@@ -1,0 +1,21 @@
+# Format reference and parser fixture for data/events.txt.
+# TR Name : EN Name : DE Name : FR Name : ES Name : Date
+# Blank lines and #-comments are ignored.
+
+Dünya'nın Oluşumu : Formation of the Earth : Entstehung der Erde : Formation de la Terre : Formación de la Tierra : MÖ 4.540.000.000
+Yaşamın Başlangıcı : Origin of Life : Ursprung des Lebens : Origine de la vie : Origen de la vida : MÖ 3.700.000.000
+Dinozorların Yok Oluşu : Extinction of the Dinosaurs : Aussterben der Dinosaurier : Extinction des dinosaures : Extinción de los dinosaurios : MÖ 66.000.000
+Piramitlerin İnşası : Construction of the Pyramids : Bau der Pyramiden : Construction des pyramides : Construcción de las pirámides : MÖ 3. binyıl
+Hammurabi Kanunları : Code of Hammurabi : Codex Hammurapi : Code de Hammurabi : Código de Hammurabi : MÖ 1754
+Perslerin Yükselişi : Rise of Persia : Aufstieg Persiens : Essor de la Perse : Auge de Persia : MÖ 5. yüzyıl
+Sezar'ın Suikasti : Assassination of Caesar : Ermordung Caesars : Assassinat de César : Asesinato de César : MÖ 44-03-15
+Batı Roma'nın Yıkılışı : Fall of the Western Roman Empire : Untergang Westroms : Chute de Rome : Caída de Roma : 4 Eylül 476
+Kara Ölüm : The Black Death : Der Schwarze Tod : La Peste noire : La Peste negra : 14. yüzyıl
+İstanbul'un Fethi : Fall of Constantinople : Fall von Konstantinopel : Chute de Constantinople : Caída de Constantinopla : 1453
+Birinci Dünya Savaşı : World War I : Erster Weltkrieg : Première Guerre mondiale : Primera Guerra Mundial : Temmuz 1914
+Ay'a İniş : Apollo 11 Moon Landing : Mondlandung : Premier pas sur la Lune : Llegada a la Luna : 1969-07-20
+
+# The three lines below are intentionally broken, to show how failures surface.
+Eksik Alanlar : Missing Fields : 1900
+Belirsiz Tarih : Unknown Date : Unbekanntes Datum : Date inconnue : Fecha desconocida : bilinmiyor
+Apollo 11: Ay'a İniş : Apollo 11: Moon Landing : Mondlandung : Lune : Luna : 1969

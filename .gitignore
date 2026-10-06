@@ -1,0 +1,21 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+
+# env
+.env
+.env*.local
+!.env.example
+
+# supabase
+/supabase/.branches
+/supabase/.temp
+
+# misc
+.DS_Store
+/.vercel

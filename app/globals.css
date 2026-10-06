@@ -1,0 +1,961 @@
+@import "tailwindcss";
+
+@theme {
+  /* Two families, split by size rather than by role: headings and any text
+     large enough to read as a title are set in Lora; everything at body size
+     and below stays in Lato.
+
+     Lato is loaded by `next/font` in app/layout.tsx. Tailwind names its
+     default family token `sans` whatever face it holds, and preflight applies
+     that token to `html` — so overriding it here is what makes Lato the page
+     default, including for elements no utility class ever touches. The
+     fallbacks are grotesques so a failed load degrades in the same key. */
+  --font-sans:
+    var(--font-lato), -apple-system, BlinkMacSystemFont, "Helvetica Neue",
+    Helvetica, Arial, sans-serif;
+
+  /* Lora, also loaded by `next/font`. Every name in this list must resolve:
+     a `var()` with no value makes the whole custom property invalid at
+     computed-value time, so `font-family: var(--font-display)` is dropped and
+     headings silently inherit Lato instead. The fallbacks are serifs — falling
+     back to Lato would erase the two-family contrast without anything looking
+     broken. */
+  --font-display: var(--font-lora), Georgia, "Times New Roman", Times, serif;
+
+  /* Surfaces. Fully neutral: the page is pure black and every surface above it
+     is an achromatic grey. These replace an earlier deep-sepia set, and the
+     swap was done by contrast ratio rather than by eye — each grey was solved
+     for so that it keeps the *same* WCAG ratio against `page` that its sepia
+     counterpart had (card 1.19:1, card-raised 1.44:1, hairline 1.66:1,
+     `ink-dim` 6.25:1, all within 0.03 of the old values). So every contrast the
+     layout was built against still holds even though `page` dropped from 10.4%
+     lightness to 0%.
+
+     That solving step is the part worth repeating. Because `page` is now pure
+     black its luminance is exactly 0, which collapses the ratio to
+     `1 + 20 * L(colour)` — so a grey picked to merely *look* like the old
+     token's lightness lands at the wrong ratio, and the surfaces compress
+     toward the floor until cards stop reading as lifted. Solve for the ratio,
+     don't match the lightness.
+
+     They are ordered by lightness and must stay that way: `page` < `card` <
+     `card-raised` < `hairline` is what makes a card read as a surface lifted off
+     the page and its border as the edge of that surface. */
+  --color-page: #000000;
+  --color-card: #191919;
+  --color-card-raised: #292929;
+  --color-ink: #ebebeb;
+  --color-ink-dim: #8c8c8c;
+  --color-hairline: #333333;
+
+  /* Accents reused by both games, and the only chroma on the page now that the
+     surfaces are neutral. In both games blue is the player's own guess and green
+     is the true answer, so these two must stay unmistakably apart from each
+     other and from the greys — that separation is load-bearing, not decorative.
+     Don't tint them toward the surfaces to "harmonise". */
+  --color-accent: #0a84ff;
+  --color-good: #32d74b;
+  --color-bad: #ff453a;
+
+  --radius-card: 28px;
+
+  --animate-reveal: reveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+:root {
+  color-scheme: dark;
+
+  /* Height of the top bar off the home page, and the single source for it:
+     `SiteHeader` sets the bar to exactly this, and the date-guessing page
+     subtracts exactly this from `100dvh` to size a screen that must not
+     scroll. The two were separate numbers before and had already drifted
+     apart by 5px — enough to put a scrollbar on a page built not to have one.
+     It only has to clear the bar's own content (the wordmark and the language
+     pill, both around 42px). */
+  --site-bar-h: 4.625rem;
+
+  /* The home board's width, and the single source for it: `GameBoard` caps
+     itself here and the masthead row above it reads the same token, because the
+     whole point of that row is that its two ends land on the outer corners of
+     the two cover cards. Change one without the other and the mark drifts off
+     the Daily card.
+
+     Every card on the board is a quarter of this less the gaps tall
+     (`CARD_HEIGHT` in components/game-board.tsx), so this number sets the whole
+     board's scale: at 1108.8px the cards are 265px and the board 546px. Widen
+     it and every card grows in both directions while the board grows by half as
+     much again in height — it was 1308px for part of 2026-10-05 and that was
+     too big, the cards crowded the first screen at 801px of content against
+     844px of viewport.
+
+     69.3rem is 77rem less a tenth, asked for on 2026-10-06 to give the cards
+     back a tenth of their width (and, through `CARD_HEIGHT`, the same share of
+     their height). 77 was `max-w-7xl` (80rem) less the `px-6` on both sides,
+     which is what made the board and every block below the fold one column;
+     that still holds, but the relationship now runs the other way — those
+     blocks are capped at `calc(var(--board-w) + 3rem)` rather than at a Tailwind
+     token, so this line is the only place the column's width is written and
+     they cannot drift apart again. Under the cap all of them are `100vw - 3rem`
+     as before. */
+  --board-w: 69.3rem;
+
+  /* The comparison screen's height budget: everything on it that is *not* one
+     of the two photographs. The page is one viewport like the date-guessing
+     screen, but here the cards are sized from the height rather than the other
+     way round — a card's height follows its width through a 16/9 picture, so
+     the only way to fill the screen without overflowing it is to subtract the
+     fixed parts first and give the rest to the pictures (`--bubble` in
+     components/comparison-game.tsx).
+
+     The parts, at the sizes the markup sets: 8px page padding-top, 84px header
+     (title, blurb, margin), 50px rail lane (two tail heights plus the rail),
+     172px for the two cards' caption blocks and borders, 20px column gap, 64px
+     reserved verdict block, 16px page padding-bottom. 414px, rounded up to
+     416 for a cushion. Change any of those and change this. */
+  --compare-chrome: 26rem;
+}
+
+html {
+  background: var(--color-page);
+}
+
+/* ---------------------------------------------------------------------------
+   Bento gradients.
+
+   The geometry is transcribed from the supplied Apple reference, but the colour
+   is not: the reference's blue/purple/pink/green sweeps were the only chroma on
+   an otherwise neutral page and read as borrowed. They are greys now, and the
+   gradients below are the same gradients — same type, same angles, same stop
+   positions — with the hues taken out.
+
+   One deliberate asymmetry. The ramp runs light -> medium -> dark on *strokes*,
+   where the dark end reads as the sweep fading into the card. Text never
+   reaches that end: `--color-card` is #191919, so a dark grey glyph would sit at
+   about 1.3:1 against it and simply disappear. The two text sweeps below
+   therefore travel light -> medium only, in opposite directions so the two cards
+   are not the same picture twice.
+
+   The "Built for" card has a gradient *stroke*, not a gradient fill. Two
+   stacked backgrounds do it without a mask: the flat card colour clipped to
+   the padding box sits on top of the conic gradient clipped to the border box,
+   so the gradient only shows through the 2px transparent border — and it
+   follows the rounded corners for free.
+   --------------------------------------------------------------------------- */
+.gradient-ring {
+  background:
+    linear-gradient(var(--color-card), var(--color-card)) padding-box,
+    conic-gradient(
+        from 200deg,
+        #e8e8e8 0%,
+        #a8a8a8 12%,
+        #3a3a3a 26%,
+        #6f6f6f 40%,
+        #d8d8d8 52%,
+        #6f6f6f 66%,
+        #3a3a3a 80%,
+        #e8e8e8 100%
+      )
+      border-box;
+  border: 2px solid transparent;
+}
+
+/* Two-tone headline spans. Painted on the text itself so the gradient tracks
+   the glyphs rather than the box. */
+.text-sweep-dim {
+  background: linear-gradient(
+    90deg,
+    #f4f4f4 0%,
+    #c6c6c6 42%,
+    #a4a4a4 72%,
+    #8c8c8c 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.text-sweep-bright {
+  background: linear-gradient(90deg, #8c8c8c 0%, #b9b9b9 45%, #ededed 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Pre-reveal state for scroll-revealed blocks: set here rather than inline so
+   the content is still laid out (and readable without JS it simply stays
+   visible, since the class is only added by the observer component). */
+.reveal-pending {
+  opacity: 0;
+}
+
+.reveal-shown {
+  animation: var(--animate-reveal);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-pending {
+    opacity: 1;
+  }
+  .reveal-shown {
+    animation: none;
+  }
+}
+
+/* The mark on the bento's "Built for daily challenges" card, turning once every
+   54.5 seconds.
+
+   The home page's masthead carried a second copy of this until 2026-10-05 and
+   no longer does: the mark sits against the word `Tempus` there now, where a
+   glyph revolving beside the text it names reads as a spinner. This is the only
+   turning copy left, so the rule has one caller — but it stays a shared class
+   rather than moving into the component, because the counter-rotation below
+   only cancels exactly while both read one keyframe set.
+
+   The glyph is a sundial — the letters of `Tempus` radiate from a hub inside
+   the ring — so it has no upright, and a slow turn reads as the dial moving
+   rather than as a logo being spun. A revolution a little under the minute is
+   the rate that says so: visibly moving when you look at it, slow enough that it
+   never pulls the eye off the copy beside it. It was a flat 60s until
+   2026-10-06, when it was asked to run 10% faster — hence 54.545s, which is
+   60/1.1 rather than a round number, and which both rules below have to carry
+   identically or the counter-rotation stops cancelling.
+
+   Clockwise, and the file's square viewBox is what makes it turn true.
+   `public/logo.svg` is cropped to the outer ring, so the ring's centre is the
+   element's centre and the default `transform-origin` needs no correction. A
+   viewBox with padding on one side would put the circle off-centre and the mark
+   would wobble instead of spin — which is also why the element must stay square.
+   --------------------------------------------------------------------------- */
+@keyframes logo-turn {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.logo-turn {
+  animation: logo-turn 54.545s linear infinite;
+}
+
+/* The sweep inside the mark, held still while the mark turns.
+
+   The gradient is painted by a child of the turning element, so by default it
+   would turn with it and the mark's dark corner would travel around the dial.
+   This runs the *same* rule backwards, which puts the child's net transform
+   against the screen at exactly identity: the light corner stays bottom-left
+   and only the glyph moves under it. Two separately-written rotations would have to
+   agree to the millisecond to cancel like that — sharing one keyframe set and
+   one duration is what makes it exact rather than nearly exact.
+
+   The child has to cover the glyph at every angle, which it does for free: the
+   mark is a disc, and a square centred on a disc it circumscribes still
+   contains that disc at any rotation. It is inset a further 2px only so the
+   ring's outermost pixel never lands exactly on the tangent point. */
+.logo-turn-counter {
+  animation: logo-turn 54.545s linear infinite reverse;
+}
+
+/* No slowed-down version here, unlike the transitions above: an element that
+   turns forever is the case this setting exists for, so it stops outright.
+   Stopping both leaves the mark upright with the sweep already in place. */
+@media (prefers-reduced-motion: reduce) {
+  .logo-turn,
+  .logo-turn-counter {
+    animation: none;
+  }
+}
+
+/* The grey sweep the bento's copy of the glyph is painted in. Light at the
+   bottom-left, dark at the top-right, over `.text-sweep-dim`'s range — the
+   headline beside it ends on the same value, which is what puts the mark and
+   the words it sits next to at one tone. The home masthead's tile used this
+   too until 2026-10-05 and is now flat `currentColor`: a gradient beside the
+   word `Tempus` read as a second, dirtier white. */
+.logo-sweep {
+  background: linear-gradient(
+    to top right,
+    #f4f4f4 0%,
+    #c6c6c6 42%,
+    #a4a4a4 72%,
+    #8c8c8c 100%
+  );
+}
+
+/* ---------------------------------------------------------------------------
+   The home board's two views.
+
+   Both are mounted in the same grid cell, so the swap is a crossfade in place
+   rather than a resize: the cell is as tall as the taller view and neither
+   arrival nor departure moves anything else on the page. That matters more
+   here than it looks — the hero is `min-h-dvh` and centred, so a board that
+   changed height would move the masthead above it by half the difference.
+   --------------------------------------------------------------------------- */
+.board-view {
+  transition:
+    opacity 200ms linear,
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* The outgoing view leaves as a block and slightly *into* the page, so it reads
+   as being put down rather than as fading out on the spot. Its cards do not
+   stagger out: a staggered exit would hold the last of them on screen past the
+   moment its replacement had already arrived underneath, and the two boards
+   would be legible through each other. */
+.board-view[data-active="false"] {
+  opacity: 0;
+  transform: scale(0.97);
+}
+
+/* Each card arrives on its own, in reading order, after the outgoing board has
+   had time to get out of the way. The delay is a custom property on the card
+   rather than a stack of `nth-child` rules, so a card added to either view
+   needs no new CSS.
+
+   `[data-swapped]` is what keeps this off the first paint: on load the board
+   has not been swapped, nothing has been interacted with, and a board that
+   dealt itself in would be a second entrance competing with the page's own. */
+@keyframes board-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+[data-swapped] .board-card {
+  animation: board-card-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(130ms + var(--card-i, 0) * 38ms);
+}
+
+/* The stand-in for a cover photograph that does not exist yet: the bento hero's
+   mesh, so an unbuilt game reads as a card that is not ready rather than as one
+   whose picture failed to load.
+
+   Same geometry as that copy — same type, same positions, same stop
+   percentages — but every stop is darkened by about a third. There it sits
+   under a photograph and is only ever glimpsed; here it is the whole card, next
+   to a real photograph, and at the bento's values it was the brightest thing on
+   a page whose background is pure black. The eye went to the one card that
+   cannot be played. */
+.board-mesh {
+  background-image:
+    radial-gradient(
+      90% 80% at 14% 6%,
+      #8f8f8f 0%,
+      #666666 28%,
+      rgba(60, 60, 60, 0) 62%
+    ),
+    radial-gradient(
+      70% 60% at 72% 10%,
+      #989898 0%,
+      #707070 34%,
+      rgba(68, 68, 68, 0) 70%
+    ),
+    radial-gradient(
+      100% 75% at 58% 104%,
+      #535353 0%,
+      #3a3a3a 42%,
+      rgba(28, 28, 28, 0) 78%
+    ),
+    linear-gradient(170deg, #1d1d1d 0%, #222222 55%, #0f0f0f 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* A cut, not a slow version: the two views still have to replace each other,
+     and 1ms does that without a second code path for whether the board
+     animates at all. */
+  .board-view {
+    transition-duration: 1ms;
+  }
+  [data-swapped] .board-card {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   The home page's FAQ.
+
+   Native `details`/`summary`, so the open/close costs the page no JavaScript
+   (see components/faq-section.tsx). What CSS adds is the two things the
+   element gives you nothing for: a mark that says which way the row is about
+   to go, and an arrival for the answer.
+   --------------------------------------------------------------------------- */
+
+/* The mark is a plus that becomes a minus. Two bars in a 12px box, both
+   centred: one lies flat and stays there, the other stands up and turns onto
+   it. Turning rather than hiding is what makes the change read as one movement
+   — a vertical bar that simply disappeared would be a flicker at this size. */
+.faq-mark > i {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  width: 12px;
+  height: 1.5px;
+  border-radius: 1px;
+  background: currentColor;
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.faq-mark > i:nth-child(1) {
+  transform: translate(-50%, -50%);
+}
+
+.faq-mark > i:nth-child(2) {
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+details[open] .faq-mark > i:nth-child(2) {
+  transform: translate(-50%, -50%) rotate(0deg);
+}
+
+/* The answer arrives rather than appearing.
+
+   It is an animation on the paragraph, not a height transition on the row: a
+   `details` element has no animatable open state in the browsers this has to
+   work in, and faking one needs a wrapper whose height is measured in
+   JavaScript — which is the thing this section is built not to need. The
+   paragraph is laid out the moment the row opens, so the row's height is a jump
+   either way; what this softens is the text landing into it. */
+@keyframes faq-answer-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+details[open] .faq-answer {
+  animation: faq-answer-in 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The mark still has to change — it is the only thing on the row that says
+     whether it is open — so it cuts rather than stops. */
+  .faq-mark > i {
+    transition-duration: 1ms;
+  }
+  details[open] .faq-answer {
+    animation-duration: 1ms;
+  }
+}
+
+/* Dragging a card or a timeline marker must not start a text selection or a
+   native image drag. */
+.no-drag-select {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  touch-action: none;
+}
+
+/* The date-guessing backdrop crossfades between panes and drifts as the stage
+   pans. Under reduced motion the crossfade stays — it carries the meaning that
+   the era changed — but the travel and the overscan it needs do not. */
+@media (prefers-reduced-motion: reduce) {
+  .timeline-backdrop-photo {
+    transform: none !important;
+  }
+}
+
+/* Small type and hairline rules sitting on a photograph. Cheaper and crisper
+   than a text-shadow stack, and it tracks the glyphs rather than their box. */
+.on-photo {
+  filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.95));
+}
+
+/* The answer's marker on the date-guessing rail. It mounts the moment the
+   guess is locked in, but the camera may still be travelling several eras to
+   reach it, so the animation is delayed by exactly that journey (see
+   `answerDelayMs` in components/timeline-game.tsx) and `both` keeps it
+   invisible until then. */
+@keyframes answer-stick-in {
+  from {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes answer-label-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.answer-stick {
+  animation: answer-stick-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* The label carries its own horizontal transform, so only opacity animates.
+   Its delay is set inline, staggered just behind the stick's. */
+.answer-label {
+  animation: answer-label-in 300ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .answer-stick,
+  .answer-label {
+    animation-duration: 1ms;
+  }
+}
+
+/* Moving from one round to the next without a page load (see `nextRound` in
+   components/timeline-game.tsx). The event's photograph cross-dissolves on the
+   same rule the backdrop follows: the outgoing picture is held at full opacity
+   underneath and only the incoming layer animates, so no third colour is ever
+   composited between them.
+
+   The title is the exception, and deliberately so. Two photographs at 50% alpha
+   read as a dissolve; two *strings* at 50% alpha on top of each other read as a
+   rendering fault. So the old caption leaves first and the new one arrives once
+   the picture has settled — the stagger below is that handover, not decoration. */
+@keyframes round-photo-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes round-title-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes round-title-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.round-photo-in {
+  animation: round-photo-in 520ms ease-out both;
+}
+
+.round-title-in {
+  animation: round-title-in 280ms ease-out 260ms both;
+}
+
+/* `forwards` only: the outgoing title is already on screen and must not blink
+   back to transparent for a frame before it starts leaving. */
+.round-title-out {
+  animation: round-title-out 200ms ease-in forwards;
+}
+
+/* The end-of-set summary arriving. It replaces the whole round rather than
+   sitting on top of it, so it comes in a touch slower and with more travel
+   than the per-round transitions above — this is the beat the set ends on, not
+   another handover between two questions. */
+@keyframes set-summary-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.set-summary-in {
+  animation: set-summary-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .round-photo-in,
+  .round-title-in,
+  .round-title-out,
+  .set-summary-in {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+  }
+}
+
+/* The verdict that pops up over the photograph when a guess is locked in
+   ("Perfect", "Great", "Good", "Way off" — picked by relative error, see
+   lib/game/scoring.ts).
+
+   It is an overlay rather than another row in the column, and that is a layout
+   decision, not a stylistic one: the date-guessing screen is exactly one
+   viewport and the button below must not move when a guess is locked in. A
+   result that takes part in the flow pushes the button down by its own height,
+   which is the bug this replaced. Painting it over the picture costs the budget
+   nothing. */
+@keyframes round-verdict-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.round-verdict-in {
+  animation: round-verdict-in 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .round-verdict-in {
+    animation-duration: 1ms;
+  }
+}
+
+/* The two panels that flank the event card once a guess is in: the result on
+   the left in the verdict's own colour, what the event was on the right
+   (components/round-flank.tsx).
+
+   Each arrives from the card it belongs to — the left panel travels left, the
+   right panel right — so the pair reads as the card opening out rather than as
+   two boxes fading up beside it. The right one is held back a beat: the result
+   is what the player locked in for, and the reading matter should land second.
+
+   They are `absolute` against the card's box, so neither of these moves
+   anything else on a screen that is exactly one viewport tall. */
+@keyframes round-flank-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(26px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes round-flank-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(-26px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.round-flank-left {
+  animation: round-flank-in-left 440ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.round-flank-right {
+  animation: round-flank-in-right 440ms cubic-bezier(0.22, 1, 0.36, 1) 120ms
+    both;
+}
+
+/* Each step of the challenge ("is the date incorrect?" -> "challenge" ->
+   earlier/later -> thanks) replaces the one before it inside a box that is
+   already on screen, so this is an arrival for the new contents rather than
+   for the panel. Keyless — the element is the same one throughout, and what
+   changes is what is in it. */
+@keyframes challenge-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.challenge-in {
+  animation: challenge-in 220ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .round-flank-left,
+  .round-flank-right,
+  .challenge-in {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Head-to-head mode.
+
+   Everything the two-player game adds to the date-guessing screen is an
+   overlay on the photograph, for the same reason the solo verdict is: the page
+   is exactly one viewport and the height budget has nothing spare. So these
+   are all animations on things that sit *over* the picture, never beside it.
+   --------------------------------------------------------------------------- */
+
+/* The last few seconds. A pulse rather than a flash: the number has to stay
+   readable while it draws attention to itself, and a hard blink on a timer
+   reads as a fault. */
+@keyframes round-timer-urgent {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(1.12);
+  }
+}
+
+.round-timer-urgent {
+  animation: round-timer-urgent 1s ease-in-out infinite;
+}
+
+/* Waiting for the opponent. Three dots rising in sequence — it has to say
+   "the game is still running and it is not your turn to do anything", which a
+   static line of text does not, and a spinner says "loading" instead. */
+@keyframes versus-dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+.versus-dot {
+  animation: versus-dot 1.2s ease-in-out infinite;
+}
+
+/* The waiting panel and the round result both arrive over the photograph, on
+   the same curve as the solo verdict they stand in place of. */
+.versus-overlay-in {
+  animation: round-verdict-in 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* The rematch request. It interrupts, so it comes in from slightly further
+   and a touch slower than anything inside a round. */
+@keyframes versus-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.versus-modal-in {
+  animation: versus-modal-in 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .round-timer-urgent,
+  .versus-dot {
+    animation: none;
+  }
+  .versus-overlay-in,
+  .versus-modal-in {
+    animation-duration: 1ms;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   The top-right menu.
+
+   One gesture in two parts: the three bars fold into an X while the panel
+   grows out of the corner the button sits in. Both run off the same
+   `data-open`, so there is no state to keep in sync and no JS timer deciding
+   when either is finished.
+   --------------------------------------------------------------------------- */
+
+/* The bars. A fixed box with three absolutely-positioned rules rather than a
+   flex column, because the fold has to move each bar to the box's *centre* —
+   which only has a stable address if the bars are out of flow. */
+.menu-bars {
+  position: relative;
+  width: 20px;
+  height: 14px;
+}
+
+/* Two nested elements per bar on purpose: the outer one travels, the inner one
+   turns, and giving them separate delays is what makes the fold read as two
+   movements instead of one diagonal slide. Collapsing them into a single
+   `translate(...) rotate(...)` would run both at once and the bars would cross
+   the middle of the box already tilted, which looks like a slip rather than a
+   fold. */
+.menu-bar {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 1.5px;
+  transition: transform 190ms cubic-bezier(0.4, 0, 0.2, 1) 190ms;
+}
+
+.menu-bar > i {
+  display: block;
+  height: 100%;
+  border-radius: 1px;
+  background: currentColor;
+  transition:
+    transform 190ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 120ms linear;
+}
+
+.menu-bar:nth-child(1) {
+  top: 0;
+}
+.menu-bar:nth-child(2) {
+  /* Centre of the box: half the height less half the bar. */
+  top: 6.25px;
+}
+.menu-bar:nth-child(3) {
+  bottom: 0;
+}
+
+/* Opening: travel first (no delay), then turn. Closing swaps the two delays,
+   so the X unfolds before the bars separate — the reverse of the same gesture
+   rather than a different one. */
+.menu-bars[data-open="true"] .menu-bar {
+  transition-delay: 0ms;
+}
+.menu-bars[data-open="true"] .menu-bar > i {
+  transition-delay: 190ms;
+}
+
+/* 6.25px is exactly the distance from either outer bar's centre to the box's,
+   so the two arms of the X meet rather than merely overlap. It is half the
+   box's height less half a bar, and it has to be re-derived whenever the box
+   is: the three bars share one centre only at that one number. */
+.menu-bars[data-open="true"] .menu-bar:nth-child(1) {
+  transform: translateY(6.25px);
+}
+.menu-bars[data-open="true"] .menu-bar:nth-child(3) {
+  transform: translateY(-6.25px);
+}
+.menu-bars[data-open="true"] .menu-bar:nth-child(1) > i {
+  transform: rotate(45deg);
+}
+.menu-bars[data-open="true"] .menu-bar:nth-child(3) > i {
+  transform: rotate(-45deg);
+}
+
+/* The middle bar has nowhere to go — it is already at the centre — so it
+   shrinks into it. Fading alone would leave a ghost across the X while the
+   arms arrived. */
+.menu-bars[data-open="true"] .menu-bar:nth-child(2) > i {
+  opacity: 0;
+  transform: scaleX(0.1);
+}
+
+/* The panel grows out of the button's corner.
+
+   `clip-path`, not `transform: scale()`, and that is the whole trick: a scaled
+   box takes its corner radius and its 1px border with it, so the panel would
+   open with a huge soft corner and a fat edge that both tighten as it grows —
+   visibly a rubber sheet rather than a panel arriving. An inset clip reveals
+   the finished box through a window, so the radius and the border are the
+   final ones from the first frame. It also leaves the layout alone: the
+   content is laid out at full size the whole time and never reflows mid
+   animation.
+
+   `round 24px` has to match the element's own radius, or the clip's corners
+   cut inside the panel's at full size and the corners read as chipped. */
+.menu-panel {
+  clip-path: inset(0 0 100% 100% round 24px);
+  transition: clip-path 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.menu-panel[data-open="true"] {
+  clip-path: inset(0 0 0 0 round 24px);
+  /* Faster out than in, which is the usual asymmetry: an opening is being
+     watched, a closing is being got out of the way. The duration lives on the
+     open state so the closed state keeps the shorter one. */
+  transition-duration: 420ms;
+}
+
+.menu-panel[data-open="false"] {
+  transition-duration: 260ms;
+  transition-timing-function: cubic-bezier(0.55, 0, 0.9, 0.4);
+}
+
+/* Each item arrives after the panel has somewhere to put it. The skew is what
+   makes the line read as catching up with itself rather than merely sliding:
+   the letters lean the way they are travelling and straighten as they land.
+
+   The stagger is a custom property on each item rather than a stack of
+   nth-child rules, so a row added to the menu needs no new CSS. */
+@keyframes menu-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) skewX(-9deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.menu-item-in {
+  animation: menu-item-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(170ms + var(--menu-i, 0) * 45ms);
+}
+
+/* Going out, everything leaves together and quickly. Staggering the exit would
+   hold the last row on screen past the moment the clip has already swallowed
+   it, so it would simply vanish — the stagger would be invisible and the
+   closing would feel slower for nothing. */
+.menu-items-out {
+  opacity: 0;
+  transition: opacity 120ms linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The panel still has to appear and disappear, so this is a cut rather than
+     a stop: 1ms keeps the state change instant without needing a second code
+     path for whether the panel is clipped at all. */
+  .menu-panel,
+  .menu-panel[data-open="true"],
+  .menu-panel[data-open="false"],
+  .menu-bar,
+  .menu-bar > i {
+    transition-duration: 1ms;
+    transition-delay: 0ms;
+  }
+  .menu-item-in {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+  }
+}
