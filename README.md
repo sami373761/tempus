@@ -2,7 +2,7 @@
 
 Foundation for a historical date-guessing game. ~1,000 historical events, each
 with multilingual text, tags, and one primary image stored in Cloudflare R2.
-
+  
 **Scope of this commit:** schema, data access, storage and auth layers only. No
 game, no admin UI.
 
