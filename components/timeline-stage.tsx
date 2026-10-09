@@ -5,8 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { EventVisual } from "@/components/event-visual";
 import type { LocalizedEvent, SupportedLocale } from "@/lib/db/types";
 import { ROUND_PHOTO_FADE_MS } from "@/lib/game/rounds";
-import type { Verdict } from "@/lib/game/scoring";
 import {
+  ALL_PANES,
   coarseStepFraction,
   DEFAULT_PANE,
   entryFraction,
@@ -16,6 +16,7 @@ import {
   paneEntrances,
   paneTicks,
   TIMELINE_PANES,
+  type PaneSet,
   type TimelinePane,
   yearAtFraction,
 } from "@/lib/game/timeline";
@@ -49,6 +50,8 @@ export interface StageEvent {
   id: string;
   name: string;
   image: LocalizedEvent["image"];
+  /** Whether the photograph goes behind a reveal control — see EventVisual. */
+  isSensitive: boolean;
 }
 
 /**
@@ -72,46 +75,180 @@ export const PAN_MS = 750;
 export const ROUND_BUTTON =
   "rounded-full border px-7 py-3 text-sm font-semibold transition";
 
-/** Which dictionary entry each tier of `gradeGuess` prints. */
-export const VERDICT_LABEL_KEYS: Record<Verdict, keyof Dict> = {
-  perfect: "verdictPerfect",
-  great: "verdictGreat",
-  good: "verdictGood",
-  bad: "verdictBad",
-};
+/**
+ * How long the rail takes to fold away when the player chooses to type the
+ * date instead (`.rail-fold` in app/globals.css, `DateEntry` in
+ * components/date-entry.tsx).
+ *
+ * It is here rather than beside that control because three things are timed
+ * against it and only one of them is the control: the rail's own collapse, the
+ * card's growth into the room it gives up, and the reveal of a guess that was
+ * typed — which cannot begin until the rail it is marked on is back on screen.
+ * **Change this and change `.rail-fold` and `.card-caps` with it**; the card
+ * only tracks the rail frame for frame while both are eased identically.
+ */
+export const RAIL_FOLD_MS = 460;
 
 /**
- * Three colours for four tiers, on purpose. Green is already the true answer's
- * colour in both games, so it is the right one to reward with; the two top
- * tiers share it and the words tell them apart. "Good" stays ink — a third hue
- * would be the page's only decorative chroma. */
-export const VERDICT_COLORS: Record<Verdict, string> = {
-  perfect: "var(--color-good)",
-  great: "var(--color-good)",
-  good: "var(--color-ink)",
-  bad: "var(--color-bad)",
-};
+ * The event card's box, and the wider one it takes while the rail is folded
+ * away.
+ *
+ * One pair of constants rather than four class lists, because the card and the
+ * wrapper the result panels hang off have to be *exactly* the same size: those
+ * panels are `inset-y-0` against the wrapper, so a wrapper taller than the
+ * card hangs them past its corners. They were two copies of the same caps
+ * until the entry arrived and made it two copies of two.
+ *
+ * The wide pair is a hand-maintained sum, in the same sense `--compare-chrome`
+ * is: `38.125rem` is `26rem` plus the rail band's own measured height (194px),
+ * so the picture takes exactly what the rail gives up and the one thing on
+ * this screen which must not move — the advance button — stays where it is
+ * when the rail goes. **Re-measure it if the rail's padding, its heading or
+ * the ruler's type changes.** A few pixels out shows as the button stepping
+ * during the fold, not as a scrollbar; on a screen too short for either cap to
+ * bind, nothing moves either way.
+ */
+export const CARD_BOX =
+  "w-full max-w-[25rem] sm:max-h-[26rem] sm:max-w-[32rem]";
+export const CARD_BOX_WIDE =
+  "w-full max-w-[25rem] sm:max-h-[38.125rem] sm:max-w-[36rem]";
 
 /**
  * Crossing several eras at once is a longer journey, so it takes longer — but
  * sub-linearly, or walking cosmos-to-future would stall. Capped so the reveal
  * never feels like waiting.
  */
-export function panDuration(from: TimelinePane, to: TimelinePane): number {
-  const panes = Math.abs(
-    TIMELINE_PANES.indexOf(to) - TIMELINE_PANES.indexOf(from),
-  );
-  return Math.min(1700, PAN_MS + Math.max(0, panes - 1) * 320);
+export function panDuration(
+  from: TimelinePane,
+  to: TimelinePane,
+  panes: PaneSet = TIMELINE_PANES,
+): number {
+  const crossed = Math.abs(panes.indexOf(to) - panes.indexOf(from));
+  return Math.min(1700, PAN_MS + Math.max(0, crossed - 1) * 320);
 }
 
-/** Where every rail stands at the start of a round. */
-export function openingFractions(): Record<TimelinePane, number> {
+/**
+ * Where every rail stands at the start of a round.
+ *
+ * Keyed over *every* pane rather than over the given set, so a game can hold
+ * one total record of marker positions and index it without a fallback. A pane
+ * outside the set gets the edge value `entryFraction` gives anything the
+ * camera cannot reach from `home` — it is never rendered and never read, and
+ * filling it is cheaper than making every `fractions[pane]` optional.
+ */
+export function openingFractions(
+  panes: PaneSet = TIMELINE_PANES,
+  home: TimelinePane = DEFAULT_PANE,
+): Record<TimelinePane, number> {
   return Object.fromEntries(
-    TIMELINE_PANES.map((candidate) => [
+    ALL_PANES.map((candidate) => [
       candidate,
-      candidate === DEFAULT_PANE ? 0.5 : entryFraction(candidate, DEFAULT_PANE),
+      candidate === home ? 0.5 : entryFraction(candidate, home, panes),
     ]),
   ) as Record<TimelinePane, number>;
+}
+
+/**
+ * The stretch of rail between the guess and the truth, on one pane.
+ *
+ * A guess and an answer in the same era are one bar between two markers, and
+ * that is all this used to be. Across eras they are not: the distance runs
+ * off the end of the rail the guess was made on, through however many panes
+ * lie between, and onto the rail the answer lives on — so the measurement has
+ * to be drawn as one fill per pane, and the panes in the middle are filled end
+ * to end. Without it a guess an era out reports its distance only as a camera
+ * move, and the one thing the player wants to see — how far wrong they were —
+ * is the one thing the screen does not say.
+ *
+ * The panes are in timeline order, so "which way is the answer" is the sign of
+ * the index difference and nothing has to know about eras.
+ */
+export interface RailGap {
+  /** Left edge of the fill, as a fraction of this pane's rail. */
+  from: number;
+  /** Right edge. */
+  to: number;
+  /** Which end it grows out of: always the end nearer the guess. */
+  origin: "left" | "right";
+  /** When it draws itself. */
+  delayMs: number;
+}
+
+export function railGap({
+  pane,
+  guessPane,
+  guessFraction,
+  answerPane,
+  answerYear,
+  answerDelayMs,
+  nearDelayMs = 0,
+  panes = TIMELINE_PANES,
+}: {
+  pane: TimelinePane;
+  guessPane: TimelinePane | null;
+  /** Where the marker was left on `guessPane`. */
+  guessFraction: number;
+  answerPane: TimelinePane | null;
+  answerYear: number | null;
+  /** When the answer's own marker lands, which the far end waits for. */
+  answerDelayMs: number;
+  /**
+   * The earliest the end nearest the guess may draw itself. Zero in the
+   * ordinary case — the player is looking straight at their own marker and
+   * the bar leaving it is what the camera then follows — and the rail's fold
+   * when the date was typed instead, because a bar that grows behind a
+   * collapsed rail is one nobody sees grow.
+   */
+  nearDelayMs?: number;
+  /** The panes whose order decides which way the distance runs. */
+  panes?: PaneSet;
+}): RailGap | null {
+  if (guessPane === null || answerPane === null || answerYear === null)
+    return null;
+
+  const here = panes.indexOf(pane);
+  const from = panes.indexOf(guessPane);
+  const to = panes.indexOf(answerPane);
+
+  // Same era: the ordinary case, one bar between the two markers. A `perfect`
+  // guess draws nothing for free — the two fractions are equal, so the bar has
+  // no width.
+  if (from === to) {
+    if (here !== from) return null;
+    const answerFraction = fractionAtYear(pane, answerYear);
+    return {
+      from: Math.min(guessFraction, answerFraction),
+      to: Math.max(guessFraction, answerFraction),
+      origin: guessFraction <= answerFraction ? "left" : "right",
+      delayMs: Math.max(nearDelayMs, answerDelayMs),
+    };
+  }
+
+  if (here < Math.min(from, to) || here > Math.max(from, to)) return null;
+
+  // Later than the guess means rightwards, which is also the direction every
+  // fill grows in.
+  const forward = to > from;
+  const origin = forward ? "left" : "right";
+
+  // The pane the guess is on starts drawing straight away rather than waiting
+  // out the camera: the player is still looking at their own marker during the
+  // reveal hold, and the bar leaving it is what the camera then follows.
+  if (here === from) {
+    return forward
+      ? { from: guessFraction, to: 1, origin, delayMs: nearDelayMs }
+      : { from: 0, to: guessFraction, origin, delayMs: nearDelayMs };
+  }
+
+  if (here === to) {
+    const answerFraction = fractionAtYear(pane, answerYear);
+    return forward
+      ? { from: 0, to: answerFraction, origin, delayMs: answerDelayMs }
+      : { from: answerFraction, to: 1, origin, delayMs: answerDelayMs };
+  }
+
+  // A pane the distance merely crosses: filled end to end.
+  return { from: 0, to: 1, origin, delayMs: answerDelayMs };
 }
 
 /**
@@ -133,6 +270,8 @@ export function RoundCard({
   badge,
   counter,
   aside = null,
+  wide = false,
+  t,
 }: {
   event: StageEvent;
   /** The round's result, painted over the picture rather than laid out under it. */
@@ -146,6 +285,18 @@ export function RoundCard({
    * page is a height budget with nothing spare.
    */
   aside?: React.ReactNode;
+  /**
+   * Whether the rail below has folded away, in which case the picture takes
+   * the room it left. Off in the head-to-head mode, which has no other way to
+   * answer a round.
+   */
+  wide?: boolean;
+  /**
+   * Only so the photograph's sensitive-content gate can be labelled. The card
+   * itself prints nothing from the dictionary — every string on it arrives
+   * already rendered, as `badge`, `counter` and `aside`.
+   */
+  t: Dict;
 }) {
   // Derived during render rather than in an effect, so the incoming layer is
   // never painted once with nothing behind it.
@@ -172,17 +323,26 @@ export function RoundCard({
     // The one part of the column that gives: it takes whatever height the rail
     // and the footer leave, capped so the picture cannot become a billboard on
     // a tall screen and floored so it is still a picture on a short one.
-    <div className="flex min-h-0 w-full max-w-[25rem] flex-1 flex-col overflow-hidden rounded-3xl border border-white/12 bg-black/35 shadow-2xl shadow-black/70 backdrop-blur-2xl sm:max-w-[32rem] sm:max-h-[26rem]">
+    //
+    // `.card-caps` is the transition between the two caps, and it exists as a
+    // class rather than as utilities so `prefers-reduced-motion` can reach it:
+    // the growth has to stay in step with the rail's own fold, which is timed
+    // in CSS as well.
+    <div
+      className={`card-caps flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-white/12 bg-black/35 shadow-2xl shadow-black/70 backdrop-blur-2xl ${
+        wide ? CARD_BOX_WIDE : CARD_BOX
+      }`}
+    >
       <div className="relative min-h-[5rem] w-full flex-1">
         {shown.leaving && (
           <div className="absolute inset-0">
-            <EventVisual event={shown.leaving} />
+            <EventVisual event={shown.leaving} t={t} />
           </div>
         )}
         {/* Keyed on the event, so the dissolve restarts for each round rather
             than running once on mount. */}
         <div key={shown.active.id} className="round-photo-in absolute inset-0">
-          <EventVisual event={shown.active} />
+          <EventVisual event={shown.active} t={t} />
         </div>
 
         {/* Top-left, clear of the verdict that lands in the middle of the same
@@ -238,22 +398,51 @@ export function TimelinePaneView({
   onFractionChange,
   answered,
   showGuess,
+  guessYear = null,
   answerYear,
   answerDelayMs,
+  gap = null,
+  gapColor = null,
   opponentYear = null,
   opponentLabel,
+  panes = TIMELINE_PANES,
   locale,
   t,
   onEnter,
 }: {
   pane: TimelinePane;
+  /** The set this pane belongs to, which is what decides its doors. */
+  panes?: PaneSet;
   active: boolean;
   fraction: number;
   onFractionChange: (fraction: number) => void;
   answered: boolean;
   showGuess: boolean;
+  /**
+   * What the marker's own bubble should read, when that is not simply the year
+   * under it. A date *typed* into the entry is exact; the year the rail reads
+   * back at that position is snapped to the pane's grid, which on the deep
+   * panes is a step of ten or a hundred years. So a guess of 123,456 BCE would
+   * be graded as typed and captioned as 123,460 — the player's own number,
+   * misquoted. Null means read the rail, which is every other case.
+   */
+  guessYear?: number | null;
   answerYear: number | null;
   answerDelayMs: number;
+  /**
+   * This pane's share of the distance between the guess and the truth, from
+   * `railGap` — null on the panes that distance does not reach, and on every
+   * pane while the round is still open. The caller computes it because only
+   * the caller knows both ends: a pane in the middle of a cross-era guess has
+   * neither marker on it and would otherwise have nothing to measure.
+   */
+  gap?: RailGap | null;
+  /**
+   * What colour to draw that gap in — the verdict's own hue, so the bar on the
+   * rail and the result card beside the photograph are the same red or the
+   * same green. Null draws no gap at all.
+   */
+  gapColor?: string | null;
   /**
    * The other player's guess, in the head-to-head mode, once the round has
    * closed. Null in the solo game, which has no other player.
@@ -267,7 +456,7 @@ export function TimelinePaneView({
 }) {
   const rail = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
-  const year = yearAtFraction(pane, fraction);
+  const year = guessYear ?? yearAtFraction(pane, fraction);
 
   function fractionFromClientX(clientX: number): number {
     const box = rail.current?.getBoundingClientRect();
@@ -320,7 +509,7 @@ export function TimelinePaneView({
 
   return (
     <div
-      className={`w-full shrink-0 px-6 transition-opacity duration-300 sm:px-12 ${
+      className={`w-full shrink-0 px-8 transition-opacity duration-300 sm:px-12 ${
         active ? "opacity-100" : "opacity-0"
       }`}
       aria-hidden={!active}
@@ -351,13 +540,23 @@ export function TimelinePaneView({
         <div className="relative pb-14 pt-24">
           {/* Doors to the neighbouring panes, at the ends of the rail they
               open from. Leaving BC works exactly like entering it. */}
-          {paneEntrances(pane).map((door) => (
+          {paneEntrances(pane, panes).map((door) => (
             <EdgeButton
               key={door.target}
               side={door.side}
               // A door opens onto a shared boundary, so it appears exactly
-              // when the marker reaches that end of the rail.
-              visible={door.side === "left" ? fraction <= 0 : fraction >= 1}
+              // when the marker reaches that end of the rail — and it closes
+              // the moment the guess is locked in. From then until the next
+              // round the camera is the only thing that moves between eras:
+              // it is travelling to the answer, and a player who walked off to
+              // another era mid-reveal would be looking at a rail with neither
+              // their marker nor the answer on it. It also keeps the answer's
+              // own pane from offering a door merely because the marker it
+              // remembers happens to be parked at one end.
+              visible={
+                !answered &&
+                (door.side === "left" ? fraction <= 0 : fraction >= 1)
+              }
               onClick={() => onEnter(door.target)}
             >
               {doorLabel(door.target, t)}
@@ -378,11 +577,55 @@ export function TimelinePaneView({
                   : "cursor-pointer"
             }`}
           >
-            {/* Travelled portion, so the marker reads as a position on a scale. */}
-            {showGuess && (
+            {/* Travelled portion, so the marker reads as a position on a
+                scale.
+
+                It was `bg-accent` — the palette's blue, which is the player's
+                own mark everywhere else — until 2026-10-08. Over a photograph
+                it was the one saturated hue on the screen and read as chrome
+                left on top of the picture, exactly as it did on the comparison
+                rail (which went white for the same reason). A *muted* white:
+                the track under it is `white/25` and the marker itself is solid
+                `ink`, so a brilliant fill would leave the travelled portion
+                competing with the marker it exists to lead the eye to. */}
+            {showGuess && !answered && (
               <div
-                className="absolute inset-y-0 left-0 rounded-full bg-accent"
+                className="absolute inset-y-0 left-0 rounded-full bg-white/55"
                 style={{ width: `${fraction * 100}%` }}
+              />
+            )}
+
+            {/* How far off the guess was, drawn along the rail between the two
+                markers in the verdict's own colour — so the distance the
+                result card names as a number is also a length on the scale the
+                guess was read off.
+
+                `railGap` decides which panes get one and how much of each:
+                the two markers' own pane when they share one, and otherwise
+                the tail of the guess's rail, the whole of every pane in
+                between, and the head of the answer's. A guess an era away from
+                the truth is a distance like any other and now reads as one,
+                rather than being reported only by how far the camera had to
+                travel.
+
+                No z-index on purpose. It has to stay under the guess marker
+                and the answer's pointer — a coloured line across the white
+                dot it starts from would read as a fault — and the rail's own
+                tick marks already cross the travelled fill above it. It is a
+                hair taller than the track so it reads as a measurement laid
+                across the rail rather than as a repaint of it. */}
+            {answered && gap && gapColor && (
+              <div
+                className="answer-gap pointer-events-none absolute -inset-y-px rounded-full"
+                style={{
+                  left: `${gap.from * 100}%`,
+                  width: `${(gap.to - gap.from) * 100}%`,
+                  background: gapColor,
+                  // It grows from the guess towards the answer, so the origin
+                  // is whichever end of this pane is nearer the guess.
+                  transformOrigin: `${gap.origin} center`,
+                  animationDelay: `${gap.delayMs}ms`,
+                }}
               />
             )}
 
@@ -395,10 +638,22 @@ export function TimelinePaneView({
                   style={{ left: `${at * 100}%` }}
                 >
                   <div className="h-3 w-px -translate-y-1/2 bg-white/35" />
-                  <span
-                    className="on-photo absolute left-1/2 top-3 whitespace-nowrap text-[13px] tabular-nums text-white/65"
-                    style={{ transform: `translateX(${-at * 100}%)` }}
-                  >
+                  {/* Centred on its own tick, every tick. The label used to be
+                      pulled back by its own width in proportion to how far
+                      along the rail it sat (`translateX(-at * 100%)`), which
+                      kept the first and last labels inside the rail's ends but
+                      left every one in between sitting to the right of the
+                      line it belongs to — by a quarter of its own width at the
+                      quarter mark, and by nothing at all only in the middle.
+                      A numeral that does not sit on its mark is not a ruler,
+                      so the ends now hang into the pane's own padding instead.
+                      That is what the `px-8` below `sm` is for, and it is
+                      measured: the widest tick label on any pane is 59.8px
+                      ("10 million"), so an end label centred on its mark needs
+                      29.9px of room beyond the rail and the old `px-6` left it
+                      24. The stage viewport clips, so the shortfall showed as
+                      a numeral with its first digit shaved off. */}
+                  <span className="on-photo absolute left-1/2 top-3 -translate-x-1/2 whitespace-nowrap text-[13px] tabular-nums text-white/65">
                     {formatYearMagnitude(tickYear)}
                   </span>
                 </div>
@@ -436,29 +691,39 @@ export function TimelinePaneView({
               </div>
             )}
 
+            {/* The answer: a pointer with the true date in the block under
+                it.
+
+                It was a green stick and a green caption until 2026-10-07, in
+                the same green the verdict used. Both are gone — it is white
+                now, like everything else the rail is drawn in, and the date
+                moved *inside* the block instead of hanging under it as a
+                second label. The one thing to keep is the symmetry: the
+                pointer is centred over the block by the flex column and the
+                whole marker is centred on its year by the keyframe's
+                `translateX(-50%)` (the transform has to live there, or the
+                animation would override a Tailwind translate class and the
+                marker would land half its own width to the right).
+
+                `top-7` is measured, not chosen. The band below the rail is
+                `pb-14` — 56px — and the ruler's own numerals occupy the first
+                27px of it, so the marker starts where they end and its 49px
+                still fit inside the pane. Grow either piece and re-check that
+                sum: the stage viewport clips, so the overflow would simply
+                take the bottom off the block. */}
             {answerYear !== null && answered && (
               <div
-                className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2"
-                style={{ left: `${fractionAtYear(pane, answerYear) * 100}%` }}
+                // Held back until the camera has finished travelling, so the
+                // answer lands in front of the player rather than having been
+                // sitting there through a pan they were not watching.
+                className="answer-marker absolute top-7 z-20 flex flex-col items-center"
+                style={{
+                  left: `${fractionAtYear(pane, answerYear) * 100}%`,
+                  animationDelay: `${answerDelayMs}ms`,
+                }}
               >
-                {/* Held back until the camera has finished travelling, so the
-                    answer lands in front of the player rather than having been
-                    sitting there through a pan they were not watching. */}
-                <div
-                  className="answer-stick on-photo h-8 w-0.5 origin-top rounded-full bg-good"
-                  style={{ animationDelay: `${answerDelayMs}ms` }}
-                />
-                <span
-                  // Below the ruler's own numerals, not level with them: the
-                  // answer can land on a tick, and two labels in one line is
-                  // unreadable exactly where it matters most.
-                  className="answer-label on-photo absolute left-1/2 top-12 whitespace-nowrap text-[11px] font-semibold text-good"
-                  style={{
-                    transform: `translateX(${-fractionAtYear(pane, answerYear) * 100}%)`,
-                    // Just behind the stick, so the year reads as its caption.
-                    animationDelay: `${answerDelayMs + 180}ms`,
-                  }}
-                >
+                <span className="answer-pointer h-2.5 w-4 bg-ink" />
+                <span className="whitespace-nowrap rounded-md bg-ink px-2 py-[3px] text-[11px] font-semibold leading-none tabular-nums text-page shadow-lg shadow-black/60">
                   {formatYear(answerYear)}
                 </span>
               </div>
@@ -560,6 +825,12 @@ export function doorLabel(pane: TimelinePane, t: Dict): string {
       return t.bc;
     case "future":
       return t.future;
+    // A one-pane set has no doors, so this is unreachable for football today;
+    // it is here because the switch is exhaustive over `TimelinePane` and a
+    // silent fall-through to "CE" is exactly the sort of wrong label that
+    // survives a review.
+    case "football":
+      return t.footballTitle;
     case "ce":
     default:
       return t.commonEra;
@@ -577,10 +848,13 @@ export function paneLabel(pane: TimelinePane, t: Dict): string {
       return t.civilizationEra;
     case "future":
       return t.future;
+    // The football rail covers no era — it covers a subject — so its heading
+    // is the subject's name.
+    case "football":
+      return t.footballTitle;
     case "ce":
     default:
       // Spelled out as a heading; the door pill keeps the abbreviation.
       return t.commonEraTitle;
   }
 }
-

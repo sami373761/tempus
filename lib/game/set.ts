@@ -26,13 +26,20 @@ export const QUESTIONS_PER_SET = 10;
  * Which tiers of `gradeGuess` count toward the set's percentage.
  *
  * The same split the game already makes visually: `VERDICT_COLORS` in
- * `components/timeline-game.tsx` paints the top two green, "good" in plain ink
- * and only "bad" in red. So "bad" is the miss and the other three are hits —
- * this is not a second opinion about difficulty, it is the existing one written
- * as a boolean. Retuning what counts as a hit means editing `BANDS` in
+ * lib/game/verdict-style.ts gives every tier its own hue and only the bottom
+ * one is red. So the red tier is the miss and the other four are hits — this is
+ * not a second opinion about difficulty, it is the existing one written as a
+ * boolean. Retuning what counts as a hit means editing `BANDS` in
  * lib/game/scoring.ts, not this line.
+ *
+ * The ladder gained a rung below "good" on 2026-10-07 and the line did not
+ * move with it, so "bad" is now a hit where before the bottom tier was the
+ * only thing it could be. That is deliberate: the bottom tier was ~45% of all
+ * guesses under the old bands and is ~15% under the new ones, so holding the
+ * line here is what makes the set's percentage more forgiving rather than
+ * slightly harsher. Moving it to also miss on "bad" is this one line.
  */
-const MISSED_VERDICT: Verdict = "bad";
+const MISSED_VERDICT: Verdict = "wayOff";
 
 /** One answered question, in the form both games can produce. */
 export interface SetResult {
@@ -130,17 +137,18 @@ export function gradeSet(summary: SetSummary): SetGrade {
 /**
  * The share grid: one square per question, in the order they were played.
  *
- * Three colours for four tiers, matching `VERDICT_COLORS` in the game itself —
- * green is the reward, so the top two tiers share it and only the words tell
- * them apart. The white square is "good" because the UI paints that tier in
- * plain ink; a miss is the black square, so on a dark client it reads as the
- * absence it is. A game with no tiers gets the plain hit/miss pair.
+ * One square per tier, and they are the tiers' own colours: the five-step
+ * ladder in lib/game/verdict-style.ts runs blue → green → yellow → orange →
+ * red, and Unicode happens to have a square for each. So a pasted result reads
+ * as the screen it came from without a legend, which four tiers over three
+ * colours never quite did. A game with no tiers gets the plain hit/miss pair.
  */
 const VERDICT_SQUARE: Record<Verdict, string> = {
-  perfect: "🟩",
+  perfect: "🟦",
   great: "🟩",
-  good: "⬜",
-  bad: "⬛",
+  good: "🟨",
+  bad: "🟧",
+  wayOff: "🟥",
 };
 
 const HIT_SQUARE = "🟩";

@@ -7,6 +7,7 @@
  */
 
 import type { LocalizedEvent } from "../db/types.ts";
+import type { Verdict } from "./scoring.ts";
 
 /**
  * Shown until `public.image` has rows. Every event falls back to the same
@@ -115,4 +116,101 @@ export function isComparisonCorrect(
   const toLeft = Math.abs(round.target.year - round.left.year);
   const toRight = Math.abs(round.target.year - round.right.year);
   return toLeft === toRight || choice === closerSide(round);
+}
+
+/**
+ * How many equal sections the comparison rail is divided into.
+ *
+ * Six, with five dividers drawn between them, which is what turns "nearer to
+ * which anchor?" into a question with a resolution. The rail spans the two
+ * anchors' years, so a section is always a sixth of the distance between
+ * them — 600 years apart makes each section a century — and the scale is
+ * therefore stated by the round rather than chosen by the game.
+ *
+ * It has to stay even: the answer is still which half the target is in, and
+ * `sectionSide` splits the row down the middle.
+ */
+export const COMPARISON_SECTIONS = 6;
+
+/**
+ * Where a year sits on the rail, 0 at the older anchor and 1 at the newer.
+ *
+ * Linear between the two, which is exact: astronomical year numbering makes
+ * this plain subtraction (lib/historical-date.ts). It lived in
+ * components/comparison-game.tsx until the sections needed it too — the
+ * section the truth falls in and the section the player picked have to be
+ * read off one scale or the distance between them is not a distance.
+ */
+export function comparisonFractionAtYear(
+  round: ComparisonRound,
+  year: number,
+): number {
+  const span = round.right.year - round.left.year;
+  if (span === 0) return 0.5; // The draw asks for distinct years; be safe anyway.
+  return Math.min(1, Math.max(0, (year - round.left.year) / span));
+}
+
+/** Which section a position on the rail falls in, 0 (oldest) to 5 (newest). */
+export function comparisonSection(fraction: number): number {
+  return Math.min(
+    COMPARISON_SECTIONS - 1,
+    Math.max(0, Math.floor(fraction * COMPARISON_SECTIONS)),
+  );
+}
+
+/** Which section the truth is in. */
+export function comparisonSectionAtYear(
+  round: ComparisonRound,
+  year: number,
+): number {
+  return comparisonSection(comparisonFractionAtYear(round, year));
+}
+
+/**
+ * Which anchor a section commits to. The three older sections are the left
+ * answer and the three newer ones the right, which is the same boundary the
+ * midpoint of the rail always was — picking a section is a finer way of
+ * saying the thing the round already asked.
+ */
+export function sectionSide(section: number): ComparisonSide {
+  return section < COMPARISON_SECTIONS / 2 ? "left" : "right";
+}
+
+/**
+ * The round's grade, on the same five-rung ladder the date-guessing game
+ * uses — so one result card can serve both screens.
+ *
+ * The side is still the question and the section is the margin: being right
+ * can earn the top three rungs and being wrong can only earn the bottom two,
+ * so no amount of precision rescues the wrong half and no near miss is
+ * reported as a win. The distances are what each rung is worth:
+ *
+ *   perfect  right half, the exact section
+ *   great    right half, one section out
+ *   good     right half, two sections out (the widest a correct answer can be)
+ *   bad      wrong half, one section out — the pair either side of the middle
+ *   wayOff   wrong half, further than that
+ *
+ * A correct answer can never be more than two sections out and a wrong one
+ * never fewer than one, because both sections lie in their own half of six;
+ * the ladder is therefore total without either end needing a clamp.
+ */
+export function comparisonVerdict(
+  round: ComparisonRound,
+  picked: number,
+): Verdict {
+  const distance = comparisonSectionDistance(round, picked);
+
+  if (!isComparisonCorrect(round, sectionSide(picked))) {
+    return distance <= 1 ? "bad" : "wayOff";
+  }
+  return distance === 0 ? "perfect" : distance === 1 ? "great" : "good";
+}
+
+/** How many sections lie between the player's pick and the truth. */
+export function comparisonSectionDistance(
+  round: ComparisonRound,
+  picked: number,
+): number {
+  return Math.abs(picked - comparisonSectionAtYear(round, round.target.year));
 }

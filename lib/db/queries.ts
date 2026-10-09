@@ -12,6 +12,15 @@
  * hiding: pass `requireImage: false` for those. Attaching an image is all it
  * takes to put an event back in play; nothing has to be re-seeded or
  * re-published.
+ *
+ * **An event belongs to exactly one pool, and a game only sees its own.**
+ * Events carrying a `kind = 'topic'` category are a subject game's — football's
+ * today — and the general games (date guessing, comparison, the daily,
+ * survival, head-to-head) draw from events that carry none. That rule is
+ * applied here, where the pool is chosen, rather than in each of the five
+ * places a round is dealt: a game that forgot to ask would otherwise deal
+ * football events to a date-guessing player, and adding basketball later would
+ * mean editing every existing draw. `restrictToPool()` is the whole of it.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -26,28 +35,63 @@ import { publicImageUrl } from "../storage/images.ts";
 
 export type DbClient = SupabaseClient<Database>;
 
-export interface ListEventsOptions {
+/**
+ * Which pool a read draws from, shared by every function here that *chooses* a
+ * set of events rather than being handed one.
+ *
+ * The default — both fields omitted — is the **general** pool: events carrying
+ * no `kind = 'topic'` category. That is deliberately the default rather than
+ * something a game opts into, because the cost of forgetting is a football
+ * event in a date-guessing round.
+ */
+export interface PoolOptions {
+  /**
+   * Draw only from this subject pool: a `kind = 'topic'` category slug, e.g.
+   * `FOOTBALL_TOPIC` from lib/game/topics.ts.
+   */
+  topicSlug?: string;
+  /**
+   * Default `false`. `true` lifts the pool rule altogether, so the read sees
+   * the general pool and every subject pool at once — for statistics about the
+   * library as a whole, and for editor tools, which have to be able to see
+   * exactly what each game is hiding. The same kind of escape hatch as
+   * `requireImage: false`. Ignored when `topicSlug` is set.
+   */
+  allPools?: boolean;
+}
+
+export interface ListEventsOptions extends PoolOptions {
   locale?: string;
   limit?: number;
   offset?: number;
   /** Inclusive astronomical-year bounds; negative = BCE. */
   fromYear?: number;
   toYear?: number;
+  /**
+   * Any category, era or topic. An explicit ask wins over the pool rule: this
+   * is how an editor lists one subject's events, or one era's.
+   */
   categorySlug?: string;
   /** Default `true`: only events that have a primary image. */
   requireImage?: boolean;
 }
 
 /**
- * Number of events the game can actually draw from — published *and*
- * illustrated. Counted over the view rather than `event`, because that is where
- * the primary image is joined in and so where the site's own rule applies.
+ * Number of events a game can actually draw from — published *and* illustrated
+ * *and* in the pool. Counted over the view rather than `event`, because that is
+ * where the primary image is joined in and so where the site's own rule
+ * applies.
+ *
+ * The pool default is the same as every other read here, so this answers "how
+ * many can the date-guessing game deal?" unless asked otherwise. A count of
+ * the library as a whole — which is what the home page states — passes
+ * `allPools: true`.
  */
 export async function countPublishedEvents(
   client: DbClient,
-  options: { requireImage?: boolean } = {},
+  options: PoolOptions & { requireImage?: boolean } = {},
 ): Promise<number> {
-  const { requireImage = true } = options;
+  const { requireImage = true, topicSlug, allPools } = options;
 
   let query = client
     .from("event_localized")
@@ -55,6 +99,16 @@ export async function countPublishedEvents(
     .eq("locale_code", DEFAULT_LOCALE);
 
   if (requireImage) query = query.not("image_object_key", "is", null);
+
+  const restriction = await poolRestriction(client, { topicSlug, allPools });
+  if (restriction?.mode === "only") {
+    if (restriction.ids.length === 0) return 0;
+    query = query.in("event_id", restriction.ids);
+  } else if (restriction && restriction.ids.length > 0) {
+    // PostgREST writes a NOT IN as a parenthesised list; an empty one is a
+    // syntax error, hence the length guard rather than an unconditional call.
+    query = query.not("event_id", "in", `(${restriction.ids.join(",")})`);
+  }
 
   const { count, error } = await query;
 
@@ -75,12 +129,25 @@ export async function listEvents(
     toYear,
     categorySlug,
     requireImage = true,
+    topicSlug,
+    allPools,
   } = options;
 
   let eventIds: string[] | undefined;
   if (categorySlug) {
     eventIds = await eventIdsInCategory(client, categorySlug);
     if (eventIds.length === 0) return [];
+  }
+
+  // A named category is the stronger statement, so it stands in for the pool
+  // rule rather than being intersected with it.
+  const restriction = categorySlug
+    ? null
+    : await poolRestriction(client, { topicSlug, allPools });
+
+  if (restriction?.mode === "only") {
+    if (restriction.ids.length === 0) return [];
+    eventIds = restriction.ids;
   }
 
   let query = client
@@ -92,6 +159,9 @@ export async function listEvents(
   if (fromYear !== undefined) query = query.gte("year", fromYear);
   if (toYear !== undefined) query = query.lte("year", toYear);
   if (eventIds) query = query.in("event_id", eventIds);
+  if (restriction?.mode === "without" && restriction.ids.length > 0) {
+    query = query.not("event_id", "in", `(${restriction.ids.join(",")})`);
+  }
   // The view left-joins the primary image, so a null key *is* "has no photo".
   if (requireImage) query = query.not("image_object_key", "is", null);
 
@@ -102,7 +172,7 @@ export async function listEvents(
   return pickPreferredLocale(data ?? [], locale).slice(0, limit);
 }
 
-export interface RandomEventsOptions {
+export interface RandomEventsOptions extends PoolOptions {
   /** How many distinct events to return. */
   count: number;
   locale?: string;
@@ -122,6 +192,11 @@ export interface RandomEventsOptions {
  * column over a few hundred rows) and then fetches only the chosen rows
  * localized. Shuffling client-side keeps the round uniform without a database
  * function, and the id list is small enough that the extra trip is free.
+ *
+ * **This is where a game's pool is decided**, and every mode that deals a round
+ * comes through here — the date-guessing game, the comparison game, survival,
+ * the daily and a head-to-head match. None of them names a pool, so all of
+ * them get the general one; a subject game passes its `topicSlug`.
  */
 export async function randomEvents(
   client: DbClient,
@@ -134,6 +209,8 @@ export async function randomEvents(
     toYear,
     distinctYears = false,
     requireImage = true,
+    topicSlug,
+    allPools,
   } = options;
 
   let idQuery = client.from("event").select("id, year").eq("status", "published");
@@ -143,11 +220,17 @@ export async function randomEvents(
   const { data: candidates, error: idError } = await idQuery;
   if (idError) throw idError;
 
-  // Narrowed here rather than in the draw below, so the shuffle stays uniform
-  // over the events that can actually be dealt instead of discarding picks.
-  const pool = requireImage
+  // Both narrowings happen here rather than in the draw below, so the shuffle
+  // stays uniform over the events that can actually be dealt instead of
+  // discarding picks.
+  const illustrated = requireImage
     ? await onlyWithPrimaryImage(client, candidates ?? [])
     : (candidates ?? []);
+
+  const pool = applyPool(
+    illustrated,
+    await poolRestriction(client, { topicSlug, allPools }),
+  );
 
   const picked = pickRandom(pool, count, distinctYears);
   if (picked.length === 0) return [];
@@ -254,6 +337,63 @@ export async function listCategories(
 // --- internals -------------------------------------------------------------
 
 /**
+ * The pool rule, resolved to a list of event ids.
+ *
+ * `mode` says what to do with them: `only` keeps them (a subject pool), and
+ * `without` drops them (the general pool, i.e. everything that is in no
+ * subject). Null means the read is not restricted at all.
+ *
+ * One query either way, because `event_category` holds *every* topic link on
+ * the site in a hundred-odd rows: the same read answers "which events are
+ * football's?" and "which events are somebody's?". Read plainly rather than
+ * folded into the candidate query as a PostgREST negated embed, for the same
+ * reason `onlyWithPrimaryImage` is a second trip — the rule stays visible.
+ */
+async function poolRestriction(
+  client: DbClient,
+  options: PoolOptions,
+): Promise<PoolRestriction | null> {
+  const { topicSlug, allPools = false } = options;
+  if (!topicSlug && allPools) return null;
+
+  const { data, error } = await client
+    .from("event_category")
+    .select("event_id, category!inner(slug, kind)")
+    .eq("category.kind", "topic");
+
+  if (error) throw error;
+  const links = data ?? [];
+
+  if (topicSlug) {
+    return {
+      mode: "only",
+      ids: links
+        .filter((link) => link.category.slug === topicSlug)
+        .map((link) => link.event_id),
+    };
+  }
+
+  return { mode: "without", ids: links.map((link) => link.event_id) };
+}
+
+interface PoolRestriction {
+  mode: "only" | "without";
+  ids: string[];
+}
+
+function applyPool<T extends { id: string }>(
+  rows: readonly T[],
+  restriction: PoolRestriction | null,
+): T[] {
+  if (!restriction) return [...rows];
+
+  const ids = new Set(restriction.ids);
+  return restriction.mode === "only"
+    ? rows.filter((row) => ids.has(row.id))
+    : rows.filter((row) => !ids.has(row.id));
+}
+
+/**
  * Keeps only the rows whose event has a primary image.
  *
  * A second round trip rather than an embedded join: `image` carries its own RLS
@@ -352,6 +492,7 @@ function toLocalizedEvent(row: LocalizedEventRow): LocalizedEvent {
     locale: row.locale_code,
     name: row.name,
     description: row.description,
+    isSensitive: row.is_sensitive,
     image: row.image_object_key
       ? {
           objectKey: row.image_object_key,

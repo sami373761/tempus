@@ -1,35 +1,31 @@
 import type { Metadata } from "next";
-import { Lato, Lora } from "next/font/google";
+import { Inter } from "next/font/google";
 
 import { readLocale } from "@/lib/i18n/server";
 
 import "./globals.css";
 
 /**
- * Two families, split by size: Lora sets the headings and anything large enough
- * to read as a title, Lato sets body copy and everything smaller.
+ * One family for the whole site: Inter.
  *
- * `next/font` self-hosts both and emits the `@font-face` rules at build time,
- * so there is no request to Google at runtime.
+ * It was two — Lora for anything large enough to read as a title, Lato for
+ * body copy — until 2026-10-06. Both tokens in globals.css now resolve to
+ * Inter, so the `font-display` utility that 19 components already carry stays
+ * as a marker for "this is a title" without being a second typeface. Putting a
+ * display face back is one line in `--font-display` rather than an edit per
+ * heading.
  *
- * `latin-ext` is not optional here: the UI ships in five languages and Turkish
+ * `next/font` self-hosts it and emits the `@font-face` rules at build time, so
+ * there is no request to Google at runtime. Inter ships as a variable font, so
+ * one load covers every weight the UI uses (400 through 700) with no synthetic
+ * bolding anywhere.
+ *
+ * `latin-ext` is not optional: the UI ships in five languages and Turkish
  * alone needs ğ, ş and ı, none of which are in the `latin` subset.
  */
-const lora = Lora({
+const inter = Inter({
   subsets: ["latin", "latin-ext"],
-  variable: "--font-lora",
-  display: "swap",
-});
-
-/**
- * Lato has no 600, and plenty of body-sized text is `font-semibold` — the
- * buttons, the marker's year bubble. Shipping 700 keeps those from being
- * synthetically emboldened off the 400.
- */
-const lato = Lato({
-  subsets: ["latin", "latin-ext"],
-  weight: ["400", "700"],
-  variable: "--font-lato",
+  variable: "--font-inter",
   display: "swap",
 });
 
@@ -47,10 +43,10 @@ export default async function RootLayout({
   const locale = await readLocale();
 
   return (
-    // The font variables go on `html`, not `body`: `--font-sans` and
-    // `--font-display` in globals.css resolve against them, and Tailwind's
+    // The font variable goes on `html`, not `body`: `--font-sans` and
+    // `--font-display` in globals.css resolve against it, and Tailwind's
     // preflight sets the default family on `html`.
-    <html lang={locale} className={`${lora.variable} ${lato.variable}`}>
+    <html lang={locale} className={inter.variable}>
       {/* No background on the body: an in-flow block's background paints *after*
           negative-z-index descendants, so an opaque one here would hide any
           full-bleed backdrop behind the page (components/timeline-backdrop.tsx).

@@ -24,10 +24,19 @@ import { usePathname } from "next/navigation";
  * a menu inside the bar would have hidden with the bar. It is a sibling in
  * app/(public)/layout.tsx instead.
  *
- * On routes that paint their own full-bleed artwork the bar carries no surface
- * of its own — no fill, no blur, no rule — so only the wordmark and the menu
- * button sit over the picture. It still reserves its height and still hides on
- * scroll; only the chrome goes.
+ * **The bar carries no surface on any route** — no fill, no blur, no rule. It
+ * was a hairline-and-blur panel everywhere except the three routes that paint
+ * their own artwork, and those three were the ones that read as clean; the rest
+ * wore a line across the top of every page for no reason but to separate the
+ * wordmark from content that already had its own margin. So every page now
+ * looks like `/versus` did: the wordmark and the menu button over whatever is
+ * behind them, and nothing drawn to hold them. The height is still reserved and
+ * the bar still hides on scroll; only the chrome went.
+ *
+ * `isTransparentRoute` therefore no longer says anything about *this* element.
+ * It stays because the controls still need it: the menu button and its panel
+ * are surfaces of their own, and over a photograph they take the game's glass
+ * rather than the card they wear on an ordinary page.
  *
  * The legibility shadow belongs to the wordmark, not to this element: as a
  * `filter` it would apply to the bar's whole subtree instead of just the bare
@@ -40,7 +49,13 @@ import { usePathname } from "next/navigation";
  * reads as a leftover panel, so `SiteMenu` matches the glass pill the
  * timeline's own doors use on exactly these routes.
  */
-export const TRANSPARENT_ROUTES = ["/guess", "/compare", "/versus"];
+export const TRANSPARENT_ROUTES = [
+  "/guess",
+  "/compare",
+  "/survival",
+  "/versus",
+  "/football",
+];
 
 /**
  * Whether this route paints its own artwork behind the bar.
@@ -65,7 +80,6 @@ export function SiteHeader() {
   const [hidden, setHidden] = useState(false);
   const pathname = usePathname();
   const home = pathname === "/";
-  const transparent = isTransparentRoute(pathname);
   // Read in a rAF callback rather than through state, so the scroll listener
   // never re-renders on a pixel that does not change the answer.
   const lastY = useRef(0);
@@ -108,10 +122,8 @@ export function SiteHeader() {
   return (
     <header
       className={`sticky top-0 z-40 transition-transform duration-300 ease-out ${
-        transparent
-          ? ""
-          : "border-b border-hairline/60 bg-page/70 backdrop-blur-xl"
-      } ${hidden ? "-translate-y-full" : "translate-y-0"}`}
+        hidden ? "-translate-y-full" : "translate-y-0"
+      }`}
     >
       {/* A fixed height rather than padding around the content: the
           date-guessing screen sizes itself to `100dvh` minus this bar, so the
@@ -119,7 +131,10 @@ export function SiteHeader() {
       <div className="mx-auto flex h-[var(--site-bar-h)] max-w-7xl items-center justify-between px-6">
         <Link
           href="/"
-          className="on-photo font-display text-lg font-semibold tracking-[-0.01em] text-ink"
+          /* A notch smaller below `sm`, with the menu button opposite it and
+             the bar itself: on a phone that row has to hold the comparison
+             game's round pill between the two of them. */
+          className="on-photo font-display text-base font-semibold tracking-[-0.01em] text-ink sm:text-lg"
         >
           Tempus
         </Link>

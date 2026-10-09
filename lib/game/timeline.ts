@@ -35,24 +35,95 @@
 
 import { PRESENT_YEAR } from "../historical-date.ts";
 
-/** Oldest to newest — the order the panes sit in, left to right. */
-export const TIMELINE_PANES = [
+/**
+ * Every pane that exists, in one union.
+ *
+ * Written out rather than derived from an array, because the panes no longer
+ * form one list: they form *sets*, and a set is what a game pans between (see
+ * `PaneSet`). Deriving the union from the general set would make a football
+ * pane unrepresentable; deriving it from a concatenation would make every
+ * `indexOf` on a set reject the union it is a subset of.
+ */
+export type TimelinePane =
+  | "cosmos"
+  | "evolution"
+  | "civilization"
+  | "ce"
+  | "future"
+  | "football";
+
+/**
+ * A pane set: the panes one game pans between, oldest first.
+ *
+ * Passed to every helper below that reads the *order* of the panes rather than
+ * the shape of one — which pane a year lives on, which panes a given pane
+ * borders, how far the camera travels. The helpers that only read one pane's
+ * own scale (`yearAtFraction`, `paneTicks`, `keyStepFraction`, …) need no such
+ * argument: a pane's rail is a property of the pane.
+ *
+ * It defaults to `TIMELINE_PANES` at every call site, so the four games that
+ * play over the whole of history read exactly as they did.
+ */
+export type PaneSet = readonly TimelinePane[];
+
+/**
+ * Oldest to newest — the order the general timeline's panes sit in, left to
+ * right. This is the *general* pane set: the five panes the date-guessing
+ * game, the daily, survival and head-to-head all pan between.
+ *
+ * Annotated `PaneSet` rather than left as a `const` tuple so that
+ * `TIMELINE_PANES.indexOf(pane)` accepts any pane. Without it the array's
+ * element type is the narrow five and every `indexOf` of a value that *might*
+ * be football's is a type error, in code where -1 is already the answer.
+ */
+export const TIMELINE_PANES: PaneSet = [
   "cosmos",
   "evolution",
   "civilization",
   "ce",
   "future",
-] as const;
-export type TimelinePane = (typeof TIMELINE_PANES)[number];
+];
 
-/** Where a round opens, and the pane the deep eras are reached through. */
+/** Where a round opens on the general timeline, and the way into the deep eras. */
 export const DEFAULT_PANE: TimelinePane = "ce";
+
+/**
+ * The football game's pane set: one rail, football's own span.
+ *
+ * A subject game is played over a slice of history rather than the whole of
+ * it, and the general timeline cannot show that slice. Every football event
+ * falls between 1872 and 2024, which on the common-era pane is the rightmost
+ * 7% of the rail — and the tolerance that earns a `great` there is 8 years, or
+ * about four pixels. The rail *is* the game, so a game whose answers are all
+ * within four pixels of each other is not the same game with a different pool,
+ * it is a different and worse one.
+ *
+ * So football gets a rail of its own, and because a pane set is a parameter
+ * rather than a module-level constant, that is this array plus a `PANE_SPEC`
+ * entry. Nothing in the general timeline changes, and the next subject pool
+ * (basketball, film) is the same two additions.
+ *
+ * One pane means there is nowhere to pan to: `paneEntrances` returns no doors,
+ * `entryFraction` is never reached and `panDuration` is always zero. The
+ * camera machinery is still the same code, it simply has one frame to hold.
+ */
+export const FOOTBALL_PANES: PaneSet = ["football"];
+
+/** The only pane football has, so it is also where every round opens. */
+export const FOOTBALL_DEFAULT_PANE: TimelinePane = "football";
 
 /** Astronomical 0 is 1 BCE: the hinge the civilisation and common-era panes share. */
 export const CE_MIN_YEAR = 0;
 export const CE_MAX_YEAR = PRESENT_YEAR;
 /** `event.year`'s own upper bound — the timeline stops where the data can. */
 export const FUTURE_MAX_YEAR = 3000;
+
+/**
+ * The left edge of the football rail. Organised football starts in the 1860s
+ * and the dataset's oldest event is 1872, so this is the round number just
+ * before it — see the `football` entry in `PANE_SPEC`.
+ */
+export const FOOTBALL_MIN_YEAR = 1850;
 
 /**
  * How a pane turns a position into a year.
@@ -114,7 +185,27 @@ const PANE_SPEC: Record<TimelinePane, PaneSpec> = {
     maxYear: FUTURE_MAX_YEAR,
     tickStep: 250,
   },
+  // The football game's whole timeline, on one rail. 1850 rather than 1872
+  // (the oldest event, Rangers) so the first club foundations are not pinned
+  // against the left edge, where a drag has nowhere to be wrong in one
+  // direction and the answer marker would sit under the rail's own end.
+  football: {
+    scale: "year",
+    minYear: FOOTBALL_MIN_YEAR,
+    maxYear: CE_MAX_YEAR,
+    tickStep: 25,
+  },
 };
+
+/**
+ * Every pane id, in no particular order — the keys of `PANE_SPEC`.
+ *
+ * Exists so a caller can build a record over *all* panes rather than over one
+ * set: `openingFractions` does exactly that, which is what lets a game hold a
+ * total `Record<TimelinePane, number>` of marker positions while only ever
+ * reading the panes its own set shows.
+ */
+export const ALL_PANES: PaneSet = Object.keys(PANE_SPEC) as TimelinePane[];
 
 /**
  * Display BCE year -> astronomical year. 100 BCE -> -99; 0 stays the hinge.
@@ -195,14 +286,26 @@ export function fractionAtYear(pane: TimelinePane, year: number): number {
   }
 }
 
-/** The pane a year lives on, newest first so a shared boundary lands on the newer pane. */
-export function paneForYear(year: number): TimelinePane {
-  for (let i = TIMELINE_PANES.length - 1; i >= 0; i -= 1) {
-    const pane = TIMELINE_PANES[i]!;
+/**
+ * The pane a year lives on within `panes`, newest first so a shared boundary
+ * lands on the newer pane.
+ *
+ * Searched rather than looked up because the answer depends on the set: 1954
+ * is on the common-era pane of the general timeline and on the football pane
+ * of football's. The fallback is the oldest pane in the set, which is what an
+ * out-of-range year pins to — `fractionAtYear` then clamps it to that pane's
+ * edge, so a year the set does not cover is still marked somewhere real.
+ */
+export function paneForYear(
+  year: number,
+  panes: PaneSet = TIMELINE_PANES,
+): TimelinePane {
+  for (let i = panes.length - 1; i >= 0; i -= 1) {
+    const pane = panes[i]!;
     const { min, max } = paneBounds(pane);
     if (year >= min && year <= max) return pane;
   }
-  return TIMELINE_PANES[0]!;
+  return panes[0]!;
 }
 
 /** The years at a pane's two edges, oldest first. */
@@ -311,14 +414,15 @@ export function paneTicks(pane: TimelinePane): number[] {
  */
 export function paneEntrances(
   pane: TimelinePane,
+  panes: PaneSet = TIMELINE_PANES,
 ): { side: "left" | "right"; target: TimelinePane }[] {
-  const index = TIMELINE_PANES.indexOf(pane);
+  const index = panes.indexOf(pane);
   const doors: { side: "left" | "right"; target: TimelinePane }[] = [];
 
-  const older = TIMELINE_PANES[index - 1];
+  const older = panes[index - 1];
   if (older) doors.push({ side: "left", target: older });
 
-  const newer = TIMELINE_PANES[index + 1];
+  const newer = panes[index + 1];
   if (newer) doors.push({ side: "right", target: newer });
 
   return doors;
@@ -342,8 +446,12 @@ export function paneEntrances(
  * reversing now costs the drag instead, and that a pane at either end of the
  * timeline is entered with no door in sight.
  */
-export function entryFraction(target: TimelinePane, from: TimelinePane): number {
-  return TIMELINE_PANES.indexOf(from) < TIMELINE_PANES.indexOf(target) ? 1 : 0;
+export function entryFraction(
+  target: TimelinePane,
+  from: TimelinePane,
+  panes: PaneSet = TIMELINE_PANES,
+): number {
+  return panes.indexOf(from) < panes.indexOf(target) ? 1 : 0;
 }
 
 /** `4_537_219_043` on a 100-year step -> `4_537_219_000`. */

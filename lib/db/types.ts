@@ -5,7 +5,7 @@
  * stable, readable surface the rest of the app imports.
  */
 
-import type { Database } from "./database.types.ts";
+import type { Database, Json } from "./database.types.ts";
 
 type Tables = Database["public"]["Tables"];
 type Views = Database["public"]["Views"];
@@ -70,6 +70,17 @@ export interface LocalizedEvent {
   locale: string;
   name: string;
   description: string | null;
+  /**
+   * Whether the photograph should be shown blurred behind a reveal control.
+   *
+   * An editorial judgement about the subject rather than a property of the
+   * image, which is why it travels with the event: a few of the events this
+   * game teaches are atrocities, and their pictures are the kind a player
+   * should choose to look at instead of having one dealt to them face up.
+   * `EventVisual` is the one place it is acted on, so every screen that shows
+   * a photograph honours it.
+   */
+  isSensitive: boolean;
   image: {
     objectKey: string;
     url: string;
@@ -78,4 +89,47 @@ export interface LocalizedEvent {
     height: number | null;
     attribution: ImageAttribution;
   } | null;
+}
+
+/* --- accounts ------------------------------------------------------------- */
+
+export type ProfileRow = Tables["profile"]["Row"];
+export type BadgeRow = Tables["badge"]["Row"];
+export type UserBadgeProgressRow = Tables["user_badge_progress"]["Row"];
+
+/**
+ * What the chrome needs to know about whoever is signed in: enough to greet
+ * them and to decide which menu rows are live, and nothing more.
+ *
+ * `username` is nullable all the way through — a Google sign-in can arrive
+ * with a name that is already taken (see `handle_new_user()`), and the account
+ * page is where one gets picked. `displayName` is the resolved thing to print,
+ * which is why both are here rather than only the second: the account page has
+ * to be able to tell "no username yet" from "a username that happens to look
+ * like an email".
+ */
+export interface Account {
+  id: string;
+  email: string | null;
+  username: string | null;
+  /** Username if there is one, else the email's local part, else "Player". */
+  displayName: string;
+}
+
+/**
+ * One badge's state for one player.
+ *
+ * `progress`/`target` are counts rather than a percentage because every
+ * criterion written down so far is a count of something, and because a
+ * percentage cannot be incremented. Nothing fills these in yet — the rules are
+ * not decided (see the migration) — so they read as zeros, which is the honest
+ * answer rather than a placeholder.
+ */
+export interface BadgeProgress {
+  slug: string;
+  progress: number;
+  target: number;
+  unlockedAt: string | null;
+  /** Whatever the eventual rule remembers between rounds. */
+  details: Record<string, Json>;
 }

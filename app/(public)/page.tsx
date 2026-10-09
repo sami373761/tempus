@@ -1,20 +1,34 @@
-import { AboutCard } from "@/components/about-card";
 import { AppleBento } from "@/components/apple-bento";
+import { ContactSection } from "@/components/contact-section";
 import { FaqSection } from "@/components/faq-section";
 import { GameBoard } from "@/components/game-board";
+import { HomeExplorer } from "@/components/home-explorer";
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { SiteMark } from "@/components/site-header";
 import { SiteMenu } from "@/components/site-menu";
+import { getCurrentAccount } from "@/lib/auth/server";
+import { createServerDbClient } from "@/lib/db/server";
+import { countPublishedEvents } from "@/lib/db/queries";
+import { SUPPORTED_LOCALES } from "@/lib/db/types";
 import { readLocaleContext } from "@/lib/i18n/server";
 import {
   boardPhotos,
   dailyGameCoverIndex,
+  explorerArt,
+  explorerModel,
   gameCoverSrcSet,
   gameCoverUrl,
+  timelineBackdropSrcSet,
+  timelineBackdropUrl,
 } from "@/lib/storage/images";
 
 export default async function HomePage() {
   const { locale, t } = await readLocaleContext();
+
+  /* The masthead's menu button is this page's own copy (the layout's floating
+     one stands down on `/`), so this page has to resolve the session too — the
+     layout's `account` does not reach a sibling route segment. */
+  const account = await getCurrentAccount();
 
   /* Which of the card's two photos shows is a function of the date, so the
      cover changes every day and holds still for the whole of one. The homepage
@@ -31,13 +45,51 @@ export default async function HomePage() {
     srcSet: gameCoverSrcSet("guess", guessPhoto),
   };
 
+  /* Daily's picture is the date-guessing game's own common-era backdrop, reused
+     rather than uploaded — the art the site already has, like everything on the
+     explorer's stage. It is the one card on the board with no photograph of its
+     own, and a plate from the game the mode is played over says what the mode
+     is where `.board-mesh` only said "not ready".
+
+     Its derived widths are the backdrops' 1440/2560 rather than the covers'
+     800/1600, which the card's `sizes` hint handles without a change: half the
+     board is 546px at the cap, so 1440 is what a 2x screen picks. */
+  const dailyCover = {
+    src: timelineBackdropUrl("ce"),
+    srcSet: timelineBackdropSrcSet("ce"),
+  };
+
   /* Every photographed card on the board, both views. One URL each and no
      srcset — at a third of the board and under, one width covers every device;
      see `boardPhotoUrl`. Resolved here for the same reason the cover above is:
      the board is a client component and this is the only part of it the server
-     has to decide. Daily is deliberately absent — it is the one card that
-     paints `.board-mesh` instead. */
+     has to decide. The two covers are not in here: they are the only cards on
+     the board that carry a pair of widths, so they travel as `CoverPhoto`
+     objects rather than as single URLs. */
   const photos = boardPhotos();
+
+  /* The explorer's library panel states how big the illustrated library is —
+     the count of published *and* illustrated rows, the site's own rule rather
+     than the size of the dataset. It is read rather than written down so it
+     cannot go stale as pictures are attached.
+
+     `allPools` is what makes it the *library* rather than one game's pool: the
+     subject games (football, and whatever follows it) draw from events of
+     their own that the general games never see, and the sentence this number
+     sits in is about every photographed event on the site.
+
+     This is the only database read the home page makes, and it is guarded for
+     that reason: until now the page rendered with no connection at all, and a
+     front page that 500s because a count failed would be a worse trade than a
+     panel showing a dash. */
+  let eventCount: number | null = null;
+  try {
+    eventCount = await countPublishedEvents(await createServerDbClient(), {
+      allPools: true,
+    });
+  } catch {
+    eventCount = null;
+  }
 
   return (
     <>
@@ -62,8 +114,18 @@ export default async function HomePage() {
           An edge vine ran down each side of this screen until 2026-10-05
           (`Ornament`, an alpha mask painted in `--color-ornament`). It was
           removed on request; `public/ornament-vine.png` is still in the repo,
-          so putting it back is a component and a token, not new artwork. */}
-      <section className="flex min-h-dvh flex-col items-center justify-center gap-10 px-6 text-center">
+          so putting it back is a component and a token, not new artwork.
+
+          The `py` is clearance for the masthead, and it is deliberately small.
+          `justify-center` overflows *both* ways, so on a phone where the block
+          was taller than the screen the wordmark sat hard against the top edge
+          with nothing above it — which is what the padding answers. It has to
+          stay under the slack the block actually has (at 375x667 the content is
+          594px after the mobile board was shortened), or it puts the overflow
+          back and the padding is skipped again. It changes nothing above `sm`:
+          symmetric padding inside `min-h-dvh` leaves the block centred on the
+          screen. */}
+      <section className="flex min-h-dvh flex-col items-center justify-center gap-10 px-6 py-6 text-center sm:py-8">
         {/* The masthead is a row on the board's own column, which is what puts
             the mark over the top-left corner of the first card and the menu
             button over the top-right corner of the second. `--board-w` is the
@@ -89,7 +151,7 @@ export default async function HomePage() {
               Tempus
             </h1>
 
-            <SiteMenu locale={locale} t={t} inline />
+            <SiteMenu locale={locale} t={t} account={account} inline />
           </div>
 
           {/* The 48px the masthead kept from the tagline when it was a header of
@@ -106,7 +168,12 @@ export default async function HomePage() {
             used to sit under the covers is gone: it was a second grid at a
             second size, and the modes in it are either on the board now or
             behind that fourth card. */}
-        <GameBoard t={t} guessCover={guessCover} photos={photos} />
+        <GameBoard
+          t={t}
+          dailyCover={dailyCover}
+          guessCover={guessCover}
+          photos={photos}
+        />
       </section>
 
       {/* Everything below the fold shares one column, and that column *is*
@@ -119,17 +186,63 @@ export default async function HomePage() {
           Each run of empty space is the *parent's*, never the revealed
           element's: `ScrollReveal` measures its own box, so padding inside it
           would trip the animation while nothing but blank space was on
-          screen. */}
-      <div className="mx-auto max-w-[calc(var(--board-w)+3rem)] px-6 pt-[26vh]">
+          screen.
+
+          **The run-up above `md` is a fifth of the board's own width, and that
+          is the fix for a gap that grew as the page narrowed.** It was a flat
+          `26vh`, which is a constant on any given screen — but the space the
+          reader actually sees above this block is that padding *plus* the slack
+          the hero leaves under the cards, and the slack is not constant. The
+          hero is `min-h-dvh` and `justify-center`, so as the column narrows the
+          board gets shorter and the leftover it is centred in grows: measured
+          at 844px tall, the gap ran 301px at 1680 and 405px at 770 — a third
+          wider at exactly the width with least room to spare. Reading the
+          board's width instead tracks the thing that is moving, because the
+          board's height *is* a function of its width (see `CARD_HEIGHT`): the
+          same two measurements now come out 301 and 330. `min()` with the old `26vh`
+          keeps the other end honest — on a tall window the hero is already
+          leaving an enormous slack and the run-up should not add to it.
+
+          Below `md` the board is two columns of four rows and fills the first
+          screen outright, so there is no slack to compensate for and the plain
+          `14vh` is the whole of the gap. */}
+      <div className="mx-auto max-w-[calc(var(--board-w)+3rem)] px-6 pt-[14vh] md:pt-[min(26vh,calc(min(var(--board-w),100vw_-_3rem)*0.2))]">
         <ScrollReveal>
-          <AboutCard t={t} />
+          {/* The block's name, outside the card rather than in a corner of it —
+              the same arrangement the bento below has, so the two sections
+              below the fold are introduced the same way. Left-aligned because
+              that is where it was asked for; the bento's is centred over a
+              block that has no left edge of its own to answer to. */}
+          {/* Heading and one line under it, left-aligned — the same two-line
+              introduction the bento and the FAQ below now carry, so the three
+              blocks under the fold are all announced the same way and all on
+              the page's one left edge. */}
+          <div className="mb-6">
+            <h2 className="font-display text-3xl font-semibold tracking-[-0.02em]">
+              {t.explorerHeading}
+            </h2>
+            <p className="mt-2 text-ink-dim">{t.explorerLead}</p>
+          </div>
+          <HomeExplorer
+            t={t}
+            locale={locale}
+            art={explorerArt()}
+            model={explorerModel()}
+            stats={{
+              events: eventCount,
+              languages: SUPPORTED_LOCALES.length,
+            }}
+          />
         </ScrollReveal>
       </div>
 
       {/* Temporary: placeholder entrances to areas that do not exist yet. */}
       <div className="mx-auto max-w-[calc(var(--board-w)+3rem)] px-6 pt-32">
         <ScrollReveal>
-          <div className="mb-10 text-center">
+          {/* Left-aligned, as asked, like the explorer's heading above and the
+              FAQ's below: the column has one left edge and every block under
+              the fold now starts on it. */}
+          <div className="mb-10">
             <h2 className="font-display text-3xl font-semibold tracking-[-0.02em]">
               {t.moreTitle}
             </h2>
@@ -148,9 +261,30 @@ export default async function HomePage() {
           plain text on the page itself rather than a block of cards, so it has
           no edge of its own to separate it from the bento above, and at the
           shared spacing the first question read as part of that block. */}
-      <div className="mx-auto max-w-[calc(var(--board-w)+3rem)] px-6 pb-32 pt-40">
+      <div className="mx-auto max-w-[calc(var(--board-w)+3rem)] px-6 pt-40">
         <ScrollReveal>
           <FaqSection t={t} />
+        </ScrollReveal>
+      </div>
+
+      {/* The last block on the home page, and still a section rather than the
+          page's only contact surface: the menu's Contact row goes to
+          `/contact` since 2026-10-07, where this errand shares a page with the
+          tip jar. This stays because it is what a reader who has scrolled the
+          whole page should arrive at — the address offered without being asked
+          for. It keeps its `id`, so `/#contact` still works for anything that
+          links it.
+
+          It is wrapped in its own `ScrollReveal` like every block above it, so
+          it arrives the same way they do. `pt-32` where the FAQ above it has
+          `pt-40`: the FAQ's last row ends on a hairline, which already reads as
+          a boundary, where the bento above it ended on the edge of a card.
+
+          The page's bottom padding moved from the FAQ's wrapper to this one —
+          whichever block is last carries it. */}
+      <div className="mx-auto max-w-[calc(var(--board-w)+3rem)] px-6 pb-32 pt-32">
+        <ScrollReveal>
+          <ContactSection t={t} />
         </ScrollReveal>
       </div>
     </>

@@ -9,6 +9,15 @@
  *   right column 313 : 715 rows
  *   whole block  1751 x 1063  ->  aspect 1.647
  *
+ * The two **big** cards are 15% shorter than that, by request: the tall card
+ * stood the whole height of its column with its glyph and headline pinned to
+ * the foot, so most of it was empty above them. Taking the height out of the
+ * block rather than out of the cards is what keeps the other two the size they
+ * were — the ratios below are solved so the icon card and the ring card hold
+ * their pixel heights while their neighbours lose a seventh. The two columns
+ * land 4.6px apart on that sum at the board's cap, which is why both are
+ * written against one `aspect-[1751/960]` rather than each carrying its own.
+ *
  * Those numbers are kept as `fr` ratios and an `aspect-ratio`, and every inset,
  * radius and type size is expressed in `cqw` against the block's own width.
  * The result scales like the reference at any width instead of drifting as
@@ -36,15 +45,15 @@ const CARD =
 export function AppleBento() {
   return (
     <div className="@container w-full">
-      <div className="grid grid-cols-1 gap-[clamp(12px,1.95cqw,24px)] md:aspect-[1751/1063] md:grid-cols-[855fr_862fr]">
-        {/* Left column: 665 : 360 */}
-        <div className="grid grid-cols-1 gap-[clamp(12px,2.2cqw,24px)] md:grid-rows-[665fr_360fr]">
+      <div className="grid grid-cols-1 gap-[clamp(12px,1.95cqw,24px)] md:aspect-[1751/960] md:grid-cols-[855fr_862fr]">
+        {/* Left column: the photo card 15% shorter, the icon card unchanged. */}
+        <div className="grid grid-cols-1 gap-[clamp(12px,2.2cqw,24px)] md:grid-rows-[356fr_228fr]">
           <HeroCard />
           <IconCard />
         </div>
 
-        {/* Right column: 313 : 715 */}
-        <div className="grid grid-cols-1 gap-[clamp(12px,2.2cqw,24px)] md:grid-rows-[313fr_715fr]">
+        {/* Right column: the tall card 15% shorter, the ring card unchanged. */}
+        <div className="grid grid-cols-1 gap-[clamp(12px,2.2cqw,24px)] md:grid-rows-[198fr_386fr]">
           <IntelligenceCard />
           <EventsCard />
         </div>
@@ -66,7 +75,7 @@ export function AppleBento() {
  */
 function HeroCard() {
   return (
-    <button type="button" className={`${CARD} min-h-[320px] md:min-h-0`}>
+    <button type="button" className={`${CARD} min-h-[272px] md:min-h-0`}>
       <div
         aria-hidden="true"
         className="absolute inset-0 bg-cover bg-center"
@@ -88,7 +97,7 @@ function HeroCard() {
       />
 
       <div className="relative flex h-full flex-col justify-between p-[clamp(20px,3.8cqw,46px)]">
-        <LaptopIcon />
+        <BookIcon />
         <h3 className="max-w-[86%] font-display text-[clamp(22px,3.15cqw,56px)] font-semibold leading-[1.07] tracking-[-0.022em] text-white">
           Browse the whole
           <br />
@@ -140,7 +149,7 @@ function EventsCard() {
   return (
     <button
       type="button"
-      className={`${CARD} flex min-h-[260px] flex-col justify-end gap-[clamp(18px,4.2cqw,50px)] p-[clamp(20px,3.8cqw,46px)] md:min-h-0`}
+      className={`${CARD} flex min-h-[221px] flex-col justify-end gap-[clamp(18px,4.2cqw,50px)] p-[clamp(20px,3.8cqw,46px)] md:min-h-0`}
     >
       <TempleIcon />
       <h3 className="font-display text-[clamp(18px,2.85cqw,50px)] font-semibold leading-[1.15] tracking-[-0.022em] text-ink">
@@ -155,7 +164,20 @@ function EventsCard() {
 // Line weights are in `cqw` too, so the strokes thin out with the block instead
 // of going chunky at small sizes.
 
-function LaptopIcon() {
+/**
+ * An open book, replacing the laptop this card carried until it was asked for.
+ *
+ * The card is about reading the timeline event by event, and a laptop said
+ * "on a screen" — which every card on the page already is. Drawn on the same
+ * terms as the other three glyphs: open strokes, no fill, weight in `cqw` so
+ * it thins with the block, and the same 64x40 box so the headline beside it
+ * does not move.
+ *
+ * Three paths and no more: two pages splayed off a centre spine. The leaves
+ * are straight rather than fanned because at 64px a curve on a 2.6px stroke
+ * reads as a wobble rather than as a page.
+ */
+function BookIcon() {
   return (
     <svg
       viewBox="0 0 64 40"
@@ -167,9 +189,9 @@ function LaptopIcon() {
       strokeLinejoin="round"
       strokeLinecap="round"
     >
-      <path d="M9 6.5h46a2 2 0 0 1 2 2v21H7v-21a2 2 0 0 1 2-2Z" />
-      <path d="M2 32.5h60l-2.6 4.2a2 2 0 0 1-1.7 1H6.3a2 2 0 0 1-1.7-1L2 32.5Z" />
-      <path d="M27 6.5h10" />
+      <path d="M32 11.8 7.8 7.6A1.9 1.9 0 0 0 5.5 9.5v19.6a1.9 1.9 0 0 0 1.6 1.9L32 35.3" />
+      <path d="M32 11.8 56.2 7.6a1.9 1.9 0 0 1 2.3 1.9v19.6a1.9 1.9 0 0 1-1.6 1.9L32 35.3" />
+      <path d="M32 11.8v23.5" />
     </svg>
   );
 }

@@ -4,13 +4,21 @@ import { useEffect, useRef, useState } from "react";
 
 import { dealComparisonRounds } from "@/app/actions/rounds";
 import { EventVisual } from "@/components/event-visual";
-import { SetProgress, SetSummary } from "@/components/set-summary";
+import { VerdictDeckRow } from "@/components/round-flank";
+import { SetSummary } from "@/components/set-summary";
+import { SurvivalSummary } from "@/components/survival-summary";
 import type { LocalizedEvent, SupportedLocale } from "@/lib/db/types";
 import {
+  comparisonFractionAtYear,
+  comparisonSection,
+  comparisonSectionDistance,
+  comparisonVerdict,
+  COMPARISON_SECTIONS,
   isComparisonCorrect,
   ROUND_PHOTO_FADE_MS,
   ROUND_QUEUE_DEPTH,
   ROUND_QUEUE_TARGET,
+  sectionSide,
   type ComparisonRound,
   type ComparisonSide,
 } from "@/lib/game/rounds";
@@ -19,8 +27,10 @@ import {
   QUESTIONS_PER_SET,
   type SetResult,
 } from "@/lib/game/set";
+import { survivalResult } from "@/lib/game/survival";
+import { VERDICT_COLORS } from "@/lib/game/verdict-style";
 import { formatHistoricalDate } from "@/lib/historical-date";
-import type { Dict } from "@/lib/i18n/dictionary";
+import { format, type Dict } from "@/lib/i18n/dictionary";
 
 /**
  * Comparison game.
@@ -30,17 +40,34 @@ import type { Dict } from "@/lib/i18n/dictionary";
  * above it and slides. Reading a position off a shared scale is the same
  * gesture as the date-guessing game, so the two rounds teach each other.
  *
- * The rule has not changed — the answer is still which anchor the event is
- * nearer to — so the midpoint of the rail is the boundary between the two.
+ * The question has not changed — the answer is still which anchor the event is
+ * nearer to — but the rail now says it at a resolution. Five dividers cut it
+ * into six equal sections, so a section is a sixth of the distance between the
+ * two anchors whatever that distance is, and the round states its own scale.
+ * The three older sections are still the left answer and the three newer ones
+ * the right, so the middle divider is the boundary it always was; what the
+ * other four buy is a *margin*, which is what lets this round be graded on the
+ * date-guessing game's five-rung ladder instead of being right or wrong.
+ * lib/game/rounds.ts owns that rule.
  *
- * **No blue anywhere.** The date-guessing game paints the player's own marker
- * in `--color-accent`, but this round now stands on a photograph (see
+ * **Nothing the player drives is painted at all.** The rail used to fill in
+ * behind the bubble and light a dot at whichever end it leaned toward; both
+ * are gone, and what is left is the track, its dividers and the bubble itself.
+ * The fill was a second readout of a position the bubble already states, and
+ * at a glance it read as progress rather than as a choice. The one coloured
+ * thing that ever appears on this rail is the band over the section the guess
+ * was locked into, in that guess's own tier colour — which is the same hue the
+ * result card is headed in, and the same arrangement the date-guessing rail
+ * uses for the gap between a guess and the truth.
+ *
+ * **No blue anywhere.** The date-guessing game painted its travelled portion
+ * in `--color-accent`, but this round stands on a photograph (see
  * `ComparisonBackdrop`) and the one saturated hue on the screen read as a UI
- * chrome left on top of it. Everything the player drives — the rail, the
- * travelled portion, the lit end, the live caption — is white at varying alpha
- * instead, which is the same language the glass surfaces already speak. Green
- * and red stay: they are the verdict, not the controls, and they are the one
- * thing on the page that must not be mistaken for decoration.
+ * chrome left on top of it. Everything that is not a verdict is white at
+ * varying alpha, which is the same language the glass surfaces already speak.
+ * The other rail came round to this on 2026-10-08 and is white now too;
+ * `--color-accent` is the site's focus ring and `--color-tier-perfect`, and no
+ * longer anything a player drives.
  *
  * The surfaces are the timeline game's glass for the same reason — an opaque
  * `bg-card` panel over a photograph reads as a leftover from another page.
@@ -52,9 +79,21 @@ import type { Dict } from "@/lib/i18n/dictionary";
  * does that: subtract everything that is not a photograph, split the rest
  * between the two lanes, convert back to a width. The consequence is that the
  * fixed parts are genuinely fixed — every row the page gains is a row the
- * pictures lose — which is why the header, the caption blocks and the verdict
- * are all sized as tightly as they are, and why `--compare-chrome` has to be
- * edited whenever one of them changes.
+ * pictures lose — which is why the caption blocks and the verdict are sized as
+ * tightly as they are, why the masthead was moved out of the flow altogether
+ * (`RoundHead`), and why `--compare-chrome` has to be edited whenever one of
+ * them changes.
+ *
+ * **Two modes play on this one screen.** `set` is the ten-question bracket
+ * this game has always been; `survival` is the same round with no bracket at
+ * all, over at the first answer on the wrong side of the rail. The mechanics
+ * are deliberately identical — the rail, the six sections, the drag, the grade,
+ * the queue, the result card — because the mode is a rule about *when the game
+ * stops*, not a second game, and a player who has learned one has learned both.
+ * So this is one component with a `mode` prop rather than a fork of 900 lines:
+ * everything below branches in exactly three places (what a result records,
+ * what ends the game, and which summary it ends on), and anything that is not
+ * one of those three cannot drift between the two modes.
  *
  * **Rounds are a queue, not a route.** The page deals two and this component
  * plays through them, topping the queue back up from the server while the
@@ -65,8 +104,33 @@ import type { Dict } from "@/lib/i18n/dictionary";
  * the same two motions the date-guessing game uses, for the same reason.
  */
 
+/**
+ * Which rule brackets the endless queue of rounds.
+ *
+ * `set` stops at `QUESTIONS_PER_SET` whatever the player scores; `survival`
+ * runs until they are wrong. Nothing else about the round differs.
+ */
+export type ComparisonMode = "set" | "survival";
+
 /** Travelled per arrow-key press. ~50 steps end to end. */
 const KEY_STEP = 0.02;
+
+/**
+ * What a bubble's caption reads before the guess is locked in — all three of
+ * them, the two anchors included.
+ *
+ * The anchors carried their dates all round until 2026-10-08, which made the
+ * question arithmetic: both ends were numbers, so the round could be answered
+ * without recognising a single one of the three events. Hiding them puts the
+ * history back — you place the middle event against two you have to *know* —
+ * and the dates all arrive together on the reveal, where they are the answer
+ * rather than the input.
+ *
+ * One constant rather than three literals so the three captions cannot drift
+ * apart: before a guess they are the same kind of unknown and have to read as
+ * one.
+ */
+const HIDDEN_DATE = "???";
 
 /** How long to wait before trying again when topping the queue up fails. */
 const REFILL_RETRY_MS = 1500;
@@ -75,14 +139,22 @@ export function ComparisonGame({
   rounds,
   t,
   locale,
+  mode = "set",
 }: {
   rounds: ComparisonRound[];
   t: Dict;
   locale: SupportedLocale;
+  mode?: ComparisonMode;
 }) {
+  const survival = mode === "survival";
   const [fraction, setFraction] = useState(0.5);
   const [dragging, setDragging] = useState(false);
-  const [choice, setChoice] = useState<ComparisonSide | null>(null);
+  // Which of the six sections the player locked in, which is a finer record of
+  // the same answer the side always was — `sectionSide` is the half it commits
+  // to, and the margin is what grades the round. It has to be kept rather than
+  // re-read off `fraction`, because locking in slides the bubble onto the
+  // truth: a moment later the rail no longer remembers where the guess was.
+  const [picked, setPicked] = useState<number | null>(null);
   // The round being played is the head of the queue; the one behind it is the
   // next round, held only so its pictures can be preloaded and swapped in.
   const [queue, setQueue] = useState<ComparisonRound[]>(rounds);
@@ -102,7 +174,9 @@ export function ComparisonGame({
 
   const round = queue[0] ?? null;
   const upcoming = queue[1] ?? null;
-  const answered = choice !== null;
+  const answered = picked !== null;
+  const choice: ComparisonSide | null =
+    picked === null ? null : sectionSide(picked);
 
   // Top the queue back up in the background. Keyed on the queue's length rather
   // than on its contents, so playing a round triggers exactly one refill;
@@ -212,11 +286,12 @@ export function ComparisonGame({
   function submit() {
     if (answered || !round) return;
 
-    const side: ComparisonSide = fraction < 0.5 ? "left" : "right";
-    setChoice(side);
+    setPicked(comparisonSection(fraction));
     // Settle onto the truth, so the reveal reads as "here is where it actually
-    // sat" rather than a verdict printed next to a stale marker.
-    setFraction(fractionAtYear(round, round.target.year));
+    // sat" rather than a verdict printed next to a stale marker. The section
+    // just banked is what keeps the guess on screen after the bubble has left
+    // it — see the band drawn on the rail below.
+    setFraction(comparisonFractionAtYear(round, round.target.year));
   }
 
   /**
@@ -230,19 +305,28 @@ export function ComparisonGame({
   function advance() {
     // `choice` is what makes this an answered round; without one there is no
     // result to bank and nothing to advance past.
-    if (!upcoming || round === null || choice === null) return;
+    if (!upcoming || round === null || picked === null) return;
 
     // Banked here rather than at `submit`, so `results.length` is always the
     // number of questions *left behind* — which makes it the index of the one
     // on screen as well as the score. The set is over when this push fills it,
     // and the round underneath advances anyway: the summary covers a fresh
     // question 1, so "Play again" is a state change with nothing to deal.
+    // The first of the two places the mode reaches: what a result records. A
+    // set is scored right-or-wrong, so it records exactly that. A run records
+    // the tier as well — the same margin the result card has just shown the
+    // player — because a run is the one screen with enough answers on it for
+    // the distribution of those tiers to say something, and its results screen
+    // is built out of them.
+    const correct = isComparisonCorrect(round, sectionSide(picked));
     setResults((current) => [
       ...current,
-      comparisonResult(isComparisonCorrect(round, choice)),
+      survival
+        ? survivalResult(correct, comparisonVerdict(round, picked))
+        : comparisonResult(correct),
     ]);
 
-    setChoice(null);
+    setPicked(null);
     setFraction(0.5);
     setQueue((current) => current.slice(1));
   }
@@ -271,13 +355,34 @@ export function ComparisonGame({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingNext, upcoming, answered]);
 
-  const correct =
-    answered && round !== null && isComparisonCorrect(round, choice);
-  // The set is full once ten questions have been banked; until then the last
-  // of them turns "Next round" into "See results", because the button is about
-  // to do something other than deal another question.
-  const setComplete = results.length >= QUESTIONS_PER_SET;
-  const lastQuestion = results.length === QUESTIONS_PER_SET - 1;
+  // The round's grade on the date-guessing game's own five-rung ladder: the
+  // half decides whether it is a win and the margin in sections decides which
+  // rung. lib/game/rounds.ts owns that rule; this screen only draws it.
+  const verdict =
+    answered && round !== null ? comparisonVerdict(round, picked) : null;
+  // Whether this round was right, which in survival is also whether there is
+  // another one. Read off the pick rather than off `verdict`, so the two can
+  // never disagree — both are derived from the same section and the same half.
+  const roundCorrect =
+    answered && round !== null
+      ? isComparisonCorrect(round, sectionSide(picked))
+      : null;
+  // The second place the mode reaches: what ends the game.
+  //
+  // A set is full at ten. A run ends at the first miss, so it is over exactly
+  // when the *last banked* result is one — and since the run stops there, no
+  // earlier result can be. Both read `results`, which is only written in
+  // `advance`, which is what keeps the verdict for the losing round on screen
+  // rather than replacing it with the summary the moment it is graded: the
+  // player sees where the event actually sat, then presses on.
+  const over = survival
+    ? results.length > 0 && !results[results.length - 1]!.hit
+    : results.length >= QUESTIONS_PER_SET;
+  // The round whose button ends the game instead of dealing another: the tenth
+  // question of a set, or the answer that has just lost a run.
+  const finalRound = survival
+    ? roundCorrect === false
+    : results.length === QUESTIONS_PER_SET - 1;
   // Which half the bubble is in, for the live highlight on the anchor it leans
   // toward. Dead centre commits to neither.
   const leaning: ComparisonSide | null =
@@ -285,12 +390,23 @@ export function ComparisonGame({
 
   if (!round) return null;
 
-  if (setComplete) {
+  if (over) {
     // The backdrop is a server component on the page, so unlike the
-    // date-guessing game there is nothing here the summary has to keep
+    // date-guessing game there is nothing here either summary has to keep
     // mounted. The round underneath is already reset to a fresh question, so
-    // "Play again" has nothing left to do but clear the set.
-    return (
+    // "Play again" has nothing left to do but clear the results.
+    //
+    // The third and last place the mode reaches. Two screens rather than one
+    // with a flag: a set's headline is a percentage of a fixed ten and a run's
+    // is a count with no ceiling, so almost nothing one of them says is true
+    // of the other (see lib/game/survival.ts).
+    return survival ? (
+      <SurvivalSummary
+        results={results}
+        onPlayAgain={() => setResults([])}
+        t={t}
+      />
+    ) : (
       <SetSummary
         results={results}
         title={t.comparisonTitle}
@@ -304,23 +420,7 @@ export function ComparisonGame({
 
   return (
     <>
-      {/* The round's masthead. It lives here rather than on the page because
-          its blurb is a live instruction, and the summary above replaces it
-          outright rather than letting it stand over a finished set.
-
-          `on-photo` rather than a heavier type colour: the backdrop's scrim
-          already carries most of the contrast, and a drop shadow that tracks
-          the glyphs keeps the thin display face from thickening into a slab.
-          Deliberately tighter than the rest of the site's mastheads — every
-          pixel it gives up goes to the photographs below it, which are the
-          part of the round the player actually reads. It is one of the rows
-          `--compare-chrome` accounts for, so its height is not free. */}
-      <header className="on-photo mb-5 shrink-0 text-center">
-        <p className="font-display text-3xl font-semibold tracking-[-0.025em] text-ink">
-          {t.comparisonTitle}
-        </p>
-        <p className="mt-2 text-sm text-white/70">{t.comparisonBlurb}</p>
-      </header>
+      <RoundHead played={results.length} survival={survival} t={t} />
 
       <div
         className="mx-auto flex w-full flex-1 flex-col items-center justify-center gap-5"
@@ -363,19 +463,11 @@ export function ComparisonGame({
             screen budgeted to the pixel, that distinction is the difference
             between a still rail and a scrollbar. */}
           {/* The lane is taller than the card hanging from its bottom edge, so
-            the top of it is empty — which is where the counter goes. Absolute,
-            because this screen's height is a hand-maintained sum
-            (`--compare-chrome` in app/globals.css) and a counter in the flow
-            would be a row the photographs pay for. */}
+            the top of it is empty. The round counter used to be pinned up
+            there; it is part of the masthead now (`RoundHead`), which is a
+            better place for it and costs this screen's height budget nothing
+            either way. */}
           <div className="relative flex h-[var(--lane)] items-end">
-            <div className="pointer-events-none absolute left-0 top-0 z-10">
-              <SetProgress
-                played={results.length}
-                total={QUESTIONS_PER_SET}
-                t={t}
-              />
-            </div>
-
             <div
               role="slider"
               tabIndex={answered ? -1 : 0}
@@ -407,10 +499,13 @@ export function ComparisonGame({
                 event={round.target}
                 tail="down"
                 caption={
-                  answered ? formatHistoricalDate(round.target, locale) : "???"
+                  answered
+                    ? formatHistoricalDate(round.target, locale)
+                    : HIDDEN_DATE
                 }
                 captionClassName={answered ? "text-good" : "text-white/75"}
                 raised
+                t={t}
               />
             </div>
           </div>
@@ -429,18 +524,51 @@ export function ComparisonGame({
             style={{ paddingBlock: TAIL_H }}
           >
             <div ref={rail} className="relative h-2.5 rounded-full bg-white/25">
-              <div
-                className="absolute inset-y-0 left-0 rounded-full bg-white/70"
-                style={{
-                  width: `${fraction * 100}%`,
-                  transition: dragging ? "none" : "width 450ms ease-out",
-                }}
-              />
-              {/* Midpoint: the actual boundary between the two answers. */}
-              <div className="absolute left-1/2 top-1/2 h-6 w-px -translate-x-1/2 -translate-y-1/2 bg-white/35" />
-              {/* The ends of the scale, which the anchors below sit on. */}
-              <RailDot at={0} active={leaning === "left"} />
-              <RailDot at={1} active={leaning === "right"} />
+              {/* The section the guess was locked into, in the colour that
+                  guess earned. It is the only thing left on the rail that says
+                  where the player put the bubble — the bubble itself has slid
+                  onto the truth by the time this appears — so the distance the
+                  card names as a number is also the gap the eye measures
+                  between this band and the card hanging over the answer.
+
+                  It grows out of its own centre (`.answer-gap` with no origin
+                  set, unlike the date-guessing rail's, where the bar has a
+                  guess end to start from). */}
+              {answered && verdict !== null && (
+                <div
+                  className="answer-gap pointer-events-none absolute -inset-y-px rounded-full"
+                  style={{
+                    left: `${(picked / COMPARISON_SECTIONS) * 100}%`,
+                    width: `${100 / COMPARISON_SECTIONS}%`,
+                    background: VERDICT_COLORS[verdict],
+                  }}
+                />
+              )}
+
+              {/* Five dividers, cutting the rail into six equal sections.
+
+                  A section is therefore a sixth of the gap between the two
+                  anchors, whatever that gap happens to be — 600 years apart
+                  makes each one a century — so the round states its own scale
+                  rather than the game imposing one, and "how close were you"
+                  has an answer finer than which half.
+
+                  The middle divider is the one that was always here: it is
+                  still the boundary between the two answers, so it is drawn
+                  taller and brighter than its four neighbours. */}
+              {Array.from({ length: COMPARISON_SECTIONS - 1 }, (_, index) => {
+                const at = (index + 1) / COMPARISON_SECTIONS;
+                const boundary = index + 1 === COMPARISON_SECTIONS / 2;
+                return (
+                  <div
+                    key={at}
+                    className={`absolute top-1/2 w-px -translate-x-1/2 -translate-y-1/2 ${
+                      boundary ? "h-6 bg-white/80" : "h-4 bg-white/50"
+                    }`}
+                    style={{ left: `${at * 100}%` }}
+                  />
+                );
+              })}
             </div>
           </div>
 
@@ -459,7 +587,7 @@ export function ComparisonGame({
               <ActionButton
                 answered={answered}
                 pending={pendingNext}
-                lastQuestion={lastQuestion}
+                final={finalRound}
                 onSubmit={submit}
                 onNext={requestNextRound}
                 t={t}
@@ -470,44 +598,79 @@ export function ComparisonGame({
             <div className="w-[var(--bubble)]">
               <EventBubble
                 event={round.left}
+                t={t}
                 tail="up"
-                caption={formatHistoricalDate(round.left, locale)}
+                caption={
+                  answered
+                    ? formatHistoricalDate(round.left, locale)
+                    : HIDDEN_DATE
+                }
+                // Dim once it is a fact; the same white as the floating
+                // bubble's "???" while it is still a question. The target's
+                // revealed date is the only one that goes green — green is the
+                // answer on this screen, and an anchor is not the answer.
+                captionClassName={answered ? "text-ink-dim" : "text-white/75"}
                 highlighted={leaning === "left"}
               />
             </div>
             <div className="w-[var(--bubble)]">
               <EventBubble
                 event={round.right}
+                t={t}
                 tail="up"
-                caption={formatHistoricalDate(round.right, locale)}
+                caption={
+                  answered
+                    ? formatHistoricalDate(round.right, locale)
+                    : HIDDEN_DATE
+                }
+                // Dim once it is a fact; the same white as the floating
+                // bubble's "???" while it is still a question. The target's
+                // revealed date is the only one that goes green — green is the
+                // answer on this screen, and an anchor is not the answer.
+                captionClassName={answered ? "text-ink-dim" : "text-white/75"}
                 highlighted={leaning === "right"}
               />
             </div>
           </div>
         </div>
 
-        <div className="on-photo flex shrink-0 flex-col items-center gap-3">
-          {/* The hint and the verdict share one reserved box. They are different
-            heights — one line against two — and on a screen budgeted to the
-            pixel the taller one has to be paid for before it arrives, or
-            locking in a guess moves the rail it is a verdict on. */}
-          <div className="flex min-h-16 flex-col items-center justify-center gap-2">
-            {answered ? (
-              <>
-                <p
-                  className="font-display text-xl font-semibold tracking-tight"
-                  style={{
-                    color: correct ? "var(--color-good)" : "var(--color-bad)",
-                  }}
-                >
-                  {correct ? t.correct : t.incorrect}
-                </p>
-                <p className="text-sm text-white/70">
-                  {t.actualDate}: {formatHistoricalDate(round.target, locale)}
-                </p>
-              </>
-            ) : (
-              <p className="text-sm text-white/70">{t.comparisonHint}</p>
+        <div className="on-photo flex w-full shrink-0 flex-col items-center gap-3">
+          {/* The verdict's reserved box. It is held open all round rather than
+            appearing with the verdict: on a screen budgeted to the pixel, a
+            card arriving under the rail would move the rail it is a verdict
+            on. Its `min-h-16` is exactly the result card's own height, which
+            is what keeps the card free — `--compare-chrome` already counts
+            these 64px, so nothing here comes out of the two photographs.
+
+            It has carried two things and now carries neither. The round's
+            instruction went on 2026-10-08 — a permanent line of help text
+            under a game is a line the player reads once; the string stays in
+            the dictionary, where it is still the rail's accessible name — and
+            the round's own scale ("each section ~ n years") went with it,
+            because a section's width in years is most of the way to the
+            answer: with the anchors' dates hidden it was the one number left
+            on screen, and it told you how far apart the two ends are. The box
+            is now empty until the verdict fills it, and it still has to be
+            reserved for exactly the same reason. */}
+          <div className="flex min-h-16 w-full max-w-[24rem] flex-col items-center justify-center">
+            {answered && verdict !== null && (
+              <VerdictDeckRow
+                verdict={verdict}
+                facts={[
+                  {
+                    label: t.distanceTitle,
+                    value: sectionDistanceLabel(
+                      comparisonSectionDistance(round, picked),
+                      t,
+                    ),
+                  },
+                  {
+                    label: t.actualDate,
+                    value: formatHistoricalDate(round.target, locale),
+                  },
+                ]}
+                t={t}
+              />
             )}
           </div>
 
@@ -517,7 +680,7 @@ export function ComparisonGame({
             <ActionButton
               answered={answered}
               pending={pendingNext}
-              lastQuestion={lastQuestion}
+              final={finalRound}
               onSubmit={submit}
               onNext={requestNextRound}
               t={t}
@@ -526,6 +689,144 @@ export function ComparisonGame({
         </div>
       </div>
     </>
+  );
+}
+
+/**
+ * The round's masthead: the game's name and where you are in the set, in one
+ * pill, in the top bar's own row.
+ *
+ * It is rendered by the game rather than by the page because it has to go when
+ * the set does — the summary replaces the round outright, and a masthead asking
+ * "which of the two dates…" over a finished set is the page asking a question
+ * that is no longer on screen. Only the game knows the set is over.
+ *
+ * **It is `fixed`, in the bar's row, and that is what makes it free.** It was
+ * an 84px block of flow at the top of the column until 2026-10-08 — a title,
+ * its blurb and a margin — and this screen's height is a hand-maintained sum
+ * (`--compare-chrome` in app/globals.css), so those 84px were 84px the two
+ * photographs did not get. In the bar's row it costs the budget nothing, and
+ * the cards went to their 360px cap as a result. Its `top` is solved the way
+ * the menu button's is, from the bar's height and its own, so the three things
+ * on that row share a centre line rather than three independent numbers —
+ * measured at 1680x844: wordmark, pill and menu button all centred at 37.0px.
+ *
+ * **It is in that row on a phone too, as of this pass.** It stood at the top
+ * of the column below `sm` until then, on the grounds that three things do not
+ * fit across a phone's bar — which was true at the sizes that row used to
+ * carry. It was asked for between the wordmark and the menu button, so the two
+ * bookends came down a notch instead (`--menu-btn` 34px, the wordmark
+ * `text-base`, the bar itself 58px; all three in app/globals.css), and the
+ * ~215px that leaves at 375px is enough for the pill at `text-[13px]`. The
+ * flow row it gave up is the "shift everything up" half of the same request:
+ * 46px of pill and its 16px margin left the column, and the lanes below centre
+ * into what that freed.
+ *
+ * It is therefore `fixed` at every width, and the two bookends' own sizes are
+ * what the horizontal padding is written against — `pl` clears the wordmark,
+ * `pr` the button, and the pill fills what is between them rather than being
+ * centred on a viewport whose middle is not the middle of that gap.
+ *
+ * **One type size for both halves**, and it is the `Tempus` wordmark's: the
+ * pill reads as the one masthead the row already has, not as a heading with a
+ * counter stuck to it. Both come down together below `sm`, so that still
+ * holds.
+ *
+ * **The instruction unrolls on hover** rather than standing under the title.
+ * It is a live instruction and it is read once, so it is available rather than
+ * permanent. The mechanism is the home board's card descriptions' —
+ * `grid-template-rows: 0fr -> 1fr` with the child owning the overflow, which
+ * is the only way to animate a height out of nothing without measuring one in
+ * JavaScript — and it comes with the same two properties: it never opens on a
+ * touch screen, because Tailwind compiles `group-hover:` inside
+ * `@media (hover: hover)`, and the text is always in the document, so a screen
+ * reader gets the instruction whether or not anything was hovered.
+ *
+ * Two things hold the shape up.
+ *
+ * **The radius is half the closed height, written as exactly that.** A pill
+ * that opens is the explorer's problem, not the button's: `rounded-full`
+ * resolves against the box, so the corners would tighten and slacken through
+ * the whole 420ms and the thing would read as a rubber sheet rather than as a
+ * panel. One constant gives the stadium closed and holds it open.
+ *
+ * **Only the pill is a pointer target.** The wrapper and the unrolled row are
+ * `pointer-events-none`, so the open panel — which hangs over the top of the
+ * floating bubble — cannot swallow the drag that starts the round. Hover still
+ * reaches the card, because an element is `:hover` whenever the hit target is
+ * one of its descendants.
+ */
+function RoundHead({
+  played,
+  survival,
+  t,
+}: {
+  /**
+   * Questions banked. In a set that is the position in it; in a run it is the
+   * score, since every banked answer in a live run is a correct one.
+   */
+  played: number;
+  survival: boolean;
+  t: Dict;
+}) {
+  return (
+    <div
+      // In the bar's own row at every width. Below `sm` it is held off the two
+      // things already in that row rather than centred in it: 24px of page
+      // padding plus the `text-base` wordmark's ~62px plus 8px of air on the
+      // left, and 24px plus the 34px button plus 8px on the right — which
+      // leaves the pill 215px at 375px and lands it in the gap instead of
+      // across the wordmark. From `sm` the row is wide enough to centre in.
+      className="pointer-events-none fixed inset-x-0 z-40 flex justify-center pl-[5.875rem] pr-[4.125rem] sm:px-6"
+      style={
+        {
+          // `--compare-head` is the closed pill's height and lives in
+          // app/globals.css, because it changes with the breakpoint and an
+          // inline style is the one place a media query cannot reach. The
+          // row's centre line and the corner radius are both read off it, so
+          // neither can drift from the box.
+          top: "calc((var(--site-bar-h) - var(--compare-head)) / 2)",
+        } as React.CSSProperties
+      }
+    >
+      <div className="group w-full max-w-[21rem] overflow-hidden rounded-[calc(var(--compare-head)/2)] border border-white/15 bg-black/45 shadow-xl shadow-black/60 backdrop-blur-xl sm:w-[21rem]">
+        <div className="pointer-events-auto flex items-center justify-center px-3 py-1.5 sm:px-5 sm:py-2">
+          {/* `min-w-0` is what lets the title give way rather than push the
+              counter out of the pill: Turkish's "10 sorudan 1." is the longest
+              pair and the gap on a 320px screen is narrower than it. */}
+          <span className="min-w-0 truncate font-display text-[13px]/[1.25rem] font-semibold tracking-[-0.01em] text-ink sm:text-lg">
+            {survival ? t.survivalTitle : t.comparisonTitle}
+          </span>
+          {/* The dot carries the row's type size too, or its own 16px line box
+              sets the pill's height and `--compare-head` no longer describes
+              the box the centre line is solved from. */}
+          <span className="px-1.5 text-[13px]/[1.25rem] text-white/30 sm:px-2 sm:text-lg">
+            ·
+          </span>
+          {/* A set counts towards its end and a run counts up from nothing, so
+              the same slot holds "3 of 10" in one mode and "12 correct" in the
+              other. A run's counter is the score it is playing for, which is
+              why it is the number banked rather than the question number: the
+              answer on screen has not been earned yet. */}
+          <span className="shrink-0 font-display text-[13px]/[1.25rem] font-semibold tracking-[-0.01em] tabular-nums text-white/70 sm:text-lg">
+            {survival
+              ? format(t.survivalCleared, { n: played })
+              : format(t.setProgress, {
+                  n: Math.min(played + 1, QUESTIONS_PER_SET),
+                  total: QUESTIONS_PER_SET,
+                })}
+          </span>
+        </div>
+
+        <div className="compare-head-blurb pointer-events-none grid grid-rows-[0fr] transition-[grid-template-rows] duration-[420ms] ease-out group-hover:grid-rows-[1fr]">
+          <div className="overflow-hidden">
+            <p className="px-5 pb-3 text-center text-xs leading-snug text-white/70 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100">
+              {survival ? t.survivalBlurb : t.comparisonBlurb}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -576,6 +877,7 @@ function EventBubble({
   captionClassName = "text-ink-dim",
   highlighted = false,
   raised = false,
+  t,
 }: {
   event: LocalizedEvent;
   tail: "up" | "down";
@@ -583,6 +885,8 @@ function EventBubble({
   captionClassName?: string;
   highlighted?: boolean;
   raised?: boolean;
+  /** Only so the photograph's sensitive-content gate can be labelled. */
+  t: Dict;
 }) {
   const live: BubbleContent = { event, caption, captionClassName };
 
@@ -622,7 +926,7 @@ function EventBubble({
         <div className="relative aspect-[16/9] w-full">
           {shown.leaving && (
             <div className="absolute inset-0">
-              <EventVisual event={shown.leaving.event} />
+              <EventVisual event={shown.leaving.event} t={t} />
             </div>
           )}
           {/* Keyed on the event, so the dissolve restarts for each round rather
@@ -631,7 +935,7 @@ function EventBubble({
             key={shown.active.event.id}
             className="round-photo-in absolute inset-0"
           >
-            <EventVisual event={shown.active.event} />
+            <EventVisual event={shown.active.event} t={t} />
           </div>
         </div>
 
@@ -740,7 +1044,7 @@ function Tail({
 function ActionButton({
   answered,
   pending,
-  lastQuestion,
+  final,
   onSubmit,
   onNext,
   t,
@@ -749,14 +1053,27 @@ function ActionButton({
   answered: boolean;
   /** The press is latched and waiting on a draw. Never disables the button. */
   pending: boolean;
-  /** The tenth question: the button ends the set rather than dealing another. */
-  lastQuestion: boolean;
+  /**
+   * This round ends the game rather than dealing another — the tenth question
+   * of a set, or the answer that has just lost a run. Stated as the thing the
+   * button is about to do, so both modes can set it from their own rule.
+   */
+  final: boolean;
   onSubmit: () => void;
   onNext: () => void;
   t: Dict;
   floating?: boolean;
 }) {
-  const base = `rounded-full bg-ink px-7 py-3 text-sm font-semibold text-page transition-opacity hover:opacity-85 disabled:opacity-50 ${
+  // A tenth larger than the site's other round buttons, asked for on
+  // 2026-10-08: this one is the only control on the screen and it sits in the
+  // gap between the two anchors rather than on a row of its own, so it was
+  // reading as small for what it does. All three numbers are scaled, not just
+  // the padding — 28/12/14px becomes 30.8/13.2/15.4 — because a button that
+  // grows only its box around the same type reads as padded, not as bigger.
+  // The line height is spelled out with the size: `text-sm` carried a 20px
+  // line box of its own and a bare `text-[…]` falls back to `normal`, which
+  // would have taken the box up 12% rather than 10%.
+  const base = `rounded-full bg-ink px-[1.925rem] py-[0.825rem] text-[0.9625rem]/[1.375rem] font-semibold text-page transition-opacity hover:opacity-85 disabled:opacity-50 ${
     floating ? "pointer-events-auto shadow-xl shadow-black/50" : ""
   }`;
 
@@ -770,7 +1087,7 @@ function ActionButton({
       aria-busy={pending}
       className={`${base} ${pending ? "cursor-progress opacity-60" : ""}`}
     >
-      {lastQuestion ? t.seeResults : t.nextRound}
+      {final ? t.seeResults : t.nextRound}
     </button>
   ) : (
     <button type="button" onClick={onSubmit} className={base}>
@@ -779,28 +1096,19 @@ function ActionButton({
   );
 }
 
-/** End-of-scale marker, lit while the bubble leans that way. */
-function RailDot({ at, active }: { at: 0 | 1; active: boolean }) {
-  return (
-    <div
-      className={`absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors duration-300 ${
-        active ? "bg-ink" : "bg-white/30"
-      }`}
-      style={{ left: `${at * 100}%` }}
-    />
-  );
-}
-
 function clamp(value: number): number {
   return Math.min(1, Math.max(0, value));
 }
 
 /**
- * Where a year sits on the rail. Linear between the anchors, which is exact:
- * astronomical year numbering makes this plain subtraction (lib/historical-date.ts).
+ * How far the pick landed from the truth, in sections.
+ *
+ * Three strings rather than one with a count in it: "1 section" is not
+ * "{n} sections" in most of the five languages, and the exact hit is not a
+ * distance at all.
  */
-function fractionAtYear(round: ComparisonRound, year: number): number {
-  const span = round.right.year - round.left.year;
-  if (span === 0) return 0.5; // The draw asks for distinct years; be safe anyway.
-  return clamp((year - round.left.year) / span);
+function sectionDistanceLabel(distance: number, t: Dict): string {
+  if (distance === 0) return t.sectionExact;
+  if (distance === 1) return t.sectionOff;
+  return format(t.sectionsOff, { n: distance });
 }

@@ -141,7 +141,7 @@ Zheng He seferlerinin başlaması:Beginning of the voyages of Zheng He:Beginn de
 İsa'nın çarmıha gerilmesi için geleneksel tarih:Traditional date of the crucifixion of Jesus:Traditionelles Datum der Kreuzigung Jesu:Date traditionnelle de la crucifixion de Jésus:Fecha tradicional de la crucifixión de Jesús:30
 Hristiyanlığın ilk topluluklarının oluşması:Formation of early Christian communities:Bildung früher christlicher Gemeinden:Formation des premières communautés chrétiennes:Formación de las primeras comunidades cristianas:1. yüzyıl
 Kudüs'ün İkinci Tapınağı'nın yıkılması:Destruction of the Second Temple:Zerstörung des Zweiten Tempels:Destruction du Second Temple:Destrucción del Segundo Templo:70
-Muhammed'in doğumu:Birth of Muhammad:Geburt Mohammeds:Naissance de Mahomet:Nacimiento de Mahoma:570
+Muhammed'in doğumu:Birth of Muhammad:Geburt Mohammeds:Naissance de Mahomet:Nacimiento de Mahoma:571
 İlk vahiy:First revelation to Muhammad:Erste Offenbarung an Mohammed:Première révélation à Mahomet:Primera revelación a Mahoma:610
 Mekke'den Medine'ye Hicret:Hijra from Mecca to Medina:Hidschra von Mekka nach Medina:Hégire de La Mecque à Médine:Hégira de La Meca a Medina:622
 Medine Sözleşmesi:Constitution of Medina:Verfassung von Medina:Constitution de Médine:Constitución de Medina:622
@@ -388,7 +388,7 @@ Fransızların Bastille'i basması:Storming of the Bastille:Sturm auf die Bastil
 Napolyon'un Rusya seferi:Napoleon's invasion of Russia:Napoleons Russlandfeldzug:Invasion de la Russie par Napoléon:Invasión de Rusia por Napoleón:1812
 Latin Amerika bağımsızlık dalgası:Latin American wars of independence:Lateinamerikanische Unabhängigkeitskriege:Guerres d'indépendance latino-américaines:Guerras de independencia latinoamericanas:1810
 Buharlı gemilerin okyanus taşımacılığında yayılması:Spread of steamships in ocean transport:Ausbreitung von Dampfschiffen im Seeverkehr:Diffusion des bateaux à vapeur dans le transport maritime:Difusión de los barcos de vapor en el transporte marítimo:1830
-Samuel Morse'un telgraf patenti:Samuel Morse's telegraph patent:Samuel Morses Telegrafenpatent:Brevet du télégraphe de Samuel Morse:Patente del telégrafo de Samuel Morse:1844
+Samuel Morse'un telgraf patenti:Samuel Morse's telegraph patent:Samuel Morses Telegrafenpatent:Brevet du télégraphe de Samuel Morse:Patente del telégrafo de Samuel Morse:1840
 Kırım Savaşı'nın sona ermesi:End of the Crimean War:Ende des Krimkriegs:Fin de la guerre de Crimée:Fin de la Guerra de Crimea:1856
 Paris Komünü:Paris Commune:Pariser Kommune:Commune de Paris:Comuna de París:1871
 Telefonun ilk ticari ağlarının kurulması:Early commercial telephone networks:Frühe kommerzielle Telefonnetze:Premiers réseaux téléphoniques commerciaux:Primeras redes telefónicas comerciales:1878

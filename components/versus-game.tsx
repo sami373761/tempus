@@ -20,9 +20,8 @@ import {
   REVEAL_HOLD_MS,
   RoundCard,
   ROUND_BUTTON,
+  railGap,
   TimelinePaneView,
-  VERDICT_COLORS,
-  VERDICT_LABEL_KEYS,
 } from "@/components/timeline-stage";
 import { VersusLobby, Waiting } from "@/components/versus-lobby";
 import type { SupportedLocale } from "@/lib/db/types";
@@ -45,6 +44,7 @@ import {
   type TimelinePane,
   yearAtFraction,
 } from "@/lib/game/timeline";
+import { VERDICT_COLORS, VERDICT_LABEL_KEYS } from "@/lib/game/verdict-style";
 import { formatYear } from "@/lib/historical-date";
 import { subscribeToMatch } from "@/lib/realtime/match-channel";
 import { format, type Dict } from "@/lib/i18n/dictionary";
@@ -149,7 +149,8 @@ export function VersusGame({
 
   useEffect(
     () => () => {
-      if (travelTimer.current !== null) window.clearTimeout(travelTimer.current);
+      if (travelTimer.current !== null)
+        window.clearTimeout(travelTimer.current);
       if (resetTimer.current !== null) window.clearTimeout(resetTimer.current);
     },
     [],
@@ -531,6 +532,7 @@ export function VersusGame({
         <>
           <RoundCard
             event={event}
+            t={t}
             counter={
               <>
                 <span className="rounded-full border border-white/20 bg-black/55 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-white/80 backdrop-blur-md">
@@ -551,7 +553,10 @@ export function VersusGame({
                 <RoundTimer
                   remainingMs={remainingMs}
                   totalMs={view.roundSeconds * 1000}
-                  label={t.versusSecondsLeft.replace("{n}", String(revealSecondsLeft))}
+                  label={t.versusSecondsLeft.replace(
+                    "{n}",
+                    String(revealSecondsLeft),
+                  )}
                 />
               ) : null
             }
@@ -590,8 +595,34 @@ export function VersusGame({
                     answerPane === candidate && revealed ? revealed.year : null
                   }
                   answerDelayMs={answerDelayMs}
+                  // This pane's share of the distance between your marker and
+                  // the truth — several rails' worth when the two are eras
+                  // apart. Same helper the solo game uses, so the two modes
+                  // report a wrong era the same way.
+                  gap={
+                    revealed
+                      ? railGap({
+                          pane: candidate,
+                          guessPane,
+                          guessFraction:
+                            guessPane === null ? 0 : fractions[guessPane],
+                          answerPane,
+                          answerYear: revealed.year,
+                          answerDelayMs,
+                        })
+                      : null
+                  }
+                  // Your own verdict, not the round's: the gap is the distance
+                  // between your marker and the truth, so it is painted in the
+                  // tier that distance earned you.
+                  gapColor={
+                    revealed
+                      ? VERDICT_COLORS[revealed.seats[view.seat].verdict]
+                      : null
+                  }
                   opponentYear={
-                    revealed && paneFor(revealed.seats[them].guess) === candidate
+                    revealed &&
+                    paneFor(revealed.seats[them].guess) === candidate
                       ? revealed.seats[them].guess
                       : null
                   }
@@ -627,7 +658,9 @@ export function VersusGame({
 
             <div
               className={`col-start-1 row-start-1 transition-opacity duration-300 ${
-                answered && view.phase === "playing" ? "opacity-100" : "opacity-0"
+                answered && view.phase === "playing"
+                  ? "opacity-100"
+                  : "opacity-0"
               }`}
               inert={!answered || view.phase !== "playing"}
             >
@@ -708,9 +741,19 @@ function RoundOutcome({
       </p>
 
       <div className="flex w-full items-start justify-center gap-5">
-        <SeatOutcome label={t.versusYouLabel} answer={mine} locale={locale} t={t} />
+        <SeatOutcome
+          label={t.versusYouLabel}
+          answer={mine}
+          locale={locale}
+          t={t}
+        />
         <span className="mt-1 text-sm font-semibold text-white/30">·</span>
-        <SeatOutcome label={t.versusThemLabel} answer={theirs} locale={locale} t={t} />
+        <SeatOutcome
+          label={t.versusThemLabel}
+          answer={theirs}
+          locale={locale}
+          t={t}
+        />
       </div>
     </div>
   );
@@ -735,7 +778,9 @@ function SeatOutcome({
         className="on-photo font-display text-xl font-semibold leading-tight tracking-tight sm:text-2xl"
         style={{ color: VERDICT_COLORS[answer.verdict] }}
       >
-        {answer.timedOut ? t.versusTimedOut : t[VERDICT_LABEL_KEYS[answer.verdict]]}
+        {answer.timedOut
+          ? t.versusTimedOut
+          : t[VERDICT_LABEL_KEYS[answer.verdict]]}
       </p>
       <p className="on-photo text-[11px] tabular-nums text-white/70">
         {answer.guess === null ? "—" : formatYear(answer.guess)}
@@ -989,7 +1034,10 @@ function ShareMatchButton({ view, t }: { view: MatchView; t: Dict }) {
   function flash(next: "copied" | "failed") {
     setState(next);
     if (timer.current !== null) window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => setState("idle"), SHARE_FEEDBACK_MS);
+    timer.current = window.setTimeout(
+      () => setState("idle"),
+      SHARE_FEEDBACK_MS,
+    );
   }
 
   async function share() {
@@ -1019,7 +1067,8 @@ function ShareMatchButton({ view, t }: { view: MatchView; t: Dict }) {
         return;
       } catch (error) {
         // Dismissing the sheet is a choice, not a failure.
-        if (error instanceof DOMException && error.name === "AbortError") return;
+        if (error instanceof DOMException && error.name === "AbortError")
+          return;
       }
     }
 

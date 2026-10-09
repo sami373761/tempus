@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/site-header";
 import { SiteMenu } from "@/components/site-menu";
+import { getCurrentAccount } from "@/lib/auth/server";
 import { readLocaleContext } from "@/lib/i18n/server";
 
 /**
@@ -23,7 +24,14 @@ export default async function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { locale, t } = await readLocaleContext();
+  /* Both in one await: the locale comes from a cookie and the account from the
+     session, and neither depends on the other. The account is resolved here, in
+     the one place every player-facing route passes through, so the menu's rows
+     agree about the session on every page without each page having to ask. */
+  const [{ locale, t }, account] = await Promise.all([
+    readLocaleContext(),
+    getCurrentAccount(),
+  ]);
 
   return (
     /* `relative` so the home page's edge ornament can hang off this box rather
@@ -31,7 +39,7 @@ export default async function PublicLayout({
        page, and everything inside `main` starts below the header. */
     <div className="relative flex min-h-dvh flex-col">
       <SiteHeader />
-      <SiteMenu locale={locale} t={t} />
+      <SiteMenu locale={locale} t={t} account={account} />
 
       <main className="flex-1">{children}</main>
     </div>

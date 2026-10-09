@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 
-import { TIMELINE_PANES, type TimelinePane } from "@/lib/game/timeline";
+import {
+  TIMELINE_PANES,
+  type PaneSet,
+  type TimelinePane,
+} from "@/lib/game/timeline";
 import {
   timelineBackdropSrcSet,
   timelineBackdropUrl,
@@ -62,9 +66,27 @@ const PANE_WASH: Record<TimelinePane, string> = {
     "radial-gradient(120% 110% at 28% 10%, #7a4a1f 0%, #39200d 48%, #0d0704 100%)",
   ce: "radial-gradient(120% 110% at 70% 6%, #1f3f63 0%, #121f31 48%, #04070c 100%)",
   future: "radial-gradient(120% 110% at 50% 0%, #0d5f66 0%, #0a2b33 46%, #02080a 100%)",
+  // Football's own, and the one pane whose wash is not an era: floodlit turf.
+  // It is the pane set's only member, so this is also the whole of what the
+  // football game degrades to when R2 is unreachable — see the note on
+  // `TIMELINE_BACKDROP_BASE_NAMES`, where that pane currently shares the
+  // common era's photograph.
+  football:
+    "radial-gradient(120% 110% at 50% 4%, #1f5c33 0%, #113021 48%, #030705 100%)",
 };
 
-export function TimelineBackdrop({ pane }: { pane: TimelinePane }) {
+export function TimelineBackdrop({
+  pane,
+  panes = TIMELINE_PANES,
+}: {
+  pane: TimelinePane;
+  /**
+   * The pane set being played, which is what decides how many layers exist and
+   * which side each one rests on. A subject game's set is one pane, so there is
+   * nothing to crossfade and nothing to drift — the layer simply holds.
+   */
+  panes?: PaneSet;
+}) {
   // `leaving` is the pane held opaque underneath the dissolve. Derived from the
   // prop during render rather than in an effect, so the incoming layer is never
   // painted once with nothing behind it.
@@ -83,19 +105,21 @@ export function TimelineBackdrop({ pane }: { pane: TimelinePane }) {
   // exactly when a blank layer would show. Holding the active pane plus its
   // immediate neighbours means every reachable pane is already decoded.
   const [mounted, setMounted] = useState<readonly TimelinePane[]>(() =>
-    neighbourhood(pane),
+    neighbourhood(pane, panes),
   );
 
   useEffect(() => {
     setMounted((current) => {
-      const wanted = neighbourhood(pane);
+      const wanted = neighbourhood(pane, panes);
       return wanted.every((candidate) => current.includes(candidate))
         ? current
         : [...new Set([...current, ...wanted])];
     });
-  }, [pane]);
+    // `panes` is a module-level constant at both call sites, so it is stable;
+    // listing it keeps the dependency array honest rather than relying on that.
+  }, [pane, panes]);
 
-  const activeIndex = TIMELINE_PANES.indexOf(shown.active);
+  const activeIndex = panes.indexOf(shown.active);
 
   return (
     // Fixed and full-bleed, so the photograph runs under the translucent site
@@ -106,11 +130,11 @@ export function TimelineBackdrop({ pane }: { pane: TimelinePane }) {
       aria-hidden
       className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-page"
     >
-      {TIMELINE_PANES.map((candidate) => {
+      {panes.map((candidate) => {
         const isActive = candidate === shown.active;
         const isLeaving = candidate === shown.leaving;
         // -1 for panes older than the active one (off to the left), +1 newer.
-        const side = Math.sign(TIMELINE_PANES.indexOf(candidate) - activeIndex);
+        const side = Math.sign(panes.indexOf(candidate) - activeIndex);
 
         return (
           <div
@@ -172,9 +196,7 @@ export function TimelineBackdrop({ pane }: { pane: TimelinePane }) {
 }
 
 /** A pane and the panes one move away from it — everything reachable next. */
-function neighbourhood(pane: TimelinePane): TimelinePane[] {
-  const index = TIMELINE_PANES.indexOf(pane);
-  return TIMELINE_PANES.filter(
-    (_, candidate) => Math.abs(candidate - index) <= 1,
-  );
+function neighbourhood(pane: TimelinePane, panes: PaneSet): TimelinePane[] {
+  const index = panes.indexOf(pane);
+  return panes.filter((_, candidate) => Math.abs(candidate - index) <= 1);
 }

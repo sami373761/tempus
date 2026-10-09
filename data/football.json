@@ -1,0 +1,1850 @@
+[
+  {
+    "id": "miracle_of_bern",
+    "category": "tarihi_basari",
+    "year": 1954,
+    "names": {
+      "tr": "Bern Mucizesi",
+      "en": "Miracle of Bern",
+      "de": "Wunder von Bern",
+      "fr": "Miracle de Berne",
+      "es": "Milagro de Berna"
+    },
+    "description": {
+      "tr": "Favori Macaristan, finalde Batı Almanya'ya yenilerek büyük bir sürprize sahne oldu.",
+      "en": "Heavy favourites Hungary lost the final to West Germany in one of football's greatest upsets.",
+      "de": "Favorit Ungarn verlor das Finale gegen die Bundesrepublik Deutschland in einer der größten Überraschungen des Fußballs.",
+      "fr": "La grande favorite Hongrie perd la finale contre l'Allemagne de l'Ouest dans l'une des plus grandes surprises du football.",
+      "es": "La favorita Hungría perdió la final ante Alemania Occidental en una de las mayores sorpresas del fútbol."
+    }
+  },
+  {
+    "id": "maracanazo",
+    "category": "tarihi_basari",
+    "year": 1950,
+    "names": {
+      "tr": "Maracanazo",
+      "en": "Maracanazo",
+      "de": "Maracanazo",
+      "fr": "Maracanazo",
+      "es": "Maracanazo"
+    },
+    "description": {
+      "tr": "Uruguay, Maracanã'daki dev kalabalık önünde Brezilya'yı yenerek Dünya Kupası'nı kazandı.",
+      "en": "Uruguay stunned Brazil in front of a huge Maracanã crowd to win the World Cup.",
+      "de": "Uruguay schockte Brasilien vor einem riesigen Maracanã-Publikum und gewann die Weltmeisterschaft.",
+      "fr": "L'Uruguay choque le Brésil devant une immense foule au Maracanã et remporte la Coupe du monde.",
+      "es": "Uruguay sorprendió a Brasil ante una multitud en el Maracanã y ganó el Mundial."
+    }
+  },
+  {
+    "id": "miracle_of_belo_horizonte",
+    "category": "siradisi_galibiyet",
+    "year": 1950,
+    "names": {
+      "tr": "Belo Horizonte Mucizesi",
+      "en": "Miracle of Belo Horizonte",
+      "de": "Wunder von Belo Horizonte",
+      "fr": "Miracle de Belo Horizonte",
+      "es": "Milagro de Belo Horizonte"
+    },
+    "description": {
+      "tr": "ABD, güçlü İngiltere'yi Dünya Kupası'nda eleyerek turnuva tarihinin en büyük sürprizlerinden birini yaptı.",
+      "en": "The United States stunned England in one of the biggest upsets in World Cup history.",
+      "de": "Die USA schockierten England in einer der größten Überraschungen der WM-Geschichte.",
+      "fr": "Les États-Unis battent l'Angleterre dans l'une des plus grandes surprises de l'histoire du Mondial.",
+      "es": "Estados Unidos sorprendió a Inglaterra en una de las mayores sorpresas de la historia del Mundial."
+    }
+  },
+  {
+    "id": "hungary_wembley_victory",
+    "category": "siradisi_galibiyet",
+    "year": 1953,
+    "names": {
+      "tr": "Macaristan'ın Wembley Zaferi",
+      "en": "Hungary's Wembley Victory",
+      "de": "Ungarns Wembley-Sieg",
+      "fr": "La victoire de la Hongrie à Wembley",
+      "es": "La victoria de Hungría en Wembley"
+    },
+    "description": {
+      "tr": "Macaristan, Wembley'de İngiltere'yi ağır biçimde yenerek İngiliz futbolunu sarstı.",
+      "en": "Hungary overwhelmed England at Wembley and shook English football.",
+      "de": "Ungarn überrollte England in Wembley und erschütterte den englischen Fußball.",
+      "fr": "La Hongrie écrase l'Angleterre à Wembley et bouleverse le football anglais.",
+      "es": "Hungría goleó a Inglaterra en Wembley y sacudió al fútbol inglés."
+    }
+  },
+  {
+    "id": "north_korea_italy",
+    "category": "siradisi_galibiyet",
+    "year": 1966,
+    "names": {
+      "tr": "Kuzey Kore'nin İtalya'yı Elemesi",
+      "en": "North Korea Eliminates Italy",
+      "de": "Nordkorea wirft Italien aus dem Turnier",
+      "fr": "La Corée du Nord élimine l'Italie",
+      "es": "Corea del Norte elimina a Italia"
+    },
+    "description": {
+      "tr": "Kuzey Kore, Dünya Kupası'nda İtalya'yı yenerek futbol tarihinin en şaşırtıcı sonuçlarından birine imza attı.",
+      "en": "North Korea defeated Italy in one of the most shocking World Cup results.",
+      "de": "Nordkorea besiegte Italien in einem der überraschendsten Ergebnisse der WM-Geschichte.",
+      "fr": "La Corée du Nord bat l'Italie dans l'un des résultats les plus surprenants de l'histoire du Mondial.",
+      "es": "Corea del Norte derrotó a Italia en uno de los resultados más sorprendentes de la historia del Mundial."
+    }
+  },
+  {
+    "id": "game_of_century",
+    "category": "siradisi_mac",
+    "year": 1970,
+    "names": {
+      "tr": "Yüzyılın Maçı",
+      "en": "Game of the Century",
+      "de": "Jahrhundertspiel",
+      "fr": "Match du siècle",
+      "es": "Partido del Siglo"
+    },
+    "description": {
+      "tr": "İtalya ile Batı Almanya arasındaki yarı final, uzatmalarda gelen beş golle futbol tarihinin klasiklerinden biri oldu.",
+      "en": "Italy and West Germany produced a legendary semi-final featuring five extra-time goals.",
+      "de": "Italien und die Bundesrepublik lieferten ein legendäres Halbfinale mit fünf Toren in der Verlängerung.",
+      "fr": "L'Italie et l'Allemagne de l'Ouest livrent une demi-finale légendaire avec cinq buts en prolongation.",
+      "es": "Italia y Alemania Occidental protagonizaron una semifinal legendaria con cinco goles en la prórroga."
+    }
+  },
+  {
+    "id": "cameroon_argentina",
+    "category": "siradisi_galibiyet",
+    "year": 1990,
+    "names": {
+      "tr": "Kamerun'un Arjantin'i Şoke Etmesi",
+      "en": "Cameroon Shocks Argentina",
+      "de": "Kamerun schockt Argentinien",
+      "fr": "Le Cameroun choque l'Argentine",
+      "es": "Camerún sorprende a Argentina"
+    },
+    "description": {
+      "tr": "Kamerun, son şampiyon Arjantin'i yenerek Dünya Kupası'nın en unutulmaz sürprizlerinden birini yaptı.",
+      "en": "Cameroon stunned reigning champions Argentina in one of the World Cup's great upsets.",
+      "de": "Kamerun schockte den amtierenden Weltmeister Argentinien in einer der größten WM-Überraschungen.",
+      "fr": "Le Cameroun choque l'Argentine, championne du monde en titre, dans l'une des grandes surprises du Mondial.",
+      "es": "Camerún sorprendió a la campeona del mundo Argentina en una de las grandes sorpresas del Mundial."
+    }
+  },
+  {
+    "id": "denmark_euro_miracle",
+    "category": "siradisi_sampiyonluk",
+    "year": 1992,
+    "names": {
+      "tr": "Danimarka'nın Euro Mucizesi",
+      "en": "Denmark's Euro Miracle",
+      "de": "Dänemarks EM-Wunder",
+      "fr": "Le miracle danois à l'Euro",
+      "es": "El milagro danés de la Eurocopa"
+    },
+    "description": {
+      "tr": "Danimarka, Yugoslavya'nın son anda çıkarılmasının ardından turnuvaya katılıp Avrupa şampiyonu oldu.",
+      "en": "Denmark entered the tournament unexpectedly after Yugoslavia's exclusion and went on to become European champions.",
+      "de": "Dänemark rückte nach dem Ausschluss Jugoslawiens ins Turnier nach und wurde Europameister.",
+      "fr": "Le Danemark entra dans le tournoi après l'exclusion de la Yougoslavie et devint champion d'Europe.",
+      "es": "Dinamarca entró en el torneo tras la exclusión de Yugoslavia y acabó proclamándose campeona de Europa."
+    }
+  },
+  {
+    "id": "greece_euro_triumph",
+    "category": "siradisi_sampiyonluk",
+    "year": 2004,
+    "names": {
+      "tr": "Yunanistan'ın Euro Şampiyonluğu",
+      "en": "Greece Wins the Euro",
+      "de": "Griechenland gewinnt die EM",
+      "fr": "La Grèce remporte l'Euro",
+      "es": "Grecia gana la Eurocopa"
+    },
+    "description": {
+      "tr": "Yunanistan, favorilerin arasından sıyrılarak tarihinin ilk Avrupa şampiyonluğunu kazandı.",
+      "en": "Greece stunned the favourites and won its first major international title.",
+      "de": "Griechenland setzte sich gegen die Favoriten durch und gewann seinen ersten großen internationalen Titel.",
+      "fr": "La Grèce surprend les favoris et remporte son premier grand titre international.",
+      "es": "Grecia sorprendió a los favoritos y ganó su primer gran título internacional."
+    }
+  },
+  {
+    "id": "istanbul_miracle",
+    "category": "siradisi_geri_donus",
+    "year": 2005,
+    "names": {
+      "tr": "İstanbul Mucizesi",
+      "en": "Istanbul Miracle",
+      "de": "Wunder von Istanbul",
+      "fr": "Miracle d'Istanbul",
+      "es": "Milagro de Estambul"
+    },
+    "description": {
+      "tr": "Liverpool, Şampiyonlar Ligi finalinde büyük bir farktan dönerek Milan'ı penaltılarla yendi.",
+      "en": "Liverpool recovered from a huge deficit in the Champions League final and beat Milan on penalties.",
+      "de": "Liverpool drehte im Champions-League-Finale einen großen Rückstand und besiegte Milan im Elfmeterschießen.",
+      "fr": "Liverpool renversa un énorme retard en finale de Ligue des champions et battit Milan aux tirs au but.",
+      "es": "El Liverpool remontó una gran desventaja en la final de la Champions y derrotó al Milan por penaltis."
+    }
+  },
+  {
+    "id": "barcelona_psg_comeback",
+    "category": "siradisi_geri_donus",
+    "year": 2017,
+    "names": {
+      "tr": "Barcelona'nın Paris Mucizesi",
+      "en": "Barcelona's Paris Miracle",
+      "de": "Barcelonas Wunder von Paris",
+      "fr": "Le miracle de Barcelone à Paris",
+      "es": "El milagro del Barcelona en París"
+    },
+    "description": {
+      "tr": "Barcelona, ilk maçtaki ağır dezavantajı tersine çevirerek PSG'yi dramatik biçimde eledi.",
+      "en": "Barcelona overturned a huge first-leg deficit to eliminate PSG in dramatic fashion.",
+      "de": "Barcelona drehte einen großen Rückstand aus dem Hinspiel und warf PSG dramatisch aus dem Wettbewerb.",
+      "fr": "Barcelone renversa un lourd retard du match aller et élimina le PSG de façon spectaculaire.",
+      "es": "El Barcelona remontó una enorme desventaja de la ida y eliminó al PSG de forma dramática."
+    }
+  },
+  {
+    "id": "liverpool_barcelona_comeback",
+    "category": "siradisi_geri_donus",
+    "year": 2019,
+    "names": {
+      "tr": "Liverpool'un Barcelona Mucizesi",
+      "en": "Liverpool's Barcelona Miracle",
+      "de": "Liverpools Wunder gegen Barcelona",
+      "fr": "Le miracle de Liverpool contre Barcelone",
+      "es": "El milagro del Liverpool contra el Barcelona"
+    },
+    "description": {
+      "tr": "Liverpool, ilk maçtaki üç farklı yenilgiyi Anfield'da tersine çevirerek finale çıktı.",
+      "en": "Liverpool overturned a three-goal first-leg deficit at Anfield to reach the final.",
+      "de": "Liverpool drehte an der Anfield Road einen Drei-Tore-Rückstand aus dem Hinspiel.",
+      "fr": "Liverpool renversa à Anfield un retard de trois buts du match aller.",
+      "es": "El Liverpool remontó en Anfield una desventaja de tres goles de la ida."
+    }
+  },
+  {
+    "id": "leicester_title",
+    "category": "siradisi_sampiyonluk",
+    "year": 2016,
+    "names": {
+      "tr": "Leicester City'nin İmkânsız Şampiyonluğu",
+      "en": "Leicester City's Impossible Title",
+      "de": "Leicester Citys unmöglicher Titel",
+      "fr": "L'impossible titre de Leicester City",
+      "es": "El título imposible del Leicester City"
+    },
+    "description": {
+      "tr": "Küme düşme adayı gösterilen Leicester City, Premier League şampiyonu oldu.",
+      "en": "Leicester City, widely expected to fight relegation, won the Premier League title.",
+      "de": "Leicester City, zuvor als Abstiegskandidat gesehen, wurde Premier-League-Meister.",
+      "fr": "Leicester City, annoncé comme candidat à la relégation, remporte la Premier League.",
+      "es": "El Leicester City, considerado candidato al descenso, ganó la Premier League."
+    }
+  },
+  {
+    "id": "germany_brazil_7_1",
+    "category": "siradisi_skor",
+    "year": 2014,
+    "names": {
+      "tr": "Almanya'nın Brezilya'yı 7-1 Yenmesi",
+      "en": "Germany's 7-1 Win Over Brazil",
+      "de": "Deutschlands 7:1 gegen Brasilien",
+      "fr": "Le 7-1 de l'Allemagne contre le Brésil",
+      "es": "El 7-1 de Alemania contra Brasil"
+    },
+    "description": {
+      "tr": "Dünya Kupası yarı finalinde Almanya, ev sahibi Brezilya'yı ilk yarıda tarihi bir farkla dağıttı.",
+      "en": "Germany destroyed hosts Brazil with an extraordinary first-half performance in the World Cup semi-final.",
+      "de": "Deutschland zerlegte Gastgeber Brasilien im WM-Halbfinale mit einer historischen ersten Halbzeit.",
+      "fr": "L'Allemagne écrase le Brésil hôte avec une première mi-temps historique en demi-finale du Mondial.",
+      "es": "Alemania destrozó a la anfitriona Brasil con una primera parte histórica en la semifinal del Mundial."
+    }
+  },
+  {
+    "id": "bayern_barcelona_8_2",
+    "category": "siradisi_skor",
+    "year": 2020,
+    "names": {
+      "tr": "Bayern'in Barcelona'yı 8-2 Yenmesi",
+      "en": "Bayern's 8-2 Win Over Barcelona",
+      "de": "Bayerns 8:2 gegen Barcelona",
+      "fr": "Le 8-2 du Bayern contre Barcelone",
+      "es": "El 8-2 del Bayern contra el Barcelona"
+    },
+    "description": {
+      "tr": "Bayern Münih, Şampiyonlar Ligi'nde Barcelona'yı tarihi bir farkla eledi.",
+      "en": "Bayern Munich destroyed Barcelona in one of the Champions League's most extraordinary knockout matches.",
+      "de": "Bayern München zerlegte Barcelona in einem der außergewöhnlichsten K.-o.-Spiele der Champions-League-Geschichte.",
+      "fr": "Le Bayern Munich écrase Barcelone dans l'un des matchs à élimination directe les plus marquants de la Ligue des champions.",
+      "es": "El Bayern de Múnich destrozó al Barcelona en uno de los partidos eliminatorios más impactantes de la Champions."
+    }
+  },
+  {
+    "id": "real_barca_5_0_bernabeu",
+    "category": "siradisi_skor",
+    "year": 1995,
+    "names": {
+      "tr": "Real Madrid'in Barcelona'yı 5-0 Yenmesi",
+      "en": "Real Madrid's 5-0 Win Over Barcelona",
+      "de": "Real Madrids 5:0 gegen Barcelona",
+      "fr": "Le 5-0 du Real Madrid contre Barcelone",
+      "es": "El 5-0 del Real Madrid contra el Barcelona"
+    },
+    "description": {
+      "tr": "Real Madrid, ezeli rakibini Santiago Bernabéu'da ağır bir yenilgiye uğrattı.",
+      "en": "Real Madrid demolished their greatest rivals at the Santiago Bernabéu.",
+      "de": "Real Madrid demütigte den Erzrivalen im Santiago Bernabéu.",
+      "fr": "Le Real Madrid écrase son grand rival au Santiago Bernabéu.",
+      "es": "El Real Madrid goleó a su gran rival en el Santiago Bernabéu."
+    }
+  },
+  {
+    "id": "barca_real_5_0_camp_nou",
+    "category": "siradisi_skor",
+    "year": 2010,
+    "names": {
+      "tr": "Barcelona'nın Real Madrid'i 5-0 Yenmesi",
+      "en": "Barcelona's 5-0 Win Over Real Madrid",
+      "de": "Barcelonas 5:0 gegen Real Madrid",
+      "fr": "Le 5-0 de Barcelone contre le Real Madrid",
+      "es": "El 5-0 del Barcelona contra el Real Madrid"
+    },
+    "description": {
+      "tr": "Guardiola'nın Barcelona'sı, Real Madrid'i Camp Nou'da ezici bir futbolla mağlup etti.",
+      "en": "Guardiola's Barcelona dismantled Real Madrid at Camp Nou.",
+      "de": "Guardiolas Barcelona zerlegte Real Madrid im Camp Nou.",
+      "fr": "Le Barcelone de Guardiola écrase le Real Madrid au Camp Nou.",
+      "es": "El Barcelona de Guardiola destrozó al Real Madrid en el Camp Nou."
+    }
+  },
+  {
+    "id": "man_city_last_second_title",
+    "category": "siradisi_sampiyonluk",
+    "year": 2012,
+    "names": {
+      "tr": "Manchester City'nin Son Saniye Şampiyonluğu",
+      "en": "Manchester City's Last-Second Title",
+      "de": "Manchester Citys Titel in letzter Sekunde",
+      "fr": "Le titre de Manchester City à la dernière seconde",
+      "es": "El título del Manchester City en el último segundo"
+    },
+    "description": {
+      "tr": "Manchester City, sezonun son dakikalarında iki gol bularak Premier League'i kazandı.",
+      "en": "Manchester City scored twice in stoppage time to win the Premier League on the final day.",
+      "de": "Manchester City erzielte in der Nachspielzeit zwei Tore und gewann am letzten Spieltag den Titel.",
+      "fr": "Manchester City marque deux fois dans le temps additionnel et remporte le titre lors de la dernière journée.",
+      "es": "El Manchester City marcó dos veces en el descuento y ganó el título en la última jornada."
+    }
+  },
+  {
+    "id": "nottingham_forest_two_european_cups",
+    "category": "siradisi_sampiyonluk",
+    "year": 1980,
+    "names": {
+      "tr": "Nottingham Forest'ın İki Yıl Üst Üste Avrupa Şampiyonluğu",
+      "en": "Nottingham Forest's Back-to-Back European Cups",
+      "de": "Nottingham Forests zwei Europapokalsiege in Folge",
+      "fr": "Les deux Coupes d'Europe consécutives de Nottingham Forest",
+      "es": "Las dos Copas de Europa consecutivas del Nottingham Forest"
+    },
+    "description": {
+      "tr": "Nottingham Forest, kulüp tarihinin en sıra dışı başarılarından biriyle Avrupa'nın zirvesinde iki yıl kaldı.",
+      "en": "Nottingham Forest conquered Europe twice in succession in one of football's strangest elite runs.",
+      "de": "Nottingham Forest gewann zweimal in Folge den Europapokal – eine der ungewöhnlichsten Erfolgsgeschichten.",
+      "fr": "Nottingham Forest remporte deux fois de suite la Coupe d'Europe dans l'une des histoires les plus improbables du football.",
+      "es": "Nottingham Forest ganó dos Copas de Europa consecutivas en una de las historias más improbables del fútbol."
+    }
+  },
+  {
+    "id": "steaua_european_cup",
+    "category": "siradisi_sampiyonluk",
+    "year": 1986,
+    "names": {
+      "tr": "Steaua Bükreş'in Avrupa Kupası Zaferi",
+      "en": "Steaua Bucharest Wins the European Cup",
+      "de": "Steaua Bukarest gewinnt den Europapokal",
+      "fr": "Le Steaua Bucarest remporte la Coupe d'Europe",
+      "es": "El Steaua de Bucarest gana la Copa de Europa"
+    },
+    "description": {
+      "tr": "Steaua Bükreş, Avrupa Kupası'nı kazanan ilk Doğu Avrupa kulüplerinden biri olarak tarihe geçti.",
+      "en": "Steaua Bucharest became the first club from Romania to win the European Cup.",
+      "de": "Steaua Bukarest wurde der erste rumänische Europapokalsieger.",
+      "fr": "Le Steaua Bucarest devient le premier club roumain à remporter la Coupe d'Europe.",
+      "es": "El Steaua de Bucarest se convirtió en el primer club rumano en ganar la Copa de Europa."
+    }
+  },
+  {
+    "id": "red_star_european_cup",
+    "category": "siradisi_sampiyonluk",
+    "year": 1991,
+    "names": {
+      "tr": "Kızılyıldız'ın Avrupa Kupası Zaferi",
+      "en": "Red Star Wins the European Cup",
+      "de": "Roter Stern gewinnt den Europapokal",
+      "fr": "L'Étoile rouge remporte la Coupe d'Europe",
+      "es": "El Estrella Roja gana la Copa de Europa"
+    },
+    "description": {
+      "tr": "Kızılyıldız, Yugoslavya döneminin zirvesinde Avrupa Kupası'nı kazandı.",
+      "en": "Red Star Belgrade won the European Cup at the peak of Yugoslav club football.",
+      "de": "Roter Stern Belgrad gewann den Europapokal auf dem Höhepunkt des jugoslawischen Vereinsfußballs.",
+      "fr": "L'Étoile rouge de Belgrade remporte la Coupe d'Europe au sommet du football yougoslave.",
+      "es": "El Estrella Roja de Belgrado ganó la Copa de Europa en el apogeo del fútbol yugoslavo."
+    }
+  },
+  {
+    "id": "porto_mourinho_champions_league",
+    "category": "siradisi_sampiyonluk",
+    "year": 2004,
+    "names": {
+      "tr": "Porto'nun Mourinho ile Şampiyonlar Ligi Zaferi",
+      "en": "Porto's Champions League Triumph Under Mourinho",
+      "de": "Portos Champions-League-Triumph unter Mourinho",
+      "fr": "Le triomphe de Porto en Ligue des champions sous Mourinho",
+      "es": "El triunfo del Porto en la Champions con Mourinho"
+    },
+    "description": {
+      "tr": "Porto, Mourinho yönetiminde Avrupa'nın dev kulüplerini geride bırakarak Şampiyonlar Ligi'ni kazandı.",
+      "en": "Porto, led by Mourinho, defeated Europe's elite to win the Champions League.",
+      "de": "Porto besiegte unter Mourinho Europas Elite und gewann die Champions League.",
+      "fr": "Porto, dirigé par Mourinho, bat les grands d'Europe et remporte la Ligue des champions.",
+      "es": "El Porto de Mourinho superó a los grandes de Europa y ganó la Champions League."
+    }
+  },
+  {
+    "id": "leverkusen_unbeaten",
+    "category": "siradisi_basari",
+    "year": 2024,
+    "names": {
+      "tr": "Leverkusen'in Yenilgisiz Bundesliga Sezonu",
+      "en": "Leverkusen's Unbeaten Bundesliga Season",
+      "de": "Leverkusens ungeschlagene Bundesliga-Saison",
+      "fr": "La saison invaincue de Leverkusen en Bundesliga",
+      "es": "La temporada invicta del Leverkusen en Bundesliga"
+    },
+    "description": {
+      "tr": "Bayer Leverkusen, Bundesliga sezonunu yenilmeden tamamlayarak kulüp tarihine geçti.",
+      "en": "Bayer Leverkusen completed a Bundesliga season without losing a match.",
+      "de": "Bayer Leverkusen beendete eine Bundesliga-Saison ohne Niederlage.",
+      "fr": "Le Bayer Leverkusen termine une saison de Bundesliga sans aucune défaite.",
+      "es": "El Bayer Leverkusen terminó una temporada de Bundesliga sin perder un solo partido."
+    }
+  },
+
+  {
+    "id": "fifa_foundation",
+    "category": "organizasyon_kurulusu",
+    "year": 1904,
+    "names": {
+      "tr": "FIFA'nın Kuruluşu",
+      "en": "Foundation of FIFA",
+      "de": "Gründung der FIFA",
+      "fr": "Fondation de la FIFA",
+      "es": "Fundación de la FIFA"
+    },
+    "description": {
+      "tr": "FIFA, uluslararası futbolu yöneten küresel kurum olarak Paris'te kuruldu.",
+      "en": "FIFA was founded in Paris as the global governing body of football.",
+      "de": "Die FIFA wurde in Paris als Weltverband des Fußballs gegründet.",
+      "fr": "La FIFA est fondée à Paris comme instance mondiale du football.",
+      "es": "La FIFA fue fundada en París como organismo mundial del fútbol."
+    }
+  },
+  {
+    "id": "first_world_cup",
+    "category": "organizasyon_kurulusu",
+    "year": 1930,
+    "names": {
+      "tr": "İlk Dünya Kupası",
+      "en": "First World Cup",
+      "de": "Erste Weltmeisterschaft",
+      "fr": "Première Coupe du monde",
+      "es": "Primer Mundial"
+    },
+    "description": {
+      "tr": "FIFA Dünya Kupası ilk kez Uruguay'da düzenlendi.",
+      "en": "The FIFA World Cup was held for the first time in Uruguay.",
+      "de": "Die FIFA-Weltmeisterschaft wurde erstmals in Uruguay ausgetragen.",
+      "fr": "La Coupe du monde de la FIFA est organisée pour la première fois en Uruguay.",
+      "es": "El Mundial de la FIFA se celebró por primera vez en Uruguay."
+    }
+  },
+  {
+    "id": "uefa_foundation",
+    "category": "organizasyon_kurulusu",
+    "year": 1954,
+    "names": {
+      "tr": "UEFA'nın Kuruluşu",
+      "en": "Foundation of UEFA",
+      "de": "Gründung der UEFA",
+      "fr": "Fondation de l'UEFA",
+      "es": "Fundación de la UEFA"
+    },
+    "description": {
+      "tr": "UEFA, Avrupa futbolunun kıtasal yönetim organı olarak kuruldu.",
+      "en": "UEFA was founded as the governing body of European football.",
+      "de": "Die UEFA wurde als Dachverband des europäischen Fußballs gegründet.",
+      "fr": "L'UEFA est fondée comme instance dirigeante du football européen.",
+      "es": "La UEFA fue fundada como organismo rector del fútbol europeo."
+    }
+  },
+  {
+    "id": "european_cup_foundation",
+    "category": "organizasyon_kurulusu",
+    "year": 1955,
+    "names": {
+      "tr": "Avrupa Şampiyon Kulüpler Kupası'nın Başlangıcı",
+      "en": "Launch of the European Cup",
+      "de": "Beginn des Europapokals der Landesmeister",
+      "fr": "Création de la Coupe d'Europe des clubs champions",
+      "es": "Inicio de la Copa de Europa"
+    },
+    "description": {
+      "tr": "Avrupa'nın ulusal lig şampiyonlarını buluşturan yeni kıta turnuvası başladı.",
+      "en": "Europe's new competition for domestic champions began.",
+      "de": "Der neue Wettbewerb für Europas Landesmeister begann.",
+      "fr": "La nouvelle compétition européenne des champions nationaux débute.",
+      "es": "Comenzó la nueva competición europea para los campeones nacionales."
+    }
+  },
+  {
+    "id": "euro_foundation",
+    "category": "organizasyon_kurulusu",
+    "year": 1960,
+    "names": {
+      "tr": "Avrupa Şampiyonası'nın Başlangıcı",
+      "en": "First European Championship",
+      "de": "Erste Europameisterschaft",
+      "fr": "Premier Championnat d'Europe",
+      "es": "Primer Campeonato de Europa"
+    },
+    "description": {
+      "tr": "Avrupa milli takımlarının kıta şampiyonası ilk kez düzenlendi.",
+      "en": "Europe's national teams competed in the first continental championship.",
+      "de": "Europas Nationalmannschaften spielten erstmals um die Kontinentalmeisterschaft.",
+      "fr": "Les sélections européennes disputent pour la première fois un championnat continental.",
+      "es": "Las selecciones europeas disputaron por primera vez un campeonato continental."
+    }
+  },
+  {
+    "id": "copa_america_foundation",
+    "category": "organizasyon_kurulusu",
+    "year": 1916,
+    "names": {
+      "tr": "Copa América'nın Başlangıcı",
+      "en": "First Copa América",
+      "de": "Erste Copa América",
+      "fr": "Première Copa América",
+      "es": "Primera Copa América"
+    },
+    "description": {
+      "tr": "Güney Amerika'nın kıtasal milli takım turnuvası ilk kez düzenlendi.",
+      "en": "South America's continental national-team tournament was held for the first time.",
+      "de": "Das kontinentale Nationalmannschaftsturnier Südamerikas fand erstmals statt.",
+      "fr": "La compétition continentale des sélections sud-américaines est organisée pour la première fois.",
+      "es": "El torneo continental de selecciones sudamericanas se celebró por primera vez."
+    }
+  },
+  {
+    "id": "premier_league_foundation",
+    "category": "organizasyon_kurulusu",
+    "year": 1992,
+    "names": {
+      "tr": "Premier League'in Kuruluşu",
+      "en": "Foundation of the Premier League",
+      "de": "Gründung der Premier League",
+      "fr": "Création de la Premier League",
+      "es": "Creación de la Premier League"
+    },
+    "description": {
+      "tr": "İngiliz futbolunun üst ligi Football League'den ayrılarak bağımsız Premier League'i oluşturdu.",
+      "en": "England's top clubs broke away from the Football League to form the Premier League.",
+      "de": "Englands Spitzenklubs lösten sich von der Football League und gründeten die Premier League.",
+      "fr": "Les grands clubs anglais quittent la Football League pour créer la Premier League.",
+      "es": "Los grandes clubes ingleses se separaron de la Football League para crear la Premier League."
+    }
+  },
+  {
+    "id": "bundesliga_foundation",
+    "category": "organizasyon_kurulusu",
+    "year": 1963,
+    "names": {
+      "tr": "Bundesliga'nın Kuruluşu",
+      "en": "Foundation of the Bundesliga",
+      "de": "Gründung der Bundesliga",
+      "fr": "Création de la Bundesliga",
+      "es": "Creación de la Bundesliga"
+    },
+    "description": {
+      "tr": "Batı Almanya'nın ulusal profesyonel üst ligi Bundesliga başladı.",
+      "en": "West Germany launched its national top division, the Bundesliga.",
+      "de": "Die Bundesrepublik startete ihre nationale Spitzenliga, die Bundesliga.",
+      "fr": "L'Allemagne de l'Ouest lance sa première division nationale, la Bundesliga.",
+      "es": "Alemania Occidental puso en marcha su primera división nacional, la Bundesliga."
+    }
+  },
+  {
+    "id": "la_liga_foundation",
+    "category": "organizasyon_kurulusu",
+    "year": 1929,
+    "names": {
+      "tr": "La Liga'nın Başlangıcı",
+      "en": "La Liga Begins",
+      "de": "Beginn der La Liga",
+      "fr": "Début de la Liga",
+      "es": "Inicio de La Liga"
+    },
+    "description": {
+      "tr": "İspanya'nın ulusal lig şampiyonası ilk kez düzenlendi.",
+      "en": "Spain's national league championship was held for the first time.",
+      "de": "Spaniens nationale Liga wurde erstmals ausgetragen.",
+      "fr": "Le championnat national espagnol est organisé pour la première fois.",
+      "es": "El campeonato nacional español se disputó por primera vez."
+    }
+  },
+  {
+    "id": "serie_a_foundation",
+    "category": "organizasyon_kurulusu",
+    "year": 1929,
+    "names": {
+      "tr": "Serie A'nın Başlangıcı",
+      "en": "Serie A Begins",
+      "de": "Beginn der Serie A",
+      "fr": "Début de la Serie A",
+      "es": "Inicio de la Serie A"
+    },
+    "description": {
+      "tr": "İtalya'nın ulusal tek gruplu üst ligi bugünkü Serie A yapısıyla başladı.",
+      "en": "Italy's national top division began in its modern single-group format.",
+      "de": "Italiens höchste Liga begann im modernen Ein-Gruppen-Format.",
+      "fr": "La première division italienne débute dans son format moderne à groupe unique.",
+      "es": "La primera división italiana comenzó con su moderno formato de grupo único."
+    }
+  },
+  {
+    "id": "ligue1_foundation",
+    "category": "organizasyon_kurulusu",
+    "year": 1932,
+    "names": {
+      "tr": "Ligue 1'in Başlangıcı",
+      "en": "Ligue 1 Begins",
+      "de": "Beginn der Ligue 1",
+      "fr": "Début de la Ligue 1",
+      "es": "Inicio de la Ligue 1"
+    },
+    "description": {
+      "tr": "Fransa'nın profesyonel ulusal lig dönemi başladı.",
+      "en": "France entered the era of professional national league football.",
+      "de": "Frankreich begann die Ära des professionellen nationalen Ligafußballs.",
+      "fr": "La France entre dans l'ère du championnat national professionnel.",
+      "es": "Francia entró en la era del campeonato nacional profesional."
+    }
+  },
+
+  {
+    "id": "hand_of_god",
+    "category": "skandal_ve_ikonic_olay",
+    "year": 1986,
+    "names": {
+      "tr": "Maradona'nın Tanrı'nın Eli",
+      "en": "Maradona's Hand of God",
+      "de": "Maradonas Hand Gottes",
+      "fr": "La Main de Dieu de Maradona",
+      "es": "La Mano de Dios de Maradona"
+    },
+    "description": {
+      "tr": "Maradona, İngiltere'ye karşı eliyle attığı golün hakem tarafından verilmesiyle futbol tarihinin en tartışmalı anlarından birini yarattı.",
+      "en": "Maradona scored with his hand against England and the goal was allowed to stand.",
+      "de": "Maradona erzielte gegen England ein Handtor, das vom Schiedsrichter anerkannt wurde.",
+      "fr": "Maradona marque de la main contre l'Angleterre et le but est validé.",
+      "es": "Maradona marcó con la mano ante Inglaterra y el gol fue concedido."
+    }
+  },
+  {
+    "id": "goal_of_century",
+    "category": "ikonic_gol",
+    "year": 1986,
+    "names": {
+      "tr": "Maradona'nın Yüzyılın Golü",
+      "en": "Maradona's Goal of the Century",
+      "de": "Maradonas Tor des Jahrhunderts",
+      "fr": "Le but du siècle de Maradona",
+      "es": "El Gol del Siglo de Maradona"
+    },
+    "description": {
+      "tr": "Maradona, İngiltere savunmasını baştan sona geçerek futbol tarihinin en ünlü bireysel gollerinden birini attı.",
+      "en": "Maradona dribbled through England's defence to score one of football's most famous individual goals.",
+      "de": "Maradona dribbelte durch Englands Abwehr und erzielte eines der berühmtesten Solotore.",
+      "fr": "Maradona traverse toute la défense anglaise et inscrit l'un des plus célèbres buts individuels.",
+      "es": "Maradona atravesó la defensa inglesa y marcó uno de los goles individuales más famosos."
+    }
+  },
+  {
+    "id": "cantona_kung_fu",
+    "category": "skandal_ve_ikonic_olay",
+    "year": 1995,
+    "names": {
+      "tr": "Cantona'nın Kung-Fu Tekmesi",
+      "en": "Cantona's Kung-Fu Kick",
+      "de": "Cantonas Kung-Fu-Tritt",
+      "fr": "Le coup de pied kung-fu de Cantona",
+      "es": "La patada de kung-fu de Cantona"
+    },
+    "description": {
+      "tr": "Eric Cantona, bir taraftara yaptığı saldırı nedeniyle futbol tarihinin en ünlü cezalarından birini aldı.",
+      "en": "Eric Cantona attacked a spectator and received one of football's most famous bans.",
+      "de": "Eric Cantona griff einen Zuschauer an und erhielt eine der berühmtesten Sperren der Fußballgeschichte.",
+      "fr": "Eric Cantona attaque un spectateur et reçoit l'une des sanctions les plus célèbres du football.",
+      "es": "Eric Cantona atacó a un espectador y recibió una de las sanciones más famosas del fútbol."
+    }
+  },
+  {
+    "id": "zidane_headbutt",
+    "category": "skandal_ve_ikonic_olay",
+    "year": 2006,
+    "names": {
+      "tr": "Zidane'ın Materazzi'ye Kafa Atması",
+      "en": "Zidane's Headbutt on Materazzi",
+      "de": "Zidanes Kopfstoß gegen Materazzi",
+      "fr": "Le coup de tête de Zidane à Materazzi",
+      "es": "El cabezazo de Zidane a Materazzi"
+    },
+    "description": {
+      "tr": "Zidane, Dünya Kupası finalinde Materazzi'ye kafa atarak finalin en unutulmaz anlarından birini yarattı.",
+      "en": "Zidane headbutted Materazzi in the World Cup final, producing one of football's most famous incidents.",
+      "de": "Zidane stieß Materazzi im WM-Finale mit dem Kopf und sorgte für einen der berühmtesten Vorfälle des Fußballs.",
+      "fr": "Zidane donne un coup de tête à Materazzi en finale du Mondial, créant l'un des incidents les plus célèbres du football.",
+      "es": "Zidane dio un cabezazo a Materazzi en la final del Mundial, creando uno de los incidentes más famosos del fútbol."
+    }
+  },
+  {
+    "id": "suarez_handball",
+    "category": "skandal_ve_ikonic_olay",
+    "year": 2010,
+    "names": {
+      "tr": "Suárez'in Gana'ya Karşı Elle Müdahalesi",
+      "en": "Suárez's Handball Against Ghana",
+      "de": "Suárez' Handspiel gegen Ghana",
+      "fr": "La main de Suárez contre le Ghana",
+      "es": "La mano de Suárez contra Ghana"
+    },
+    "description": {
+      "tr": "Suárez, uzatmada çizgi üzerindeki golü eliyle engelledi; Gana penaltıyı kaçırınca Uruguay tur atladı.",
+      "en": "Suárez stopped a goal with his hand in extra time, then Ghana missed the resulting penalty.",
+      "de": "Suárez verhinderte in der Verlängerung ein Tor mit der Hand, danach verschoss Ghana den Elfmeter.",
+      "fr": "Suárez empêche un but de la main en prolongation, puis le Ghana rate le penalty.",
+      "es": "Suárez evitó un gol con la mano en la prórroga y Ghana falló el penalti posterior."
+    }
+  },
+  {
+    "id": "baggio_penalty",
+    "category": "ikonic_an",
+    "year": 1994,
+    "names": {
+      "tr": "Baggio'nun Final Penaltısı",
+      "en": "Baggio's Final Penalty",
+      "de": "Baggios Final-Elfmeter",
+      "fr": "Le penalty de Baggio en finale",
+      "es": "El penalti de Baggio en la final"
+    },
+    "description": {
+      "tr": "Roberto Baggio'nun kaçırdığı son penaltı, Brezilya'nın Dünya Kupası'nı kazanmasını sağladı.",
+      "en": "Roberto Baggio missed the decisive penalty as Brazil won the World Cup.",
+      "de": "Roberto Baggio verschoss den entscheidenden Elfmeter und Brasilien wurde Weltmeister.",
+      "fr": "Roberto Baggio rate le penalty décisif et le Brésil remporte la Coupe du monde.",
+      "es": "Roberto Baggio falló el penalti decisivo y Brasil ganó el Mundial."
+    }
+  },
+  {
+    "id": "maradona_doping_exit",
+    "category": "skandal",
+    "year": 1994,
+    "names": {
+      "tr": "Maradona'nın Doping Nedeniyle Dünya Kupası'ndan Çıkarılması",
+      "en": "Maradona's Doping Expulsion",
+      "de": "Maradonas Ausschluss wegen Dopings",
+      "fr": "L'exclusion de Maradona pour dopage",
+      "es": "La expulsión de Maradona por dopaje"
+    },
+    "description": {
+      "tr": "Maradona, doping testinin pozitif çıkmasının ardından 1994 Dünya Kupası'ndan çıkarıldı.",
+      "en": "Maradona was expelled from the 1994 World Cup after a positive doping test.",
+      "de": "Maradona wurde nach einem positiven Dopingtest von der WM 1994 ausgeschlossen.",
+      "fr": "Maradona est exclu du Mondial 1994 après un contrôle antidopage positif.",
+      "es": "Maradona fue expulsado del Mundial de 1994 tras un control antidopaje positivo."
+    }
+  },
+  {
+    "id": "escobar_murder",
+    "category": "trajedi",
+    "year": 1994,
+    "names": {
+      "tr": "Andrés Escobar'ın Öldürülmesi",
+      "en": "The Murder of Andrés Escobar",
+      "de": "Die Ermordung von Andrés Escobar",
+      "fr": "L'assassinat d'Andrés Escobar",
+      "es": "El asesinato de Andrés Escobar"
+    },
+    "description": {
+      "tr": "Kolombiyalı futbolcu, Dünya Kupası'ndaki kendi kalesine golün ardından Medellín'de öldürüldü.",
+      "en": "The Colombian defender was murdered in Medellín after the World Cup own goal.",
+      "de": "Der kolumbianische Verteidiger wurde nach seinem Eigentor bei der WM in Medellín ermordet.",
+      "fr": "Le défenseur colombien est assassiné à Medellín après son but contre son camp au Mondial.",
+      "es": "El defensa colombiano fue asesinado en Medellín tras su autogol en el Mundial."
+    }
+  },
+  {
+    "id": "calciopoli",
+    "category": "sike_skandal",
+    "year": 2006,
+    "names": {
+      "tr": "Calciopoli",
+      "en": "Calciopoli",
+      "de": "Calciopoli",
+      "fr": "Calciopoli",
+      "es": "Calciopoli"
+    },
+    "description": {
+      "tr": "Hakem atamalarını etkilemeye yönelik skandal Juventus'un küme düşürülmesi ve unvan kayıplarıyla sonuçlandı.",
+      "en": "The refereeing scandal led to Juventus being relegated and stripped of a league title.",
+      "de": "Der Schiedsrichterskandal führte zum Zwangsabstieg von Juventus und zum Entzug eines Meistertitels.",
+      "fr": "Le scandale des arbitres entraîne la relégation de la Juventus et le retrait d'un titre.",
+      "es": "El escándalo arbitral provocó el descenso de la Juventus y la retirada de un título."
+    }
+  },
+  {
+    "id": "marseille_bribery",
+    "category": "sike_skandal",
+    "year": 1993,
+    "names": {
+      "tr": "Marseille-Valenciennes Şike Skandalı",
+      "en": "Marseille-Valenciennes Bribery Scandal",
+      "de": "Bestechungsskandal Marseille-Valenciennes",
+      "fr": "Scandale de corruption Marseille-Valenciennes",
+      "es": "Escándalo de sobornos Marseille-Valenciennes"
+    },
+    "description": {
+      "tr": "Marseille'in rakip oyunculara para teklif ettiği ortaya çıktı ve kulüp Fransa şampiyonluğundan mahrum bırakıldı.",
+      "en": "Marseille was found to have bribed opponents and was stripped of the French title.",
+      "de": "Marseille bestach Gegner und wurde daraufhin der französische Meistertitel aberkannt.",
+      "fr": "Marseille avait corrompu des adversaires et fut privé du titre de champion de France.",
+      "es": "El Marsella sobornó a rivales y fue despojado del título francés."
+    }
+  },
+  {
+    "id": "hoyzer_scandal",
+    "category": "sike_skandal",
+    "year": 2005,
+    "names": {
+      "tr": "Robert Hoyzer Şike Skandalı",
+      "en": "Robert Hoyzer Match-Fixing Scandal",
+      "de": "Robert-Hoyzer-Manipulationsskandal",
+      "fr": "Scandale des matchs truqués de Robert Hoyzer",
+      "es": "Escándalo de amaños de Robert Hoyzer"
+    },
+    "description": {
+      "tr": "Alman hakem Robert Hoyzer, bahis çetesiyle bağlantılı maçları manipüle ettiğini itiraf etti.",
+      "en": "German referee Robert Hoyzer confessed to manipulating matches for a betting syndicate.",
+      "de": "Der deutsche Schiedsrichter Robert Hoyzer gestand Spielmanipulationen für eine Wettbande.",
+      "fr": "L'arbitre allemand Robert Hoyzer avoue avoir manipulé des matchs pour un réseau de paris.",
+      "es": "El árbitro alemán Robert Hoyzer confesó amañar partidos para una red de apuestas."
+    }
+  },
+  {
+    "id": "totonero",
+    "category": "sike_skandal",
+    "year": 1980,
+    "names": {
+      "tr": "Totonero Skandalı",
+      "en": "Totonero Scandal",
+      "de": "Totonero-Skandal",
+      "fr": "Scandale Totonero",
+      "es": "Escándalo Totonero"
+    },
+    "description": {
+      "tr": "İtalya'daki büyük bahis ve şike skandalı Milan ve Lazio gibi kulüpleri ağır biçimde etkiledi.",
+      "en": "Italy's major betting scandal implicated clubs including Milan and Lazio.",
+      "de": "Italiens großer Wettskandal belastete unter anderem Milan und Lazio.",
+      "fr": "Le grand scandale italien des paris implique notamment Milan et la Lazio.",
+      "es": "El gran escándalo italiano de apuestas implicó, entre otros, al Milan y a la Lazio."
+    }
+  },
+  {
+    "id": "bosman_ruling",
+    "category": "hukuki_donusum",
+    "year": 1995,
+    "names": {
+      "tr": "Bosman Kararı",
+      "en": "Bosman Ruling",
+      "de": "Bosman-Urteil",
+      "fr": "Arrêt Bosman",
+      "es": "Sentencia Bosman"
+    },
+    "description": {
+      "tr": "Avrupa Adalet Divanı kararı, sözleşmesi biten futbolcuların transfer sistemini ve yabancı oyuncu kurallarını değiştirdi.",
+      "en": "The ruling transformed free transfers and foreign-player rules in European football.",
+      "de": "Das Urteil veränderte ablösefreie Transfers und Ausländerregeln im europäischen Fußball.",
+      "fr": "L'arrêt bouleverse les transferts libres et les règles concernant les joueurs étrangers en Europe.",
+      "es": "La sentencia transformó los traspasos libres y las reglas sobre jugadores extranjeros en Europa."
+    }
+  },
+  {
+    "id": "rubiales_kiss",
+    "category": "skandal",
+    "year": 2023,
+    "names": {
+      "tr": "Rubiales Öpücük Skandalı",
+      "en": "Rubiales Kiss Scandal",
+      "de": "Rubiales-Kuss-Skandal",
+      "fr": "Scandale du baiser de Rubiales",
+      "es": "Escándalo del beso de Rubiales"
+    },
+    "description": {
+      "tr": "İspanya'nın Dünya Kupası kutlamasında Luis Rubiales'in Jenni Hermoso'yu öpmesi küresel bir federasyon krizine dönüştü.",
+      "en": "Luis Rubiales's unsolicited kiss of Jenni Hermoso became a global football governance scandal.",
+      "de": "Luis Rubiales' Kuss von Jenni Hermoso wurde zu einem weltweiten Fußball- und Verbands-Skandal.",
+      "fr": "Le baiser de Luis Rubiales à Jenni Hermoso devient un scandale mondial touchant la gouvernance du football.",
+      "es": "El beso de Luis Rubiales a Jenni Hermoso se convirtió en un escándalo mundial del fútbol."
+    }
+  },
+
+  {
+    "id": "heysel",
+    "category": "trajedi",
+    "year": 1985,
+    "names": {
+      "tr": "Heysel Faciası",
+      "en": "Heysel Disaster",
+      "de": "Katastrophe von Heysel",
+      "fr": "Drame du Heysel",
+      "es": "Tragedia de Heysel"
+    },
+    "description": {
+      "tr": "Avrupa Kupası finali öncesindeki tribün olaylarında 39 kişi öldü ve İngiliz kulüpleri Avrupa'dan men edildi.",
+      "en": "Thirty-nine people died before the European Cup final, followed by a ban on English clubs.",
+      "de": "Vor dem Europapokalfinale starben 39 Menschen; englische Klubs wurden anschließend ausgeschlossen.",
+      "fr": "Trente-neuf personnes meurent avant la finale de la Coupe d'Europe, suivie d'une exclusion des clubs anglais.",
+      "es": "39 personas murieron antes de la final de la Copa de Europa y los clubes ingleses fueron posteriormente excluidos."
+    }
+  },
+  {
+    "id": "hillsborough",
+    "category": "trajedi",
+    "year": 1989,
+    "names": {
+      "tr": "Hillsborough Faciası",
+      "en": "Hillsborough Disaster",
+      "de": "Hillsborough-Katastrophe",
+      "fr": "Catastrophe de Hillsborough",
+      "es": "Tragedia de Hillsborough"
+    },
+    "description": {
+      "tr": "FA Cup yarı finalindeki izdihamda 97 Liverpool taraftarı hayatını kaybetti.",
+      "en": "Ninety-seven Liverpool supporters died in a crush during an FA Cup semi-final.",
+      "de": "Bei einem Gedränge im FA-Cup-Halbfinale starben 97 Liverpool-Fans.",
+      "fr": "Quatre-vingt-dix-sept supporters de Liverpool meurent dans une bousculade lors d'une demi-finale de FA Cup.",
+      "es": "97 aficionados del Liverpool murieron en una avalancha durante una semifinal de la FA Cup."
+    }
+  },
+  {
+    "id": "munich_air_disaster",
+    "category": "trajedi",
+    "year": 1958,
+    "names": {
+      "tr": "Münih Hava Faciası",
+      "en": "Munich Air Disaster",
+      "de": "Flugzeugunglück von München",
+      "fr": "Catastrophe aérienne de Munich",
+      "es": "Tragedia aérea de Múnich"
+    },
+    "description": {
+      "tr": "Manchester United takımını taşıyan uçak kazasında sekiz futbolcu hayatını kaybetti.",
+      "en": "Eight Manchester United players died in the Munich air disaster.",
+      "de": "Bei der Flugkatastrophe von München starben acht Spieler von Manchester United.",
+      "fr": "Huit joueurs de Manchester United meurent dans la catastrophe aérienne de Munich.",
+      "es": "Ocho jugadores del Manchester United murieron en la tragedia aérea de Múnich."
+    }
+  },
+  {
+    "id": "superga",
+    "category": "trajedi",
+    "year": 1949,
+    "names": {
+      "tr": "Superga Faciası",
+      "en": "Superga Air Disaster",
+      "de": "Superga-Flugzeugunglück",
+      "fr": "Catastrophe aérienne de Superga",
+      "es": "Tragedia aérea de Superga"
+    },
+    "description": {
+      "tr": "Grande Torino'nun büyük bölümü uçak kazasında hayatını kaybederek dönemin efsane takımını yok etti.",
+      "en": "A plane crash killed most of the legendary Grande Torino team.",
+      "de": "Ein Flugzeugabsturz riss den Großteil des legendären Grande Torino aus dem Leben.",
+      "fr": "Un crash aérien décime la majeure partie de la légendaire équipe du Grande Torino.",
+      "es": "Un accidente aéreo acabó con gran parte del legendario Grande Torino."
+    }
+  },
+  {
+    "id": "chapecoense",
+    "category": "trajedi",
+    "year": 2016,
+    "names": {
+      "tr": "Chapecoense Uçak Faciası",
+      "en": "Chapecoense Plane Disaster",
+      "de": "Flugzeugunglück von Chapecoense",
+      "fr": "Catastrophe aérienne de Chapecoense",
+      "es": "Tragedia aérea del Chapecoense"
+    },
+    "description": {
+      "tr": "Chapecoense'yi taşıyan uçak düştü ve takımın büyük bölümü hayatını kaybetti.",
+      "en": "A plane carrying Chapecoense crashed, killing most of the squad.",
+      "de": "Ein Flugzeug mit Chapecoense stürzte ab und riss den Großteil der Mannschaft in den Tod.",
+      "fr": "L'avion de Chapecoense s'écrase et tue la majeure partie de l'équipe.",
+      "es": "El avión del Chapecoense se estrelló y murió gran parte de la plantilla."
+    }
+  },
+  {
+    "id": "zambia_plane_crash",
+    "category": "trajedi",
+    "year": 1993,
+    "names": {
+      "tr": "Zambiya Milli Takımı Uçak Faciası",
+      "en": "Zambia National Team Air Disaster",
+      "de": "Flugzeugkatastrophe der sambischen Nationalmannschaft",
+      "fr": "Catastrophe aérienne de l'équipe de Zambie",
+      "es": "Tragedia aérea de la selección de Zambia"
+    },
+    "description": {
+      "tr": "Zambiya milli takımının büyük bölümü Dünya Kupası elemelerine giderken uçak kazasında öldü.",
+      "en": "Most of Zambia's national team died in a plane crash while travelling to a World Cup qualifier.",
+      "de": "Der Großteil der sambischen Nationalmannschaft starb auf dem Weg zu einem WM-Qualifikationsspiel bei einem Flugzeugabsturz.",
+      "fr": "La majeure partie de la sélection zambienne meurt dans un crash en route vers un match de qualification au Mondial.",
+      "es": "La mayor parte de la selección de Zambia murió en un accidente aéreo rumbo a un partido de clasificación mundialista."
+    }
+  },
+  {
+    "id": "bradford_fire",
+    "category": "trajedi",
+    "year": 1985,
+    "names": {
+      "tr": "Bradford City Yangını",
+      "en": "Bradford City Fire",
+      "de": "Brandkatastrophe von Bradford City",
+      "fr": "Incendie de Bradford City",
+      "es": "Incendio del Bradford City"
+    },
+    "description": {
+      "tr": "Bradford City maçında tribün yangınında 56 taraftar hayatını kaybetti.",
+      "en": "A stadium fire during a Bradford City match killed 56 supporters.",
+      "de": "Ein Stadionbrand bei einem Bradford-City-Spiel forderte 56 Todesopfer.",
+      "fr": "Un incendie dans le stade de Bradford City fait 56 morts.",
+      "es": "Un incendio en el estadio del Bradford City causó 56 muertos."
+    }
+  },
+
+  {
+    "id": "first_ballon_dor",
+    "category": "bireysel_basari",
+    "year": 1956,
+    "names": {
+      "tr": "İlk Ballon d'Or: Stanley Matthews",
+      "en": "First Ballon d'Or: Stanley Matthews",
+      "de": "Erster Ballon d'Or: Stanley Matthews",
+      "fr": "Premier Ballon d'Or: Stanley Matthews",
+      "es": "Primer Balón de Oro: Stanley Matthews"
+    },
+    "description": {
+      "tr": "Stanley Matthews, tarihteki ilk Ballon d'Or ödülünü kazandı.",
+      "en": "Stanley Matthews became the first Ballon d'Or winner.",
+      "de": "Stanley Matthews wurde der erste Gewinner des Ballon d'Or.",
+      "fr": "Stanley Matthews devient le premier lauréat du Ballon d'Or.",
+      "es": "Stanley Matthews se convirtió en el primer ganador del Balón de Oro."
+    }
+  },
+  {
+    "id": "yashin_ballon_dor",
+    "category": "bireysel_basari",
+    "year": 1963,
+    "names": {
+      "tr": "Lev Yashin'in Ballon d'Or Kazanması",
+      "en": "Lev Yashin Wins the Ballon d'Or",
+      "de": "Lev Yashin gewinnt den Ballon d'Or",
+      "fr": "Lev Yashin remporte le Ballon d'Or",
+      "es": "Lev Yashin gana el Balón de Oro"
+    },
+    "description": {
+      "tr": "Lev Yashin, Ballon d'Or kazanan tek kaleci olarak tarihe geçti.",
+      "en": "Lev Yashin became the only goalkeeper ever to win the Ballon d'Or.",
+      "de": "Lev Yashin ist bis heute der einzige Torhüter, der den Ballon d'Or gewann.",
+      "fr": "Lev Yashin reste le seul gardien à avoir remporté le Ballon d'Or.",
+      "es": "Lev Yashin sigue siendo el único portero que ha ganado el Balón de Oro."
+    }
+  },
+  {
+    "id": "weah_ballon_dor",
+    "category": "bireysel_basari",
+    "year": 1995,
+    "names": {
+      "tr": "George Weah'ın Ballon d'Or Kazanması",
+      "en": "George Weah Wins the Ballon d'Or",
+      "de": "George Weah gewinnt den Ballon d'Or",
+      "fr": "George Weah remporte le Ballon d'Or",
+      "es": "George Weah gana el Balón de Oro"
+    },
+    "description": {
+      "tr": "George Weah, Afrika'dan Ballon d'Or kazanan ilk futbolcu oldu.",
+      "en": "George Weah became the first African winner of the Ballon d'Or.",
+      "de": "George Weah wurde der erste afrikanische Ballon-d'Or-Gewinner.",
+      "fr": "George Weah devient le premier Africain à remporter le Ballon d'Or.",
+      "es": "George Weah se convirtió en el primer africano en ganar el Balón de Oro."
+    }
+  },
+  {
+    "id": "cannavaro_ballon_dor",
+    "category": "bireysel_basari",
+    "year": 2006,
+    "names": {
+      "tr": "Cannavaro'nun Ballon d'Or Kazanması",
+      "en": "Cannavaro Wins the Ballon d'Or",
+      "de": "Cannavaro gewinnt den Ballon d'Or",
+      "fr": "Cannavaro remporte le Ballon d'Or",
+      "es": "Cannavaro gana el Balón de Oro"
+    },
+    "description": {
+      "tr": "Fabio Cannavaro, Dünya Kupası zaferinin ardından ödülü kazanan nadir savunmacılardan biri oldu.",
+      "en": "Fabio Cannavaro won the award after captaining Italy to the World Cup.",
+      "de": "Fabio Cannavaro gewann die Auszeichnung nach Italiens WM-Triumph.",
+      "fr": "Fabio Cannavaro remporte le trophée après avoir mené l'Italie au titre mondial.",
+      "es": "Fabio Cannavaro ganó el premio tras liderar a Italia al título mundial."
+    }
+  },
+  {
+    "id": "modric_ballon_dor",
+    "category": "bireysel_basari",
+    "year": 2018,
+    "names": {
+      "tr": "Modrić'in Ballon d'Or Kazanması",
+      "en": "Modrić Wins the Ballon d'Or",
+      "de": "Modrić gewinnt den Ballon d'Or",
+      "fr": "Modrić remporte le Ballon d'Or",
+      "es": "Modrić gana el Balón de Oro"
+    },
+    "description": {
+      "tr": "Luka Modrić, uzun süre Messi-Ronaldo hakimiyetinin ardından ödülü kazandı.",
+      "en": "Luka Modrić won the award after a decade dominated by Messi and Cristiano Ronaldo.",
+      "de": "Luka Modrić gewann die Auszeichnung nach einem Jahrzehnt der Dominanz von Messi und Cristiano Ronaldo.",
+      "fr": "Luka Modrić remporte le trophée après une décennie dominée par Messi et Cristiano Ronaldo.",
+      "es": "Luka Modrić ganó el premio tras una década dominada por Messi y Cristiano Ronaldo."
+    }
+  },
+  {
+    "id": "pele_third_world_cup",
+    "category": "bireysel_basari",
+    "year": 1970,
+    "names": {
+      "tr": "Pelé'nin Üçüncü Dünya Kupası",
+      "en": "Pelé's Third World Cup",
+      "de": "Pelés dritter Weltmeistertitel",
+      "fr": "La troisième Coupe du monde de Pelé",
+      "es": "El tercer Mundial de Pelé"
+    },
+    "description": {
+      "tr": "Pelé, üç Dünya Kupası kazanan ilk futbolcu oldu.",
+      "en": "Pelé became the first player to win three World Cups.",
+      "de": "Pelé wurde der erste Spieler mit drei Weltmeistertiteln.",
+      "fr": "Pelé devient le premier joueur à remporter trois Coupes du monde.",
+      "es": "Pelé se convirtió en el primer jugador en ganar tres Mundiales."
+    }
+  },
+  {
+    "id": "maradona_world_cup",
+    "category": "bireysel_basari",
+    "year": 1986,
+    "names": {
+      "tr": "Maradona'nın Dünya Kupası Zaferi",
+      "en": "Maradona's World Cup Triumph",
+      "de": "Maradonas WM-Triumph",
+      "fr": "Le triomphe mondial de Maradona",
+      "es": "El triunfo mundial de Maradona"
+    },
+    "description": {
+      "tr": "Maradona, 1986 Dünya Kupası'nda Arjantin'i kaptan olarak şampiyonluğa taşıdı.",
+      "en": "Maradona captained Argentina to the World Cup title in 1986.",
+      "de": "Maradona führte Argentinien 1986 als Kapitän zum Weltmeistertitel.",
+      "fr": "Maradona mène l'Argentine au titre mondial en tant que capitaine en 1986.",
+      "es": "Maradona llevó a Argentina al título mundial como capitán en 1986."
+    }
+  },
+  {
+    "id": "zidane_world_cup",
+    "category": "bireysel_basari",
+    "year": 1998,
+    "names": {
+      "tr": "Zidane'ın Dünya Kupası Zaferi",
+      "en": "Zidane's World Cup Triumph",
+      "de": "Zidanes WM-Triumph",
+      "fr": "Le triomphe mondial de Zidane",
+      "es": "El triunfo mundial de Zidane"
+    },
+    "description": {
+      "tr": "Zidane, Fransa'nın tarihindeki ilk Dünya Kupası zaferinin başrolündeki oyunculardan biri oldu.",
+      "en": "Zidane was one of the central figures in France's first World Cup triumph.",
+      "de": "Zidane war eine der Schlüsselfiguren beim ersten WM-Triumph Frankreichs.",
+      "fr": "Zidane fut l'une des figures centrales du premier sacre mondial de la France.",
+      "es": "Zidane fue una de las figuras centrales del primer título mundial de Francia."
+    }
+  },
+  {
+    "id": "iniesta_world_cup",
+    "category": "bireysel_basari",
+    "year": 2010,
+    "names": {
+      "tr": "Iniesta'nın Dünya Kupası Final Golü",
+      "en": "Iniesta's World Cup Final Goal",
+      "de": "Iniestas WM-Finaltor",
+      "fr": "Le but d'Iniesta en finale du Mondial",
+      "es": "El gol de Iniesta en la final del Mundial"
+    },
+    "description": {
+      "tr": "Iniesta'nın uzatmadaki golü İspanya'ya tarihindeki ilk Dünya Kupası'nı kazandırdı.",
+      "en": "Iniesta's extra-time goal gave Spain its first World Cup title.",
+      "de": "Iniestas Tor in der Verlängerung brachte Spanien den ersten WM-Titel.",
+      "fr": "Le but d'Iniesta en prolongation offre à l'Espagne son premier titre mondial.",
+      "es": "El gol de Iniesta en la prórroga dio a España su primer Mundial."
+    }
+  },
+  {
+    "id": "messi_world_cup",
+    "category": "bireysel_basari",
+    "year": 2022,
+    "names": {
+      "tr": "Messi'nin Dünya Kupası Zaferi",
+      "en": "Messi's World Cup Triumph",
+      "de": "Messis WM-Triumph",
+      "fr": "Le triomphe mondial de Messi",
+      "es": "El triunfo mundial de Messi"
+    },
+    "description": {
+      "tr": "Messi, kariyerinin en büyük eksik parçasını tamamlayarak Arjantin'i Dünya Kupası şampiyonluğuna taşıdı.",
+      "en": "Messi completed his major international trophy collection by leading Argentina to the World Cup.",
+      "de": "Messi vervollständigte seine große Titelsammlung und führte Argentinien zum WM-Titel.",
+      "fr": "Messi complète son palmarès international majeur en menant l'Argentine au titre mondial.",
+      "es": "Messi completó su gran colección de títulos internacionales llevando a Argentina al Mundial."
+    }
+  },
+  {
+    "id": "platini_euro",
+    "category": "bireysel_basari",
+    "year": 1984,
+    "names": {
+      "tr": "Platini'nin Avrupa Şampiyonluğu",
+      "en": "Platini's European Championship Triumph",
+      "de": "Platini wird Europameister",
+      "fr": "Le sacre européen de Platini",
+      "es": "El triunfo europeo de Platini"
+    },
+    "description": {
+      "tr": "Michel Platini, Fransa'nın ilk Avrupa şampiyonluğunun başrolünü oynadı.",
+      "en": "Michel Platini led France to its first European Championship.",
+      "de": "Michel Platini führte Frankreich zum ersten Europameistertitel.",
+      "fr": "Michel Platini mène la France à son premier titre européen.",
+      "es": "Michel Platini lideró a Francia hacia su primera Eurocopa."
+    }
+  },
+  {
+    "id": "ronaldo_euro",
+    "category": "bireysel_basari",
+    "year": 2016,
+    "names": {
+      "tr": "Cristiano Ronaldo'nun Avrupa Şampiyonluğu",
+      "en": "Cristiano Ronaldo's European Championship Triumph",
+      "de": "Cristiano Ronaldos EM-Triumph",
+      "fr": "Le sacre européen de Cristiano Ronaldo",
+      "es": "El triunfo europeo de Cristiano Ronaldo"
+    },
+    "description": {
+      "tr": "Cristiano Ronaldo, Portekiz'in tarihindeki ilk büyük milli takım kupasını kazanmasına öncülük etti.",
+      "en": "Cristiano Ronaldo helped Portugal win its first major international title.",
+      "de": "Cristiano Ronaldo half Portugal beim ersten großen internationalen Titel.",
+      "fr": "Cristiano Ronaldo contribue au premier grand titre international du Portugal.",
+      "es": "Cristiano Ronaldo ayudó a Portugal a conquistar su primer gran título internacional."
+    }
+  },
+
+  {
+    "id": "real_madrid_founded",
+    "category": "kulup_kurulusu",
+    "year": 1902,
+    "names": {
+      "tr": "Real Madrid'in Kuruluşu",
+      "en": "Foundation of Real Madrid",
+      "de": "Gründung von Real Madrid",
+      "fr": "Fondation du Real Madrid",
+      "es": "Fundación del Real Madrid"
+    },
+    "description": {
+      "tr": "Madrid Football Club 1902'de kuruldu ve daha sonra Real Madrid adını aldı.",
+      "en": "Madrid Football Club was founded in 1902 and later became Real Madrid.",
+      "de": "Der Madrid Football Club wurde 1902 gegründet und später zu Real Madrid.",
+      "fr": "Le Madrid Football Club est fondé en 1902 avant de devenir le Real Madrid.",
+      "es": "El Madrid Football Club fue fundado en 1902 y posteriormente se convirtió en el Real Madrid."
+    }
+  },
+  {
+    "id": "barcelona_founded",
+    "category": "kulup_kurulusu",
+    "year": 1899,
+    "names": {
+      "tr": "Barcelona'nın Kuruluşu",
+      "en": "Foundation of Barcelona",
+      "de": "Gründung des FC Barcelona",
+      "fr": "Fondation du FC Barcelone",
+      "es": "Fundación del FC Barcelona"
+    },
+    "description": {
+      "tr": "FC Barcelona, Joan Gamper ve arkadaşları tarafından 1899'da kuruldu.",
+      "en": "FC Barcelona was founded in 1899 by Joan Gamper and fellow enthusiasts.",
+      "de": "Der FC Barcelona wurde 1899 von Joan Gamper und weiteren Fußballbegeisterten gegründet.",
+      "fr": "Le FC Barcelone est fondé en 1899 par Joan Gamper et d'autres passionnés.",
+      "es": "El FC Barcelona fue fundado en 1899 por Joan Gamper y otros aficionados."
+    }
+  },
+  {
+    "id": "man_utd_founded",
+    "category": "kulup_kurulusu",
+    "year": 1878,
+    "names": {
+      "tr": "Manchester United'ın Kuruluşu",
+      "en": "Foundation of Manchester United",
+      "de": "Gründung von Manchester United",
+      "fr": "Fondation de Manchester United",
+      "es": "Fundación del Manchester United"
+    },
+    "description": {
+      "tr": "Kulübün kökeni 1878'de kurulan Newton Heath'e dayanır.",
+      "en": "Manchester United traces its origins to Newton Heath, founded in 1878.",
+      "de": "Manchester United geht auf Newton Heath zurück, das 1878 gegründet wurde.",
+      "fr": "Manchester United trouve ses origines dans Newton Heath, fondé en 1878.",
+      "es": "El Manchester United tiene sus orígenes en el Newton Heath, fundado en 1878."
+    }
+  },
+  {
+    "id": "liverpool_founded",
+    "category": "kulup_kurulusu",
+    "year": 1892,
+    "names": {
+      "tr": "Liverpool'un Kuruluşu",
+      "en": "Foundation of Liverpool",
+      "de": "Gründung des FC Liverpool",
+      "fr": "Fondation de Liverpool",
+      "es": "Fundación del Liverpool"
+    },
+    "description": {
+      "tr": "Liverpool, Everton'un Anfield'dan ayrılmasının ardından 1892'de kuruldu.",
+      "en": "Liverpool was founded in 1892 after Everton left Anfield.",
+      "de": "Liverpool wurde 1892 gegründet, nachdem Everton Anfield verlassen hatte.",
+      "fr": "Liverpool est fondé en 1892 après le départ d'Everton d'Anfield.",
+      "es": "El Liverpool fue fundado en 1892 después de que Everton abandonara Anfield."
+    }
+  },
+  {
+    "id": "bayern_founded",
+    "category": "kulup_kurulusu",
+    "year": 1900,
+    "names": {
+      "tr": "Bayern Münih'in Kuruluşu",
+      "en": "Foundation of Bayern Munich",
+      "de": "Gründung des FC Bayern München",
+      "fr": "Fondation du Bayern Munich",
+      "es": "Fundación del Bayern de Múnich"
+    },
+    "description": {
+      "tr": "FC Bayern München 1900 yılında Münih'te kuruldu.",
+      "en": "FC Bayern Munich was founded in 1900.",
+      "de": "Der FC Bayern München wurde 1900 gegründet.",
+      "fr": "Le Bayern Munich est fondé en 1900.",
+      "es": "El Bayern de Múnich fue fundado en 1900."
+    }
+  },
+  {
+    "id": "juventus_founded",
+    "category": "kulup_kurulusu",
+    "year": 1897,
+    "names": {
+      "tr": "Juventus'un Kuruluşu",
+      "en": "Foundation of Juventus",
+      "de": "Gründung von Juventus",
+      "fr": "Fondation de la Juventus",
+      "es": "Fundación de la Juventus"
+    },
+    "description": {
+      "tr": "Juventus, Torino'da genç öğrenciler tarafından 1897'de kuruldu.",
+      "en": "Juventus was founded in Turin by young students in 1897.",
+      "de": "Juventus wurde 1897 in Turin von jungen Schülern gegründet.",
+      "fr": "La Juventus est fondée à Turin par de jeunes étudiants en 1897.",
+      "es": "La Juventus fue fundada en Turín por jóvenes estudiantes en 1897."
+    }
+  },
+  {
+    "id": "ac_milan_founded",
+    "category": "kulup_kurulusu",
+    "year": 1899,
+    "names": {
+      "tr": "Milan'ın Kuruluşu",
+      "en": "Foundation of Milan",
+      "de": "Gründung des AC Milan",
+      "fr": "Fondation de l'AC Milan",
+      "es": "Fundación del AC Milan"
+    },
+    "description": {
+      "tr": "Milan Cricket and Football Club 1899'da kuruldu.",
+      "en": "Milan Cricket and Football Club was founded in 1899.",
+      "de": "Der Milan Cricket and Football Club wurde 1899 gegründet.",
+      "fr": "Le Milan Cricket and Football Club est fondé en 1899.",
+      "es": "El Milan Cricket and Football Club fue fundado en 1899."
+    }
+  },
+  {
+    "id": "inter_founded",
+    "category": "kulup_kurulusu",
+    "year": 1908,
+    "names": {
+      "tr": "Inter'in Kuruluşu",
+      "en": "Foundation of Inter Milan",
+      "de": "Gründung von Inter Mailand",
+      "fr": "Fondation de l'Inter Milan",
+      "es": "Fundación del Inter de Milán"
+    },
+    "description": {
+      "tr": "Internazionale, Milan kulübünden ayrılan bir grubun 1908'de kurduğu kulüptür.",
+      "en": "Internazionale was founded in 1908 by a group that broke away from Milan.",
+      "de": "Internazionale wurde 1908 von einer Gruppe gegründet, die sich von Milan abspaltete.",
+      "fr": "L'Internazionale est fondé en 1908 par un groupe séparé du Milan.",
+      "es": "El Internazionale fue fundado en 1908 por un grupo separado del Milan."
+    }
+  },
+  {
+    "id": "arsenal_founded",
+    "category": "kulup_kurulusu",
+    "year": 1886,
+    "names": {
+      "tr": "Arsenal'in Kuruluşu",
+      "en": "Foundation of Arsenal",
+      "de": "Gründung des FC Arsenal",
+      "fr": "Fondation d'Arsenal",
+      "es": "Fundación del Arsenal"
+    },
+    "description": {
+      "tr": "Arsenal'ın kökeni Woolwich Arsenal adıyla 1886'da kurulan işçi takımına dayanır.",
+      "en": "Arsenal traces its origins to Woolwich Arsenal, founded in 1886.",
+      "de": "Arsenal geht auf Woolwich Arsenal zurück, das 1886 gegründet wurde.",
+      "fr": "Arsenal trouve ses origines dans Woolwich Arsenal, fondé en 1886.",
+      "es": "El Arsenal tiene sus orígenes en el Woolwich Arsenal, fundado en 1886."
+    }
+  },
+  {
+    "id": "chelsea_founded",
+    "category": "kulup_kurulusu",
+    "year": 1905,
+    "names": {
+      "tr": "Chelsea'nin Kuruluşu",
+      "en": "Foundation of Chelsea",
+      "de": "Gründung des FC Chelsea",
+      "fr": "Fondation de Chelsea",
+      "es": "Fundación del Chelsea"
+    },
+    "description": {
+      "tr": "Chelsea FC, Stamford Bridge'in futbol kulübüne dönüştürülmesiyle 1905'te kuruldu.",
+      "en": "Chelsea FC was founded in 1905 around Stamford Bridge.",
+      "de": "Der FC Chelsea wurde 1905 rund um Stamford Bridge gegründet.",
+      "fr": "Chelsea FC est fondé en 1905 autour de Stamford Bridge.",
+      "es": "El Chelsea FC fue fundado en 1905 alrededor de Stamford Bridge."
+    }
+  },
+  {
+    "id": "man_city_founded",
+    "category": "kulup_kurulusu",
+    "year": 1880,
+    "names": {
+      "tr": "Manchester City'nin Kökeni",
+      "en": "Origins of Manchester City",
+      "de": "Ursprünge von Manchester City",
+      "fr": "Origines de Manchester City",
+      "es": "Orígenes del Manchester City"
+    },
+    "description": {
+      "tr": "Manchester City'nin kökeni 1880'de St Mark's Church tarafından kurulan takıma dayanır.",
+      "en": "Manchester City's origins trace back to a team founded by St Mark's Church in 1880.",
+      "de": "Manchester City geht auf ein 1880 von St Mark's Church gegründetes Team zurück.",
+      "fr": "Manchester City trouve ses origines dans une équipe fondée par St Mark's Church en 1880.",
+      "es": "El Manchester City tiene sus orígenes en un equipo fundado por St Mark's Church en 1880."
+    }
+  },
+  {
+    "id": "psg_founded",
+    "category": "kulup_kurulusu",
+    "year": 1970,
+    "names": {
+      "tr": "Paris Saint-Germain'in Kuruluşu",
+      "en": "Foundation of Paris Saint-Germain",
+      "de": "Gründung von Paris Saint-Germain",
+      "fr": "Fondation du Paris Saint-Germain",
+      "es": "Fundación del Paris Saint-Germain"
+    },
+    "description": {
+      "tr": "Paris Saint-Germain, 1970'te Paris futbol kulübü ile Stade Saint-Germain'in birleşmesiyle ortaya çıktı.",
+      "en": "Paris Saint-Germain was formed in 1970 through the merger of Paris FC and Stade Saint-Germain.",
+      "de": "Paris Saint-Germain entstand 1970 aus der Verbindung von Paris FC und Stade Saint-Germain.",
+      "fr": "Le Paris Saint-Germain est créé en 1970 par la fusion du Paris FC et du Stade Saint-Germain.",
+      "es": "El Paris Saint-Germain nació en 1970 mediante la unión del Paris FC y el Stade Saint-Germain."
+    }
+  },
+  {
+    "id": "ajax_founded",
+    "category": "kulup_kurulusu",
+    "year": 1900,
+    "names": {
+      "tr": "Ajax'ın Kuruluşu",
+      "en": "Foundation of Ajax",
+      "de": "Gründung von Ajax",
+      "fr": "Fondation de l'Ajax",
+      "es": "Fundación del Ajax"
+    },
+    "description": {
+      "tr": "Ajax, Amsterdam'da 1900 yılında kuruldu.",
+      "en": "Ajax was founded in Amsterdam in 1900.",
+      "de": "Ajax wurde 1900 in Amsterdam gegründet.",
+      "fr": "L'Ajax est fondé à Amsterdam en 1900.",
+      "es": "El Ajax fue fundado en Ámsterdam en 1900."
+    }
+  },
+  {
+    "id": "benfica_founded",
+    "category": "kulup_kurulusu",
+    "year": 1904,
+    "names": {
+      "tr": "Benfica'nın Kuruluşu",
+      "en": "Foundation of Benfica",
+      "de": "Gründung von Benfica",
+      "fr": "Fondation de Benfica",
+      "es": "Fundación del Benfica"
+    },
+    "description": {
+      "tr": "Benfica, Lizbon'da 1904 yılında kuruldu.",
+      "en": "Benfica was founded in Lisbon in 1904.",
+      "de": "Benfica wurde 1904 in Lissabon gegründet.",
+      "fr": "Benfica est fondé à Lisbonne en 1904.",
+      "es": "El Benfica fue fundado en Lisboa en 1904."
+    }
+  },
+  {
+    "id": "porto_founded",
+    "category": "kulup_kurulusu",
+    "year": 1893,
+    "names": {
+      "tr": "Porto'nun Kuruluşu",
+      "en": "Foundation of Porto",
+      "de": "Gründung des FC Porto",
+      "fr": "Fondation du FC Porto",
+      "es": "Fundación del FC Porto"
+    },
+    "description": {
+      "tr": "FC Porto, Portekiz'in en eski büyük kulüplerinden biri olarak 1893'te kuruldu.",
+      "en": "FC Porto was founded in 1893 and became one of Portugal's historic clubs.",
+      "de": "Der FC Porto wurde 1893 gegründet und zählt zu Portugals Traditionsklubs.",
+      "fr": "Le FC Porto est fondé en 1893 et devient l'un des clubs historiques du Portugal.",
+      "es": "El FC Porto fue fundado en 1893 y se convirtió en uno de los clubes históricos de Portugal."
+    }
+  },
+  {
+    "id": "boca_founded",
+    "category": "kulup_kurulusu",
+    "year": 1905,
+    "names": {
+      "tr": "Boca Juniors'ın Kuruluşu",
+      "en": "Foundation of Boca Juniors",
+      "de": "Gründung der Boca Juniors",
+      "fr": "Fondation de Boca Juniors",
+      "es": "Fundación de Boca Juniors"
+    },
+    "description": {
+      "tr": "Boca Juniors, Buenos Aires'in La Boca semtinde 1905'te kuruldu.",
+      "en": "Boca Juniors was founded in Buenos Aires' La Boca district in 1905.",
+      "de": "Boca Juniors wurde 1905 im Stadtteil La Boca in Buenos Aires gegründet.",
+      "fr": "Boca Juniors est fondé en 1905 dans le quartier de La Boca à Buenos Aires.",
+      "es": "Boca Juniors fue fundado en 1905 en el barrio de La Boca de Buenos Aires."
+    }
+  },
+  {
+    "id": "river_founded",
+    "category": "kulup_kurulusu",
+    "year": 1901,
+    "names": {
+      "tr": "River Plate'ın Kuruluşu",
+      "en": "Foundation of River Plate",
+      "de": "Gründung von River Plate",
+      "fr": "Fondation de River Plate",
+      "es": "Fundación de River Plate"
+    },
+    "description": {
+      "tr": "River Plate, Buenos Aires'te 1901 yılında kuruldu.",
+      "en": "River Plate was founded in Buenos Aires in 1901.",
+      "de": "River Plate wurde 1901 in Buenos Aires gegründet.",
+      "fr": "River Plate est fondé à Buenos Aires en 1901.",
+      "es": "River Plate fue fundado en Buenos Aires en 1901."
+    }
+  },
+  {
+    "id": "flamengo_founded",
+    "category": "kulup_kurulusu",
+    "year": 1895,
+    "names": {
+      "tr": "Flamengo'nun Kuruluşu",
+      "en": "Foundation of Flamengo",
+      "de": "Gründung von Flamengo",
+      "fr": "Fondation de Flamengo",
+      "es": "Fundación del Flamengo"
+    },
+    "description": {
+      "tr": "Flamengo'nun kökeni 1895'te Rio de Janeiro'da kurulan kürek kulübüne dayanır.",
+      "en": "Flamengo traces its origins to a rowing club founded in Rio in 1895.",
+      "de": "Flamengo geht auf einen 1895 in Rio gegründeten Ruderverein zurück.",
+      "fr": "Flamengo trouve ses origines dans un club d'aviron fondé à Rio en 1895.",
+      "es": "El Flamengo tiene sus orígenes en un club de remo fundado en Río en 1895."
+    }
+  },
+  {
+    "id": "santos_founded",
+    "category": "kulup_kurulusu",
+    "year": 1912,
+    "names": {
+      "tr": "Santos'un Kuruluşu",
+      "en": "Foundation of Santos",
+      "de": "Gründung des FC Santos",
+      "fr": "Fondation du Santos FC",
+      "es": "Fundación del Santos FC"
+    },
+    "description": {
+      "tr": "Santos FC, Pelé'nin efsaneleşeceği kulüp olarak 1912'de kuruldu.",
+      "en": "Santos FC was founded in 1912 and later became synonymous with Pelé.",
+      "de": "Santos FC wurde 1912 gegründet und wurde später eng mit Pelé verbunden.",
+      "fr": "Le Santos FC est fondé en 1912 avant de devenir le club emblématique de Pelé.",
+      "es": "El Santos FC fue fundado en 1912 y más tarde se convirtió en el club de Pelé."
+    }
+  },
+  {
+    "id": "corinthians_founded",
+    "category": "kulup_kurulusu",
+    "year": 1910,
+    "names": {
+      "tr": "Corinthians'ın Kuruluşu",
+      "en": "Foundation of Corinthians",
+      "de": "Gründung von Corinthians",
+      "fr": "Fondation des Corinthians",
+      "es": "Fundación del Corinthians"
+    },
+    "description": {
+      "tr": "Corinthians, São Paulo'da 1910 yılında kuruldu.",
+      "en": "Corinthians was founded in São Paulo in 1910.",
+      "de": "Corinthians wurde 1910 in São Paulo gegründet.",
+      "fr": "Corinthians est fondé à São Paulo en 1910.",
+      "es": "Corinthians fue fundado en São Paulo en 1910."
+    }
+  },
+  {
+    "id": "celtic_founded",
+    "category": "kulup_kurulusu",
+    "year": 1887,
+    "names": {
+      "tr": "Celtic'in Kuruluşu",
+      "en": "Foundation of Celtic",
+      "de": "Gründung von Celtic",
+      "fr": "Fondation du Celtic",
+      "es": "Fundación del Celtic"
+    },
+    "description": {
+      "tr": "Celtic FC, Glasgow'da 1887 yılında kuruldu.",
+      "en": "Celtic FC was founded in Glasgow in 1887.",
+      "de": "Celtic FC wurde 1887 in Glasgow gegründet.",
+      "fr": "Le Celtic FC est fondé à Glasgow en 1887.",
+      "es": "El Celtic FC fue fundado en Glasgow en 1887."
+    }
+  },
+  {
+    "id": "rangers_founded",
+    "category": "kulup_kurulusu",
+    "year": 1872,
+    "names": {
+      "tr": "Rangers'ın Kuruluşu",
+      "en": "Foundation of Rangers",
+      "de": "Gründung der Rangers",
+      "fr": "Fondation des Rangers",
+      "es": "Fundación del Rangers"
+    },
+    "description": {
+      "tr": "Rangers, Glasgow'da 1872 yılında kuruldu.",
+      "en": "Rangers were founded in Glasgow in 1872.",
+      "de": "Rangers wurden 1872 in Glasgow gegründet.",
+      "fr": "Les Rangers sont fondés à Glasgow en 1872.",
+      "es": "El Rangers fue fundado en Glasgow en 1872."
+    }
+  },
+  {
+    "id": "atletico_founded",
+    "category": "kulup_kurulusu",
+    "year": 1903,
+    "names": {
+      "tr": "Atlético Madrid'in Kuruluşu",
+      "en": "Foundation of Atlético Madrid",
+      "de": "Gründung von Atlético Madrid",
+      "fr": "Fondation de l'Atlético Madrid",
+      "es": "Fundación del Atlético de Madrid"
+    },
+    "description": {
+      "tr": "Atlético Madrid 1903 yılında kuruldu.",
+      "en": "Atlético Madrid was founded in 1903.",
+      "de": "Atlético Madrid wurde 1903 gegründet.",
+      "fr": "L'Atlético Madrid est fondé en 1903.",
+      "es": "El Atlético de Madrid fue fundado en 1903."
+    }
+  },
+  {
+    "id": "dortmund_founded",
+    "category": "kulup_kurulusu",
+    "year": 1909,
+    "names": {
+      "tr": "Borussia Dortmund'un Kuruluşu",
+      "en": "Foundation of Borussia Dortmund",
+      "de": "Gründung von Borussia Dortmund",
+      "fr": "Fondation du Borussia Dortmund",
+      "es": "Fundación del Borussia Dortmund"
+    },
+    "description": {
+      "tr": "Borussia Dortmund, Dortmund'da 1909 yılında kuruldu.",
+      "en": "Borussia Dortmund was founded in 1909.",
+      "de": "Borussia Dortmund wurde 1909 gegründet.",
+      "fr": "Le Borussia Dortmund est fondé en 1909.",
+      "es": "El Borussia Dortmund fue fundado en 1909."
+    }
+  },
+  {
+    "id": "schalke_founded",
+    "category": "kulup_kurulusu",
+    "year": 1904,
+    "names": {
+      "tr": "Schalke 04'ün Kuruluşu",
+      "en": "Foundation of Schalke 04",
+      "de": "Gründung von Schalke 04",
+      "fr": "Fondation de Schalke 04",
+      "es": "Fundación del Schalke 04"
+    },
+    "description": {
+      "tr": "Schalke 04, Gelsenkirchen'de 1904 yılında kuruldu.",
+      "en": "Schalke 04 was founded in Gelsenkirchen in 1904.",
+      "de": "Schalke 04 wurde 1904 in Gelsenkirchen gegründet.",
+      "fr": "Schalke 04 est fondé à Gelsenkirchen en 1904.",
+      "es": "El Schalke 04 fue fundado en Gelsenkirchen en 1904."
+    }
+  },
+  {
+    "id": "napoli_founded",
+    "category": "kulup_kurulusu",
+    "year": 1926,
+    "names": {
+      "tr": "Napoli'nin Kuruluşu",
+      "en": "Foundation of Napoli",
+      "de": "Gründung des SSC Neapel",
+      "fr": "Fondation du Napoli",
+      "es": "Fundación del Napoli"
+    },
+    "description": {
+      "tr": "Napoli, bugünkü kimliğinin temelini oluşturan kulüp yapısıyla 1926'da kuruldu.",
+      "en": "Napoli was established in its modern form in 1926.",
+      "de": "Napoli entstand in seiner heutigen Vereinsform 1926.",
+      "fr": "Le Napoli est créé sous sa forme moderne en 1926.",
+      "es": "El Napoli fue establecido en su forma moderna en 1926."
+    }
+  },
+  {
+    "id": "roma_founded",
+    "category": "kulup_kurulusu",
+    "year": 1927,
+    "names": {
+      "tr": "Roma'nın Kuruluşu",
+      "en": "Foundation of Roma",
+      "de": "Gründung der AS Roma",
+      "fr": "Fondation de l'AS Roma",
+      "es": "Fundación de la AS Roma"
+    },
+    "description": {
+      "tr": "AS Roma, Roma'daki birkaç kulübün birleşmesiyle 1927'de kuruldu.",
+      "en": "AS Roma was formed in 1927 through the merger of several Roman clubs.",
+      "de": "Die AS Roma entstand 1927 durch die Fusion mehrerer römischer Vereine.",
+      "fr": "L'AS Roma est créée en 1927 par la fusion de plusieurs clubs romains.",
+      "es": "La AS Roma nació en 1927 mediante la fusión de varios clubes romanos."
+    }
+  },
+  {
+    "id": "marseille_founded",
+    "category": "kulup_kurulusu",
+    "year": 1899,
+    "names": {
+      "tr": "Marseille'in Kuruluşu",
+      "en": "Foundation of Marseille",
+      "de": "Gründung von Marseille",
+      "fr": "Fondation de Marseille",
+      "es": "Fundación del Marsella"
+    },
+    "description": {
+      "tr": "Olympique de Marseille, 1899 yılında kuruldu.",
+      "en": "Olympique de Marseille was founded in 1899.",
+      "de": "Olympique de Marseille wurde 1899 gegründet.",
+      "fr": "L'Olympique de Marseille est fondé en 1899.",
+      "es": "El Olympique de Marseille fue fundado en 1899."
+    }
+  },
+  {
+    "id": "galatasaray_founded",
+    "category": "kulup_kurulusu",
+    "year": 1905,
+    "names": {
+      "tr": "Galatasaray'ın Kuruluşu",
+      "en": "Foundation of Galatasaray",
+      "de": "Gründung von Galatasaray",
+      "fr": "Fondation de Galatasaray",
+      "es": "Fundación del Galatasaray"
+    },
+    "description": {
+      "tr": "Galatasaray, Galatasaray Lisesi öğrencileri tarafından 1905'te kuruldu.",
+      "en": "Galatasaray was founded by students of Galatasaray High School in 1905.",
+      "de": "Galatasaray wurde 1905 von Schülern des Galatasaray-Gymnasiums gegründet.",
+      "fr": "Galatasaray est fondé en 1905 par des élèves du lycée de Galatasaray.",
+      "es": "El Galatasaray fue fundado en 1905 por estudiantes del Liceo de Galatasaray."
+    }
+  },
+  {
+    "id": "fenerbahce_founded",
+    "category": "kulup_kurulusu",
+    "year": 1907,
+    "names": {
+      "tr": "Fenerbahçe'nin Kuruluşu",
+      "en": "Foundation of Fenerbahçe",
+      "de": "Gründung von Fenerbahçe",
+      "fr": "Fondation de Fenerbahçe",
+      "es": "Fundación del Fenerbahçe"
+    },
+    "description": {
+      "tr": "Fenerbahçe, Kadıköy'de 1907 yılında kuruldu.",
+      "en": "Fenerbahçe was founded in Kadıköy in 1907.",
+      "de": "Fenerbahçe wurde 1907 in Kadıköy gegründet.",
+      "fr": "Fenerbahçe est fondé à Kadıköy en 1907.",
+      "es": "El Fenerbahçe fue fundado en Kadıköy en 1907."
+    }
+  }
+]

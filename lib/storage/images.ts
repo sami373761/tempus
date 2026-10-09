@@ -145,17 +145,32 @@ export function randomHomepageHeroUrl(): string {
  * outside the era folders and `parseImageObjectKey()` rejects their keys by
  * design. Uploaded by hand, not by `attach-image`.
  *
- * The base names are the pane slugs because the pane is what each photo
- * illustrates — `common-era2` is the one exception, left as it was uploaded.
+ * **A base name says nothing about which pane shows it.** Three of the five
+ * were re-dressed on 2026-10-07 with photographs uploaded under the names they
+ * arrived with (`game-backgrounds-00N`), so this map is the only place the
+ * pairing is written down — the two that still match their pane's slug do so
+ * by history, not by rule. Renaming an object in the bucket to match its pane
+ * means regenerating its derived widths, which is why they were left alone.
+ *
  * A pane with no photo is not representable: the record is total, so adding a
  * sixth pane forces a sixth key rather than silently falling back to black.
  */
 const TIMELINE_BACKDROP_BASE_NAMES: Record<TimelinePane, string> = {
   cosmos: "cosmos",
-  evolution: "evolution",
-  civilization: "civilization",
-  ce: "common-era2",
+  evolution: "game-backgrounds-003",
+  civilization: "game-backgrounds-002",
+  ce: "game-backgrounds-001",
   future: "future",
+  // The football rail covers 1850–2026, which sits wholly inside the common
+  // era, so until a plate of its own is uploaded it wears the common era's —
+  // art the site already has, which is the rule the explorer's stage follows
+  // too. The bucket's only football photography is `homepage/football.jpeg`, a
+  // 736x1308 phone shot: a portrait a fifth of the width a full-bleed backdrop
+  // is stored at, so deriving a 1440/2560 pair from it would be upscaling a
+  // crop. Giving football its own plate is this one line plus
+  // `npm run backdrops:derive`; the pane's wash in
+  // components/timeline-backdrop.tsx is already its own.
+  football: "game-backgrounds-001",
 };
 
 /**
@@ -335,8 +350,19 @@ export function gameCoverSrcSet(card: GameCard, photo: 0 | 1): string {
  *   sips --cropOffset 0 122  --cropToHeightWidth 1803 1803 basketball.jpg --out b.jpg
  *   sips --cropOffset 0 840  --cropToHeightWidth 2160 2160 movies-1.jpg   --out m.jpg
  *   sips --cropToHeightWidth 2700 2700 arka-4.png --out s.jpg   # centred
+ *   sips --cropOffset 0 640  --cropToHeightWidth 1693 1693 invention.jpg  --out i.jpg
+ *   sips --cropOffset 0 380  --cropToHeightWidth 1067 1067 when-born.jpg  --out w.jpg
+ *   sips --cropOffset 0 170  --cropToHeightWidth 782 782   coming-soon.jpg --out c.jpg
  *   sips --resampleWidth 512 <each square> --out <each>
  *   sips -s format jpeg -s formatOptions 85 --resampleWidth 800 <flag-1|arka-2> --out <tile>
+ *
+ * `--cropOffset` is `<y> <x>`, which is why every landscape master above moves
+ * its crop with the second number. The last three are off-centre on purpose:
+ * the bulb's filament sits right of centre in its frame and the statue's face
+ * right of centre in its, so a centred square would have cut the subject of
+ * each in half; the coming-soon still is two subjects at once — a mechanism
+ * and the figure working on it — so its offset is the one that keeps both
+ * rather than the one that centres either.
  */
 export type BoardPhoto =
   | "versus"
@@ -345,7 +371,10 @@ export type BoardPhoto =
   | "survival"
   | "football"
   | "basketball"
-  | "screen";
+  | "screen"
+  | "invention"
+  | "whenBorn"
+  | "comingSoon";
 
 /**
  * Master -> card, so the source of each crop is written down next to it.
@@ -370,7 +399,56 @@ const BOARD_PHOTO_OBJECT_KEYS: Record<BoardPhoto, string> = {
   // The master this was cut from is `homepage/movies-1.jpg`; the card is
   // "Film & TV" and `screen` is what the board calls it.
   screen: "homepage/screen-card.jpg",
+  // The last three masters are the only ones not under `homepage/`: they were
+  // uploaded to prefixes of their own — `invention/invention.jpg` (a filament
+  // bulb), `when-born/when-born.webp` (the Confucius statue) and
+  // `coming-soon/coming-soon.jpg`. The cards cut from them live here with every
+  // other card, so the board stays one prefix and the dev proxy needs no new
+  // entry.
+  invention: "homepage/invention-card.jpg",
+  whenBorn: "homepage/when-born-card.jpg",
+  // The card for the modes that have no name yet, which is why it was the last
+  // bare one on the board.
+  comingSoon: "homepage/coming-soon-card.jpg",
 };
+
+/**
+ * The 3D model the explorer's stage shows while nothing is open — a
+ * photogrammetry scan of a Macedonian tetradrachm, hand-uploaded under its own
+ * `3d-models/` prefix like every other decorative asset, so
+ * `parseImageObjectKey()` rejects the key by design.
+ *
+ * It replaced the Colosseum video loop on 2026-10-07. That film stays in the
+ * bucket under `videos/` and nothing reads it any more; what is here instead is
+ * an object the game is about rather than a plate that suggests the period.
+ *
+ * **The GLB requires three extensions, and "requires" is literal**:
+ * `EXT_meshopt_compression`, `KHR_mesh_quantization` and `EXT_texture_webp` are
+ * all in `extensionsRequired`, so a loader missing any of them throws instead of
+ * degrading. Only Meshopt needs wiring up by hand — see
+ * `components/explorer-coin.tsx`.
+ *
+ * **`3d-models/` and `.glb` had to be added to the dev proxy**
+ * (`app/api/r2/[...key]`), and a missing prefix there looks exactly like a
+ * missing object. See CLAUDE.md.
+ */
+export function explorerModel(): string {
+  return publicImageUrl("3d-models/tetradrachme_uit_macedonia-v1.glb");
+}
+
+
+/**
+ * The survival photograph at a width the explorer's stage can use. Derived from
+ * `homepage/arka-4.png` exactly as `survival-card.jpg` was, only larger:
+ *
+ *   sips --cropToHeightWidth 2700 2700 arka-4.png --out s.jpg
+ *   sips -s format jpeg -s formatOptions 85 --resampleWidth 1600 s.jpg --out s.jpg
+ *
+ * One width rather than a pair: the stage is ~690 CSS px and this covers it at
+ * 2x, and a second file would only be chosen on screens that are narrower than
+ * the card it is already too big for.
+ */
+const SURVIVAL_STAGE_OBJECT_KEY = "homepage/survival-stage-1600.jpg";
 
 export function boardPhotoUrl(card: BoardPhoto): string {
   return publicImageUrl(BOARD_PHOTO_OBJECT_KEYS[card]);
@@ -387,7 +465,63 @@ export function boardPhotos(): Record<BoardPhoto, string> {
 }
 
 /**
- * The pattern on the home page's "what Tempus is" card.
+ * The artwork the home page's explorer puts on its stage — one entry per pill
+ * that has a picture behind it.
+ *
+ * **Nothing new is uploaded for it.** Every key here is already in the bucket
+ * for something else: the two game covers (the comparison pair had gone unused
+ * when that card lost its photograph), four of the board's card photographs,
+ * and the pattern the prose card used before the explorer replaced it. The
+ * explorer is a second reading of the art the site already has, which is why
+ * this is an assembly rather than a new `Record` of keys.
+ *
+ * `srcSet` is present only where a pair of widths actually exists. The stage is
+ * ~690 CSS px at the cap, so the 800/1600 covers are worth a hint and the
+ * board's single-width squares — which were cut for a card a third that size —
+ * have nothing to choose between. They are shown small here, each a third of
+ * the stage in the three-panel subject view, for exactly that reason.
+ *
+ * Survival is the exception and has a file of its own, because it is the one
+ * board photograph the explorer shows *full-bleed*. `survival-card.jpg` is
+ * 512px square for a card that is 265px wide; across a 690px stage it would be
+ * upscaled on every screen and twice over on a retina one. This is the same
+ * master (`homepage/arka-4.png`, 4800x2700), cropped square the same way and
+ * resampled to 1600 instead of 512.
+ */
+export type ExplorerArt =
+  | "guess"
+  | "compare"
+  | "survival"
+  | "football"
+  | "basketball"
+  | "screen"
+  | "pattern";
+
+export type ExplorerImage = { src: string; srcSet?: string };
+
+export function explorerArt(): Record<ExplorerArt, ExplorerImage> {
+  const guess = dailyGameCoverIndex("guess");
+  const compare = dailyGameCoverIndex("comparison");
+
+  return {
+    guess: {
+      src: gameCoverUrl("guess", guess),
+      srcSet: gameCoverSrcSet("guess", guess),
+    },
+    compare: {
+      src: gameCoverUrl("comparison", compare),
+      srcSet: gameCoverSrcSet("comparison", compare),
+    },
+    survival: { src: publicImageUrl(SURVIVAL_STAGE_OBJECT_KEY) },
+    football: { src: boardPhotoUrl("football") },
+    basketball: { src: boardPhotoUrl("basketball") },
+    screen: { src: boardPhotoUrl("screen") },
+    pattern: { src: aboutArtUrl(), srcSet: aboutArtSrcSet() },
+  };
+}
+
+/**
+ * The pattern on the home page's explorer, and on the prose card before it.
  *
  * Decorative like everything else under `homepage/`, so `parseImageObjectKey()`
  * rejects the key by design. It is a textile repeat rather than a photograph of

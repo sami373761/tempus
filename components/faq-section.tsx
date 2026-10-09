@@ -50,7 +50,10 @@ export function FaqSection({ t }: { t: Dict }) {
 
   return (
     <section id="faq" className="scroll-mt-24">
-      <div className="mb-10 text-center">
+      {/* Left-aligned like the two blocks above it: the rules below run the
+          full width of the column, so a centred heading sat off the left edge
+          its own list starts on. */}
+      <div className="mb-10">
         <h2 className="font-display text-3xl font-semibold tracking-[-0.02em]">
           {t.faqTitle}
         </h2>

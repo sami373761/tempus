@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, useTransition } from "react";
+import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
+import { signOut } from "@/app/actions/auth";
 import { setLocale } from "@/app/actions/locale";
 import { isTransparentRoute } from "@/components/site-header";
-import type { SupportedLocale } from "@/lib/db/types";
+import { ACCOUNT_PATH, signInHref, SIGN_IN_PATH } from "@/lib/auth/paths";
+import { contactHref } from "@/lib/contact";
+import type { Account, SupportedLocale } from "@/lib/db/types";
 import type { Dict } from "@/lib/i18n/dictionary";
 import { UI_LOCALES } from "@/lib/i18n/locales";
 
@@ -20,12 +24,42 @@ import { UI_LOCALES } from "@/lib/i18n/locales";
  * layers of overlay on top of a game, and the five options are short enough to
  * sit side by side with the current one simply marked.
  *
- * Everything else in here is named but not wired — leaderboard, accounts,
- * contact, the tip jar. They are rendered as buttons that announce themselves as
- * unavailable rather than as links to a 404, the same holding pattern the home
- * page's coming-soon tiles use. FAQ is the exception and is a real link: the
- * answers are a section at the foot of the home page rather than a route of
- * their own, so the row goes to `/#faq` from anywhere on the site.
+ * **Every row is live.** Home, leaderboard, achievements, account, contact and
+ * the tip jar are routes; FAQ is a *section* of the home page (`/#faq`) rather
+ * than a route of its own, so it works from anywhere on the site. All of them
+ * close the panel on the way out, or it would be left sitting over the thing
+ * it just scrolled to.
+ *
+ * The Home row is first because it is the one destination that is not a page
+ * *about* the player or the site but the way back to playing, and because this
+ * button is the only chrome on a game screen — `/guess` and `/compare` are one
+ * viewport with no header to click a wordmark in, so without this row the only
+ * way out of a game is the browser's own back button.
+ *
+ * **Pressing a row arms the button's progress ring.** The panel closes on the
+ * way out, so between the press and the next page there was nothing on screen
+ * saying anything was happening — on a route that has to fetch a round's worth
+ * of events that is a visible, silent wait. The rows navigate through
+ * `router.push` inside a transition rather than letting the `Link` do it, which
+ * is what makes "has it arrived" a value this component holds; the `href` stays
+ * on the anchor, so a middle-click, a modified click and a copied link address
+ * all still behave like links. The language chips and the sign-out share the
+ * ring, because from the reader's side they are the same press.
+ *
+ * **Contact and the tip jar are two doors into one page.** Both go to
+ * `/contact`, which holds the two errands in whichever order the row that was
+ * pressed implies — see `lib/contact.ts`. That is also why the tip jar's label
+ * is `supportTitle`, its own section's heading, rather than a `menu*` key: it
+ * joins the three rows that are named from where they land, so a row and its
+ * heading cannot drift apart in five languages. Contact keeps `menuContact`,
+ * since the page it lands on has two names and neither is the row's.
+ *
+ * **Two rows change with the session, and the fourth changes identity.**
+ * Achievements and account need an account, so while signed out they point at
+ * the sign-in form carrying a `next` rather than at a page the middleware would
+ * bounce; and the "sign in" row becomes a "sign out" form once there is a
+ * session, because one slot holds the door in and the door out. The session is
+ * read on the server and handed down as `account` — see the prop.
  *
  * The animation itself is CSS (see the menu block in app/globals.css); this
  * component owns only the `open` flag the stylesheet keys off. The one piece of
@@ -55,16 +89,32 @@ import { UI_LOCALES } from "@/lib/i18n/locales";
 export function SiteMenu({
   locale,
   t,
+  account,
   inline,
 }: {
   locale: SupportedLocale;
   t: Dict;
+  /**
+   * Whoever is signed in, or null. Resolved on the server and handed down as
+   * three strings rather than read here: the menu is a Client Component, and a
+   * browser read of the session would leave the panel saying "sign in" on the
+   * very page the player just signed in from until the next navigation.
+   */
+  account: Account | null;
   /** Render as a flex item rather than on the fixed viewport track. */
   inline?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [opening, setOpening] = useState(0);
+  /* One transition for every press in the panel. A locale change and a
+     navigation are two different writes, but from the reader's side they are
+     the same gesture — the panel shuts and something is being waited for — so
+     they drive one indicator rather than two. */
   const [pending, startTransition] = useTransition();
+  /* The sign-out is a `<form action={...}>`, whose pending state only exists
+     inside the form. `SignOutRow` reports it up so the ring can show it too. */
+  const [signingOut, setSigningOut] = useState(false);
+  const busy = pending || signingOut;
   const router = useRouter();
   const container = useRef<HTMLDivElement>(null);
   const panelId = useId();
@@ -101,6 +151,18 @@ export function SiteMenu({
     });
   }
 
+  /* The rows navigate through here rather than letting the `Link` do it, so the
+     wait has an owner: `pending` stays true until the destination's payload has
+     been fetched and rendered, which is exactly as long as the ring should
+     turn. The anchor keeps its `href`, and `MenuRow` only diverts the plain
+     left click — every other way of following a link is left alone. */
+  function go(href: string) {
+    setOpen(false);
+    startTransition(() => {
+      router.push(href);
+    });
+  }
+
   function choose(next: SupportedLocale) {
     setOpen(false);
     if (next === locale) return;
@@ -126,12 +188,23 @@ export function SiteMenu({
         aria-label={open ? t.menuClose : t.menuOpen}
         aria-expanded={open}
         aria-controls={panelId}
-        className={`flex h-[42px] w-[42px] items-center justify-center rounded-full text-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+        aria-busy={busy || undefined}
+        /* `relative` is what the ring hangs off: it is `inset: -3px` on this
+           box, so it tracks `--menu-btn` rather than carrying a size of its
+           own. The box itself reads that token too, because the fixed track
+           below solves this button's `top` from it. */
+        className={`relative flex h-[var(--menu-btn)] w-[var(--menu-btn)] items-center justify-center rounded-full text-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
           onPhoto
             ? "border border-white/15 bg-white/10 backdrop-blur-xl hover:bg-white/20"
             : "border border-hairline bg-card/80 backdrop-blur hover:bg-card-raised"
         }`}
       >
+        {/* Always mounted, faded by `data-busy`: a ring that mounted on the
+            press would have to animate in from its first frame, and a
+            navigation that resolves in under the fade never shows at all —
+            which is the right answer for one that fast. */}
+        <span className="pending-ring" data-busy={busy} aria-hidden="true" />
+
         <span className="menu-bars" data-open={open} aria-hidden="true">
           <span className="menu-bar">
             <i />
@@ -167,33 +240,107 @@ export function SiteMenu({
                 as a block on the way out — see `.menu-items-out`. */}
         <div key={opening} className={open ? undefined : "menu-items-out"}>
           <nav className="flex flex-col">
+            {/* Every row but the tip jar is a real destination now. The three
+                labels that name a page are taken from that page's own title
+                rather than from a `menu*` key, so a row and the heading it
+                lands on cannot drift apart in five languages. */}
+            {/* First, and the only row on a game screen that leads back out of
+                it: `/guess` and `/compare` are exactly one viewport with no
+                wordmark to press. */}
             <MenuRow
               index={0}
-              label={t.menuLeaderboard}
+              href="/"
+              onNavigate={go}
+              label={t.menuHome}
+              icon={<HomeIcon />}
+            />
+            <MenuRow
+              index={1}
+              href="/leaderboard"
+              onNavigate={go}
+              label={t.leaderboardTitle}
               icon={<TrophyIcon />}
             />
-            <MenuRow index={1} label={t.menuAccount} icon={<PersonIcon />} />
-            <MenuRow index={2} label={t.menuSignIn} icon={<KeyIcon />} />
-            {/* The one row that goes somewhere. Closing on the way is what
-                makes the jump visible: left open, the panel would be sitting
-                over the top of the section it just scrolled to. */}
+            {/* Both gated rows point at the sign-in form while signed out
+                rather than at the page itself. The middleware would redirect
+                either way — this is so the URL in the status bar is the truth
+                before the click, and so the form knows where to return to. */}
+            <MenuRow
+              index={2}
+              href={
+                account ? "/achievements" : signInHref("/achievements")
+              }
+              onNavigate={go}
+              label={t.achievementsTitle}
+              icon={<MedalIcon />}
+            />
             <MenuRow
               index={3}
+              href={account ? ACCOUNT_PATH : signInHref(ACCOUNT_PATH)}
+              onNavigate={go}
+              label={t.menuAccount}
+              /* The name under the row is the whole of the panel's "you are
+                 signed in" state. A banner above the list would be a second
+                 thing to translate and a second thing to lay out, and the row
+                 it would be announcing is right here. */
+              detail={account?.displayName}
+              icon={<PersonIcon />}
+            />
+            {/* One slot, two controls: the door in and the door out. They are
+                never both on screen, and the second is a form rather than a
+                link because signing out is a write — it clears the session
+                cookie, which a GET must not do. */}
+            {account ? (
+              <SignOutRow
+                index={4}
+                label={t.menuSignOut}
+                onPending={setSigningOut}
+              />
+            ) : (
+              <MenuRow
+                index={4}
+                href={SIGN_IN_PATH}
+                onNavigate={go}
+                label={t.menuSignIn}
+                icon={<KeyIcon />}
+              />
+            )}
+            {/* Closing on the way is what makes the jump visible: left open,
+                the panel would be sitting over the top of the section it just
+                scrolled to. The FAQ lands on a section of the home page rather
+                than a route, so it works from anywhere on the site. */}
+            <MenuRow
+              index={5}
               href="/#faq"
-              onNavigate={() => setOpen(false)}
+              onNavigate={go}
               label={t.menuFaq}
               icon={<QuestionIcon />}
             />
-            <MenuRow index={4} label={t.menuContact} icon={<EnvelopeIcon />} />
-            <MenuRow index={5} label={t.menuCoffee} icon={<CupIcon />} />
+            {/* The last two rows are the same page, entered from its two ends:
+                the order the sections are dealt in is the whole of what the
+                href decides. */}
+            <MenuRow
+              index={6}
+              href={contactHref("contact")}
+              onNavigate={go}
+              label={t.menuContact}
+              icon={<EnvelopeIcon />}
+            />
+            <MenuRow
+              index={7}
+              href={contactHref("support")}
+              onNavigate={go}
+              label={t.supportTitle}
+              icon={<CupIcon />}
+            />
           </nav>
 
-          {/* The language picker is the one live control in here, so it is
-                  separated by a rule rather than sitting in the same list as five
-                  placeholders. */}
+          {/* The language picker is a control rather than a destination, so it
+                  is separated by a rule rather than sitting in the list of rows
+                  that navigate. */}
           <div
             className="menu-item-in mt-2 border-t border-hairline/70 px-3 pb-1 pt-3"
-            style={{ "--menu-i": 6 } as React.CSSProperties}
+            style={{ "--menu-i": 8 } as React.CSSProperties}
           >
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-dim">
               {t.language}
@@ -242,9 +389,17 @@ export function SiteMenu({
      use, and a full-width fixed bar that swallowed clicks would make the top of
      every page dead. `inset-x-0` measures the initial containing block, which
      excludes the scrollbar — the same width the in-flow rows are centred in, so
-     the two agree to the pixel. */
+     the two agree to the pixel.
+
+     **The `top` is solved, not chosen.** The button is `fixed`, so nothing in
+     the bar can centre it against the wordmark beside it; this is the
+     arithmetic the bar's own `items-center` does, written out — half of what
+     the bar has left over once the button is in it. It was a flat `top-7` and
+     the two were 12px apart on every page off home, which is exactly what a
+     second independent number buys. Both halves read tokens, so neither the
+     bar's height nor the button's size can move without this following. */
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-7 z-50">
+    <div className="pointer-events-none fixed inset-x-0 top-[calc((var(--site-bar-h)-var(--menu-btn))/2)] z-50">
       <div className="mx-auto flex max-w-7xl justify-end px-6">{button}</div>
     </div>
   );
@@ -253,21 +408,23 @@ export function SiteMenu({
 /**
  * One row of the menu.
  *
- * Without `href` it is a `button` rather than a `Link`, because most of these
- * destinations do not exist yet: a link to a route that 404s is worse than a
- * control that says so. It stays focusable and keeps its hover so the panel
- * reads as finished rather than as half-built, and `aria-disabled` is what
- * tells a screen reader the difference — `disabled` would drop the row out of
- * the tab order and out of the menu's shape entirely.
- *
- * With one, it is an ordinary `Link` in the same clothes. Only FAQ has one
- * today.
+ * Every row has an `href` today, so every row is a `Link`. The other branch
+ * stays rather than being deleted: without one it is an `aria-disabled`
+ * `button`, which is what a row whose destination does not exist yet should be
+ * — a link to a route that 404s is worse than a control that says so, and
+ * `aria-disabled` rather than `disabled` keeps such a row in the tab order and
+ * in the menu's shape. The tip jar was the last of them until it gained a page
+ * on 2026-10-07.
  */
+const ROW_SHAPE =
+  "menu-item-in flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-[15px] font-semibold text-ink/85 transition-colors hover:bg-card-raised hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent";
+
 function MenuRow({
   index,
   label,
   icon,
   href,
+  detail,
   onNavigate,
 }: {
   index: number;
@@ -275,25 +432,124 @@ function MenuRow({
   icon: React.ReactNode;
   /** A real destination. Without it the row only announces itself. */
   href?: string;
-  onNavigate?: () => void;
+  /** A second, quieter line — the signed-in player's name on the account row. */
+  detail?: string;
+  /** Closes the panel and drives the button's ring for as long as the
+   *  destination takes to arrive. Given the `href` because it does the pushing
+   *  itself — see `go` in `SiteMenu`. */
+  onNavigate?: (href: string) => void;
 }) {
-  const shape =
-    "menu-item-in flex items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-[15px] font-semibold text-ink/85 transition-colors hover:bg-card-raised hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent";
   const order = { "--menu-i": index } as React.CSSProperties;
+
+  /* Two lines when there is a detail, one when there is not, and the icon is
+     centred against the pair either way. `truncate` on the detail rather than
+     on the label: a long username must not push the row wider than the panel,
+     and the label is a dictionary string that was chosen to fit. */
+  const body = (
+    <>
+      <span className="text-ink-dim">{icon}</span>
+      <span className="min-w-0 flex-1">
+        {label}
+        {detail ? (
+          <span className="block truncate text-[12px] font-normal text-ink-dim">
+            {detail}
+          </span>
+        ) : null}
+      </span>
+    </>
+  );
 
   if (href) {
     return (
-      <Link href={href} onClick={onNavigate} style={order} className={shape}>
-        <span className="text-ink-dim">{icon}</span>
-        {label}
+      <Link
+        href={href}
+        /* Only the plain left click is diverted. A modified or middle click is
+           the reader asking the browser for a tab or a window, and preventing
+           it to run our own `router.push` would turn every one of those into a
+           navigation in this tab. `defaultPrevented` is checked first so this
+           can never fight something upstream that has already handled the
+           press. */
+        onClick={(event) => {
+          if (!onNavigate || event.defaultPrevented) return;
+          if (event.button !== 0) return;
+          if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+            return;
+          }
+          event.preventDefault();
+          onNavigate(href);
+        }}
+        style={order}
+        className={ROW_SHAPE}
+      >
+        {body}
       </Link>
     );
   }
 
   return (
-    <button type="button" aria-disabled="true" style={order} className={shape}>
-      <span className="text-ink-dim">{icon}</span>
-      {label}
+    <button type="button" aria-disabled="true" style={order} className={ROW_SHAPE}>
+      {body}
+    </button>
+  );
+}
+
+/**
+ * The way out, in the row the way in occupies while signed out.
+ *
+ * A form rather than a `Link`: signing out clears the session cookie, and the
+ * action that does it redirects home afterwards — so the panel is never left
+ * open over a page that has changed underneath it, and no `setOpen(false)` is
+ * needed here. It carries the same shape as every other row, so the list does
+ * not visibly gain a button.
+ */
+function SignOutRow({
+  index,
+  label,
+  onPending,
+}: {
+  index: number;
+  label: string;
+  /** Lifts this form's pending state to the button's ring. `useFormStatus`
+   *  only reads the form a component is *inside*, so the report has to start
+   *  here rather than being asked for from above. */
+  onPending: (pending: boolean) => void;
+}) {
+  return (
+    <form action={signOut} className="contents">
+      <SignOutButton index={index} label={label} onPending={onPending} />
+    </form>
+  );
+}
+
+function SignOutButton({
+  index,
+  label,
+  onPending,
+}: {
+  index: number;
+  label: string;
+  onPending: (pending: boolean) => void;
+}) {
+  const { pending } = useFormStatus();
+
+  useEffect(() => {
+    onPending(pending);
+    /* The action redirects, so this component is unmounted rather than being
+       told the request finished — the cleanup is what actually clears the ring
+       on the far side of a sign-out. */
+    return () => onPending(false);
+  }, [pending, onPending]);
+
+  return (
+    <button
+      type="submit"
+      style={{ "--menu-i": index } as React.CSSProperties}
+      className={ROW_SHAPE}
+    >
+      <span className="text-ink-dim">
+        <ExitIcon />
+      </span>
+      <span className="min-w-0 flex-1">{label}</span>
     </button>
   );
 }
@@ -312,12 +568,32 @@ const ICON = {
   strokeLinejoin: "round",
 } as const;
 
+function HomeIcon() {
+  return (
+    <svg {...ICON}>
+      <path d="M4 10.5 12 4l8 6.5" />
+      <path d="M6 9.8V19a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V9.8" />
+      <path d="M10 20v-5h4v5" />
+    </svg>
+  );
+}
+
 function TrophyIcon() {
   return (
     <svg {...ICON}>
       <path d="M7 4h10v5a5 5 0 0 1-10 0V4Z" />
       <path d="M7 6H4.5v1A3.5 3.5 0 0 0 8 10.5M17 6h2.5v1a3.5 3.5 0 0 1-3.5 3.5" />
       <path d="M12 14v3M9 20h6M10 17h4l.5 3h-5l.5-3Z" />
+    </svg>
+  );
+}
+
+function MedalIcon() {
+  return (
+    <svg {...ICON}>
+      <circle cx="12" cy="14" r="6" />
+      <path d="M12 11.6l1 2 2.2.3-1.6 1.5.4 2.2-2-1-2 1 .4-2.2L8.8 14l2.2-.3 1-2.1Z" />
+      <path d="M8.5 8.6 6 3.5h12l-2.5 5.1" />
     </svg>
   );
 }
@@ -355,6 +631,15 @@ function EnvelopeIcon() {
     <svg {...ICON}>
       <rect x="3" y="5.5" width="18" height="13" rx="2.5" />
       <path d="m3.8 7 7.1 5.3a2 2 0 0 0 2.2 0L20.2 7" />
+    </svg>
+  );
+}
+
+function ExitIcon() {
+  return (
+    <svg {...ICON}>
+      <path d="M15 4.5h2.5A2.5 2.5 0 0 1 20 7v10a2.5 2.5 0 0 1-2.5 2.5H15" />
+      <path d="M11 8l-4 4 4 4M7 12h9" />
     </svg>
   );
 }

@@ -38,8 +38,12 @@ export default async function ComparePage() {
           when the set does: its blurb is a live instruction ("which of the two
           dates…"), and leaving it standing over the end-of-set summary would
           be the page asking a question that is no longer on screen. Only the
-          game knows the set is over. The markup and the space it takes are
-          unchanged, so `--compare-chrome` still balances. */}
+          game knows the set is over.
+
+          It is a `fixed` pill in the top bar's own row since 2026-10-08
+          (`RoundHead`), so it is no longer one of the rows this screen's
+          height budget pays for — `--compare-chrome` dropped by its 84px and
+          the photographs took them. */}
       {rounds.length > 0 ? (
         <ComparisonGame rounds={rounds} t={t} locale={locale} />
       ) : (

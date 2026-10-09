@@ -79,7 +79,10 @@ export async function objectExists(objectKey: string): Promise<boolean> {
 export interface FetchedObject {
   body: ReadableStream<Uint8Array>;
   contentType: string;
+  /** Bytes in *this* response — the slice, when a range was asked for. */
   contentLength: number | undefined;
+  /** Set only for a ranged read; the caller answers 206 when it is present. */
+  contentRange: string | undefined;
   etag: string | undefined;
 }
 
@@ -90,13 +93,25 @@ export interface FetchedObject {
  * so the only caller is the dev-only image proxy (`app/api/r2/[...key]`): the
  * S3 endpoint resolves from networks where `r2.dev` does not. Returns null for
  * a missing key so the caller can answer 404 rather than 500.
+ *
+ * `range` is passed straight through to R2 rather than being applied to a full
+ * download, which is what the proxy needs to serve a `<video>` honestly: the
+ * element asks for byte ranges and Safari will not play a source that answers
+ * the whole file to one.
  */
-export async function getObject(objectKey: string): Promise<FetchedObject | null> {
+export async function getObject(
+  objectKey: string,
+  options: { range?: string } = {},
+): Promise<FetchedObject | null> {
   const { s3, bucket } = r2();
 
   try {
     const response = await s3.send(
-      new GetObjectCommand({ Bucket: bucket, Key: objectKey }),
+      new GetObjectCommand({
+        Bucket: bucket,
+        Key: objectKey,
+        Range: options.range,
+      }),
     );
     if (!response.Body) return null;
 
@@ -104,6 +119,7 @@ export async function getObject(objectKey: string): Promise<FetchedObject | null
       body: response.Body.transformToWebStream(),
       contentType: response.ContentType ?? "application/octet-stream",
       contentLength: response.ContentLength,
+      contentRange: response.ContentRange,
       etag: response.ETag,
     };
   } catch (error) {

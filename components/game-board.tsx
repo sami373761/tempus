@@ -54,15 +54,32 @@ type View = "play" | "games";
  * A fixed ratio cannot do this job at all: a cover spans two columns *plus the
  * gap between them*, so the ratio that lands it on the squares' height is
  * `2(W-16)/(W-48)` — a function of the board's width rather than a constant.
+ *
+ * **The two-column branch is a tenth shorter than square**, asked for: on a
+ * phone every card is half the board and a square one is 155px tall, which
+ * made the first screen a column of five of them with the masthead pushed off
+ * the top of it. The `md` branch is untouched, so nothing about the board at
+ * its cap moves. It is still *one* height for both views, which is the whole
+ * point of the token — the number changed, not the rule.
  */
-const CARD_HEIGHT = "h-[calc((100cqw-1rem)/2)] md:h-[calc((100cqw-3rem)/4)]";
+const CARD_HEIGHT =
+  "h-[calc((100cqw-1rem)/2*0.9)] md:h-[calc((100cqw-3rem)/4)]";
 
 export function GameBoard({
   t,
+  dailyCover,
   guessCover,
   photos,
 }: {
   t: Dict;
+  /** The date-guessing game's common-era backdrop, reused as the Daily card's
+   *  picture. Asked for on 2026-10-07: that card painted `.board-mesh` while
+   *  every other card on both views carried a photograph, which made the one
+   *  card that cannot be played the only one that looked unfinished. It is the
+   *  art the site already has rather than a new upload, like the explorer's
+   *  stage — and a backdrop from the game Daily is played over is the picture
+   *  that says what the mode is. */
+  dailyCover: CoverPhoto;
   guessCover: CoverPhoto;
   /** One photograph per photographed card, across both views, resolved on the
    *  server like `guessCover` — a record of strings crosses the boundary
@@ -130,10 +147,12 @@ export function GameBoard({
           width as well as the same height. */}
       <BoardView active={view === "play"} swaps={swaps} columns={6}>
         <CoverCard
+          href="/daily"
           title={t.dailyTitle}
           kicker={t.timelineTitle}
           icon={<CalendarIcon />}
-          soon={t.comingSoon}
+          photo={dailyCover}
+          blurb={t.cardDailyBlurb}
           index={0}
         />
         <CoverCard
@@ -141,11 +160,15 @@ export function GameBoard({
           title={t.timelineTitle}
           icon={<MarkerIcon />}
           photo={guessCover}
+          /* The instruction the game's own screen carries, rather than a second
+             sentence about the same game in five languages. */
+          blurb={t.timelineBlurb}
           index={1}
         />
         <BoardCard
           href="/versus"
           title={t.duelTitle}
+          blurb={t.cardDuelBlurb}
           kicker={t.timelineTitle}
           icon={<SwordsIcon />}
           photo={photos.versus}
@@ -155,22 +178,20 @@ export function GameBoard({
         <BoardCard
           href="/compare"
           title={t.comparisonTitle}
+          blurb={t.comparisonBlurb}
           icon={<ScalesIcon />}
           photo={photos.compare}
           span="wide"
           index={3}
         />
-        {/* Deliberately *not* `outlined`: on this page a dashed edge means a
-            card that cannot be used, and both of the cards that swap the board
-            are the one live control on the view they sit in.
-
-            `span="full"` rather than `"wide"` only matters under `md`, where
+        {/* `span="full"` rather than `"wide"` only matters under `md`, where
             the grid is two columns and this is the odd third tile: spanning
             both keeps the row flush instead of leaving a half-width hole. At
             six columns it is two of them like its neighbours. */}
         <BoardCard
           onClick={(event) => show("games", event)}
           title={t.otherGamesTitle}
+          blurb={t.cardOtherBlurb}
           icon={<GridIcon />}
           photo={photos.other}
           span="full"
@@ -179,28 +200,38 @@ export function GameBoard({
       </BoardView>
 
       <BoardView active={view === "games"} swaps={swaps} columns={4}>
-        {/* Survival leads this view rather than the play one. It is a mode that
-            is named but not built, which is what everything else in here is —
-            and it took one of the three slots that were being held open, so the
-            view is still eight cards in two rows. */}
+        {/* Survival leads this view, and it is now the one card in it that is
+            built — it kept the slot it took from the three that were being
+            held open, rather than moving to the play view, because this is
+            still where a player looks for a mode that is not one of the two
+            headline games.
+
+            **Its kicker is the comparison round, not the date-guessing one.**
+            The kicker names the game a mode is played over, and survival is
+            the comparison round with no set of ten around it (see
+            app/(public)/survival/page.tsx) — it was labelled date guessing
+            while it was only a name on a card. */}
         <BoardCard
+          href="/survival"
           title={t.survivalTitle}
-          kicker={t.timelineTitle}
+          blurb={t.cardSurvivalBlurb}
+          kicker={t.comparisonTitle}
           icon={<HeartIcon />}
           photo={photos.survival}
-          soon={t.comingSoon}
           index={0}
         />
         <BoardCard
+          href="/football"
           title={t.footballTitle}
+          blurb={t.cardFootballBlurb}
           kicker={t.timelineTitle}
           icon={<FootballIcon />}
           photo={photos.football}
-          soon={t.comingSoon}
           index={1}
         />
         <BoardCard
           title={t.basketballTitle}
+          blurb={t.cardBasketballBlurb}
           kicker={t.timelineTitle}
           icon={<BasketballIcon />}
           photo={photos.basketball}
@@ -209,27 +240,42 @@ export function GameBoard({
         />
         <BoardCard
           title={t.screenTitle}
+          blurb={t.cardScreenBlurb}
           kicker={t.timelineTitle}
           icon={<ClapperIcon />}
           photo={photos.screen}
           soon={t.comingSoon}
           index={3}
         />
-        {/* Two slots held open on purpose — there were three before survival
-            took one — so the board keeps its shape and the two cards that mean
-            something, what is coming and the way back, stay in the corner the
-            eye already knows. Empty rather than filled with invented names:
-            there is nothing to announce yet. `aria-hidden`, because unlabelled
-            stops in a row are noise to a screen reader rather than
-            information. */}
-        <EmptySlot index={4} />
-        <EmptySlot index={5} />
+        {/* The last two slots stood empty until 2026-10-06. They are named
+            now, which leaves the view eight cards with nothing held open: the
+            board's shape is settled and the two that mean something — what is
+            coming and the way back — are still in the corner the eye knows. */}
+        <BoardCard
+          title={t.inventionTitle}
+          blurb={t.cardInventionBlurb}
+          kicker={t.timelineTitle}
+          icon={<BulbIcon />}
+          photo={photos.invention}
+          soon={t.comingSoon}
+          index={4}
+        />
+        <BoardCard
+          title={t.whenBornTitle}
+          blurb={t.cardWhenBornBlurb}
+          kicker={t.timelineTitle}
+          icon={<PersonIcon />}
+          photo={photos.whenBorn}
+          soon={t.comingSoon}
+          index={5}
+        />
         <BoardCard
           title={t.comingSoonTitle}
+          blurb={t.cardComingSoonBlurb}
           kicker={t.newGamesBlurb}
           icon={<SparkIcon />}
+          photo={photos.comingSoon}
           soon={t.comingSoon}
-          outlined
           index={6}
         />
         <BoardCard
@@ -271,7 +317,14 @@ function BoardView({
     <div
       data-active={active}
       inert={!active || undefined}
-      className="board-view col-start-1 row-start-1 self-center"
+      /* Centred in the shared cell, which is what stops a board that changed
+         height between views from moving the masthead above it by half the
+         difference. Below `md` the two views are no longer the same number of
+         rows — the play view is three now that the covers sit side by side,
+         and the games view is still four — so there the shorter one is pinned
+         to the top of the cell and the slack falls below it, where it reads as
+         the run-up to the scroll rather than as a board floating in a hole. */
+      className="board-view col-start-1 row-start-1 self-start md:self-center"
     >
       {/* The grid lives on the inner element, not on the view, because this is
           what the key remounts — and a remount of the grid itself would be a
@@ -340,10 +393,63 @@ function CardScrim() {
 const ON_PHOTO_SHADOW = "drop-shadow-[0_1px_6px_rgba(0,0,0,0.75)]";
 
 /**
+ * The sentence that unrolls under a card's title while the pointer is on it.
+ *
+ * **The row is what animates** — `0fr` -> `1fr`, the same arrangement the
+ * explorer's pills use — and the child owns the `overflow-hidden`, or the text
+ * spills out of the collapsed row. Height is not animatable from nothing any
+ * other way without measuring one in JavaScript, and there are thirteen of
+ * these on the board.
+ *
+ * **Growing the row is what lifts the title**, which is the whole of the
+ * effect: every card's text block is anchored to the card's lower edge
+ * (`justify-between`), so a row that opens underneath the title pushes the
+ * title up by exactly its own height rather than moving anything else on the
+ * card. A translate on the title would have had to be a guess at that height.
+ *
+ * `group-hover` is Tailwind's, which wraps `@media (hover: hover)`, so this
+ * never opens on a touch screen — where there is no pointer to explain it and,
+ * on a phone-sized card, not enough height for the paragraph either. The card
+ * clips what does not fit in any case.
+ *
+ * The text is always in the document rather than being revealed by script, so
+ * a screen reader reads each card's name *and* what the mode is. The
+ * `.board-card-blurb` class is only how `prefers-reduced-motion` reaches the
+ * inline durations — see `app/globals.css`.
+ */
+function CardBlurb({
+  text,
+  onPhoto,
+  size,
+}: {
+  text: string;
+  onPhoto?: boolean;
+  /** The covers carry a notch more than the tiles, in proportion with their
+   *  own much larger titles. Neither goes below 13px: a description nobody can
+   *  read is a description that need not have been written. */
+  size: string;
+}) {
+  return (
+    <span className="board-card-blurb grid grid-rows-[0fr] transition-[grid-template-rows] duration-[420ms] ease-out group-hover:grid-rows-[1fr]">
+      <span className="overflow-hidden">
+        <span
+          className={`block pt-2 ${size} leading-snug opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 ${
+            onPhoto ? `text-white/85 ${ON_PHOTO_SHADOW}` : "text-ink-dim"
+          }`}
+        >
+          {text}
+        </span>
+      </span>
+    </span>
+  );
+}
+
+/**
  * A cover card: the half-board frame at the top of the board.
  *
- * Its photograph is a function of the date, so the card changes once a day and
- * holds still for the whole of one.
+ * The date-guessing cover's photograph is a function of the date, so that card
+ * changes once a day and holds still for the whole of one. Daily's is fixed: it
+ * is the game's own common-era backdrop, reused rather than uploaded.
  *
  * **Its contents are a `BoardCard`'s, at a cover's size.** The title stood in
  * the middle of the frame until 2026-10-06, which made these two the only
@@ -362,6 +468,7 @@ function CoverCard({
   kicker,
   icon,
   photo,
+  blurb,
   soon,
   index,
 }: {
@@ -370,6 +477,9 @@ function CoverCard({
   kicker?: string;
   icon: React.ReactNode;
   photo?: CoverPhoto;
+  /** One line about the mode, unrolled under the title on hover. See
+   *  `CardBlurb`. */
+  blurb?: string;
   soon?: string;
   index: number;
 }) {
@@ -385,16 +495,23 @@ function CoverCard({
              wider viewport and pull a file larger than it can ever show. Both
              numbers follow the board's width; rescale it and this has to
              follow. */
-          sizes="(min-width: 1160px) 546px, (min-width: 768px) 47vw, 100vw"
+          /* Half the board from `md`; below it the card is one of two columns
+             like every other card on the board, so it is ~47vw at both ends
+             and the old `100vw` would have pulled twice the file it can show. */
+          sizes="(min-width: 1160px) 546px, 47vw"
           alt=""
           aria-hidden="true"
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
         />
       ) : (
-        /* The mesh stands in for the photograph this card does not have yet,
-           for the same reason the bento's hero keeps one underneath: a card
-           with nothing behind its title reads as a card that failed to load
-           rather than as one that is not ready. */
+        /* The mesh stands in for a photograph a cover does not have, for the
+           same reason the bento's hero keeps one underneath: a card with
+           nothing behind its title reads as a card that failed to load rather
+           than as one that is not ready. **It has no caller as of
+           2026-10-07** — Daily was the last cover without a picture and now
+           carries the date-guessing game's common-era backdrop — so this is
+           the branch a third cover added without art would land in, not a
+           state anything on the board is in. */
         <div aria-hidden="true" className="board-mesh absolute inset-0" />
       )}
 
@@ -403,7 +520,10 @@ function CoverCard({
       <span className="relative flex items-start justify-between">
         <span
           aria-hidden="true"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-white/80 backdrop-blur-md transition-colors group-hover:text-white"
+          /* A notch smaller below `sm`, where a card is half a phone rather
+             than a quarter of the board: 40px of chip over a 128px card is a
+             third of its width. Unchanged from `sm` up. */
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-white/80 backdrop-blur-md transition-colors group-hover:text-white sm:h-10 sm:w-10"
         >
           {icon}
         </span>
@@ -421,30 +541,58 @@ function CoverCard({
       </span>
 
       <span className="relative block">
+        {/* The tiles' mobile kicker, for the same reason — see `BoardCard`.
+            At 320px a cover is a 96px text column and "Date guessing" wants
+            two lines of `text-xs` in it, which is a line more than the card
+            has. Unchanged from `sm` up. */}
         {kicker ? (
-          <span className="mb-1 block text-xs uppercase tracking-[0.1em] text-white/70">
+          <span className="mb-1 block text-[10px] uppercase leading-[1.35] tracking-[0.08em] text-white/70 sm:text-xs sm:leading-4 sm:tracking-[0.1em]">
             {kicker}
           </span>
         ) : null}
-        <h2 className="font-display text-3xl font-semibold leading-none tracking-[-0.02em] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)] sm:text-4xl">
+        {/* A cover's type is the one thing about it that is bigger than a
+            tile's, and only from `md` — below that the two are the same card
+            at the same width, so the same size is what makes the row read as
+            one row. `leading-none` is a one-line setting; a half-width mobile
+            card takes two, so it waits for `md` as well. */}
+        <h2 className="font-display text-xl font-semibold leading-tight tracking-[-0.02em] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)] sm:text-2xl md:text-3xl md:leading-none lg:text-4xl">
           {title}
         </h2>
+        {blurb ? (
+          <CardBlurb text={blurb} onPhoto size="text-[13px] md:text-sm lg:text-base" />
+        ) : null}
       </span>
     </>
   );
 
-  /* Half the board wide — three of the play view's six columns plus the gap
-     between them — and `CARD_HEIGHT` tall like everything else on it. The
-     padding is a notch wider than a `BoardCard`'s, which is the one thing
-     about the arrangement that does scale with the card. */
-  const shape = `board-card group relative col-span-2 flex ${CARD_HEIGHT} flex-col justify-between overflow-hidden rounded-3xl border border-hairline bg-card p-5 text-left md:col-span-3`;
+  /* Half the board wide from `md` — three of the play view's six columns plus
+     the gap between them — and `CARD_HEIGHT` tall like everything else on it.
+     The padding is a notch wider than a `BoardCard`'s, which is the one thing
+     about the arrangement that does scale with the card.
+
+     **Below `md` it is one column, not two**, asked for so Daily and Date
+     Guessing sit side by side at the games view's own size rather than as two
+     full-width bands stacked above the rest. That takes the play view from
+     four rows to three on a phone, and it is why the two covers take a tile's
+     padding, radius and type down there: at a tile's width they *are* tiles,
+     and a cover's 20px padding and 30px headline inside a 155px box read as a
+     card that had been scaled rather than laid out. Other Games keeps its
+     `span="full"`, so the row under them is unchanged. */
+  const shape = `board-card group relative flex ${CARD_HEIGHT} flex-col justify-between overflow-hidden rounded-2xl border border-hairline bg-card p-3.5 text-left sm:p-4 md:col-span-3 md:rounded-3xl md:p-5`;
 
   if (!href) {
     return (
       <div
         aria-disabled="true"
         style={cardOrder(index)}
-        className={`${shape} opacity-80`}
+        /* It comes out of its mute under the pointer, and it brightens its
+           border like the live cards do. The border used to be withheld here
+           on the grounds that it promises a click this card cannot answer; it
+           was asked for on 2026-10-07, and the distinction is still carried by
+           the "soon" chip, the default cursor and the mute itself — what is
+           gone is a card that looked inert rather than unready. The fill
+           (`hover:bg-card-raised`) stays off: that is the pressable pair. */
+        className={`${shape} opacity-80 transition-[opacity,border-color] duration-300 hover:border-ink/25 hover:opacity-100`}
       >
         {inner}
       </div>
@@ -473,10 +621,11 @@ function CoverCard({
  * screen reader, and it stays out of the tab order so a keyboard user does not
  * have to step through stops that do nothing.
  *
- * `outlined` is the one visual variant — a dashed edge and no fill — and it
- * belongs to the card that stands for modes not yet named rather than for a
- * particular one, which is why the two cards that swap the board do not take
- * it: a dashed edge here means a card that cannot be used.
+ * There is no dashed variant any more. A dashed edge used to mean a card that
+ * cannot be used — the empty slots and the "coming soon" card wore one — but
+ * the slots are named now and that card has a photograph of its own, so the
+ * board carries no dashes at all and the "soon" chip is the whole of the
+ * distinction. Bringing it back is a `surface` branch and a prop.
  *
  * **The text block is anchored to the bottom and the title wraps rather than
  * truncating.** Both follow from the card being tall enough for a second line:
@@ -495,8 +644,8 @@ function CoverCard({
  * dark.
  *
  * A photograph says nothing about whether the mode exists. A card that is not
- * ready is still `aria-disabled` with its "soon" chip, exactly as the Daily
- * cover is, and it keeps the cover card's `opacity-80` rather than the bare
+ * ready is still `aria-disabled` with its "soon" chip, and it keeps the cover
+ * card's `opacity-80` rather than the bare
  * card's `opacity-60`, which at this size muted the photograph into a grey
  * rectangle. A finished mode wearing one is an ordinary `Link` at full
  * opacity — which is why the arrow has a photographed colour at all, since
@@ -513,18 +662,21 @@ function BoardCard({
   href,
   onClick,
   title,
+  blurb,
   kicker,
   icon,
   photo,
   soon,
   arrow,
-  outlined,
   span,
   index,
 }: {
   href?: string;
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
   title: string;
+  /** One line about the mode, unrolled under the title on hover. See
+   *  `CardBlurb`. The way back has none: it is not a game. */
+  blurb?: string;
   kicker?: string;
   icon: React.ReactNode;
   /** A photograph to fill the card with. One URL, no srcset — see
@@ -533,13 +685,10 @@ function BoardCard({
   photo?: string;
   soon?: string;
   arrow?: "back";
-  outlined?: boolean;
   span?: "wide" | "full";
   index: number;
 }) {
-  const surface = outlined
-    ? "border border-dashed border-hairline"
-    : "border border-hairline bg-card";
+  const surface = "border border-hairline bg-card";
 
   const inner = (
     <>
@@ -553,7 +702,13 @@ function BoardCard({
                file and no srcset — see `boardPhotoUrl`. */
             alt=""
             aria-hidden="true"
-            className="absolute inset-0 h-full w-full object-cover"
+            /* The hover every card shares. It is on the *picture* rather than
+               on the card because the card's own hover — border and fill — is
+               invisible under a photograph, which is why only the three
+               interactive cards used to appear to react at all. The scale is
+               clipped by the card's `overflow-hidden`, and the scrim is a
+               sibling so the title does not drift with it. */
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
           />
           <CardScrim />
         </>
@@ -562,12 +717,10 @@ function BoardCard({
       <span className="relative flex items-start justify-between">
         <span
           aria-hidden="true"
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors sm:h-10 sm:w-10 ${
             photo
               ? "border border-white/15 bg-white/10 text-white/80 backdrop-blur-md group-hover:text-white"
-              : `text-ink-dim group-hover:text-ink ${
-                  outlined ? "bg-card/70" : "bg-card-raised"
-                }`
+              : "bg-card-raised text-ink-dim group-hover:text-ink"
           }`}
         >
           {icon}
@@ -591,17 +744,35 @@ function BoardCard({
       </span>
 
       <span className="relative block">
+        {/* The kicker is a step smaller below `sm`, where a tile leaves ~123px
+            of text column: "More modes on the way" wants three lines of
+            `text-xs` there, and three lines of kicker over two of title is
+            more than a card a tenth shorter than square has. The size only
+            matters on a phone — from `sm` every kicker on the board is one
+            line. */}
         {kicker ? (
           <span
-            className={`mb-0.5 block text-xs uppercase tracking-[0.1em] ${
+            className={`mb-0.5 block text-[10px] uppercase leading-[1.35] tracking-[0.08em] sm:text-xs sm:leading-4 sm:tracking-[0.1em] ${
               photo ? "text-white/70" : "text-ink-dim"
             }`}
           >
             {kicker}
           </span>
         ) : null}
+        {/* Up from `text-lg` on 2026-10-07, asked for: at a third of the board
+            these titles read as captions beside the covers' `text-3xl`. The
+            step stops well short of a cover's, which is the one thing the
+            request pinned — Daily and Date Guessing stay the loudest names on
+            the board.
+
+            Below `sm` it is back to `text-lg`, which is a consequence of the
+            cards being a tenth shorter on a phone: "Coming Soon" is the one
+            card carrying a two-line kicker *and* a two-line title, and at
+            `text-xl` it ran 1px past its own lower edge. The covers stay at
+            `text-xl` there, so the hierarchy the step was asked for survives
+            at every width. */}
         <span
-          className={`block text-lg font-semibold leading-tight ${
+          className={`block text-lg font-semibold leading-tight sm:text-2xl ${
             photo
               ? "text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)]"
               : "text-ink"
@@ -609,6 +780,13 @@ function BoardCard({
         >
           {title}
         </span>
+        {blurb ? (
+          <CardBlurb
+            text={blurb}
+            onPhoto={Boolean(photo)}
+            size="text-[13px] sm:text-sm"
+          />
+        ) : null}
       </span>
     </>
   );
@@ -622,7 +800,7 @@ function BoardCard({
 
   /* `relative` and `overflow-hidden` only matter with a photograph, but they
      cost a card without one nothing and keep the class list one string. */
-  const shape = `board-card group relative flex ${CARD_HEIGHT} flex-col justify-between overflow-hidden rounded-2xl p-4 text-left ${surface} ${width ?? ""}`;
+  const shape = `board-card group relative flex ${CARD_HEIGHT} flex-col justify-between overflow-hidden rounded-2xl p-3.5 text-left sm:p-4 ${surface} ${width ?? ""}`;
 
   if (onClick) {
     return (
@@ -645,7 +823,15 @@ function BoardCard({
       <div
         aria-disabled="true"
         style={cardOrder(index)}
-        className={`${shape} ${photo ? "opacity-80" : "opacity-60"}`}
+        /* The outline the live branches carry, asked for on 2026-10-07 so the
+           games view answers the pointer the way the play view does. It is
+           only *half* of the pressable pair: `hover:bg-card-raised` stays off,
+           and so does the pointer cursor, so a card that cannot be played
+           still does not promise a click. What it keeps from before is coming
+           out of its own mute, which is the louder half of the reaction. */
+        className={`${shape} transition-[opacity,border-color] duration-300 hover:border-ink/25 ${
+          photo ? "opacity-80 hover:opacity-100" : "opacity-60 hover:opacity-80"
+        }`}
       >
         {inner}
       </div>
@@ -660,17 +846,6 @@ function BoardCard({
     >
       {inner}
     </Link>
-  );
-}
-
-/** A slot the board keeps open for a game that has not been named yet. */
-function EmptySlot({ index }: { index: number }) {
-  return (
-    <div
-      aria-hidden="true"
-      style={cardOrder(index)}
-      className={`board-card ${CARD_HEIGHT} rounded-2xl border border-dashed border-hairline/50`}
-    />
   );
 }
 
@@ -695,7 +870,12 @@ function cardOrder(index: number) {
 }
 
 /* The cards' icons. Line art at one weight, like the menu's, so the two sets of
-   chrome on the page are visibly the same hand. 20px inside a 40px box. */
+   chrome on the page are visibly the same hand. 20px inside a 40px box.
+
+   Four of them are exported, because the explorer below the fold names the same
+   four modes this board does (components/home-explorer.tsx) and a second
+   drawing of the same mode would be two things to keep in step. The two the
+   explorer adds — a medal and a shelf — have no card up here and live there. */
 const CARD_ICON = {
   viewBox: "0 0 24 24",
   "aria-hidden": true,
@@ -721,7 +901,7 @@ function CalendarIcon() {
 
 /** Date guessing: a marker standing on a ruler — the game's own rail, seen
  *  small. The one icon on the board that is a picture of the thing you do. */
-function MarkerIcon() {
+export function MarkerIcon() {
   return (
     <svg {...CARD_ICON}>
       <path d="M3 15h18" />
@@ -747,7 +927,7 @@ function SwordsIcon() {
 
 /** Comparison: a balance, which is the question that game asks — which of two
  *  dates the event sits nearer to. */
-function ScalesIcon() {
+export function ScalesIcon() {
   return (
     <svg {...CARD_ICON}>
       <path d="M12 4.5v15M7.5 19.5h9" />
@@ -758,7 +938,7 @@ function ScalesIcon() {
 
 /** Survival: lives, not a heartbeat — the mode is "keep going until you are
  *  out", and a pulse line would have read as health or activity. */
-function HeartIcon() {
+export function HeartIcon() {
   return (
     <svg {...CARD_ICON}>
       <path d="M12 20s-7.5-4.6-7.5-9.4A4.1 4.1 0 0 1 12 8.2a4.1 4.1 0 0 1 7.5 2.4C19.5 15.4 12 20 12 20Z" />
@@ -768,7 +948,7 @@ function HeartIcon() {
 
 /** The door to the rest of the board: four panes, which is the board itself
  *  seen small. */
-function GridIcon() {
+export function GridIcon() {
   return (
     <svg {...CARD_ICON}>
       <rect x="3.5" y="3.5" width="7" height="7" rx="1.6" />
@@ -815,6 +995,30 @@ function ClapperIcon() {
       <rect x="3" y="4.5" width="18" height="13" rx="2.5" />
       <path d="M10.4 9.1v3.8l3.4-1.9-3.4-1.9Z" />
       <path d="M8.5 20.5h7" />
+    </svg>
+  );
+}
+
+/** Inventions: a filament bulb, which is the picture on the card seen small —
+ *  the one glyph in this set that repeats its own photograph, because every
+ *  other drawing of "an invention" is a cog, and a cog is machinery. */
+function BulbIcon() {
+  return (
+    <svg {...CARD_ICON}>
+      <path d="M9 17.2a6 6 0 1 1 6 0v1.3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 18.5v-1.3Z" />
+      <path d="M9.6 17.2h4.8" />
+    </svg>
+  );
+}
+
+/** Born when?: a bust rather than a cradle. The question is which year a
+ *  person belongs to, and the picture on the card is a statue — a cradle would
+ *  have promised babies. */
+function PersonIcon() {
+  return (
+    <svg {...CARD_ICON}>
+      <circle cx="12" cy="8" r="3.6" />
+      <path d="M5.4 20.4a6.6 6.6 0 0 1 13.2 0" />
     </svg>
   );
 }

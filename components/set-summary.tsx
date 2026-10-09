@@ -10,6 +10,7 @@ import {
   type SetGrade,
   type SetResult,
 } from "@/lib/game/set";
+import { VERDICT_LABEL_KEYS, verdictPip } from "@/lib/game/verdict-style";
 import { format, type Dict } from "@/lib/i18n/dictionary";
 
 /**
@@ -25,10 +26,11 @@ import { format, type Dict } from "@/lib/i18n/dictionary";
  * **Styled for a photograph, not for the page.** Both games stand on a backdrop
  * image, so this is the same dark glass their own panels use rather than an
  * opaque `bg-card`, which over a picture reads as a leftover from another
- * screen. It is also why there is no blue in here: the comparison page has none
- * by design, and a summary that matched one game's chrome would be wrong on the
- * other. Green and red stay — they are the verdict, which is the one thing on
- * the screen that must not read as decoration.
+ * screen. The one chroma in here is the verdict itself — the date-guessing
+ * game's five-tier ladder, blue down to red (lib/game/verdict-style.ts) — which
+ * is the one thing on the screen that must not read as decoration. The
+ * comparison game grades no tiers, so on that page the only colours are its own
+ * green and the dim of a miss.
  *
  * **It is sized to a viewport that must not scroll.** Both pages are exactly
  * `100dvh` less the bar, so this caps its own height and scrolls internally if
@@ -129,9 +131,14 @@ export function SetSummary({
           </button>
 
           <ShareButton
-            results={results}
-            summary={summary}
-            title={title}
+            buildText={() =>
+              shareText({
+                title,
+                results,
+                summary,
+                url: window.location.href,
+              })
+            }
             t={t}
           />
         </div>
@@ -147,8 +154,14 @@ export function SetSummary({
   );
 }
 
-/** Shared geometry, so the two stacked buttons cannot differ by a pixel. */
-const SUMMARY_BUTTON =
+/**
+ * Shared geometry, so the two stacked buttons cannot differ by a pixel.
+ *
+ * Exported because the survival run's results screen stacks the same two
+ * buttons (components/survival-summary.tsx) and a second copy of these numbers
+ * is a second place for them to drift.
+ */
+export const SUMMARY_BUTTON =
   "w-full rounded-full border px-6 py-2.5 text-sm font-semibold transition";
 
 /**
@@ -158,33 +171,19 @@ const SUMMARY_BUTTON =
  * answer — painting a weak set in it would read as a scolding rather than as a
  * score. A rough set is dimmed instead, which says the same thing quietly.
  */
-const GRADE_COLOR: Record<SetGrade, string> = {
+export const GRADE_COLOR: Record<SetGrade, string> = {
   flawless: "var(--color-good)",
   strong: "var(--color-good)",
   fair: "var(--color-ink)",
   rough: "var(--color-ink-dim)",
 };
 
-const GRADE_LABEL_KEYS: Record<SetGrade, keyof Dict> = {
+/** Exported with `GRADE_COLOR` for the daily, which grades a ten the same way. */
+export const GRADE_LABEL_KEYS: Record<SetGrade, keyof Dict> = {
   flawless: "gradeFlawless",
   strong: "gradeStrong",
   fair: "gradeFair",
   rough: "gradeRough",
-};
-
-/**
- * Per-question colours, and the single source the share grid is matched to.
- *
- * The same three-for-four split the game itself uses (`VERDICT_COLORS` in
- * components/timeline-game.tsx): green for the top two tiers, plain ink for
- * "good", and a hollow dim pip for a miss. `setSquares` picks 🟩/⬜/⬛ against
- * exactly this, so a pasted result looks like the screen it came from.
- */
-const PIP_COLOR: Record<Verdict, string> = {
-  perfect: "var(--color-good)",
-  great: "var(--color-good)",
-  good: "var(--color-ink)",
-  bad: "transparent",
 };
 
 /**
@@ -193,13 +192,22 @@ const PIP_COLOR: Record<Verdict, string> = {
  * It is the only part of the screen that says *where* the set went wrong rather
  * than how much — a run of misses at the end reads differently from three
  * scattered ones, and the player can see which they had.
+ *
+ * Exported for the daily mode's results screen, which is a ten-question set
+ * and so wants exactly this strip — the same reasoning as `ShareButton` and
+ * `SUMMARY_BUTTON` below. The survival run writes its own, because two hundred
+ * answers have to be a block rather than a row.
  */
-function Pips({ results }: { results: readonly SetResult[] }) {
+export function Pips({ results }: { results: readonly SetResult[] }) {
   return (
     <div className="flex flex-wrap items-center justify-center gap-1.5">
       {results.map((result, at) => {
+        // A tiered game paints the tier; the comparison game, which has no
+        // tiers, keeps the plain green pip for a hit and a hollow one for a
+        // miss. `setSquares` picks its emoji against exactly this, so a pasted
+        // result looks like the screen it came from.
         const color = result.verdict
-          ? PIP_COLOR[result.verdict]
+          ? verdictPip(result.verdict)
           : result.hit
             ? "var(--color-good)"
             : "transparent";
@@ -210,9 +218,10 @@ function Pips({ results }: { results: readonly SetResult[] }) {
             className="h-3.5 w-3.5 rounded-[4px] border"
             style={{
               backgroundColor: color,
-              // A missed question is a hollow pip: nothing to read as a score,
-              // but still a slot, so the strip stays ten wide and the shape of
-              // the set is legible at a glance.
+              // A hollow pip is the comparison game's miss: nothing to read
+              // as a score, but still a slot, so the strip stays ten wide and
+              // the shape of the set is legible at a glance. The tiered game
+              // has a colour for every rung, its bottom one included.
               borderColor:
                 color === "transparent" ? "rgb(255 255 255 / 0.25)" : color,
             }}
@@ -229,8 +238,12 @@ function Pips({ results }: { results: readonly SetResult[] }) {
  * Empty tiers are dropped rather than shown as zero: a set with no perfects
  * should not print a row saying so, and the rows that remain are the ones the
  * player actually earned.
+ *
+ * Exported for the daily mode, whose ten questions are graded on the same
+ * ladder; a second copy of this would be a second place for the rows to drift
+ * out of step with the tiers.
  */
-function Breakdown({
+export function Breakdown({
   byVerdict,
   t,
 }: {
@@ -254,11 +267,8 @@ function Breakdown({
               <span
                 className="h-2.5 w-2.5 rounded-full border"
                 style={{
-                  backgroundColor: PIP_COLOR[verdict],
-                  borderColor:
-                    PIP_COLOR[verdict] === "transparent"
-                      ? "rgb(255 255 255 / 0.3)"
-                      : PIP_COLOR[verdict],
+                  backgroundColor: verdictPip(verdict),
+                  borderColor: verdictPip(verdict),
                 }}
               />
               {t[VERDICT_LABEL_KEYS[verdict]]}
@@ -273,19 +283,18 @@ function Breakdown({
   );
 }
 
-/** The same four entries the in-game verdict prints, reused for the breakdown. */
-const VERDICT_LABEL_KEYS: Record<Verdict, keyof Dict> = {
-  perfect: "verdictPerfect",
-  great: "verdictGreat",
-  good: "verdictGood",
-  bad: "verdictBad",
-};
-
 /** How long the button holds its "Copied" state before going back. */
 const SHARE_FEEDBACK_MS = 2000;
 
 /**
  * Share, by whichever route the browser actually has.
+ *
+ * The text is built by the caller rather than here, because the two games that
+ * end on a results screen say different things in it — a set quotes a
+ * percentage of ten and a run quotes a count with no ceiling. Everything that
+ * is awkward about sharing is the same for both, though, which is why this is
+ * one button: the sheet-then-clipboard fallback, the cancel that must not be
+ * reported as a failure, and the URL read at click time.
  *
  * `navigator.share` is the right one on a phone — it opens the OS sheet and the
  * player picks the app — but it does not exist on most desktop browsers and
@@ -302,15 +311,16 @@ const SHARE_FEEDBACK_MS = 2000;
  * black squares of a missed question are invisible against the panel — so the
  * one thing a preview would add is the impression that the grid renders badly.
  */
-function ShareButton({
-  results,
-  summary,
-  title,
+export function ShareButton({
+  buildText,
   t,
 }: {
-  results: readonly SetResult[];
-  summary: ReturnType<typeof summarizeSet>;
-  title: string;
+  /**
+   * Called at click time, not at render: the URL comes from
+   * `window.location` (the site has no domain yet) and must be read when the
+   * player actually presses the button.
+   */
+  buildText: () => string;
   t: Dict;
 }) {
   const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
@@ -333,12 +343,7 @@ function ShareButton({
   }
 
   async function share() {
-    const text = shareText({
-      title,
-      results,
-      summary,
-      url: window.location.href,
-    });
+    const text = buildText();
 
     if (navigator.share) {
       try {

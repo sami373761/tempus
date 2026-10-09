@@ -10,6 +10,7 @@ import {
   ROUND_QUEUE_DEPTH,
   type ComparisonRound,
 } from "@/lib/game/rounds";
+import { FOOTBALL_TOPIC } from "@/lib/game/topics";
 import { readLocale } from "@/lib/i18n/server";
 
 /**
@@ -42,6 +43,36 @@ export async function dealTimelineEvents(
   const locale = await readLocale();
   const supabase = await createServerDbClient();
   const events = await randomEvents(supabase, { count: take, locale });
+
+  return shuffle(events);
+}
+
+/**
+ * Deals events for the football game.
+ *
+ * The same deal as `dealTimelineEvents` with one difference, and the
+ * difference is the whole point: `topicSlug` restricts the draw to the
+ * football pool, which is a pool every other game is restricted *out* of (see
+ * `randomEvents` in lib/db/queries.ts, where both halves of that rule live).
+ *
+ * It is a separate action rather than a parameter on the one above because the
+ * pool must not be decidable by the caller: `dealTimelineEvents(2, "football")`
+ * would make the date-guessing game's endpoint able to deal football events,
+ * and — worse in the other direction — a future subject endpoint able to deal
+ * the general pool. An action per pool has no argument to get wrong.
+ */
+export async function dealFootballEvents(
+  count: number = ROUND_QUEUE_DEPTH,
+): Promise<LocalizedEvent[]> {
+  const take = Math.min(Math.max(1, Math.trunc(count) || 1), MAX_DRAW);
+
+  const locale = await readLocale();
+  const supabase = await createServerDbClient();
+  const events = await randomEvents(supabase, {
+    count: take,
+    locale,
+    topicSlug: FOOTBALL_TOPIC,
+  });
 
   return shuffle(events);
 }

@@ -1,26 +1,29 @@
 @import "tailwindcss";
 
 @theme {
-  /* Two families, split by size rather than by role: headings and any text
-     large enough to read as a title are set in Lora; everything at body size
-     and below stays in Lato.
+  /* One family for the whole site: Inter, loaded by `next/font` in
+     app/layout.tsx. It was two until 2026-10-06 — Lora for anything large
+     enough to read as a title, Lato for body copy — and both tokens point at
+     the same face now.
 
-     Lato is loaded by `next/font` in app/layout.tsx. Tailwind names its
-     default family token `sans` whatever face it holds, and preflight applies
-     that token to `html` — so overriding it here is what makes Lato the page
-     default, including for elements no utility class ever touches. The
-     fallbacks are grotesques so a failed load degrades in the same key. */
+     `--font-display` stays as a token rather than being deleted, and the
+     `font-display` utility stays on the 35 headings that carry it. It is a
+     marker for "this text is a title", not a second typeface: putting a
+     display face back is one line here instead of an edit per heading.
+
+     Two traps that have both already bitten. Tailwind names its default family
+     token `sans` whatever face it holds, and preflight applies that token to
+     `html` — so overriding `--font-sans` here is what makes Inter the page
+     default, including for elements no utility class ever touches. And every
+     name in a stack must resolve: a `var()` with no value makes the whole
+     custom property invalid at computed-value time, so `font-family:
+     var(--font-display)` would be dropped outright and headings would silently
+     fall back to Tailwind's stock sans. The fallbacks below are the system
+     grotesques, so a failed webfont load degrades in the same key. */
   --font-sans:
-    var(--font-lato), -apple-system, BlinkMacSystemFont, "Helvetica Neue",
-    Helvetica, Arial, sans-serif;
-
-  /* Lora, also loaded by `next/font`. Every name in this list must resolve:
-     a `var()` with no value makes the whole custom property invalid at
-     computed-value time, so `font-family: var(--font-display)` is dropped and
-     headings silently inherit Lato instead. The fallbacks are serifs — falling
-     back to Lato would erase the two-family contrast without anything looking
-     broken. */
-  --font-display: var(--font-lora), Georgia, "Times New Roman", Times, serif;
+    var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-display: var(--font-sans);
 
   /* Surfaces. Fully neutral: the page is pure black and every surface above it
      is an achromatic grey. These replace an earlier deep-sepia set, and the
@@ -57,6 +60,28 @@
   --color-good: #32d74b;
   --color-bad: #ff453a;
 
+  /* The date-guessing verdict ladder, worst to best, and the only ordered
+     colour scale on the site. Five rungs since 2026-10-07, when the game gained
+     a tier between "good" and the floor; before that it was three colours for
+     four tiers and the words carried the difference.
+
+     Two of the five are new hues and three are the accents above, which is the
+     one thing to be careful of when reading this: `--color-good` is the green
+     the *true answer* is drawn in and it paints the `great` tier, while
+     `--color-bad` is the red of a wrong answer and paints `wayOff`. The tier
+     called "good" is the yellow one. The names collide; the colours do not.
+
+     The two new values are the remaining pair from the same Apple dark-mode
+     system palette the accents were taken from (#ffd60a yellow, #ff9f0a
+     orange), so the ladder is one family rather than two hand-picked
+     in-betweens. lib/game/verdict-style.ts derives every shade of each from
+     these with `color-mix` — a tier is one value to retune, never three. */
+  --color-tier-wayoff: var(--color-bad);
+  --color-tier-bad: #ff9f0a;
+  --color-tier-good: #ffd60a;
+  --color-tier-great: var(--color-good);
+  --color-tier-perfect: var(--color-accent);
+
   --radius-card: 28px;
 
   --animate-reveal: reveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -81,9 +106,16 @@
      subtracts exactly this from `100dvh` to size a screen that must not
      scroll. The two were separate numbers before and had already drifted
      apart by 5px — enough to put a scrollbar on a page built not to have one.
-     It only has to clear the bar's own content (the wordmark and the language
-     pill, both around 42px). */
+     It only has to clear the bar's own content (the wordmark and the menu
+     button, both around 42px). */
   --site-bar-h: 4.625rem;
+
+  /* The menu button's box, and the single source for it. The button is `fixed`
+     to the viewport off the home page, so nothing in the bar can centre it —
+     its own `top` is solved from these two numbers instead
+     (`(--site-bar-h - --menu-btn) / 2`), which is what puts its centre on the
+     wordmark's. Two independent numbers is what had the two 12px apart. */
+  --menu-btn: 42px;
 
   /* The home board's width, and the single source for it: `GameBoard` caps
      itself here and the masthead row above it reads the same token, because the
@@ -118,12 +150,47 @@
      fixed parts first and give the rest to the pictures (`--bubble` in
      components/comparison-game.tsx).
 
-     The parts, at the sizes the markup sets: 8px page padding-top, 84px header
-     (title, blurb, margin), 50px rail lane (two tail heights plus the rail),
-     172px for the two cards' caption blocks and borders, 20px column gap, 64px
-     reserved verdict block, 16px page padding-bottom. 414px, rounded up to
-     416 for a cushion. Change any of those and change this. */
-  --compare-chrome: 26rem;
+     The parts, at the sizes the markup sets: 8px page padding-top, 50px rail
+     lane (two tail heights plus the rail), 172px for the two cards' caption
+     blocks and borders, 20px column gap, 64px reserved verdict block, 16px
+     page padding-bottom. 330px, rounded up to 332 for a cushion. Change any of
+     those and change this.
+
+     The round's masthead used to be the 84px row at the top of that list. It
+     is `fixed` in the top bar's own row since 2026-10-08 (`RoundHead` in
+     components/comparison-game.tsx), so it costs this budget nothing and the
+     84px went to the photographs — which is what puts the cards on their
+     360px cap at a 1680x844 window. */
+  --compare-chrome: 20.75rem;
+
+  /* The comparison round's masthead pill: its own closed height, which both
+     the row's centre line and its corner radius are read off (`RoundHead` in
+     components/comparison-game.tsx). It lives here rather than inline on the
+     element because it has to change with the breakpoint below, and an inline
+     style is the one place a media query cannot reach. */
+  --compare-head: 2.875rem;
+}
+
+/* The bar's row, on a phone.
+   -------------------------------------------------------------------------
+   Everything in that row is a notch smaller below `sm`, asked for because on
+   a phone it has to hold three things rather than two: the wordmark, the
+   comparison game's round pill *between* them, and the menu button. Shrinking
+   the two bookends is what makes room for the pill, and the bar itself comes
+   down with them — it only ever had to clear its own tallest item, so 58px
+   around a 34px button keeps the same 12px of air a 74px bar kept around a
+   42px one.
+
+   Every page that is exactly one viewport reads `--site-bar-h` to size itself,
+   so this hands all of them 16px of height back rather than taking any away —
+   the safe direction for a screen built not to scroll, and the "shift the main
+   area up" half of the same request. */
+@media (max-width: 639px) {
+  :root {
+    --site-bar-h: 3.625rem;
+    --menu-btn: 34px;
+    --compare-head: 2.125rem;
+  }
 }
 
 html {
@@ -192,6 +259,42 @@ html {
   color: transparent;
 }
 
+/* ---------------------------------------------------------------------------
+   The contact block's two ramps (components/contact-section.tsx).
+
+   Transcribed from the supplied Apple reference, whose rule runs #e7f5f0 ->
+   #4c647b across each column and whose headline runs #e5f4ef -> #9cc1c3 across
+   the glyphs. Both were sampled off the reference rather than eyeballed, which
+   is why the stops are where they are: the rule's midpoint is a third of the
+   way along, not halfway.
+
+   The hue is the site's amber (`#f5a623`, the bento library card's sun) in
+   place of the reference's steel blue — asked for, and the one chroma this page
+   already carries. The *luminance* curve is the reference's, so the rule still
+   reads as a bright edge fading into the page and the headline still reads as a
+   tint rather than as white.
+
+   `.contact-sweep` stops short of the dark end for the same reason the bento's
+   text sweeps do: the page is pure black, so a glyph that reached #6b4716 would
+   sit near 2:1 against it and the last word of a headline would disappear.
+   --------------------------------------------------------------------------- */
+.contact-rule {
+  background: linear-gradient(
+    90deg,
+    #fdf3e4 0%,
+    #f3c47c 30%,
+    #c98a23 66%,
+    #6b4716 100%
+  );
+}
+
+.contact-sweep {
+  background: linear-gradient(90deg, #fdf4e8 0%, #f2cd95 55%, #e3a94f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 /* Pre-reveal state for scroll-revealed blocks: set here rather than inline so
    the content is still laid out (and readable without JS it simply stays
    visible, since the class is only added by the observer component). */
@@ -209,6 +312,49 @@ html {
   }
   .reveal-shown {
     animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   The badges page (components/badge-showcase.tsx).
+
+   The page is a rail of six cards, transcribed from the supplied Apple
+   reference. The rail itself needs no CSS — it is an ordinary scroll-snapping
+   scroller, so the browser owns the position and a swipe, a trackpad and the
+   two arrows are all the same gesture. What is left here is the pair of
+   transitions on a card: the silhouette dissolving into the real artwork, and
+   the mark on the button that asks for it.
+
+   Everything is timed here rather than inline, unlike the explorer, so
+   `prefers-reduced-motion` can outrank it with an ordinary media query instead
+   of needing `!important`. One duration for both, because a card opening is one
+   gesture rather than two things happening at once.
+   --------------------------------------------------------------------------- */
+:root {
+  --badge-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --badge-ms: 520ms;
+}
+
+/* Anything that dissolves rather than moves — today, the two stacked copies of
+   a badge's artwork that swap when a card is revealed. */
+.badge-fade {
+  transition:
+    opacity var(--badge-ms) var(--badge-ease),
+    color var(--badge-ms) var(--badge-ease);
+}
+
+/* The reveal button's mark: a plus whose vertical bar turns onto the
+   horizontal one, which is the FAQ row's arrangement at a smaller size. The
+   bar turns rather than fading, so the two states are one object in two
+   positions rather than two glyphs being switched. */
+.badge-mark {
+  transition: transform var(--badge-ms) var(--badge-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-fade,
+  .badge-mark {
+    transition: none;
   }
 }
 
@@ -326,20 +472,32 @@ html {
 
    `[data-swapped]` is what keeps this off the first paint: on load the board
    has not been swapped, nothing has been interacted with, and a board that
-   dealt itself in would be a second entrance competing with the page's own. */
+   dealt itself in would be a second entrance competing with the page's own.
+
+   **The `to` keyframe names no opacity and the fill is `backwards`, not
+   `both`, and both halves of that are load-bearing.** A card that cannot be
+   played is muted (`opacity-80`, or `opacity-60` with no photograph) and
+   brightens under the pointer, and an animation beats a class: with
+   `opacity: 1` held by a forwards fill, every card on the games view sat at
+   full strength after a swap and the hover had nothing left to change — the
+   mute was only ever visible on the first paint, where this animation does not
+   run. Omitting the property makes the 100% keyframe implicit, so the card
+   animates up to *its own* opacity rather than to 1, and `backwards` hands the
+   element back to its own styles the moment the animation ends. `backwards`
+   alone is still what the stagger needs: it is the delay that has to find the
+   card already invisible. */
 @keyframes board-card-in {
   from {
     opacity: 0;
     transform: translateY(14px) scale(0.96);
   }
   to {
-    opacity: 1;
     transform: none;
   }
 }
 
 [data-swapped] .board-card {
-  animation: board-card-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: board-card-in 420ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
   animation-delay: calc(130ms + var(--card-i, 0) * 38ms);
 }
 
@@ -386,6 +544,90 @@ html {
   [data-swapped] .board-card {
     animation-duration: 1ms;
     animation-delay: 0ms;
+  }
+  /* The description that unrolls under a card's title on hover (`CardBlurb` in
+     components/game-board.tsx). Same cut, and it has to reach the paragraph
+     inside as well as the row: the row carries the height and the child carries
+     the fade, so slowing only one of them would leave the text arriving into a
+     box that is already open. */
+  .board-card-blurb,
+  .board-card-blurb * {
+    transition-duration: 1ms;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   The home page's explorer (components/home-explorer.tsx).
+
+   Everything the pills do — the width, the height, the chip's plus — is a
+   transition written inline, because each one is driven by a prop and would
+   otherwise be a data attribute plus a rule. What is here is the two arrivals
+   that have to *replay*: a CSS animation that has already finished does not run
+   again merely because its element became visible, so these are applied by a
+   class the component adds and removes with `active`.
+   --------------------------------------------------------------------------- */
+
+/* The three subject tiles and the three library statistics, dealt in. Same
+   stagger mechanism as the board's cards: a custom property on each item rather
+   than a stack of `nth-child` rules, so a fourth tile needs no new CSS. The
+   delay starts after the stage's own dissolve is most of the way through —
+   tiles arriving into a layer that is still half transparent read as two
+   animations fighting. */
+@keyframes explorer-tile-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.explorer-tile-in {
+  animation: explorer-tile-in 460ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(240ms + var(--tile-i, 0) * 90ms);
+}
+
+/* The badge is put on rather than faded in: it comes up out of the stage,
+   turning the last few degrees into place. These are medals — the one thing on
+   the page with weight to it — and a straight dissolve made the swatches read
+   as changing a picture rather than as changing what is being worn. */
+@keyframes explorer-badge-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.86) rotate(-7deg);
+  }
+  55% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.explorer-badge-in {
+  animation: explorer-badge-in 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Both are arrivals rather than ambience, so they cut instead of stopping —
+     the content still has to appear. */
+  .explorer-tile-in,
+  .explorer-badge-in {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+  }
+
+  /* The pill's width and height and the stage's dissolve have their durations
+     set from the component, where one constant keeps them in step. An inline
+     style outranks a media query, so `!important` is what this rule needs —
+     the alternative is a second copy of every duration in CSS, which is the
+     drift the constant exists to prevent. A cut, not a slow version: the pills
+     still have to open. */
+  .explorer-motion {
+    transition-duration: 1ms !important;
   }
 }
 
@@ -484,20 +726,40 @@ details[open] .faq-answer {
   filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.95));
 }
 
-/* The answer's marker on the date-guessing rail. It mounts the moment the
-   guess is locked in, but the camera may still be travelling several eras to
-   reach it, so the animation is delayed by exactly that journey (see
-   `answerDelayMs` in components/timeline-game.tsx) and `both` keeps it
-   invisible until then. */
-@keyframes answer-stick-in {
+/* The answer marker on the rail: a pointer with the true date in the block
+   under it (`TimelinePaneView` in components/timeline-stage.tsx).
+
+   It replaced a green stick and a green caption on 2026-10-07. The transform
+   is the part worth knowing: the marker is placed by `left: <fraction>%` and
+   pulled back half its own width *here*, because an animation outranks the
+   element's own classes — a Tailwind `-translate-x-1/2` would hold for the
+   element's whole life except the 380ms this is running, which is exactly the
+   moment it is being looked at. Both keyframes carry it, so the marker is
+   centred on its year from the first frame to the last.
+
+   The delay is set inline, so the marker stays hidden (`both`) until the
+   camera has finished travelling to the era the answer is in. */
+@keyframes answer-marker-in {
   from {
-    transform: scaleY(0);
     opacity: 0;
+    transform: translateX(-50%) translateY(-7px);
   }
   to {
-    transform: scaleY(1);
     opacity: 1;
+    transform: translateX(-50%);
   }
+}
+
+.answer-marker {
+  animation: answer-marker-in 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* The pointer itself. A clip path rather than the border trick: it is one
+   element, it stays exactly symmetrical about its own centre at any size, and
+   it takes `bg-ink` like everything else on the rail instead of needing its
+   colour spelled out as a border. */
+.answer-pointer {
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
 }
 
 @keyframes answer-label-in {
@@ -509,20 +771,210 @@ details[open] .faq-answer {
   }
 }
 
-.answer-stick {
-  animation: answer-stick-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-/* The label carries its own horizontal transform, so only opacity animates.
-   Its delay is set inline, staggered just behind the stick's. */
+/* The opponent's marker in the head-to-head mode — a hollow ring and its own
+   pill — which carries its horizontal transform on the element, so only
+   opacity animates here. Its delay is set inline, staggered just behind the
+   answer marker's. */
 .answer-label {
   animation: answer-label-in 300ms ease-out both;
 }
 
+/* The gap between the guess and the truth, drawn along the rail in the
+   verdict's own colour (`TimelinePaneView` in components/timeline-stage.tsx).
+
+   It grows out of the guess towards the answer rather than fading in whole,
+   because the thing it reports is a distance and a bar that draws itself is
+   read as one. The origin is set inline — which end it grows from depends on
+   whether the guess was early or late — and `scaleX` is what carries it, so
+   the element's own `left`/`width` stay the plain geometry.
+
+   Nothing renders it on a `perfect` guess: the two years are the same, so the
+   bar has no width to grow into. */
+@keyframes answer-gap-in {
+  from {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+.answer-gap {
+  animation: answer-gap-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .answer-stick,
-  .answer-label {
+  .answer-marker,
+  .answer-label,
+  .answer-gap {
     animation-duration: 1ms;
+  }
+}
+
+/* Swapping the rail for a typed date, and back (`TimelineGame` in
+   components/timeline-game.tsx, `DateEntry` in components/date-entry.tsx).
+
+   The rail leaves by collapsing inward from both of its ends rather than by
+   fading, because what replaces it is a single compact control: a ruler that
+   retracts to nothing reads as the same question asked a shorter way, where a
+   dissolve would read as one screen being exchanged for another.
+
+   Three things move together and the division of labour between them is the
+   whole of why nothing reflows. The *shell* reclaims the band's height —
+   `1fr` -> `0fr`, with the child owning the overflow, which is the board's
+   card-description mechanism and the only way to animate a height from nothing
+   without measuring one in JavaScript. The *inner* box carries the inward
+   collapse as a `clip-path`, which clips without laying anything out, so the
+   five panes keep their geometry and the ruler is never re-measured
+   mid-animation. And the photograph above grows into the room this gives up,
+   which is `.card-caps` below.
+
+   The opacity is delayed on the way out and immediate on the way back, so what
+   is read going is the collapse and what is read coming is the expansion.
+
+   **460ms is `RAIL_FOLD_MS` in components/timeline-stage.tsx**, which is also
+   how long the reveal of a typed guess is held back. Change one and change
+   both, or the answer lands on a rail that is not there yet. */
+.rail-fold {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 460ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* The overflow the row trick needs, and nothing else. */
+.rail-fold > div {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.rail-fold-inner {
+  clip-path: inset(0 0 0 0);
+  transition:
+    clip-path 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms ease;
+}
+
+.rail-fold[data-folded="true"] {
+  grid-template-rows: 0fr;
+}
+
+.rail-fold[data-folded="true"] .rail-fold-inner {
+  clip-path: inset(0 50% 0 50%);
+  opacity: 0;
+  transition:
+    clip-path 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 180ms ease 300ms;
+}
+
+/* The picture's two caps and the journey between them.
+
+   A class rather than Tailwind utilities for two reasons: `prefers-reduced-
+   motion` has to be able to reach it, and the duration and curve must match
+   `.rail-fold`'s row transition *exactly*. The card's used height is
+   `min(available space, cap)` on every frame — the cap eased by this rule, the
+   available space eased by the fold above — so the two only track each other
+   without a kink while both are eased identically. */
+.card-caps {
+  transition:
+    max-width 460ms cubic-bezier(0.22, 1, 0.36, 1),
+    max-height 460ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* The date entry's own shell, which has to give its space back in *both* axes.
+   The controls are a row above `md` and a column below it, so a width collapse
+   alone would leave an empty row on a phone and a height collapse alone an
+   empty column on a desktop. The margin goes with them, or the gap the control
+   was holding open outlives the control.
+
+   The inner box fades and shrinks a little rather than merely being clipped:
+   the shell's `overflow` cuts from one side, and on its own that reads as the
+   control sliding out through the edge of something. */
+.entry-shell {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  margin-bottom: 0.75rem;
+  transition:
+    grid-template-columns 460ms cubic-bezier(0.22, 1, 0.36, 1),
+    grid-template-rows 460ms cubic-bezier(0.22, 1, 0.36, 1),
+    margin 460ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (min-width: 768px) {
+  .entry-shell {
+    margin-right: 0.75rem;
+    margin-bottom: 0;
+  }
+}
+
+.entry-shell > div {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.entry-shell > div > div {
+  transition:
+    opacity 220ms ease,
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.entry-shell[data-shown="false"] {
+  grid-template-columns: 0fr;
+  grid-template-rows: 0fr;
+  margin: 0;
+}
+
+.entry-shell[data-shown="false"] > div > div {
+  opacity: 0;
+  transform: scale(0.92);
+}
+
+/* A refused date. It hangs below the controls rather than taking a row, so it
+   cannot move the button that refused it. */
+@keyframes entry-warning-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -4px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.entry-warning {
+  animation: entry-warning-in 240ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail-fold,
+  .rail-fold-inner,
+  .rail-fold[data-folded="true"] .rail-fold-inner,
+  .card-caps,
+  .entry-shell,
+  .entry-shell > div > div {
+    transition-duration: 1ms;
+    transition-delay: 0ms;
+  }
+
+  .entry-warning {
+    animation-duration: 1ms;
+  }
+}
+
+/* The comparison round's masthead, which unrolls its instruction on hover
+   (`RoundHead` in components/comparison-game.tsx). The board's card
+   descriptions' mechanism — `grid-template-rows: 0fr -> 1fr` with the child
+   owning the overflow — so the same cut applies, and it has to reach the
+   paragraph as well as the row: the row carries the height and the child
+   carries the fade. */
+@media (prefers-reduced-motion: reduce) {
+  .compare-head-blurb,
+  .compare-head-blurb * {
+    transition-duration: 1ms;
   }
 }
 
@@ -679,6 +1131,72 @@ details[open] .faq-answer {
 .round-flank-right {
   animation: round-flank-in-right 440ms cubic-bezier(0.22, 1, 0.36, 1) 120ms
     both;
+}
+
+/* The result card's coloured head (`VerdictFlank` in
+   components/round-flank.tsx). The gradient itself is mixed per tier in
+   lib/game/verdict-style.ts; what has to live in a stylesheet is the pair of
+   things an inline style cannot express.
+
+   **The drift.** The fill is laid out at nearly twice the head's size and
+   walked slowly across it, so the one block of saturated colour on the screen
+   is alive rather than flat. It is deliberately long and small — 9s across a
+   180% box — because this sits beside a photograph and anything faster reads
+   as a second thing happening in a round that has just been answered.
+
+   **The notches.** Two half-circles are *punched out* of the lower corners
+   rather than painted over them, which is the one part of this that the card's
+   transparency forced. A notch drawn as a disc in the foot's colour composites
+   over the head and shows as a dark blob; a hole lets the round's own
+   photograph through, which is what the eye already expects from a ticket. The
+   mask is two radial gradients intersected — every pixel must be inside both
+   to survive — so the standard `intersect` and WebKit's `source-in` are the
+   same instruction spelled twice. */
+.verdict-deck-head,
+.verdict-deck-head-row {
+  background-size: 180% 180%;
+  animation: verdict-deck-drift 9s ease-in-out infinite;
+
+  -webkit-mask-image: var(--verdict-notch);
+  -webkit-mask-composite: source-in;
+  mask-image: var(--verdict-notch);
+  mask-composite: intersect;
+}
+
+.verdict-deck-head {
+  --verdict-notch:
+    radial-gradient(circle 9px at 0 100%, transparent 99%, #000 100%),
+    radial-gradient(circle 9px at 100% 100%, transparent 99%, #000 100%);
+}
+
+/* The landscape card's head (`VerdictDeckRow`), where the perforation runs
+   down the right-hand edge instead of across the foot. Same two holes, same
+   radius, turned a quarter with the card — a ticket torn along its short side
+   rather than its long one. */
+.verdict-deck-head-row {
+  --verdict-notch:
+    radial-gradient(circle 8px at 100% 0, transparent 99%, #000 100%),
+    radial-gradient(circle 8px at 100% 100%, transparent 99%, #000 100%);
+}
+
+@keyframes verdict-deck-drift {
+  0%,
+  100% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* A perpetual drift is exactly what this setting exists to stop, so it stops
+     outright rather than being shortened. The notches are not motion and stay.
+  */
+  .verdict-deck-head,
+  .verdict-deck-head-row {
+    animation: none;
+  }
 }
 
 /* Each step of the challenge ("is the date incorrect?" -> "challenge" ->
@@ -880,6 +1398,34 @@ details[open] .faq-answer {
   transform: scaleX(0.1);
 }
 
+/* The glyph comes down with the button below `sm`, where `--menu-btn` is 34px.
+   Every number above that was derived from the 20x14 box has to be re-derived
+   from the 17x12 one — the middle bar's own address included — because the
+   bars are positioned from the top and the bottom rather than from a centre
+   CSS could solve for them. It sits *after* the rules it replaces: a media
+   query adds no specificity, so an override written above them would simply
+   lose.
+
+   It stays `max-width` rather than `min-width` because the desktop numbers are
+   the ones every other breakpoint keeps; only the phone departs. */
+@media (max-width: 639px) {
+  .menu-bars {
+    width: 17px;
+    height: 12px;
+  }
+
+  .menu-bar:nth-child(2) {
+    top: 5.25px;
+  }
+
+  .menu-bars[data-open="true"] .menu-bar:nth-child(1) {
+    transform: translateY(5.25px);
+  }
+  .menu-bars[data-open="true"] .menu-bar:nth-child(3) {
+    transform: translateY(-5.25px);
+  }
+}
+
 /* The panel grows out of the button's corner.
 
    `clip-path`, not `transform: scale()`, and that is the whole trick: a scaled
@@ -942,6 +1488,72 @@ details[open] .faq-answer {
   transition: opacity 120ms linear;
 }
 
+/* The site's one "something is on its way" mark: a thin arc, turning.
+
+   It was the menu button's and nothing else until 2026-10-07, and the first
+   use is still the clearest description of it. A press on a menu row is a
+   navigation, and the panel closes on the way out — so between the press and
+   the new page arriving there is nothing on screen that says anything is
+   happening. This is that, and it is deliberately not a spinner *in* the
+   button (the bars are still the control's own state, open or closed) but a
+   ring around its edge, so the two never fight for the same 42px.
+
+   The second caller is the explorer's stage, waiting on the coin's 3.9MB
+   model. Same statement, so the same mark rather than a second spinner drawn
+   a second way — which is what `--ring-inset` is for: the menu's ring *hangs
+   off* the button it belongs to and the stage's ring owns a box of its own.
+
+   `inset` rather than a box of its own, for the menu: the ring tracks
+   `--menu-btn` without a second number to keep in step, and it is
+   `pointer-events: none` so a second press still lands on the button
+   underneath it. The default inset is measured from the button's *padding*
+   box, which is 2px narrower than the button — hence -4px for a 3px
+   clearance.
+
+   The arc is a `conic-gradient` masked to an annulus rather than an SVG
+   circle: one element, no viewBox to keep square, and the stroke width is the
+   one number in `--ring-w`. */
+.pending-ring {
+  position: absolute;
+  inset: var(--ring-inset, -4px);
+  border-radius: 9999px;
+  pointer-events: none;
+  --ring-w: 2px;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 170deg,
+    currentColor 300deg,
+    currentColor 360deg
+  );
+  mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - var(--ring-w)),
+    #000 calc(100% - var(--ring-w))
+  );
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - var(--ring-w)),
+    #000 calc(100% - var(--ring-w))
+  );
+  animation: pending-ring-turn 900ms linear infinite;
+  /* Fades in rather than appearing: a navigation that resolves in 80ms should
+     not flash a ring, and 140ms of fade is enough that the quick ones are only
+     ever a hint. */
+  opacity: 0;
+  transition: opacity 140ms linear;
+}
+
+.pending-ring[data-busy="true"] {
+  opacity: 0.85;
+}
+
+@keyframes pending-ring-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   /* The panel still has to appear and disappear, so this is a cut rather than
      a stop: 1ms keeps the state change instant without needing a second code
@@ -957,5 +1569,17 @@ details[open] .faq-answer {
   .menu-item-in {
     animation-duration: 1ms;
     animation-delay: 0ms;
+  }
+  /* A thing that turns until something else finishes is exactly what this
+     setting is for, so the ring stops outright rather than turning slower. It
+     stays visible as a complete faint annulus, which still says "working" —
+     `aria-busy` on the button is what actually announces it. */
+  .pending-ring {
+    animation: none;
+    background: currentColor;
+    transition-duration: 1ms;
+  }
+  .pending-ring[data-busy="true"] {
+    opacity: 0.4;
   }
 }

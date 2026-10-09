@@ -3,27 +3,35 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { dealTimelineEvents } from "@/app/actions/rounds";
+import { DateEntry, InputModeToggle } from "@/components/date-entry";
 import {
-  DateChallenge,
   NoteFlank,
+  RoundVerdict,
   VerdictFlank,
 } from "@/components/round-flank";
 import { SetProgress, SetSummary } from "@/components/set-summary";
 import { TimelineBackdrop } from "@/components/timeline-backdrop";
 import {
+  CARD_BOX,
+  CARD_BOX_WIDE,
   openingFractions,
   panDuration,
   PAN_MS,
+  railGap,
+  RAIL_FOLD_MS,
   REVEAL_HOLD_MS,
   RoundCard,
   ROUND_BUTTON,
   TimelinePaneView,
-  VERDICT_COLORS,
-  VERDICT_LABEL_KEYS,
 } from "@/components/timeline-stage";
 import type { LocalizedEvent, SupportedLocale } from "@/lib/db/types";
+import {
+  directYear,
+  EMPTY_DATE_ENTRY,
+  type DateEntryValue,
+} from "@/lib/game/date-entry";
 import { ROUND_QUEUE_DEPTH, ROUND_QUEUE_TARGET } from "@/lib/game/rounds";
-import { gradeGuess, type GuessAccuracy } from "@/lib/game/scoring";
+import { gradeGuess, type BandSet } from "@/lib/game/scoring";
 import {
   QUESTIONS_PER_SET,
   timelineResult,
@@ -32,13 +40,16 @@ import {
 import {
   DEFAULT_PANE,
   entryFraction,
+  fractionAtYear,
+  paneBounds,
   paneForYear,
   TIMELINE_PANES,
+  type PaneSet,
   type TimelinePane,
   yearAtFraction,
 } from "@/lib/game/timeline";
-import { formatYear, formatYearCount } from "@/lib/historical-date";
-import { format, type Dict } from "@/lib/i18n/dictionary"
+import { VERDICT_COLORS } from "@/lib/game/verdict-style";
+import type { Dict } from "@/lib/i18n/dictionary";
 
 /** How long to wait before trying again when topping the queue up fails. */
 const REFILL_RETRY_MS = 1500;
@@ -75,6 +86,17 @@ const REFILL_RETRY_MS = 1500;
  * pointer is already there. They differ in colour rather than in place: solid
  * white while the guess is still to be made, dark glass once it has been.
  *
+ * **There are two ways to answer a round and one reveal.** The rail is the
+ * default and the one the game is built around; a player who already knows the
+ * year can type it instead (`DateEntry`), and the switch between them is the
+ * round control at the right-hand end of the footer. What they produce is the
+ * same thing — a year, graded by `gradeGuess` — so nothing downstream of the
+ * guess knows which was used. The *reveal* is always the rail, because the
+ * rail is where the answer is marked and where the distance between the two is
+ * drawn: locking in a typed date unfolds it, having first placed the camera
+ * and the marker behind the fold so that what unfurls already carries the
+ * guess.
+ *
  * **The result is beside the card, not in the column and not on the
  * picture.** A verdict laid out in flow is ~80px of new height between the
  * rail and the button, which pushes the button down the moment it is needed
@@ -90,17 +112,55 @@ export function TimelineGame({
   events,
   t,
   locale,
+  panes = TIMELINE_PANES,
+  homePane = DEFAULT_PANE,
+  bands = undefined,
+  deal = dealTimelineEvents,
+  title,
+  otherHref = "/compare",
+  otherLabel,
 }: {
   events: LocalizedEvent[];
   t: Dict;
   locale: SupportedLocale;
+  /**
+   * The rail, or rails, this game is played over. Defaults to the general
+   * timeline's five panes; the football game passes its own single pane.
+   *
+   * Everything that reads the *order* of the panes — which rail an answer is
+   * marked on, which doors a rail offers, how long the camera takes — is given
+   * this, so a one-pane game is the same code with nowhere to pan to rather
+   * than a second implementation of the screen.
+   */
+  panes?: PaneSet;
+  /** Where a round opens, and where the camera returns between rounds. */
+  homePane?: TimelinePane;
+  /**
+   * The tolerance ladder. Undefined means the general one (`gradeGuess`'s own
+   * default), which is scored on the event's age; a subject pool whose events
+   * are all roughly contemporary brings its own — see `FOOTBALL_BANDS`.
+   */
+  bands?: BandSet;
+  /**
+   * How the queue is topped up. A Server Action, passed in rather than chosen
+   * here, because the pool is the one thing that must not be decidable on the
+   * client: the football game and the date-guessing game differ in which
+   * action they call and in nothing else.
+   */
+  deal?: (count: number) => Promise<LocalizedEvent[]>;
+  /** The set summary's heading. Defaults to the date-guessing game's. */
+  title?: string;
+  /** Where the summary's "try the other game" link goes. */
+  otherHref?: string;
+  otherLabel?: string;
 }) {
-  const [pane, setPane] = useState<TimelinePane>(DEFAULT_PANE);
+  const [pane, setPane] = useState<TimelinePane>(homePane);
   // One position per pane: panning away and back should not lose the marker.
   // Every pane remembers its own position; the ones the player has not opened
   // yet start on the edge they will walk in through.
-  const [fractions, setFractions] =
-    useState<Record<TimelinePane, number>>(openingFractions);
+  const [fractions, setFractions] = useState<Record<TimelinePane, number>>(
+    () => openingFractions(panes, homePane),
+  );
   const [guess, setGuess] = useState<number | null>(null);
   // The pane the guess was made in, which is not necessarily the one on camera
   // once the answer has been revealed — so the marker stays with the guess.
@@ -118,6 +178,20 @@ export function TimelineGame({
   // The set so far: one entry per question already answered *and* advanced
   // past, so its length is both the score and the position in the set.
   const [results, setResults] = useState<SetResult[]>([]);
+  // Typing the date rather than dragging for it. A preference, not a round's
+  // state: it survives the reveal and the next round, because a player who
+  // wanted to type one date almost certainly wants to type the next.
+  const [direct, setDirect] = useState(false);
+  const [entry, setEntry] = useState<DateEntryValue>(EMPTY_DATE_ENTRY);
+  // Set by a refused lock-in and cleared by the next edit, so the warning
+  // answers the press rather than nagging at a half-typed year.
+  const [invalid, setInvalid] = useState(false);
+  // Whether the guess on screen was typed rather than dragged for. Two things
+  // read it: the rail has to unfold before anything can be marked on it, so
+  // the whole reveal is held back by the fold; and the marker's own caption
+  // has to quote the year the player typed rather than the one the rail reads
+  // back at that position, which is snapped to the pane's grid.
+  const [guessTyped, setGuessTyped] = useState(false);
   const travelTimer = useRef<number | null>(null);
   const resetTimer = useRef<number | null>(null);
 
@@ -143,7 +217,7 @@ export function TimelineGame({
     let cancelled = false;
     let retry: number | null = null;
 
-    dealTimelineEvents(ROUND_QUEUE_DEPTH)
+    deal(ROUND_QUEUE_DEPTH)
       .then((fresh) => {
         if (cancelled) return;
         // A draw is distinct within itself but can repeat what is already in
@@ -169,7 +243,9 @@ export function TimelineGame({
       cancelled = true;
       if (retry !== null) window.clearTimeout(retry);
     };
-  }, [queue.length, refillAttempt]);
+    // `deal` is a module-level Server Action reference at every call site, so
+    // it is stable; naming it keeps the dependency array honest.
+  }, [queue.length, refillAttempt, deal]);
 
   // Pull the next round's photograph while the current one is being guessed, so
   // the dissolve has something to dissolve *to*. Decoding is the browser's; all
@@ -186,12 +262,22 @@ export function TimelineGame({
   const year = yearAtFraction(pane, fraction);
   const answered = guess !== null;
 
+  // What a typed date may name: the two ends of the rails this game actually
+  // shows. On the general timeline that is the whole ruler, which is what the
+  // entry already allowed; on a one-pane subject game it is that pane, so a
+  // year with nowhere to be marked is refused rather than clamped onto an edge
+  // it does not stand for.
+  const entryRange = {
+    min: paneBounds(panes[0]!).min,
+    max: paneBounds(panes[panes.length - 1]!).max,
+  };
+
   const move = useCallback((nextPane: TimelinePane, nextFraction: number) => {
     setFractions((current) => ({ ...current, [nextPane]: nextFraction }));
   }, []);
 
   function enter(nextPane: TimelinePane) {
-    move(nextPane, entryFraction(nextPane, pane));
+    move(nextPane, entryFraction(nextPane, pane, panes));
     setPanMs(PAN_MS);
     setPane(nextPane);
   }
@@ -205,18 +291,43 @@ export function TimelineGame({
   function submit() {
     if (answered || !event) return;
 
-    const from = pane;
-    const target = paneForYear(event.year);
+    // Where the guess came from. Dragging has already put the camera and the
+    // marker where they belong; a typed date has to be *placed* — and it is
+    // placed while the rail is still folded, with the pan at zero, so the
+    // camera's jump to another era is spent behind the fold instead of being
+    // watched. What unfolds a moment later is a rail that already carries the
+    // guess, which is why the fold is also what the reveal below waits on.
+    let from = pane;
+    let guessed = year;
+    let offset = 0;
 
-    setGuess(year);
+    if (direct) {
+      const typed = directYear(entry, entryRange);
+      if (typed === null) {
+        setInvalid(true);
+        return;
+      }
+
+      guessed = typed;
+      from = paneForYear(typed, panes);
+      offset = RAIL_FOLD_MS;
+
+      setPanMs(0);
+      setPane(from);
+      move(from, fractionAtYear(from, typed));
+    }
+
+    setGuess(guessed);
     setGuessPane(from);
+    setGuessTyped(direct);
 
+    const target = paneForYear(event.year, panes);
     if (target === from) return;
 
     travelTimer.current = window.setTimeout(() => {
-      setPanMs(panDuration(from, target));
+      setPanMs(panDuration(from, target, panes));
       setPane(target);
-    }, REVEAL_HOLD_MS);
+    }, offset + REVEAL_HOLD_MS);
   }
 
   /**
@@ -245,23 +356,29 @@ export function TimelineGame({
     setResults((current) => [...current, timelineResult(accuracy.verdict)]);
 
     const from = pane;
-    const travel = from === DEFAULT_PANE ? 0 : panDuration(from, DEFAULT_PANE);
+    const travel =
+      from === homePane ? 0 : panDuration(from, homePane, panes);
 
     if (travelTimer.current !== null) window.clearTimeout(travelTimer.current);
     if (resetTimer.current !== null) window.clearTimeout(resetTimer.current);
 
     setGuess(null);
     setGuessPane(null);
+    setGuessTyped(false);
+    // The era is kept and only the digits are cleared: the next round is a
+    // fresh year, not a fresh opinion about which half of history it is in.
+    setEntry((current) => ({ era: current.era, digits: "" }));
+    setInvalid(false);
     setQueue((current) => current.slice(1));
-    setFractions((current) => ({ ...current, [DEFAULT_PANE]: 0.5 }));
+    setFractions((current) => ({ ...current, [homePane]: 0.5 }));
 
     if (travel > 0) {
       setPanMs(travel);
-      setPane(DEFAULT_PANE);
+      setPane(homePane);
     }
 
     resetTimer.current = window.setTimeout(
-      () => setFractions(openingFractions()),
+      () => setFractions(openingFractions(panes, homePane)),
       travel,
     );
   }
@@ -284,7 +401,7 @@ export function TimelineGame({
   // for why 900 years out on 1900 is a worse answer than 10,000 out on
   // 110,000 BCE.
   const accuracy =
-    guess !== null && event ? gradeGuess(guess, event.year) : null;
+    guess !== null && event ? gradeGuess(guess, event.year, bands) : null;
   // The set is full once ten questions have been banked; until then the last
   // of them turns "Next round" into "See results", because the button is about
   // to do something other than deal another question.
@@ -301,12 +418,19 @@ export function TimelineGame({
     advance();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingNext, upcoming, accuracy]);
-  const answerPane = event ? paneForYear(event.year) : null;
-  // The answer appears when the camera gets there: the hold plus the journey.
+  const answerPane = event ? paneForYear(event.year, panes) : null;
+  // The answer appears when the camera gets there: the hold plus the journey,
+  // after the rail has finished unfolding if it had to. A guess made in the
+  // answer's own era needs no journey, so the offset is all that holds it.
+  const revealOffsetMs = guessTyped ? RAIL_FOLD_MS : 0;
   const answerDelayMs =
-    guessPane === null || answerPane === null || guessPane === answerPane
+    revealOffsetMs +
+    (guessPane === null || answerPane === null || guessPane === answerPane
       ? 0
-      : REVEAL_HOLD_MS + panDuration(guessPane, answerPane);
+      : REVEAL_HOLD_MS + panDuration(guessPane, answerPane, panes));
+  // The rail folds away while a date is being typed, and comes back for the
+  // reveal — so it is the *unanswered* half of direct mode that has no rail.
+  const folded = direct && !answered;
 
   if (!event) return null;
 
@@ -314,7 +438,7 @@ export function TimelineGame({
     <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-4 sm:gap-5">
       {/* Full-bleed and fixed, so it must stay out of any transformed ancestor;
           see the note in the component itself. */}
-      <TimelineBackdrop pane={pane} />
+      <TimelineBackdrop pane={pane} panes={panes} />
 
       {setComplete ? (
         // The backdrop above stays mounted and the round below is already reset
@@ -323,9 +447,9 @@ export function TimelineGame({
         // clear the set.
         <SetSummary
           results={results}
-          title={t.timelineTitle}
-          otherHref="/compare"
-          otherLabel={t.tryComparison}
+          title={title ?? t.timelineTitle}
+          otherHref={otherHref}
+          otherLabel={otherLabel ?? t.tryComparison}
           onPlayAgain={() => setResults([])}
           t={t}
         />
@@ -339,25 +463,37 @@ export function TimelineGame({
               after a guess. A panel laid out in flow beside the card would
               shove the card sideways the moment a round was answered.
 
-              It repeats the card's own width and height caps so the two boxes
+              It reads the card's own width and height caps so the two boxes
               are the same size — the panels are `inset-y-0`, so a wrapper
-              taller than the card would hang them past its corners. */}
-          <div className="relative flex min-h-0 w-full max-w-[25rem] flex-1 flex-col items-stretch sm:max-h-[26rem] sm:max-w-[32rem]">
+              taller than the card would hang them past its corners. Both read
+              the same constants rather than repeating a class list, which is
+              what keeps them identical now that there are two sizes of card. */}
+          <div
+            className={`card-caps relative flex min-h-0 flex-1 flex-col items-stretch ${
+              folded ? CARD_BOX_WIDE : CARD_BOX
+            }`}
+          >
             {accuracy && guess !== null && (
               <>
                 <VerdictFlank
                   accuracy={accuracy}
                   guess={guess}
-                  eventId={event.id}
                   locale={locale}
                   t={t}
                 />
-                <NoteFlank note={event.description} t={t} />
+                {/* The challenge rides with the description now, not with the
+                    result — it is the event's date being disputed. */}
+                <NoteFlank note={event.description} eventId={event.id} t={t} />
               </>
             )}
 
             <RoundCard
               event={event}
+              t={t}
+              // The picture grows into the room the rail gives up, so folding
+              // it away leaves no hole in the column and the button below does
+              // not move.
+              wide={folded}
               // On the photograph for the same reason the verdict was: this
               // screen is a height budget with nothing spare, and a counter in
               // the flow would be another row between the rail and the button.
@@ -382,151 +518,235 @@ export function TimelineGame({
             />
           </div>
 
-          {/* Stage viewport: clips the two panes that are off-camera. */}
-          <div className="w-full shrink-0 overflow-hidden">
-            <div
-              className="flex transition-transform ease-[cubic-bezier(0.65,0,0.35,1)]"
-              style={{
-                transform: `translateX(-${TIMELINE_PANES.indexOf(pane) * 100}%)`,
-                transitionDuration: `${panMs}ms`,
-              }}
-            >
-              {TIMELINE_PANES.map((candidate) => (
-                <TimelinePaneView
-                  key={candidate}
-                  pane={candidate}
-                  active={candidate === pane}
-                  fraction={fractions[candidate]}
-                  onFractionChange={(next) => move(candidate, next)}
-                  answered={answered}
-                  // The marker belongs to the pane it was placed in. Showing one on
-                  // the answer's pane too would read as a second guess.
-                  showGuess={!answered || guessPane === candidate}
-                  answerYear={answerPane === candidate ? event.year : null}
-                  answerDelayMs={answerDelayMs}
-                  locale={locale}
-                  t={t}
-                  onEnter={enter}
-                />
-              ))}
+          {/* The rail, and the fold that takes it away when the player would
+              rather type the date.
+
+              Three boxes, one per job, because they cannot be the same box.
+              The outer one reclaims the band's *height* (`1fr` -> `0fr`), the
+              middle one owns the overflow that trick needs, and the inner one
+              carries the collapse inward from both ends as a `clip-path` —
+              which clips without laying anything out, so none of the five
+              panes reflows on the way and the ruler is not re-measured
+              mid-animation. `.rail-fold` in app/globals.css is all of it.
+
+              `inert` rather than a conditional render: the rail has to animate
+              in both directions, and an element that unmounts has no closing
+              frame to show. It is also what keeps a folded rail's slider and
+              its era doors off the tab order. */}
+          <div
+            className="rail-fold w-full shrink-0"
+            data-folded={folded}
+            inert={folded}
+          >
+            <div>
+              <div className="rail-fold-inner w-full overflow-hidden">
+                <div
+                  className="flex transition-transform ease-[cubic-bezier(0.65,0,0.35,1)]"
+                  style={{
+                    transform: `translateX(-${panes.indexOf(pane) * 100}%)`,
+                    transitionDuration: `${panMs}ms`,
+                  }}
+                >
+                  {panes.map((candidate) => (
+                    <TimelinePaneView
+                      key={candidate}
+                      pane={candidate}
+                      panes={panes}
+                      active={candidate === pane}
+                      fraction={fractions[candidate]}
+                      onFractionChange={(next) => move(candidate, next)}
+                      answered={answered}
+                      // The marker belongs to the pane it was placed in. Showing one on
+                      // the answer's pane too would read as a second guess.
+                      showGuess={!answered || guessPane === candidate}
+                      // A typed date is exact, and the year this rail reads back
+                      // at that position is snapped to the pane's grid — so the
+                      // bubble is told the player's own number rather than
+                      // deriving one that may be a hundred years off it.
+                      guessYear={
+                        guessTyped && guessPane === candidate ? guess : null
+                      }
+                      answerYear={answerPane === candidate ? event.year : null}
+                      answerDelayMs={answerDelayMs}
+                      // This pane's share of the distance between the guess and
+                      // the truth. A guess in the wrong era spans several rails,
+                      // so the measurement is computed here — where both ends are
+                      // known — rather than by a pane that may hold neither.
+                      gap={railGap({
+                        pane: candidate,
+                        guessPane,
+                        guessFraction:
+                          guessPane === null ? 0 : fractions[guessPane],
+                        answerPane,
+                        answerYear: event.year,
+                        answerDelayMs,
+                        // The end nearest the guess normally draws itself at
+                        // once; a typed one waits for the rail it is drawn on.
+                        nearDelayMs: revealOffsetMs,
+                        panes,
+                      })}
+                      // The hue it is drawn in, which is the same one the result
+                      // card beside the photograph is headed in. Null until there
+                      // is a verdict, and nothing is drawn on a `perfect` guess —
+                      // the two years are the same, so the bar has no length.
+                      gapColor={
+                        accuracy ? VERDICT_COLORS[accuracy.verdict] : null
+                      }
+                      locale={locale}
+                      t={t}
+                      onEnter={enter}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* One button, one place, all round. Both are in the same grid cell with
-          the same padding, so they share a centre and "Next round" appears
-          exactly where "Lock in guess" was — under the pointer that just
-          pressed it. Only the colour changes, which is what tells the player
-          which of the two they are looking at.
+          {/* The round's controls: how the date is entered, the one button
+              that answers the round, and the switch between the two.
 
-          `inert` on whichever is hidden keeps it off the tab order and out of
-          the accessibility tree while it is only holding the slot open. */}
-          <div className="grid shrink-0 place-items-center">
+              **A three-column grid with equal flexible sides, not a flex
+              row.** The middle column is therefore the column's own centre
+              whatever the two sides are holding, so the advance button stands
+              in exactly the same place with the entry open as with it folded
+              away — and the entry can appear immediately to its left and the
+              switch immediately to its right without either of them moving
+              it. A flex row would have re-centred the lot every time one of
+              them came or went, and that button is the one position on this
+              screen which must not move.
+
+              Below `md` the three do not fit across a phone, so the entry
+              takes a row of its own above them. It keeps its place in the
+              document either way — `.entry-shell` gives its space back in
+              both axes for exactly that reason — and the button and the
+              switch stay side by side, which is what the inner flex and its
+              `md:contents` are for: above the breakpoint that wrapper stops
+              being a box and its two children become the grid's own middle
+              and right cells.
+
+              `relative` is for the warning, which hangs underneath the row
+              rather than taking a row of its own: a sentence that appears
+              only when a date is refused must not be able to move the button
+              it was refused by. */}
+          <div className="relative grid w-full shrink-0 justify-items-center md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-center">
+            {/* Always mounted and folded by `data-shown`, like the rail: it
+                has to animate out as well as in. `inert` is what takes a
+                folded field out of reach — a clipped input is still a
+                focusable one. */}
             <div
-              className={`col-start-1 row-start-1 transition-opacity duration-300 ${
-                answered ? "opacity-0" : "opacity-100"
-              }`}
-              inert={answered}
+              className="entry-shell md:justify-self-end"
+              data-shown={direct}
+              inert={!direct}
             >
-              <button
-                type="button"
-                onClick={submit}
-                className={`${ROUND_BUTTON} bg-ink text-page hover:opacity-85`}
-              >
-                {t.submitGuess}
-              </button>
+              <div>
+                <div>
+                  <DateEntry
+                    value={entry}
+                    onChange={(next) => {
+                      setEntry(next);
+                      setInvalid(false);
+                    }}
+                    onSubmit={submit}
+                    // Locked in: it stays on screen reporting the year that
+                    // was guessed, but it is no longer a control.
+                    disabled={answered}
+                    invalid={invalid}
+                    shown={direct}
+                    focusDelayMs={RAIL_FOLD_MS}
+                    t={t}
+                  />
+                </div>
+              </div>
             </div>
 
-            <div
-              className={`col-start-1 row-start-1 transition-opacity duration-300 ${
-                answered ? "opacity-100" : "opacity-0"
-              }`}
-              inert={!answered}
-            >
-              <button
-                type="button"
-                onClick={requestNextRound}
-                // Never disabled. A press with nothing queued is latched and
-                // played as soon as the draw lands (`requestNextRound`);
-                // disabling it here is what left it dead for the whole of the
-                // first draw, on question 2 of every game.
-                aria-busy={pendingNext}
-                className={`${ROUND_BUTTON} border border-white/45 bg-black/45 text-ink backdrop-blur-md hover:bg-black/65 ${
-                  pendingNext ? "cursor-progress opacity-60" : ""
+            {/* One button, one place, all round. Both are in the same grid cell
+                with the same padding, so they share a centre and "Next round"
+                appears exactly where "Lock in guess" was — under the pointer
+                that just pressed it. Only the colour changes, which is what
+                tells the player which of the two they are looking at.
+
+                `inert` on whichever is hidden keeps it off the tab order and
+                out of the accessibility tree while it is only holding the slot
+                open. */}
+            <div className="flex items-center gap-3 md:contents">
+              <div className="grid place-items-center">
+                <div
+                  className={`col-start-1 row-start-1 transition-opacity duration-300 ${
+                    answered ? "opacity-0" : "opacity-100"
+                  }`}
+                  inert={answered}
+                >
+                  <button
+                    type="button"
+                    onClick={submit}
+                    className={`${ROUND_BUTTON} bg-ink text-page hover:opacity-85`}
+                  >
+                    {t.submitGuess}
+                  </button>
+                </div>
+
+                <div
+                  className={`col-start-1 row-start-1 transition-opacity duration-300 ${
+                    answered ? "opacity-100" : "opacity-0"
+                  }`}
+                  inert={!answered}
+                >
+                  <button
+                    type="button"
+                    onClick={requestNextRound}
+                    // Never disabled. A press with nothing queued is latched and
+                    // played as soon as the draw lands (`requestNextRound`);
+                    // disabling it here is what left it dead for the whole of the
+                    // first draw, on question 2 of every game.
+                    aria-busy={pendingNext}
+                    className={`${ROUND_BUTTON} border border-white/45 bg-black/45 text-ink backdrop-blur-md hover:bg-black/65 ${
+                      pendingNext ? "cursor-progress opacity-60" : ""
+                    }`}
+                  >
+                    {lastQuestion ? t.seeResults : t.nextRound}
+                  </button>
+                </div>
+              </div>
+
+              {/* Faded and inert once the round is answered rather than
+                  unmounted, so its cell keeps its width and the button beside
+                  it stays centred. There is nothing to switch to mid-reveal
+                  anyway: the rail is back on screen carrying the answer. */}
+              <div
+                className={`transition-opacity duration-300 md:ml-3 md:justify-self-start ${
+                  answered ? "opacity-0" : "opacity-100"
                 }`}
+                inert={answered}
               >
-                {lastQuestion ? t.seeResults : t.nextRound}
-              </button>
+                <InputModeToggle
+                  direct={direct}
+                  onToggle={() => {
+                    setDirect((current) => !current);
+                    setInvalid(false);
+                  }}
+                  t={t}
+                />
+              </div>
             </div>
+
+            {/* The refusal, under the row and out of the flow. Keyed on
+                nothing: it is mounted by the press and animates once. */}
+            {invalid && (
+              <p
+                role="alert"
+                // No `-translate-x-1/2`: Tailwind v4 compiles that to the
+                // `translate` property and the keyframe below animates
+                // `transform`, so the two would compose and pull it a whole
+                // width left. Both of its keyframes carry the -50% instead,
+                // the way the answer marker's do.
+                className="entry-warning on-photo absolute left-1/2 top-full mt-2 whitespace-nowrap text-[12px] font-medium text-bad"
+              >
+                {t.invalidDate}
+              </p>
+            )}
           </div>
         </>
       )}
-    </div>
-  );
-}
-
-
-
-/**
- * The round's result, painted over the foot of the photograph.
- *
- * **This is the narrow-screen fallback now, not the main event.** The result
- * moved out to `VerdictFlank` beside the card on 2026-10-06, because a verdict
- * across the picture covers the one thing the round is about — but the flanks
- * need a screen with sides to it, and below 1120px there are none. So this
- * stays, hidden at exactly the width the panels appear at, and the two are
- * never on screen together.
- *
- * It mounts only once a guess is in, which is what makes the pop-in animation
- * run per round rather than once on load. The scrim is what keeps it legible:
- * the picture underneath it is a different photograph every round and cannot
- * be relied on to be dark.
- *
- * The guessed year is repeated here even though the rail marks it, because the
- * camera may have flown several eras away to the answer by the time this is
- * read, taking the player's own marker off screen with it.
- *
- * The challenge sits in here as well as in the flank, so reporting a wrong
- * date is not something only a wide screen can do. The surrounding block is
- * `pointer-events-none` — it is a scrim over a photograph and must not swallow
- * anything — so the one part of it that is a control says so for itself.
- */
-function RoundVerdict({
-  accuracy,
-  guess,
-  eventId,
-  locale,
-  t,
-}: {
-  accuracy: GuessAccuracy;
-  guess: number;
-  eventId: string;
-  locale: SupportedLocale;
-  t: Dict;
-}) {
-  return (
-    <div
-      role="status"
-      className="round-verdict-in pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center gap-1 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-4 pb-3 pt-14 text-center min-[1120px]:hidden"
-    >
-      <p
-        className="on-photo font-display text-3xl font-semibold leading-none tracking-tight sm:text-4xl"
-        style={{ color: VERDICT_COLORS[accuracy.verdict] }}
-      >
-        {t[VERDICT_LABEL_KEYS[accuracy.verdict]]}
-      </p>
-      <p className="on-photo text-xs text-white/80 sm:text-sm">
-        {accuracy.distance === 0
-          ? t.correct
-          : format(t.yearsOff, {
-              n: formatYearCount(accuracy.distance, locale),
-            })}
-        <span className="px-1.5 text-white/40">·</span>
-        {t.yourGuess}: {formatYear(guess)}
-      </p>
-
-      <div className="mt-1 flex justify-center">
-        <DateChallenge eventId={eventId} t={t} />
-      </div>
     </div>
   );
 }

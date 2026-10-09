@@ -62,6 +62,7 @@ export type Database = {
           precision: Database["public"]["Enums"]["date_precision"];
           sort_key: number;
           status: Database["public"]["Enums"]["publication_status"];
+          is_sensitive: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -73,6 +74,7 @@ export type Database = {
           day?: number | null;
           precision?: Database["public"]["Enums"]["date_precision"];
           status?: Database["public"]["Enums"]["publication_status"];
+          is_sensitive?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -84,6 +86,7 @@ export type Database = {
           day?: number | null;
           precision?: Database["public"]["Enums"]["date_precision"];
           status?: Database["public"]["Enums"]["publication_status"];
+          is_sensitive?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -538,6 +541,135 @@ export type Database = {
           },
         ];
       };
+      profile: {
+        Row: {
+          id: string;
+          /** Null until the player picks one — see normalize_username(). */
+          username: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          username?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        /** `username` is the only column granted to `authenticated`. */
+        Update: {
+          username?: string | null;
+        };
+        Relationships: [];
+      };
+      badge: {
+        Row: {
+          slug: string;
+          sort_order: number;
+          default_target: number;
+          is_rank: boolean;
+        };
+        Insert: {
+          slug: string;
+          sort_order: number;
+          default_target: number;
+          is_rank?: boolean;
+        };
+        Update: {
+          sort_order?: number;
+          default_target?: number;
+          is_rank?: boolean;
+        };
+        Relationships: [];
+      };
+      user_badge_progress: {
+        Row: {
+          user_id: string;
+          badge_slug: string;
+          progress: number;
+          target: number;
+          unlocked_at: string | null;
+          details: Json;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          badge_slug: string;
+          progress?: number;
+          target: number;
+          unlocked_at?: string | null;
+          details?: Json;
+          updated_at?: string;
+        };
+        Update: {
+          progress?: number;
+          target?: number;
+          unlocked_at?: string | null;
+          details?: Json;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_badge_progress_badge_slug_fkey";
+            columns: ["badge_slug"];
+            isOneToOne: false;
+            referencedRelation: "badge";
+            referencedColumns: ["slug"];
+          },
+        ];
+      };
+      daily_challenge: {
+        Row: {
+          puzzle_date: string;
+          audience: Database["public"]["Enums"]["daily_audience"];
+          event_ids: string[];
+          created_at: string;
+        };
+        Insert: {
+          puzzle_date: string;
+          audience: Database["public"]["Enums"]["daily_audience"];
+          event_ids: string[];
+          created_at?: string;
+        };
+        Update: {
+          puzzle_date?: string;
+          audience?: Database["public"]["Enums"]["daily_audience"];
+          event_ids?: string[];
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      daily_attempt: {
+        Row: {
+          user_id: string;
+          puzzle_date: string;
+          answers: Json;
+          points: number;
+          hits: number;
+          started_at: string;
+          completed_at: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          puzzle_date: string;
+          answers?: Json;
+          points?: number;
+          hits?: number;
+          started_at?: string;
+          completed_at?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          puzzle_date?: string;
+          answers?: Json;
+          points?: number;
+          hits?: number;
+          started_at?: string;
+          completed_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       event_challenge_stats: {
@@ -580,11 +712,42 @@ export type Database = {
           image_author: string | null;
           image_license_code: string | null;
           image_attribution_text: string | null;
+          is_sensitive: boolean;
         };
         Relationships: [];
       };
     };
     Functions: {
+      array_is_distinct: {
+        Args: { ids: string[] };
+        Returns: boolean;
+      };
+      daily_ensure_challenges: {
+        Args: {
+          p_puzzle_date: string;
+          p_member: string[];
+          p_guest: string[];
+        };
+        Returns: Database["public"]["Tables"]["daily_challenge"]["Row"][];
+      };
+      daily_record_answer: {
+        Args: {
+          p_user_id: string;
+          p_puzzle_date: string;
+          p_idx: number;
+          p_guess: number;
+          p_year: number;
+          p_verdict: string;
+          p_points: number;
+          p_hit: boolean;
+          p_total: number;
+        };
+        Returns: Database["public"]["Tables"]["daily_attempt"]["Row"];
+      };
+      normalize_username: {
+        Args: { raw: string };
+        Returns: string | null;
+      };
       historical_year_label: {
         Args: { p_year: number };
         Returns: string;
@@ -643,6 +806,7 @@ export type Database = {
         | "millennium";
       publication_status: "draft" | "review" | "published" | "archived";
       category_kind: "topic" | "region" | "era" | "other";
+      daily_audience: "member" | "guest";
       match_phase:
         | "lobby"
         | "playing"
