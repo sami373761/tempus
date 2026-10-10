@@ -1,0 +1,2863 @@
+{
+  "version": "1.0",
+  "languages": [
+    "tr",
+    "en",
+    "es",
+    "fr",
+    "de"
+  ],
+  "count": 150,
+  "items": [
+    {
+      "id": "tutankhamun",
+      "type": "leader",
+      "year": -1341,
+      "title": {
+        "tr": "Tutankamon",
+        "en": "Tutankhamun",
+        "es": "Tutankamón",
+        "fr": "Toutânkhamon",
+        "de": "Tutanchamun"
+      },
+      "description": {
+        "tr": "MÖ 1341 civarında Mısır'da, büyük olasılıkla Amarna'da doğdu; çocuk yaşta firavun oldu ve 1922'de neredeyse bozulmamış bulunan mezarı onu en ünlü firavun yaptı.",
+        "en": "Born around 1341 BC in Egypt, probably at Amarna, he became pharaoh as a child; his nearly intact tomb, found in 1922, made him the most famous pharaoh.",
+        "es": "Nació hacia el 1341 a. C. en Egipto, probablemente en Amarna, y fue faraón desde niño; su tumba casi intacta, hallada en 1922, lo convirtió en el faraón más famoso.",
+        "fr": "Né vers 1341 av. J.-C. en Égypte, probablement à Amarna, il devint pharaon enfant ; sa tombe presque intacte, découverte en 1922, en fit le plus célèbre des pharaons.",
+        "de": "Um 1341 v. Chr. in Ägypten geboren, wahrscheinlich in Amarna, wurde er schon als Kind Pharao; sein 1922 fast unversehrt entdecktes Grab machte ihn weltberühmt."
+      }
+    },
+    {
+      "id": "pythagoras",
+      "type": "scientist",
+      "year": -570,
+      "title": {
+        "tr": "Pisagor",
+        "en": "Pythagoras",
+        "es": "Pitágoras",
+        "fr": "Pythagore",
+        "de": "Pythagoras"
+      },
+      "description": {
+        "tr": "MÖ 570 civarında Yunan adası Sisam'da doğdu; adı Pisagor teoremiyle yaşamaya devam eden bir filozof ve matematikçidir.",
+        "en": "Born around 570 BC on the Greek island of Samos, he was a philosopher and mathematician whose name lives on in the Pythagorean theorem.",
+        "es": "Nació hacia el 570 a. C. en la isla griega de Samos; fue un filósofo y matemático cuyo nombre perdura en el teorema de Pitágoras.",
+        "fr": "Né vers 570 av. J.-C. sur l'île grecque de Samos, ce philosophe et mathématicien a donné son nom au célèbre théorème de Pythagore.",
+        "de": "Um 570 v. Chr. auf der griechischen Insel Samos geboren, war er Philosoph und Mathematiker, dessen Name im Satz des Pythagoras weiterlebt."
+      }
+    },
+    {
+      "id": "buddha",
+      "type": "religious",
+      "year": -563,
+      "title": {
+        "tr": "Buda",
+        "en": "Buddha",
+        "es": "Buda",
+        "fr": "Bouddha",
+        "de": "Buddha"
+      },
+      "description": {
+        "tr": "Siddhartha Gautama, geleneksel tarihlemeye göre MÖ 563 civarında bugünkü Nepal'deki Lumbini'de doğdu; Buda olarak Budizm'in kurucusudur.",
+        "en": "Siddhartha Gautama was born, by traditional dating around 563 BC, in Lumbini in present-day Nepal; as the Buddha he founded Buddhism.",
+        "es": "Siddhartha Gautama nació, según la datación tradicional, hacia el 563 a. C. en Lumbini, en el actual Nepal; como Buda fundó el budismo.",
+        "fr": "Siddhartha Gautama naquit, selon la datation traditionnelle, vers 563 av. J.-C. à Lumbini, dans l'actuel Népal ; devenu le Bouddha, il fonda le bouddhisme.",
+        "de": "Siddhartha Gautama wurde nach traditioneller Datierung um 563 v. Chr. in Lumbini im heutigen Nepal geboren; als Buddha begründete er den Buddhismus."
+      }
+    },
+    {
+      "id": "confucius",
+      "type": "philosopher",
+      "year": -551,
+      "title": {
+        "tr": "Konfüçyüs",
+        "en": "Confucius",
+        "es": "Confucio",
+        "fr": "Confucius",
+        "de": "Konfuzius"
+      },
+      "description": {
+        "tr": "MÖ 551 yılında Çin'in Lu devletindeki Qufu'da doğdu; ahlak ve aile üzerine öğretileri binlerce yıl Doğu Asya kültürünü şekillendirdi.",
+        "en": "Born in 551 BC in Qufu, in the Chinese state of Lu, he became the philosopher whose teachings on ethics and family shaped East Asian culture for millennia.",
+        "es": "Nació en el 551 a. C. en Qufu, en el estado chino de Lu; sus enseñanzas sobre ética y familia moldearon la cultura de Asia oriental durante milenios.",
+        "fr": "Né en 551 av. J.-C. à Qufu, dans l'État chinois de Lu, ce philosophe a façonné pendant des millénaires la culture d'Asie orientale par sa morale.",
+        "de": "551 v. Chr. in Qufu im chinesischen Staat Lu geboren, prägte der Philosoph mit seiner Lehre von Ethik und Familie Ostasien über Jahrtausende."
+      }
+    },
+    {
+      "id": "socrates",
+      "type": "philosopher",
+      "year": -470,
+      "title": {
+        "tr": "Sokrates",
+        "en": "Socrates",
+        "es": "Sócrates",
+        "fr": "Socrate",
+        "de": "Sokrates"
+      },
+      "description": {
+        "tr": "MÖ 470 civarında Atina'da doğdu; her şeyi diyalogla sorgulamasıyla tanınan, Batı felsefesinin kurucularından sayılan düşünürdür.",
+        "en": "Born around 470 BC in Athens, he is considered a founder of Western philosophy, known for questioning everything through dialogue.",
+        "es": "Nació hacia el 470 a. C. en Atenas; se le considera uno de los fundadores de la filosofía occidental, famoso por cuestionarlo todo mediante el diálogo.",
+        "fr": "Né vers 470 av. J.-C. à Athènes, il est considéré comme l'un des fondateurs de la philosophie occidentale, célèbre pour son art du questionnement.",
+        "de": "Um 470 v. Chr. in Athen geboren, gilt er als Begründer der abendländischen Philosophie, berühmt für sein fragendes Gespräch."
+      }
+    },
+    {
+      "id": "hippocrates",
+      "type": "scientist",
+      "year": -460,
+      "title": {
+        "tr": "Hipokrat",
+        "en": "Hippocrates",
+        "es": "Hipócrates",
+        "fr": "Hippocrate",
+        "de": "Hippokrates"
+      },
+      "description": {
+        "tr": "MÖ 460 civarında Yunan adası İstanköy'de (Kos) doğdu; tıbbın babası sayılır ve hekimler hâlâ onun adını taşıyan yemini eder.",
+        "en": "Born around 460 BC on the Greek island of Kos, he is called the father of medicine, and doctors still take an oath bearing his name.",
+        "es": "Nació hacia el 460 a. C. en la isla griega de Cos; es llamado el padre de la medicina y los médicos aún pronuncian el juramento que lleva su nombre.",
+        "fr": "Né vers 460 av. J.-C. sur l'île grecque de Cos, il est appelé le père de la médecine ; les médecins prêtent encore le serment qui porte son nom.",
+        "de": "Um 460 v. Chr. auf der griechischen Insel Kos geboren, gilt er als Vater der Medizin; Ärzte leisten bis heute den nach ihm benannten Eid."
+      }
+    },
+    {
+      "id": "plato",
+      "type": "philosopher",
+      "year": -428,
+      "title": {
+        "tr": "Platon",
+        "en": "Plato",
+        "es": "Platón",
+        "fr": "Platon",
+        "de": "Platon"
+      },
+      "description": {
+        "tr": "MÖ 428 civarında Atina'da doğdu; Sokrates'in öğrencisi olarak Akademi'yi kurdu ve hâlâ felsefeyi şekillendiren Devlet gibi diyaloglar yazdı.",
+        "en": "Born around 428 BC in Athens, Socrates' student founded the Academy and wrote dialogues such as the Republic that still shape philosophy.",
+        "es": "Nació hacia el 428 a. C. en Atenas; discípulo de Sócrates, fundó la Academia y escribió diálogos como La República, que aún marcan la filosofía.",
+        "fr": "Né vers 428 av. J.-C. à Athènes, ce disciple de Socrate fonda l'Académie et écrivit des dialogues comme La République.",
+        "de": "Um 428 v. Chr. in Athen geboren, gründete der Schüler des Sokrates die Akademie und schrieb Dialoge wie die Politeia."
+      }
+    },
+    {
+      "id": "aristotle",
+      "type": "philosopher",
+      "year": -384,
+      "title": {
+        "tr": "Aristoteles",
+        "en": "Aristotle",
+        "es": "Aristóteles",
+        "fr": "Aristote",
+        "de": "Aristoteles"
+      },
+      "description": {
+        "tr": "MÖ 384 yılında kuzey Yunanistan'daki Stagira'da doğdu; Platon'un öğrencisi, Büyük İskender'in hocasıdır ve mantık, biyoloji ve etiğin temellerini attı.",
+        "en": "Born in 384 BC in Stagira, northern Greece, Plato's student became tutor to Alexander the Great and laid foundations for logic, biology and ethics.",
+        "es": "Nació en el 384 a. C. en Estagira, en el norte de Grecia; discípulo de Platón y maestro de Alejandro Magno, sentó las bases de la lógica y la biología.",
+        "fr": "Né en 384 av. J.-C. à Stagire, dans le nord de la Grèce, l'élève de Platon fut le précepteur d'Alexandre le Grand et posa les bases de la logique.",
+        "de": "384 v. Chr. in Stagira im Norden Griechenlands geboren, war der Platon-Schüler Lehrer Alexanders des Großen und begründete Logik und Biologie mit."
+      }
+    },
+    {
+      "id": "alexander-the-great",
+      "type": "leader",
+      "year": -356,
+      "title": {
+        "tr": "Büyük İskender",
+        "en": "Alexander the Great",
+        "es": "Alejandro Magno",
+        "fr": "Alexandre le Grand",
+        "de": "Alexander der Große"
+      },
+      "description": {
+        "tr": "MÖ 356 yılında Makedonya'nın başkenti Pella'da doğdu; 33 yaşına gelmeden Yunanistan'dan Hindistan'a uzanan tarihin en büyük imparatorluklarından birini kurdu.",
+        "en": "Born in 356 BC in Pella, capital of Macedon, he built one of history's largest empires, stretching from Greece to India, before turning 33.",
+        "es": "Nació en el 356 a. C. en Pela, capital de Macedonia; antes de cumplir 33 años creó uno de los mayores imperios de la historia, de Grecia a la India.",
+        "fr": "Né en 356 av. J.-C. à Pella, capitale de la Macédoine, il bâtit avant 33 ans l'un des plus vastes empires de l'histoire, de la Grèce à l'Inde.",
+        "de": "356 v. Chr. in Pella, der Hauptstadt Makedoniens, geboren, schuf er vor seinem 33. Lebensjahr ein Weltreich von Griechenland bis Indien."
+      }
+    },
+    {
+      "id": "archimedes",
+      "type": "scientist",
+      "year": -287,
+      "title": {
+        "tr": "Arşimet",
+        "en": "Archimedes",
+        "es": "Arquímedes",
+        "fr": "Archimède",
+        "de": "Archimedes"
+      },
+      "description": {
+        "tr": "MÖ 287 civarında Sicilya'daki Siraküza'da doğdu; kaldırma kuvveti ilkesi ve ünlü 'Eureka!' çığlığıyla hatırlanan matematikçi ve mucittir.",
+        "en": "Born around 287 BC in Syracuse, Sicily, the mathematician and inventor is remembered for the principle of buoyancy and his famous cry of 'Eureka!'.",
+        "es": "Nació hacia el 287 a. C. en Siracusa, Sicilia; matemático e inventor, es recordado por el principio de flotación y su célebre «¡Eureka!».",
+        "fr": "Né vers 287 av. J.-C. à Syracuse, en Sicile, ce mathématicien et inventeur est resté célèbre pour la poussée d'Archimède et son « Eurêka ! ».",
+        "de": "Um 287 v. Chr. in Syrakus auf Sizilien geboren, ist der Mathematiker und Erfinder für das Auftriebsprinzip und sein berühmtes „Heureka!“ bekannt."
+      }
+    },
+    {
+      "id": "hannibal",
+      "type": "leader",
+      "year": -247,
+      "title": {
+        "tr": "Hannibal",
+        "en": "Hannibal",
+        "es": "Aníbal",
+        "fr": "Hannibal",
+        "de": "Hannibal"
+      },
+      "description": {
+        "tr": "MÖ 247 yılında bugünkü Tunus'taki Kartaca'da doğdu; savaş filleriyle Alpleri aşarak Roma'ya saldırmasıyla ünlü komutandır.",
+        "en": "Born in 247 BC in Carthage, in present-day Tunisia, the general famously crossed the Alps with war elephants to attack Rome.",
+        "es": "Nació en el 247 a. C. en Cartago, en el actual Túnez; este general cruzó los Alpes con elefantes de guerra para atacar Roma.",
+        "fr": "Né en 247 av. J.-C. à Carthage, dans l'actuelle Tunisie, ce général franchit les Alpes avec des éléphants de guerre pour attaquer Rome.",
+        "de": "247 v. Chr. in Karthago im heutigen Tunesien geboren, überquerte der Feldherr mit Kriegselefanten die Alpen, um Rom anzugreifen."
+      }
+    },
+    {
+      "id": "julius-caesar",
+      "type": "leader",
+      "year": -100,
+      "title": {
+        "tr": "Jül Sezar",
+        "en": "Julius Caesar",
+        "es": "Julio César",
+        "fr": "Jules César",
+        "de": "Julius Caesar"
+      },
+      "description": {
+        "tr": "MÖ 100 yılının Temmuz ayında Roma'da doğdu; Galya'yı fethetti, diktatör olarak iktidarı ele geçirdi ve MÖ 44'te suikasta kurban gitti.",
+        "en": "Born in July 100 BC in Rome, he conquered Gaul, seized power as dictator and was assassinated on the Ides of March in 44 BC.",
+        "es": "Nació en julio del 100 a. C. en Roma; conquistó la Galia, se hizo con el poder como dictador y fue asesinado en los idus de marzo del 44 a. C.",
+        "fr": "Né en juillet 100 av. J.-C. à Rome, il conquit la Gaule, prit le pouvoir comme dictateur et fut assassiné aux ides de mars 44 av. J.-C.",
+        "de": "Im Juli 100 v. Chr. in Rom geboren, eroberte er Gallien, riss als Diktator die Macht an sich und wurde an den Iden des März 44 v. Chr. ermordet."
+      }
+    },
+    {
+      "id": "cleopatra",
+      "type": "leader",
+      "year": -69,
+      "title": {
+        "tr": "Kleopatra",
+        "en": "Cleopatra",
+        "es": "Cleopatra",
+        "fr": "Cléopâtre",
+        "de": "Kleopatra"
+      },
+      "description": {
+        "tr": "MÖ 69 yılında İskenderiye'de doğdu; Jül Sezar ve Marcus Antonius ile ittifaklarıyla ünlü, Ptolemaios Mısırı'nın son etkin hükümdarıdır.",
+        "en": "Born in 69 BC in Alexandria, she was the last active ruler of Ptolemaic Egypt, famed for her alliances with Julius Caesar and Mark Antony.",
+        "es": "Nació en el 69 a. C. en Alejandría; fue la última gobernante del Egipto ptolemaico, célebre por sus alianzas con Julio César y Marco Antonio.",
+        "fr": "Née en 69 av. J.-C. à Alexandrie, elle fut la dernière souveraine de l'Égypte ptolémaïque, célèbre pour ses alliances avec César et Marc Antoine.",
+        "de": "69 v. Chr. in Alexandria geboren, war sie die letzte Herrscherin des ptolemäischen Ägypten, berühmt für ihre Bündnisse mit Caesar und Marcus Antonius."
+      }
+    },
+    {
+      "id": "augustus",
+      "type": "leader",
+      "year": -63,
+      "title": {
+        "tr": "Augustus",
+        "en": "Augustus",
+        "es": "César Augusto",
+        "fr": "Auguste",
+        "de": "Augustus"
+      },
+      "description": {
+        "tr": "23 Eylül MÖ 63 tarihinde Roma'da doğdu; Sezar'ın evlatlık varisi olarak ilk Roma imparatoru oldu ve Ağustos ayına adını verdi.",
+        "en": "Born on 23 September 63 BC in Rome, Caesar's adopted heir became the first Roman emperor and gave his name to the month of August.",
+        "es": "Nació el 23 de septiembre del 63 a. C. en Roma; heredero adoptivo de César, fue el primer emperador romano y dio nombre al mes de agosto.",
+        "fr": "Né le 23 septembre 63 av. J.-C. à Rome, l'héritier adoptif de César devint le premier empereur romain et donna son nom au mois d'août.",
+        "de": "Am 23. September 63 v. Chr. in Rom geboren, wurde Caesars Adoptivsohn der erste römische Kaiser und gab dem Monat August seinen Namen."
+      }
+    },
+    {
+      "id": "jesus",
+      "type": "religious",
+      "year": -4,
+      "title": {
+        "tr": "Hz. İsa",
+        "en": "Jesus of Nazareth",
+        "es": "Jesús de Nazaret",
+        "fr": "Jésus de Nazareth",
+        "de": "Jesus von Nazaret"
+      },
+      "description": {
+        "tr": "MÖ 6–4 civarında, İncillere göre Yahudiye'deki Beytüllahim'de doğdu; Nasıra'da büyüdü ve Hristiyanlığın merkezî figürüdür.",
+        "en": "Born around 6–4 BC, according to the Gospels in Bethlehem in Judea, he grew up in Nazareth and is the central figure of Christianity.",
+        "es": "Nació hacia el 6–4 a. C., según los Evangelios en Belén de Judea; creció en Nazaret y es la figura central del cristianismo.",
+        "fr": "Né vers 6–4 av. J.-C., à Bethléem en Judée selon les Évangiles, il grandit à Nazareth et est la figure centrale du christianisme.",
+        "de": "Um 6–4 v. Chr. laut den Evangelien in Betlehem in Judäa geboren, wuchs er in Nazaret auf und ist die zentrale Gestalt des Christentums."
+      }
+    },
+    {
+      "id": "constantine-the-great",
+      "type": "leader",
+      "year": 272,
+      "title": {
+        "tr": "Büyük Konstantin",
+        "en": "Constantine the Great",
+        "es": "Constantino el Grande",
+        "fr": "Constantin le Grand",
+        "de": "Konstantin der Große"
+      },
+      "description": {
+        "tr": "272 civarında bugünkü Sırbistan'daki Niş'te (Naissus) doğdu; Hristiyanlığı benimseyen ilk Roma imparatorudur ve Konstantinopolis'i kurdu.",
+        "en": "Born around 272 in Naissus, today's Niš in Serbia, he was the first Roman emperor to embrace Christianity and founded Constantinople.",
+        "es": "Nació hacia el 272 en Naissus, la actual Niš (Serbia); fue el primer emperador romano en abrazar el cristianismo y fundó Constantinopla.",
+        "fr": "Né vers 272 à Naissus, l'actuelle Niš en Serbie, il fut le premier empereur romain à embrasser le christianisme et fonda Constantinople.",
+        "de": "Um 272 in Naissus, dem heutigen Niš in Serbien, geboren, war er der erste christliche römische Kaiser und gründete Konstantinopel."
+      }
+    },
+    {
+      "id": "muhammad",
+      "type": "religious",
+      "year": 571,
+      "title": {
+        "tr": "Hz. Muhammed",
+        "en": "Muhammad",
+        "es": "Mahoma",
+        "fr": "Mahomet",
+        "de": "Mohammed"
+      },
+      "description": {
+        "tr": "İslam dünyasında yaygın kabul gören tarihe göre 571 yılında Arap Yarımadası'ndaki Mekke'de doğdu (kesin yılı tartışmalıdır); İslam'ın peygamberidir.",
+        "en": "Born in Mecca, on the Arabian Peninsula, in 571 according to the date widely accepted in the Islamic world (the exact year is uncertain); he is the prophet of Islam.",
+        "es": "Nació en La Meca, en la península arábiga, en el año 571 según la fecha ampliamente aceptada en el mundo islámico (el año exacto es incierto); es el profeta del islam.",
+        "fr": "Né à La Mecque, dans la péninsule Arabique, en 571 selon la date largement admise dans le monde musulman (l'année exacte reste incertaine), il est le prophète de l'islam.",
+        "de": "Nach der in der islamischen Welt verbreiteten Datierung 571 in Mekka auf der Arabischen Halbinsel geboren (das genaue Jahr ist ungewiss), ist er der Prophet des Islam."
+      }
+    },
+    {
+      "id": "charlemagne",
+      "type": "leader",
+      "year": 748,
+      "title": {
+        "tr": "Şarlman",
+        "en": "Charlemagne",
+        "es": "Carlomagno",
+        "fr": "Charlemagne",
+        "de": "Karl der Große"
+      },
+      "description": {
+        "tr": "748 civarında Frank Krallığı'nda doğdu; Batı Avrupa'nın büyük kısmını birleştirdi ve 800 yılında Roma'da imparator olarak taç giydi.",
+        "en": "Born around 748 in the Frankish kingdom, he united much of Western Europe and was crowned emperor in Rome in the year 800.",
+        "es": "Nació hacia el 748 en el reino franco; unificó gran parte de Europa occidental y fue coronado emperador en Roma en el año 800.",
+        "fr": "Né vers 748 dans le royaume franc, il unifia une grande partie de l'Europe occidentale et fut couronné empereur à Rome en l'an 800.",
+        "de": "Um 748 im Frankenreich geboren, einte er große Teile Westeuropas und wurde im Jahr 800 in Rom zum Kaiser gekrönt."
+      }
+    },
+    {
+      "id": "avicenna",
+      "type": "scientist",
+      "year": 980,
+      "title": {
+        "tr": "İbn-i Sina",
+        "en": "Avicenna",
+        "es": "Avicena",
+        "fr": "Avicenne",
+        "de": "Avicenna"
+      },
+      "description": {
+        "tr": "980 civarında bugünkü Özbekistan'da, Buhara yakınlarındaki Afşana'da doğdu; yüzyıllarca temel kaynak olan El-Kanun fi't-Tıb'ı yazan hekim ve filozoftur.",
+        "en": "Born around 980 in Afshana near Bukhara, in today's Uzbekistan, the physician and philosopher wrote The Canon of Medicine, a standard text for centuries.",
+        "es": "Nació hacia el 980 en Afshana, cerca de Bujará (actual Uzbekistán); médico y filósofo, escribió el Canon de medicina, texto de referencia durante siglos.",
+        "fr": "Né vers 980 à Afchana, près de Boukhara (actuel Ouzbékistan), ce médecin et philosophe écrivit le Canon de la médecine, référence pendant des siècles.",
+        "de": "Um 980 in Afschana bei Buchara im heutigen Usbekistan geboren, schrieb der Arzt und Philosoph den Kanon der Medizin, jahrhundertelang ein Standardwerk."
+      }
+    },
+    {
+      "id": "saladin",
+      "type": "leader",
+      "year": 1137,
+      "title": {
+        "tr": "Selahaddin Eyyubi",
+        "en": "Saladin",
+        "es": "Saladino",
+        "fr": "Saladin",
+        "de": "Saladin"
+      },
+      "description": {
+        "tr": "1137 civarında bugünkü Irak'taki Tikrit'te doğdu; Mısır ve Suriye sultanı olarak 1187'de Kudüs'ü Haçlılardan geri aldı.",
+        "en": "Born around 1137 in Tikrit, in present-day Iraq, the sultan of Egypt and Syria recaptured Jerusalem from the Crusaders in 1187.",
+        "es": "Nació hacia el 1137 en Tikrit, en el actual Irak; sultán de Egipto y Siria, reconquistó Jerusalén a los cruzados en 1187.",
+        "fr": "Né vers 1137 à Tikrit, dans l'actuel Irak, le sultan d'Égypte et de Syrie reprit Jérusalem aux croisés en 1187.",
+        "de": "Um 1137 in Tikrit im heutigen Irak geboren, eroberte der Sultan von Ägypten und Syrien 1187 Jerusalem von den Kreuzfahrern zurück."
+      }
+    },
+    {
+      "id": "genghis-khan",
+      "type": "leader",
+      "year": 1162,
+      "title": {
+        "tr": "Cengiz Han",
+        "en": "Genghis Khan",
+        "es": "Gengis Kan",
+        "fr": "Gengis Khan",
+        "de": "Dschingis Khan"
+      },
+      "description": {
+        "tr": "Temuçin adıyla 1162 civarında Moğolistan'da Onon Nehri yakınlarında doğdu; Moğol boylarını birleştirdi ve tarihin en büyük bitişik kara imparatorluğunu kurdu.",
+        "en": "Born as Temüjin around 1162 near the Onon River in Mongolia, he united the Mongol tribes and founded the largest contiguous land empire in history.",
+        "es": "Nació como Temuyín hacia 1162 junto al río Onón, en Mongolia; unificó a las tribus mongolas y fundó el mayor imperio terrestre contiguo de la historia.",
+        "fr": "Né sous le nom de Temüdjin vers 1162 près de la rivière Onon, en Mongolie, il unifia les tribus mongoles et fonda le plus vaste empire continu de l'histoire.",
+        "de": "Als Temüdschin um 1162 am Fluss Onon in der Mongolei geboren, einte er die mongolischen Stämme und schuf das größte zusammenhängende Landreich der Geschichte."
+      }
+    },
+    {
+      "id": "rumi",
+      "type": "writer",
+      "year": 1207,
+      "title": {
+        "tr": "Mevlânâ Celâleddîn-i Rûmî",
+        "en": "Rumi",
+        "es": "Rumi",
+        "fr": "Rûmî",
+        "de": "Rumi"
+      },
+      "description": {
+        "tr": "1207 yılında bugünkü Afganistan'daki Horasan'ın Belh bölgesinde doğdu; Konya'ya yerleşen Sufi şairin aşk üzerine dizeleri tüm dünyada okunur.",
+        "en": "Born in 1207 in the Balkh region of Khorasan, in present-day Afghanistan, the Sufi poet settled in Konya, and his verses on love are read worldwide.",
+        "es": "Nació en 1207 en la región de Balj, en el Jorasán (actual Afganistán); el poeta sufí se estableció en Konya y sus versos sobre el amor se leen en todo el mundo.",
+        "fr": "Né en 1207 dans la région de Balkh, au Khorassan (actuel Afghanistan), le poète soufi s'établit à Konya ; ses vers sur l'amour sont lus dans le monde entier.",
+        "de": "1207 in der Region Balch in Chorasan im heutigen Afghanistan geboren, ließ sich der Sufi-Dichter in Konya nieder; seine Liebesverse werden weltweit gelesen."
+      }
+    },
+    {
+      "id": "marco-polo",
+      "type": "explorer",
+      "year": 1254,
+      "title": {
+        "tr": "Marco Polo",
+        "en": "Marco Polo",
+        "es": "Marco Polo",
+        "fr": "Marco Polo",
+        "de": "Marco Polo"
+      },
+      "description": {
+        "tr": "1254 yılında Venedik'te doğdu; İpek Yolu'nu izleyerek Kubilay Han'ın sarayına ulaşan tüccarın anlattıkları Avrupalılara Asya'yı tanıttı.",
+        "en": "Born in 1254 in Venice, the merchant traveled the Silk Road to the court of Kublai Khan, and his account introduced Asia to Europeans.",
+        "es": "Nació en 1254 en Venecia; el mercader recorrió la Ruta de la Seda hasta la corte de Kublai Kan y su relato dio a conocer Asia a los europeos.",
+        "fr": "Né en 1254 à Venise, le marchand suivit la route de la soie jusqu'à la cour de Kubilai Khan, et son récit fit découvrir l'Asie aux Européens.",
+        "de": "1254 in Venedig geboren, reiste der Kaufmann über die Seidenstraße an den Hof Kublai Khans; sein Bericht machte Asien in Europa bekannt."
+      }
+    },
+    {
+      "id": "dante-alighieri",
+      "type": "writer",
+      "year": 1265,
+      "title": {
+        "tr": "Dante Alighieri",
+        "en": "Dante Alighieri",
+        "es": "Dante Alighieri",
+        "fr": "Dante Alighieri",
+        "de": "Dante Alighieri"
+      },
+      "description": {
+        "tr": "1265 yılında Floransa'da doğdu; Cehennem, Araf ve Cennet'te geçen ve İtalyan dilini biçimlendiren İlahi Komedya'nın şairidir.",
+        "en": "Born in 1265 in Florence, the poet wrote the Divine Comedy, a journey through Hell, Purgatory and Paradise that helped shape the Italian language.",
+        "es": "Nació en 1265 en Florencia; escribió la Divina comedia, un viaje por el Infierno, el Purgatorio y el Paraíso que ayudó a forjar la lengua italiana.",
+        "fr": "Né en 1265 à Florence, le poète écrivit la Divine Comédie, voyage à travers l'Enfer, le Purgatoire et le Paradis qui a façonné la langue italienne.",
+        "de": "1265 in Florenz geboren, schrieb der Dichter die Göttliche Komödie, eine Reise durch Hölle, Fegefeuer und Paradies, die die italienische Sprache prägte."
+      }
+    },
+    {
+      "id": "johannes-gutenberg",
+      "type": "inventor",
+      "year": 1400,
+      "title": {
+        "tr": "Johannes Gutenberg",
+        "en": "Johannes Gutenberg",
+        "es": "Johannes Gutenberg",
+        "fr": "Johannes Gutenberg",
+        "de": "Johannes Gutenberg"
+      },
+      "description": {
+        "tr": "1400 civarında Almanya'nın Mainz şehrinde doğdu; Avrupa'da hareketli harflerle baskıyı geliştirerek bilginin yayılmasında devrim başlattı.",
+        "en": "Born around 1400 in Mainz, Germany, he developed movable-type printing in Europe, sparking a revolution in the spread of knowledge.",
+        "es": "Nació hacia el 1400 en Maguncia, Alemania; desarrolló en Europa la imprenta de tipos móviles, que revolucionó la difusión del saber.",
+        "fr": "Né vers 1400 à Mayence, en Allemagne, il mit au point l'imprimerie à caractères mobiles en Europe, révolutionnant la diffusion du savoir.",
+        "de": "Um 1400 in Mainz geboren, entwickelte er in Europa den Buchdruck mit beweglichen Lettern und revolutionierte die Verbreitung von Wissen."
+      }
+    },
+    {
+      "id": "joan-of-arc",
+      "type": "leader",
+      "year": 1412,
+      "title": {
+        "tr": "Jeanne d'Arc",
+        "en": "Joan of Arc",
+        "es": "Juana de Arco",
+        "fr": "Jeanne d'Arc",
+        "de": "Johanna von Orléans"
+      },
+      "description": {
+        "tr": "1412 civarında Fransız köyü Domrémy'de doğdu; köylü bir kız olarak Yüz Yıl Savaşları sırasında Fransız birliklerini Orléans'ta zafere taşıdı.",
+        "en": "Born around 1412 in Domrémy, a French village, the peasant girl led French troops to victory at Orléans during the Hundred Years' War.",
+        "es": "Nació hacia 1412 en Domrémy, una aldea francesa; esta joven campesina llevó a las tropas francesas a la victoria en Orleans durante la guerra de los Cien Años.",
+        "fr": "Née vers 1412 à Domrémy, cette jeune paysanne mena les troupes françaises à la victoire à Orléans pendant la guerre de Cent Ans.",
+        "de": "Um 1412 im französischen Dorf Domrémy geboren, führte das Bauernmädchen im Hundertjährigen Krieg die französischen Truppen bei Orléans zum Sieg."
+      }
+    },
+    {
+      "id": "mehmed-the-conqueror",
+      "type": "leader",
+      "year": 1432,
+      "title": {
+        "tr": "Fatih Sultan Mehmet",
+        "en": "Mehmed the Conqueror",
+        "es": "Mehmed II el Conquistador",
+        "fr": "Mehmed II le Conquérant",
+        "de": "Mehmed II. der Eroberer"
+      },
+      "description": {
+        "tr": "30 Mart 1432 tarihinde Edirne'de doğdu; 21 yaşında 1453'te İstanbul'u fethederek Bizans İmparatorluğu'na son veren Osmanlı padişahıdır.",
+        "en": "Born on 30 March 1432 in Edirne, the Ottoman sultan conquered Constantinople in 1453 at the age of 21, ending the Byzantine Empire.",
+        "es": "Nació el 30 de marzo de 1432 en Edirne; el sultán otomano conquistó Constantinopla en 1453, con 21 años, y puso fin al Imperio bizantino.",
+        "fr": "Né le 30 mars 1432 à Edirne, le sultan ottoman prit Constantinople en 1453, à 21 ans, mettant fin à l'Empire byzantin.",
+        "de": "Am 30. März 1432 in Edirne geboren, eroberte der osmanische Sultan 1453 mit 21 Jahren Konstantinopel und beendete das Byzantinische Reich."
+      }
+    },
+    {
+      "id": "christopher-columbus",
+      "type": "explorer",
+      "year": 1451,
+      "title": {
+        "tr": "Kristof Kolomb",
+        "en": "Christopher Columbus",
+        "es": "Cristóbal Colón",
+        "fr": "Christophe Colomb",
+        "de": "Christoph Kolumbus"
+      },
+      "description": {
+        "tr": "1451 yılında Ceneviz Cumhuriyeti'nde doğdu; İspanya tacı adına 1492'de Atlantik'i geçen denizci, Avrupa ile Amerika arasında kalıcı temasın kapısını açtı.",
+        "en": "Born in 1451 in the Republic of Genoa, the navigator crossed the Atlantic in 1492 under the Spanish crown, opening lasting contact between Europe and the Americas.",
+        "es": "Nació en 1451 en la República de Génova; el navegante cruzó el Atlántico en 1492 al servicio de la Corona española y abrió el contacto duradero entre Europa y América.",
+        "fr": "Né en 1451 dans la république de Gênes, le navigateur traversa l'Atlantique en 1492 pour la couronne d'Espagne, ouvrant un contact durable entre l'Europe et l'Amérique.",
+        "de": "1451 in der Republik Genua geboren, überquerte der Seefahrer 1492 im Auftrag der spanischen Krone den Atlantik und öffnete den dauerhaften Kontakt zwischen Europa und Amerika."
+      }
+    },
+    {
+      "id": "leonardo-da-vinci",
+      "type": "artist",
+      "year": 1452,
+      "title": {
+        "tr": "Leonardo da Vinci",
+        "en": "Leonardo da Vinci",
+        "es": "Leonardo da Vinci",
+        "fr": "Léonard de Vinci",
+        "de": "Leonardo da Vinci"
+      },
+      "description": {
+        "tr": "15 Nisan 1452 tarihinde Floransa yakınlarındaki Vinci'de doğdu; Mona Lisa'yı yapan ve defterlerini çağının çok ötesinde icatlarla dolduran Rönesans dâhisidir.",
+        "en": "Born on 15 April 1452 in Vinci, near Florence, the Renaissance genius painted the Mona Lisa and filled notebooks with inventions far ahead of his time.",
+        "es": "Nació el 15 de abril de 1452 en Vinci, cerca de Florencia; el genio del Renacimiento pintó la Mona Lisa y llenó cuadernos de inventos adelantados a su época.",
+        "fr": "Né le 15 avril 1452 à Vinci, près de Florence, le génie de la Renaissance peignit la Joconde et remplit ses carnets d'inventions en avance sur son temps.",
+        "de": "Am 15. April 1452 in Vinci bei Florenz geboren, malte das Renaissance-Genie die Mona Lisa und füllte Notizbücher mit Erfindungen weit vor seiner Zeit."
+      }
+    },
+    {
+      "id": "niccolo-machiavelli",
+      "type": "philosopher",
+      "year": 1469,
+      "title": {
+        "tr": "Niccolò Machiavelli",
+        "en": "Niccolò Machiavelli",
+        "es": "Nicolás Maquiavelo",
+        "fr": "Nicolas Machiavel",
+        "de": "Niccolò Machiavelli"
+      },
+      "description": {
+        "tr": "3 Mayıs 1469 tarihinde Floransa'da doğdu; iktidar üzerine açık sözlü rehberi Hükümdar'ı yazan diplomat ve düşünürdür, 'makyavelist' sözcüğü ondan gelir.",
+        "en": "Born on 3 May 1469 in Florence, the diplomat and thinker wrote The Prince, a frank guide to power that gave us the word 'Machiavellian'.",
+        "es": "Nació el 3 de mayo de 1469 en Florencia; diplomático y pensador, escribió El príncipe, una franca guía del poder que dio origen al adjetivo «maquiavélico».",
+        "fr": "Né le 3 mai 1469 à Florence, ce diplomate et penseur écrivit Le Prince, guide sans fard du pouvoir qui a donné le mot « machiavélique ».",
+        "de": "Am 3. Mai 1469 in Florenz geboren, schrieb der Diplomat und Denker Der Fürst, eine schonungslose Anleitung zur Macht, nach der der Begriff „machiavellistisch“ benannt ist."
+      }
+    },
+    {
+      "id": "nicolaus-copernicus",
+      "type": "scientist",
+      "year": 1473,
+      "title": {
+        "tr": "Nikolaus Kopernik",
+        "en": "Nicolaus Copernicus",
+        "es": "Nicolás Copérnico",
+        "fr": "Nicolas Copernic",
+        "de": "Nikolaus Kopernikus"
+      },
+      "description": {
+        "tr": "19 Şubat 1473 tarihinde Polonya'nın Toruń şehrinde doğdu; evrenin merkezine Dünya'yı değil Güneş'i yerleştiren astronomdur.",
+        "en": "Born on 19 February 1473 in Toruń, Poland, the astronomer placed the Sun, not the Earth, at the center of the universe.",
+        "es": "Nació el 19 de febrero de 1473 en Toruń, Polonia; el astrónomo situó al Sol, y no a la Tierra, en el centro del universo.",
+        "fr": "Né le 19 février 1473 à Toruń, en Pologne, l'astronome plaça le Soleil, et non la Terre, au centre de l'univers.",
+        "de": "Am 19. Februar 1473 im polnischen Toruń geboren, stellte der Astronom die Sonne statt der Erde in den Mittelpunkt des Universums."
+      }
+    },
+    {
+      "id": "michelangelo",
+      "type": "artist",
+      "year": 1475,
+      "title": {
+        "tr": "Michelangelo",
+        "en": "Michelangelo",
+        "es": "Miguel Ángel",
+        "fr": "Michel-Ange",
+        "de": "Michelangelo"
+      },
+      "description": {
+        "tr": "6 Mart 1475 tarihinde Toskana'daki Caprese'de doğdu; Davut heykelini ve Sistina Şapeli'nin tavan resimlerini yaratan heykeltıraş ve ressamdır.",
+        "en": "Born on 6 March 1475 in Caprese, Tuscany, the sculptor and painter created the statue of David and the Sistine Chapel ceiling.",
+        "es": "Nació el 6 de marzo de 1475 en Caprese, Toscana; escultor y pintor, creó el David y la bóveda de la Capilla Sixtina.",
+        "fr": "Né le 6 mars 1475 à Caprese, en Toscane, le sculpteur et peintre créa le David et le plafond de la chapelle Sixtine.",
+        "de": "Am 6. März 1475 in Caprese in der Toskana geboren, schuf der Bildhauer und Maler den David und die Decke der Sixtinischen Kapelle."
+      }
+    },
+    {
+      "id": "ferdinand-magellan",
+      "type": "explorer",
+      "year": 1480,
+      "title": {
+        "tr": "Ferdinand Macellan",
+        "en": "Ferdinand Magellan",
+        "es": "Fernando de Magallanes",
+        "fr": "Fernand de Magellan",
+        "de": "Ferdinand Magellan"
+      },
+      "description": {
+        "tr": "1480 civarında Portekiz'in kuzeyinde doğdu; dünyanın çevresini dolaşan ilk seferi yöneten denizcidir, ancak sefer bitmeden hayatını kaybetti.",
+        "en": "Born around 1480 in northern Portugal, the navigator led the first expedition to sail around the world, though he died before it ended.",
+        "es": "Nació hacia 1480 en el norte de Portugal; el navegante dirigió la primera expedición que dio la vuelta al mundo, aunque murió antes de que terminara.",
+        "fr": "Né vers 1480 dans le nord du Portugal, le navigateur mena la première expédition autour du monde, mais mourut avant son terme.",
+        "de": "Um 1480 im Norden Portugals geboren, leitete der Seefahrer die erste Weltumsegelung, starb jedoch vor ihrem Ende."
+      }
+    },
+    {
+      "id": "martin-luther",
+      "type": "religious",
+      "year": 1483,
+      "title": {
+        "tr": "Martin Luther",
+        "en": "Martin Luther",
+        "es": "Martín Lutero",
+        "fr": "Martin Luther",
+        "de": "Martin Luther"
+      },
+      "description": {
+        "tr": "10 Kasım 1483 tarihinde Almanya'nın Eisleben kasabasında doğdu; 1517'de 95 Tez'iyle Protestan Reformu'nu başlatan keşiştir.",
+        "en": "Born on 10 November 1483 in Eisleben, Germany, the monk launched the Protestant Reformation with his 95 Theses in 1517.",
+        "es": "Nació el 10 de noviembre de 1483 en Eisleben, Alemania; este monje inició la Reforma protestante con sus 95 tesis en 1517.",
+        "fr": "Né le 10 novembre 1483 à Eisleben, en Allemagne, ce moine lança la Réforme protestante avec ses 95 thèses en 1517.",
+        "de": "Am 10. November 1483 in Eisleben geboren, löste der Mönch 1517 mit seinen 95 Thesen die Reformation aus."
+      }
+    },
+    {
+      "id": "suleiman-the-magnificent",
+      "type": "leader",
+      "year": 1494,
+      "title": {
+        "tr": "Kanuni Sultan Süleyman",
+        "en": "Suleiman the Magnificent",
+        "es": "Solimán el Magnífico",
+        "fr": "Soliman le Magnifique",
+        "de": "Süleyman der Prächtige"
+      },
+      "description": {
+        "tr": "6 Kasım 1494 tarihinde Trabzon'da doğdu; imparatorluğu gücünün zirvesinde yöneten, en uzun süre tahtta kalan Osmanlı padişahıdır.",
+        "en": "Born on 6 November 1494 in Trabzon, he became the longest-reigning Ottoman sultan, leading the empire at the height of its power.",
+        "es": "Nació el 6 de noviembre de 1494 en Trebisonda; fue el sultán otomano de reinado más largo y llevó al imperio a la cima de su poder.",
+        "fr": "Né le 6 novembre 1494 à Trébizonde, il fut le sultan ottoman au plus long règne et mena l'empire à l'apogée de sa puissance.",
+        "de": "Am 6. November 1494 in Trabzon geboren, war er der am längsten regierende osmanische Sultan und führte das Reich auf den Höhepunkt seiner Macht."
+      }
+    },
+    {
+      "id": "elizabeth-i",
+      "type": "leader",
+      "year": 1533,
+      "title": {
+        "tr": "I. Elizabeth",
+        "en": "Elizabeth I",
+        "es": "Isabel I de Inglaterra",
+        "fr": "Élisabeth Ire",
+        "de": "Elisabeth I."
+      },
+      "description": {
+        "tr": "7 Eylül 1533 tarihinde Londra yakınlarındaki Greenwich Sarayı'nda doğdu; VIII. Henry'nin kızı İngiltere'nin altın çağını yönetti ve İspanyol Armadası'nı yendi.",
+        "en": "Born on 7 September 1533 at Greenwich Palace near London, Henry VIII's daughter ruled England's golden age and defeated the Spanish Armada.",
+        "es": "Nació el 7 de septiembre de 1533 en el palacio de Greenwich, cerca de Londres; hija de Enrique VIII, reinó en la edad de oro inglesa y derrotó a la Armada Invencible.",
+        "fr": "Née le 7 septembre 1533 au palais de Greenwich, près de Londres, la fille d'Henri VIII régna sur l'âge d'or anglais et vainquit l'Invincible Armada.",
+        "de": "Am 7. September 1533 im Greenwich Palace bei London geboren, regierte die Tochter Heinrichs VIII. Englands goldenes Zeitalter und besiegte die spanische Armada."
+      }
+    },
+    {
+      "id": "miguel-de-cervantes",
+      "type": "writer",
+      "year": 1547,
+      "title": {
+        "tr": "Miguel de Cervantes",
+        "en": "Miguel de Cervantes",
+        "es": "Miguel de Cervantes",
+        "fr": "Miguel de Cervantes",
+        "de": "Miguel de Cervantes"
+      },
+      "description": {
+        "tr": "1547 yılında İspanya'nın Alcalá de Henares kentinde doğdu; çoğu zaman ilk modern roman sayılan Don Kişot'un yazarıdır.",
+        "en": "Born in 1547 in Alcalá de Henares, Spain, he wrote Don Quixote, often called the first modern novel.",
+        "es": "Nació en 1547 en Alcalá de Henares, España; escribió Don Quijote de la Mancha, considerada a menudo la primera novela moderna.",
+        "fr": "Né en 1547 à Alcalá de Henares, en Espagne, il écrivit Don Quichotte, souvent considéré comme le premier roman moderne.",
+        "de": "1547 im spanischen Alcalá de Henares geboren, schrieb er den Don Quijote, der oft als erster moderner Roman gilt."
+      }
+    },
+    {
+      "id": "william-shakespeare",
+      "type": "writer",
+      "year": 1564,
+      "title": {
+        "tr": "William Shakespeare",
+        "en": "William Shakespeare",
+        "es": "William Shakespeare",
+        "fr": "William Shakespeare",
+        "de": "William Shakespeare"
+      },
+      "description": {
+        "tr": "Nisan 1564'te İngiltere'nin Stratford-upon-Avon kasabasında doğdu; Hamlet, Romeo ve Juliet ve Macbeth'i yazan, dünyada en çok sahnelenen oyun yazarıdır.",
+        "en": "Born in April 1564 in Stratford-upon-Avon, England, the playwright wrote Hamlet, Romeo and Juliet and Macbeth and is the most performed dramatist ever.",
+        "es": "Nació en abril de 1564 en Stratford-upon-Avon, Inglaterra; autor de Hamlet, Romeo y Julieta y Macbeth, es el dramaturgo más representado de la historia.",
+        "fr": "Né en avril 1564 à Stratford-upon-Avon, en Angleterre, l'auteur d'Hamlet, Roméo et Juliette et Macbeth est le dramaturge le plus joué au monde.",
+        "de": "Im April 1564 in Stratford-upon-Avon geboren, schrieb er Hamlet, Romeo und Julia und Macbeth und ist der meistgespielte Dramatiker der Welt."
+      }
+    },
+    {
+      "id": "galileo-galilei",
+      "type": "scientist",
+      "year": 1564,
+      "title": {
+        "tr": "Galileo Galilei",
+        "en": "Galileo Galilei",
+        "es": "Galileo Galilei",
+        "fr": "Galilée",
+        "de": "Galileo Galilei"
+      },
+      "description": {
+        "tr": "15 Şubat 1564 tarihinde İtalya'nın Pisa şehrinde doğdu; teleskobu gökyüzüne çeviren ve Dünya'nın Güneş'in etrafında döndüğünü savunan astronomdur.",
+        "en": "Born on 15 February 1564 in Pisa, Italy, the astronomer turned the telescope to the sky and defended the idea that the Earth orbits the Sun.",
+        "es": "Nació el 15 de febrero de 1564 en Pisa, Italia; el astrónomo apuntó el telescopio al cielo y defendió que la Tierra gira alrededor del Sol.",
+        "fr": "Né le 15 février 1564 à Pise, en Italie, l'astronome braqua la lunette vers le ciel et défendit l'idée que la Terre tourne autour du Soleil.",
+        "de": "Am 15. Februar 1564 in Pisa geboren, richtete der Astronom das Fernrohr auf den Himmel und verteidigte, dass die Erde um die Sonne kreist."
+      }
+    },
+    {
+      "id": "rene-descartes",
+      "type": "philosopher",
+      "year": 1596,
+      "title": {
+        "tr": "René Descartes",
+        "en": "René Descartes",
+        "es": "René Descartes",
+        "fr": "René Descartes",
+        "de": "René Descartes"
+      },
+      "description": {
+        "tr": "31 Mart 1596 tarihinde Fransa'nın La Haye en Touraine kasabasında doğdu; 'Düşünüyorum, öyleyse varım' sözünün sahibi filozof ve matematikçidir.",
+        "en": "Born on 31 March 1596 in La Haye en Touraine, France, the philosopher and mathematician coined 'I think, therefore I am'.",
+        "es": "Nació el 31 de marzo de 1596 en La Haye en Touraine, Francia; el filósofo y matemático acuñó la frase «Pienso, luego existo».",
+        "fr": "Né le 31 mars 1596 à La Haye en Touraine, en France, le philosophe et mathématicien est l'auteur du « Je pense, donc je suis ».",
+        "de": "Am 31. März 1596 in La Haye en Touraine in Frankreich geboren, prägte der Philosoph und Mathematiker den Satz „Ich denke, also bin ich“."
+      }
+    },
+    {
+      "id": "rembrandt",
+      "type": "artist",
+      "year": 1606,
+      "title": {
+        "tr": "Rembrandt",
+        "en": "Rembrandt",
+        "es": "Rembrandt",
+        "fr": "Rembrandt",
+        "de": "Rembrandt"
+      },
+      "description": {
+        "tr": "15 Temmuz 1606 tarihinde Hollanda'nın Leiden şehrinde doğdu; Gece Devriyesi'ni ve onlarca otoportreyi yapan ışık ve gölge ustasıdır.",
+        "en": "Born on 15 July 1606 in Leiden, Netherlands, the master of light and shadow painted The Night Watch and dozens of self-portraits.",
+        "es": "Nació el 15 de julio de 1606 en Leiden, Países Bajos; el maestro de la luz y la sombra pintó La ronda de noche y decenas de autorretratos.",
+        "fr": "Né le 15 juillet 1606 à Leyde, aux Pays-Bas, le maître de l'ombre et de la lumière peignit La Ronde de nuit et des dizaines d'autoportraits.",
+        "de": "Am 15. Juli 1606 im niederländischen Leiden geboren, malte der Meister von Licht und Schatten Die Nachtwache und zahlreiche Selbstbildnisse."
+      }
+    },
+    {
+      "id": "louis-xiv",
+      "type": "leader",
+      "year": 1638,
+      "title": {
+        "tr": "XIV. Louis",
+        "en": "Louis XIV",
+        "es": "Luis XIV",
+        "fr": "Louis XIV",
+        "de": "Ludwig XIV."
+      },
+      "description": {
+        "tr": "5 Eylül 1638 tarihinde Fransa'nın Saint-Germain-en-Laye kentinde doğdu; 72 yıl hüküm süren ve Versay Sarayı'nı yaptıran 'Güneş Kral'dır.",
+        "en": "Born on 5 September 1638 in Saint-Germain-en-Laye, France, the 'Sun King' reigned for 72 years and built the Palace of Versailles.",
+        "es": "Nació el 5 de septiembre de 1638 en Saint-Germain-en-Laye, Francia; el «Rey Sol» reinó 72 años y construyó el palacio de Versalles.",
+        "fr": "Né le 5 septembre 1638 à Saint-Germain-en-Laye, le « Roi-Soleil » régna 72 ans et fit bâtir le château de Versailles.",
+        "de": "Am 5. September 1638 in Saint-Germain-en-Laye geboren, regierte der „Sonnenkönig“ 72 Jahre lang und ließ Schloss Versailles erbauen."
+      }
+    },
+    {
+      "id": "isaac-newton",
+      "type": "scientist",
+      "year": 1643,
+      "title": {
+        "tr": "Isaac Newton",
+        "en": "Isaac Newton",
+        "es": "Isaac Newton",
+        "fr": "Isaac Newton",
+        "de": "Isaac Newton"
+      },
+      "description": {
+        "tr": "4 Ocak 1643 tarihinde (eski takvimle 25 Aralık 1642) İngiltere'nin Woolsthorpe köyünde doğdu; hareket yasalarını ve evrensel çekim yasasını ortaya koydu.",
+        "en": "Born on 4 January 1643 (25 December 1642 in the old calendar) in Woolsthorpe, England, he formulated the laws of motion and universal gravitation.",
+        "es": "Nació el 4 de enero de 1643 (25 de diciembre de 1642 según el calendario antiguo) en Woolsthorpe, Inglaterra; formuló las leyes del movimiento y la gravitación universal.",
+        "fr": "Né le 4 janvier 1643 (25 décembre 1642 selon l'ancien calendrier) à Woolsthorpe, en Angleterre, il formula les lois du mouvement et la gravitation universelle.",
+        "de": "Am 4. Januar 1643 (nach altem Kalender am 25. Dezember 1642) in Woolsthorpe geboren, formulierte er die Bewegungsgesetze und das Gravitationsgesetz."
+      }
+    },
+    {
+      "id": "peter-the-great",
+      "type": "leader",
+      "year": 1672,
+      "title": {
+        "tr": "Büyük Petro",
+        "en": "Peter the Great",
+        "es": "Pedro el Grande",
+        "fr": "Pierre le Grand",
+        "de": "Peter der Große"
+      },
+      "description": {
+        "tr": "9 Haziran 1672 tarihinde Moskova'da doğdu; Rusya'yı Avrupa tarzında modernleştiren ve yeni başkent olarak Sankt Peterburg'u kuran çardır.",
+        "en": "Born on 9 June 1672 in Moscow, the tsar modernized Russia along European lines and founded Saint Petersburg as his new capital.",
+        "es": "Nació el 9 de junio de 1672 en Moscú; el zar modernizó Rusia al estilo europeo y fundó San Petersburgo como nueva capital.",
+        "fr": "Né le 9 juin 1672 à Moscou, le tsar modernisa la Russie sur le modèle européen et fonda Saint-Pétersbourg, sa nouvelle capitale.",
+        "de": "Am 9. Juni 1672 in Moskau geboren, modernisierte der Zar Russland nach europäischem Vorbild und gründete Sankt Petersburg als neue Hauptstadt."
+      }
+    },
+    {
+      "id": "johann-sebastian-bach",
+      "type": "musician",
+      "year": 1685,
+      "title": {
+        "tr": "Johann Sebastian Bach",
+        "en": "Johann Sebastian Bach",
+        "es": "Johann Sebastian Bach",
+        "fr": "Jean-Sébastien Bach",
+        "de": "Johann Sebastian Bach"
+      },
+      "description": {
+        "tr": "31 Mart 1685 tarihinde Almanya'nın Eisenach kentinde doğdu; Brandenburg Konçertoları'nı besteleyen, Batı müziğinin temel direklerinden sayılan Barok bestecidir.",
+        "en": "Born on 31 March 1685 in Eisenach, Germany, the Baroque composer wrote the Brandenburg Concertos and is seen as a pillar of Western music.",
+        "es": "Nació el 31 de marzo de 1685 en Eisenach, Alemania; el compositor barroco escribió los Conciertos de Brandeburgo y es un pilar de la música occidental.",
+        "fr": "Né le 31 mars 1685 à Eisenach, en Allemagne, le compositeur baroque des Concertos brandebourgeois est un pilier de la musique occidentale.",
+        "de": "Am 31. März 1685 in Eisenach geboren, schrieb der Barockkomponist die Brandenburgischen Konzerte und gilt als Säule der abendländischen Musik."
+      }
+    },
+    {
+      "id": "voltaire",
+      "type": "philosopher",
+      "year": 1694,
+      "title": {
+        "tr": "Voltaire",
+        "en": "Voltaire",
+        "es": "Voltaire",
+        "fr": "Voltaire",
+        "de": "Voltaire"
+      },
+      "description": {
+        "tr": "21 Kasım 1694 tarihinde Paris'te doğdu; düşünce özgürlüğünü ve dinî hoşgörüyü savunan Aydınlanma yazarıdır, en bilinen eseri Candide'dir.",
+        "en": "Born on 21 November 1694 in Paris, the Enlightenment writer championed freedom of thought and religious tolerance; his best-known work is Candide.",
+        "es": "Nació el 21 de noviembre de 1694 en París; el escritor de la Ilustración defendió la libertad de pensamiento y la tolerancia, y su obra más conocida es Cándido.",
+        "fr": "Né le 21 novembre 1694 à Paris, l'écrivain des Lumières défendit la liberté de pensée et la tolérance ; son œuvre la plus connue est Candide.",
+        "de": "Am 21. November 1694 in Paris geboren, kämpfte der Aufklärer für Gedankenfreiheit und Toleranz; sein bekanntestes Werk ist Candide."
+      }
+    },
+    {
+      "id": "benjamin-franklin",
+      "type": "leader",
+      "year": 1706,
+      "title": {
+        "tr": "Benjamin Franklin",
+        "en": "Benjamin Franklin",
+        "es": "Benjamin Franklin",
+        "fr": "Benjamin Franklin",
+        "de": "Benjamin Franklin"
+      },
+      "description": {
+        "tr": "17 Ocak 1706 tarihinde Boston'da doğdu; elektrikle deneyler yapan matbaacı, bilim insanı ve diplomat, ABD'nin kurucu babalarındandır.",
+        "en": "Born on 17 January 1706 in Boston, the printer, scientist and diplomat experimented with electricity and was a Founding Father of the United States.",
+        "es": "Nació el 17 de enero de 1706 en Boston; impresor, científico y diplomático, experimentó con la electricidad y fue uno de los padres fundadores de EE. UU.",
+        "fr": "Né le 17 janvier 1706 à Boston, l'imprimeur, savant et diplomate étudia l'électricité et fut l'un des Pères fondateurs des États-Unis.",
+        "de": "Am 17. Januar 1706 in Boston geboren, experimentierte der Drucker, Wissenschaftler und Diplomat mit Elektrizität und war einer der Gründerväter der USA."
+      }
+    },
+    {
+      "id": "immanuel-kant",
+      "type": "philosopher",
+      "year": 1724,
+      "title": {
+        "tr": "Immanuel Kant",
+        "en": "Immanuel Kant",
+        "es": "Immanuel Kant",
+        "fr": "Emmanuel Kant",
+        "de": "Immanuel Kant"
+      },
+      "description": {
+        "tr": "22 Nisan 1724 tarihinde Prusya'nın Königsberg kentinde (bugünkü Kaliningrad) doğdu; Saf Aklın Eleştirisi'ni yazarak modern felsefeyi dönüştürdü.",
+        "en": "Born on 22 April 1724 in Königsberg, Prussia (today's Kaliningrad), he wrote the Critique of Pure Reason and transformed modern philosophy.",
+        "es": "Nació el 22 de abril de 1724 en Königsberg, Prusia (actual Kaliningrado); escribió la Crítica de la razón pura y transformó la filosofía moderna.",
+        "fr": "Né le 22 avril 1724 à Königsberg, en Prusse (actuelle Kaliningrad), il écrivit la Critique de la raison pure et transforma la philosophie moderne.",
+        "de": "Am 22. April 1724 in Königsberg in Preußen (heute Kaliningrad) geboren, schrieb er die Kritik der reinen Vernunft und veränderte die moderne Philosophie."
+      }
+    },
+    {
+      "id": "catherine-the-great",
+      "type": "leader",
+      "year": 1729,
+      "title": {
+        "tr": "Büyük Katerina",
+        "en": "Catherine the Great",
+        "es": "Catalina la Grande",
+        "fr": "Catherine II de Russie",
+        "de": "Katharina die Große"
+      },
+      "description": {
+        "tr": "2 Mayıs 1729 tarihinde Prusya'nın Stettin kentinde (bugün Polonya'daki Szczecin) doğdu; Alman asıllı prenses, Rusya'yı en uzun süre yöneten imparatoriçe oldu.",
+        "en": "Born on 2 May 1729 in Stettin, Prussia (today's Szczecin, Poland), the German-born princess became Russia's longest-ruling empress.",
+        "es": "Nació el 2 de mayo de 1729 en Stettin, Prusia (actual Szczecin, Polonia); la princesa de origen alemán fue la emperatriz que más tiempo gobernó Rusia.",
+        "fr": "Née le 2 mai 1729 à Stettin, en Prusse (actuelle Szczecin, en Pologne), la princesse d'origine allemande devint l'impératrice au plus long règne de Russie.",
+        "de": "Am 2. Mai 1729 in Stettin in Preußen (heute Szczecin, Polen) geboren, wurde die deutsche Prinzessin Russlands am längsten regierende Kaiserin."
+      }
+    },
+    {
+      "id": "george-washington",
+      "type": "leader",
+      "year": 1732,
+      "title": {
+        "tr": "George Washington",
+        "en": "George Washington",
+        "es": "George Washington",
+        "fr": "George Washington",
+        "de": "George Washington"
+      },
+      "description": {
+        "tr": "22 Şubat 1732 tarihinde Virginia'nın Westmoreland County bölgesinde doğdu; Kıta Ordusu'nu zafere taşıdı ve ABD'nin ilk başkanı oldu.",
+        "en": "Born on 22 February 1732 in Westmoreland County, Virginia, he led the Continental Army to victory and became the first President of the United States.",
+        "es": "Nació el 22 de febrero de 1732 en el condado de Westmoreland, Virginia; condujo al Ejército Continental a la victoria y fue el primer presidente de EE. UU.",
+        "fr": "Né le 22 février 1732 dans le comté de Westmoreland, en Virginie, il mena l'armée continentale à la victoire et devint le premier président des États-Unis.",
+        "de": "Am 22. Februar 1732 im Westmoreland County in Virginia geboren, führte er die Kontinentalarmee zum Sieg und wurde erster Präsident der USA."
+      }
+    },
+    {
+      "id": "johann-wolfgang-von-goethe",
+      "type": "writer",
+      "year": 1749,
+      "title": {
+        "tr": "Johann Wolfgang von Goethe",
+        "en": "Johann Wolfgang von Goethe",
+        "es": "Johann Wolfgang von Goethe",
+        "fr": "Johann Wolfgang von Goethe",
+        "de": "Johann Wolfgang von Goethe"
+      },
+      "description": {
+        "tr": "28 Ağustos 1749 tarihinde Frankfurt am Main'da doğdu; Faust'u ve Genç Werther'in Acıları'nı yazan, Alman edebiyatının en büyük ismidir.",
+        "en": "Born on 28 August 1749 in Frankfurt am Main, Germany's greatest literary figure wrote Faust and The Sorrows of Young Werther.",
+        "es": "Nació el 28 de agosto de 1749 en Fráncfort del Meno; la mayor figura de la literatura alemana escribió Fausto y Las penas del joven Werther.",
+        "fr": "Né le 28 août 1749 à Francfort-sur-le-Main, la plus grande figure de la littérature allemande écrivit Faust et Les Souffrances du jeune Werther.",
+        "de": "Am 28. August 1749 in Frankfurt am Main geboren, schrieb der bedeutendste deutsche Dichter Faust und Die Leiden des jungen Werthers."
+      }
+    },
+    {
+      "id": "wolfgang-amadeus-mozart",
+      "type": "musician",
+      "year": 1756,
+      "title": {
+        "tr": "Wolfgang Amadeus Mozart",
+        "en": "Wolfgang Amadeus Mozart",
+        "es": "Wolfgang Amadeus Mozart",
+        "fr": "Wolfgang Amadeus Mozart",
+        "de": "Wolfgang Amadeus Mozart"
+      },
+      "description": {
+        "tr": "27 Ocak 1756 tarihinde Salzburg'da doğdu; 35 yaşında ölmeden önce Sihirli Flüt dâhil 600'den fazla eser besteleyen harika çocuktur.",
+        "en": "Born on 27 January 1756 in Salzburg, the child prodigy composed more than 600 works, including The Magic Flute, before dying at 35.",
+        "es": "Nació el 27 de enero de 1756 en Salzburgo; el niño prodigio compuso más de 600 obras, entre ellas La flauta mágica, antes de morir a los 35 años.",
+        "fr": "Né le 27 janvier 1756 à Salzbourg, l'enfant prodige composa plus de 600 œuvres, dont La Flûte enchantée, avant de mourir à 35 ans.",
+        "de": "Am 27. Januar 1756 in Salzburg geboren, komponierte das Wunderkind über 600 Werke, darunter Die Zauberflöte, bevor es mit 35 Jahren starb."
+      }
+    },
+    {
+      "id": "napoleon-bonaparte",
+      "type": "leader",
+      "year": 1769,
+      "title": {
+        "tr": "Napolyon Bonapart",
+        "en": "Napoleon Bonaparte",
+        "es": "Napoleón Bonaparte",
+        "fr": "Napoléon Bonaparte",
+        "de": "Napoleon Bonaparte"
+      },
+      "description": {
+        "tr": "15 Ağustos 1769 tarihinde Korsika'daki Ajaccio'da doğdu; kendini Fransızların İmparatoru ilan eden ve Avrupa'nın büyük kısmını fetheden generaldir.",
+        "en": "Born on 15 August 1769 in Ajaccio, Corsica, the general crowned himself Emperor of the French and conquered much of Europe.",
+        "es": "Nació el 15 de agosto de 1769 en Ajaccio, Córcega; el general se coronó emperador de los franceses y conquistó gran parte de Europa.",
+        "fr": "Né le 15 août 1769 à Ajaccio, en Corse, le général se couronna empereur des Français et conquit une grande partie de l'Europe.",
+        "de": "Am 15. August 1769 in Ajaccio auf Korsika geboren, krönte sich der General zum Kaiser der Franzosen und eroberte weite Teile Europas."
+      }
+    },
+    {
+      "id": "ludwig-van-beethoven",
+      "type": "musician",
+      "year": 1770,
+      "title": {
+        "tr": "Ludwig van Beethoven",
+        "en": "Ludwig van Beethoven",
+        "es": "Ludwig van Beethoven",
+        "fr": "Ludwig van Beethoven",
+        "de": "Ludwig van Beethoven"
+      },
+      "description": {
+        "tr": "Aralık 1770'te Bonn'da doğdu; işitme yetisini kaybettikten sonra bile Dokuzuncu Senfoni gibi başyapıtlar bestelemeyi sürdüren bestecidir.",
+        "en": "Born in December 1770 in Bonn, the composer kept writing masterpieces such as the Ninth Symphony even after losing his hearing.",
+        "es": "Nació en diciembre de 1770 en Bonn; el compositor siguió creando obras maestras como la Novena Sinfonía incluso después de quedarse sordo.",
+        "fr": "Né en décembre 1770 à Bonn, le compositeur continua d'écrire des chefs-d'œuvre comme la Neuvième Symphonie même après être devenu sourd.",
+        "de": "Im Dezember 1770 in Bonn geboren, schrieb der Komponist auch nach seiner Ertaubung noch Meisterwerke wie die Neunte Sinfonie."
+      }
+    },
+    {
+      "id": "jane-austen",
+      "type": "writer",
+      "year": 1775,
+      "title": {
+        "tr": "Jane Austen",
+        "en": "Jane Austen",
+        "es": "Jane Austen",
+        "fr": "Jane Austen",
+        "de": "Jane Austen"
+      },
+      "description": {
+        "tr": "16 Aralık 1775 tarihinde İngiltere'nin Hampshire bölgesindeki Steventon'da doğdu; Aşk ve Gurur ile aşk ve toplum üzerine başka esprili romanların yazarıdır.",
+        "en": "Born on 16 December 1775 in Steventon, Hampshire, England, she wrote Pride and Prejudice and other witty novels about love and society.",
+        "es": "Nació el 16 de diciembre de 1775 en Steventon, Hampshire, Inglaterra; escribió Orgullo y prejuicio y otras ingeniosas novelas sobre el amor y la sociedad.",
+        "fr": "Née le 16 décembre 1775 à Steventon, dans le Hampshire, elle écrivit Orgueil et Préjugés et d'autres romans pleins d'esprit sur l'amour et la société.",
+        "de": "Am 16. Dezember 1775 in Steventon in der englischen Grafschaft Hampshire geboren, schrieb sie Stolz und Vorurteil und weitere geistreiche Gesellschaftsromane."
+      }
+    },
+    {
+      "id": "simon-bolivar",
+      "type": "leader",
+      "year": 1783,
+      "title": {
+        "tr": "Simón Bolívar",
+        "en": "Simón Bolívar",
+        "es": "Simón Bolívar",
+        "fr": "Simón Bolívar",
+        "de": "Simón Bolívar"
+      },
+      "description": {
+        "tr": "24 Temmuz 1783 tarihinde Venezuela'nın Caracas kentinde doğdu; Güney Amerika'nın büyük bölümünü İspanyol yönetiminden kurtaran bağımsızlık mücadelelerinin önderi 'Kurtarıcı'dır.",
+        "en": "Born on 24 July 1783 in Caracas, Venezuela, 'The Liberator' led independence struggles that freed much of South America from Spanish rule.",
+        "es": "Nació el 24 de julio de 1783 en Caracas, Venezuela; «el Libertador» encabezó las luchas que independizaron gran parte de Sudamérica del dominio español.",
+        "fr": "Né le 24 juillet 1783 à Caracas, au Venezuela, « le Libertador » mena les luttes qui libérèrent une grande partie de l'Amérique du Sud de la domination espagnole.",
+        "de": "Am 24. Juli 1783 in Caracas geboren, führte „der Befreier“ die Unabhängigkeitskämpfe, die große Teile Südamerikas von der spanischen Herrschaft befreiten."
+      }
+    },
+    {
+      "id": "victor-hugo",
+      "type": "writer",
+      "year": 1802,
+      "title": {
+        "tr": "Victor Hugo",
+        "en": "Victor Hugo",
+        "es": "Victor Hugo",
+        "fr": "Victor Hugo",
+        "de": "Victor Hugo"
+      },
+      "description": {
+        "tr": "26 Şubat 1802 tarihinde Fransa'nın Besançon kentinde doğdu; Sefiller ve Notre-Dame'ın Kamburu'nun yazarıdır.",
+        "en": "Born on 26 February 1802 in Besançon, France, he wrote Les Misérables and The Hunchback of Notre-Dame.",
+        "es": "Nació el 26 de febrero de 1802 en Besanzón, Francia; escribió Los miserables y Nuestra Señora de París.",
+        "fr": "Né le 26 février 1802 à Besançon, il écrivit Les Misérables et Notre-Dame de Paris.",
+        "de": "Am 26. Februar 1802 im französischen Besançon geboren, schrieb er Die Elenden und Der Glöckner von Notre-Dame."
+      }
+    },
+    {
+      "id": "hans-christian-andersen",
+      "type": "writer",
+      "year": 1805,
+      "title": {
+        "tr": "Hans Christian Andersen",
+        "en": "Hans Christian Andersen",
+        "es": "Hans Christian Andersen",
+        "fr": "Hans Christian Andersen",
+        "de": "Hans Christian Andersen"
+      },
+      "description": {
+        "tr": "2 Nisan 1805 tarihinde Danimarka'nın Odense kentinde doğdu; Küçük Deniz Kızı ve Çirkin Ördek Yavrusu gibi sevilen masalların yazarıdır.",
+        "en": "Born on 2 April 1805 in Odense, Denmark, he wrote beloved fairy tales such as The Little Mermaid and The Ugly Duckling.",
+        "es": "Nació el 2 de abril de 1805 en Odense, Dinamarca; escribió cuentos queridos como La sirenita y El patito feo.",
+        "fr": "Né le 2 avril 1805 à Odense, au Danemark, il écrivit des contes célèbres comme La Petite Sirène et Le Vilain Petit Canard.",
+        "de": "Am 2. April 1805 im dänischen Odense geboren, schrieb er geliebte Märchen wie Die kleine Meerjungfrau und Das hässliche Entlein."
+      }
+    },
+    {
+      "id": "abraham-lincoln",
+      "type": "leader",
+      "year": 1809,
+      "title": {
+        "tr": "Abraham Lincoln",
+        "en": "Abraham Lincoln",
+        "es": "Abraham Lincoln",
+        "fr": "Abraham Lincoln",
+        "de": "Abraham Lincoln"
+      },
+      "description": {
+        "tr": "12 Şubat 1809 tarihinde Kentucky'de Hodgenville yakınlarındaki bir kütük evde doğdu; İç Savaş'ta Birlik'i yöneten ve köleliği kaldıran 16. ABD başkanıdır.",
+        "en": "Born on 12 February 1809 in a log cabin near Hodgenville, Kentucky, the 16th U.S. President led the Union through the Civil War and abolished slavery.",
+        "es": "Nació el 12 de febrero de 1809 en una cabaña cerca de Hodgenville, Kentucky; el 16.º presidente de EE. UU. dirigió la Unión en la guerra civil y abolió la esclavitud.",
+        "fr": "Né le 12 février 1809 dans une cabane en rondins près de Hodgenville, au Kentucky, le 16e président américain mena l'Union pendant la guerre de Sécession et abolit l'esclavage.",
+        "de": "Am 12. Februar 1809 in einer Blockhütte bei Hodgenville in Kentucky geboren, führte der 16. US-Präsident die Union durch den Bürgerkrieg und schaffte die Sklaverei ab."
+      }
+    },
+    {
+      "id": "charles-darwin",
+      "type": "scientist",
+      "year": 1809,
+      "title": {
+        "tr": "Charles Darwin",
+        "en": "Charles Darwin",
+        "es": "Charles Darwin",
+        "fr": "Charles Darwin",
+        "de": "Charles Darwin"
+      },
+      "description": {
+        "tr": "12 Şubat 1809 tarihinde (Lincoln'le aynı gün) İngiltere'nin Shrewsbury kasabasında doğdu; doğal seçilim yoluyla evrim kuramını geliştirdi.",
+        "en": "Born on 12 February 1809 in Shrewsbury, England (the same day as Lincoln), he developed the theory of evolution by natural selection.",
+        "es": "Nació el 12 de febrero de 1809 en Shrewsbury, Inglaterra (el mismo día que Lincoln); desarrolló la teoría de la evolución por selección natural.",
+        "fr": "Né le 12 février 1809 à Shrewsbury, en Angleterre (le même jour que Lincoln), il élabora la théorie de l'évolution par la sélection naturelle.",
+        "de": "Am 12. Februar 1809 im englischen Shrewsbury geboren (am selben Tag wie Lincoln), entwickelte er die Evolutionstheorie durch natürliche Selektion."
+      }
+    },
+    {
+      "id": "frederic-chopin",
+      "type": "musician",
+      "year": 1810,
+      "title": {
+        "tr": "Frédéric Chopin",
+        "en": "Frédéric Chopin",
+        "es": "Frédéric Chopin",
+        "fr": "Frédéric Chopin",
+        "de": "Frédéric Chopin"
+      },
+      "description": {
+        "tr": "1810 yılında Varşova yakınlarındaki Żelazowa Wola'da doğdu; Romantik dönemin en sevilen piyano eserlerinden bazılarını yazan Polonyalı besteci ve piyanisttir.",
+        "en": "Born in 1810 in Żelazowa Wola, near Warsaw, the Polish composer and pianist wrote some of the most beloved piano music of the Romantic era.",
+        "es": "Nació en 1810 en Żelazowa Wola, cerca de Varsovia; el compositor y pianista polaco escribió algunas de las piezas para piano más queridas del Romanticismo.",
+        "fr": "Né en 1810 à Żelazowa Wola, près de Varsovie, le compositeur et pianiste polonais signa certaines des pages pour piano les plus aimées du romantisme.",
+        "de": "1810 in Żelazowa Wola bei Warschau geboren, schuf der polnische Komponist und Pianist einige der beliebtesten Klavierwerke der Romantik."
+      }
+    },
+    {
+      "id": "charles-dickens",
+      "type": "writer",
+      "year": 1812,
+      "title": {
+        "tr": "Charles Dickens",
+        "en": "Charles Dickens",
+        "es": "Charles Dickens",
+        "fr": "Charles Dickens",
+        "de": "Charles Dickens"
+      },
+      "description": {
+        "tr": "7 Şubat 1812 tarihinde İngiltere'nin Portsmouth kentinde doğdu; Viktorya dönemi hayatını canlı biçimde anlatan Oliver Twist ve Bir Noel Şarkısı'nın yazarıdır.",
+        "en": "Born on 7 February 1812 in Portsmouth, England, he wrote Oliver Twist and A Christmas Carol, vivid portraits of Victorian life.",
+        "es": "Nació el 7 de febrero de 1812 en Portsmouth, Inglaterra; escribió Oliver Twist y Cuento de Navidad, vívidos retratos de la época victoriana.",
+        "fr": "Né le 7 février 1812 à Portsmouth, en Angleterre, il écrivit Oliver Twist et Un chant de Noël, vivants portraits de l'ère victorienne.",
+        "de": "Am 7. Februar 1812 im englischen Portsmouth geboren, schrieb er Oliver Twist und Eine Weihnachtsgeschichte, lebendige Bilder der viktorianischen Zeit."
+      }
+    },
+    {
+      "id": "karl-marx",
+      "type": "philosopher",
+      "year": 1818,
+      "title": {
+        "tr": "Karl Marx",
+        "en": "Karl Marx",
+        "es": "Karl Marx",
+        "fr": "Karl Marx",
+        "de": "Karl Marx"
+      },
+      "description": {
+        "tr": "5 Mayıs 1818 tarihinde Almanya'nın Trier kentinde doğdu; Komünist Manifesto'nun ortak yazarı ve Kapital'in yazarı olan filozof ve iktisatçıdır.",
+        "en": "Born on 5 May 1818 in Trier, Germany, the philosopher and economist co-wrote The Communist Manifesto and wrote Das Kapital.",
+        "es": "Nació el 5 de mayo de 1818 en Tréveris, Alemania; filósofo y economista, fue coautor del Manifiesto comunista y autor de El capital.",
+        "fr": "Né le 5 mai 1818 à Trèves, en Allemagne, le philosophe et économiste co-écrivit le Manifeste du Parti communiste et écrivit Le Capital.",
+        "de": "Am 5. Mai 1818 in Trier geboren, verfasste der Philosoph und Ökonom mit Engels das Kommunistische Manifest und schrieb Das Kapital."
+      }
+    },
+    {
+      "id": "queen-victoria",
+      "type": "leader",
+      "year": 1819,
+      "title": {
+        "tr": "Kraliçe Victoria",
+        "en": "Queen Victoria",
+        "es": "Reina Victoria",
+        "fr": "Reine Victoria",
+        "de": "Königin Victoria"
+      },
+      "description": {
+        "tr": "24 Mayıs 1819 tarihinde Londra'daki Kensington Sarayı'nda doğdu; zirvedeki Britanya İmparatorluğu'nu 63 yıl yönetti ve Viktorya dönemine adını verdi.",
+        "en": "Born on 24 May 1819 at Kensington Palace in London, she reigned for 63 years over the British Empire at its peak, giving her name to the Victorian era.",
+        "es": "Nació el 24 de mayo de 1819 en el palacio de Kensington, Londres; reinó 63 años sobre el Imperio británico en su apogeo y dio nombre a la época victoriana.",
+        "fr": "Née le 24 mai 1819 au palais de Kensington, à Londres, elle régna 63 ans sur l'Empire britannique à son apogée et donna son nom à l'ère victorienne.",
+        "de": "Am 24. Mai 1819 im Londoner Kensington Palace geboren, regierte sie 63 Jahre lang das Britische Weltreich auf seinem Höhepunkt; nach ihr ist die viktorianische Ära benannt."
+      }
+    },
+    {
+      "id": "florence-nightingale",
+      "type": "scientist",
+      "year": 1820,
+      "title": {
+        "tr": "Florence Nightingale",
+        "en": "Florence Nightingale",
+        "es": "Florence Nightingale",
+        "fr": "Florence Nightingale",
+        "de": "Florence Nightingale"
+      },
+      "description": {
+        "tr": "12 Mayıs 1820 tarihinde İngiliz bir ailenin kızı olarak İtalya'nın Floransa kentinde doğdu; 'Lambalı Kadın' Kırım Savaşı sırasında modern hemşireliğin temelini attı.",
+        "en": "Born on 12 May 1820 in Florence, Italy, to British parents, the 'Lady with the Lamp' founded modern nursing during the Crimean War.",
+        "es": "Nació el 12 de mayo de 1820 en Florencia, Italia, de padres británicos; «la dama de la lámpara» fundó la enfermería moderna durante la guerra de Crimea.",
+        "fr": "Née le 12 mai 1820 à Florence, en Italie, de parents britanniques, « la dame à la lampe » fonda les soins infirmiers modernes pendant la guerre de Crimée.",
+        "de": "Am 12. Mai 1820 als Tochter britischer Eltern in Florenz geboren, begründete die „Lady mit der Lampe“ im Krimkrieg die moderne Krankenpflege."
+      }
+    },
+    {
+      "id": "fyodor-dostoevsky",
+      "type": "writer",
+      "year": 1821,
+      "title": {
+        "tr": "Fyodor Dostoyevski",
+        "en": "Fyodor Dostoevsky",
+        "es": "Fiódor Dostoyevski",
+        "fr": "Fiodor Dostoïevski",
+        "de": "Fjodor Dostojewski"
+      },
+      "description": {
+        "tr": "11 Kasım 1821 tarihinde Moskova'da doğdu; Suç ve Ceza ile Karamazov Kardeşler'de suçluluk ve inancı irdeleyen Rus romancıdır.",
+        "en": "Born on 11 November 1821 in Moscow, the Russian novelist explored guilt and faith in Crime and Punishment and The Brothers Karamazov.",
+        "es": "Nació el 11 de noviembre de 1821 en Moscú; el novelista ruso exploró la culpa y la fe en Crimen y castigo y Los hermanos Karamázov.",
+        "fr": "Né le 11 novembre 1821 à Moscou, le romancier russe explora la culpabilité et la foi dans Crime et Châtiment et Les Frères Karamazov.",
+        "de": "Am 11. November 1821 in Moskau geboren, ergründete der russische Romancier Schuld und Glauben in Schuld und Sühne und Die Brüder Karamasow."
+      }
+    },
+    {
+      "id": "louis-pasteur",
+      "type": "scientist",
+      "year": 1822,
+      "title": {
+        "tr": "Louis Pasteur",
+        "en": "Louis Pasteur",
+        "es": "Louis Pasteur",
+        "fr": "Louis Pasteur",
+        "de": "Louis Pasteur"
+      },
+      "description": {
+        "tr": "27 Aralık 1822 tarihinde Fransa'nın Dole kasabasında doğdu; pastörizasyonu ve kuduz aşısı başta olmak üzere ilk aşıları geliştiren kimyagerdir.",
+        "en": "Born on 27 December 1822 in Dole, France, the chemist developed pasteurization and early vaccines, including one against rabies.",
+        "es": "Nació el 27 de diciembre de 1822 en Dole, Francia; el químico desarrolló la pasteurización y las primeras vacunas, entre ellas la de la rabia.",
+        "fr": "Né le 27 décembre 1822 à Dole, en France, le chimiste mit au point la pasteurisation et les premiers vaccins, dont celui contre la rage.",
+        "de": "Am 27. Dezember 1822 im französischen Dole geboren, entwickelte der Chemiker die Pasteurisierung und frühe Impfstoffe, etwa gegen Tollwut."
+      }
+    },
+    {
+      "id": "leo-tolstoy",
+      "type": "writer",
+      "year": 1828,
+      "title": {
+        "tr": "Lev Tolstoy",
+        "en": "Leo Tolstoy",
+        "es": "León Tolstói",
+        "fr": "Léon Tolstoï",
+        "de": "Leo Tolstoi"
+      },
+      "description": {
+        "tr": "9 Eylül 1828 tarihinde Rusya'da Tula yakınlarındaki Yasnaya Polyana malikânesinde doğdu; Savaş ve Barış ile Anna Karenina adlı destansı romanların yazarıdır.",
+        "en": "Born on 9 September 1828 on the Yasnaya Polyana estate near Tula, Russia, he wrote the epic novels War and Peace and Anna Karenina.",
+        "es": "Nació el 9 de septiembre de 1828 en la finca de Yásnaia Poliana, cerca de Tula, Rusia; escribió las novelas épicas Guerra y paz y Ana Karénina.",
+        "fr": "Né le 9 septembre 1828 au domaine de Iasnaïa Poliana, près de Toula, en Russie, il écrivit les grands romans Guerre et Paix et Anna Karénine.",
+        "de": "Am 9. September 1828 auf dem Gut Jasnaja Poljana bei Tula geboren, schrieb er die großen Romane Krieg und Frieden und Anna Karenina."
+      }
+    },
+    {
+      "id": "jules-verne",
+      "type": "writer",
+      "year": 1828,
+      "title": {
+        "tr": "Jules Verne",
+        "en": "Jules Verne",
+        "es": "Julio Verne",
+        "fr": "Jules Verne",
+        "de": "Jules Verne"
+      },
+      "description": {
+        "tr": "8 Şubat 1828 tarihinde Fransa'nın Nantes kentinde doğdu; Denizler Altında Yirmi Bin Fersah ve Seksen Günde Devrialem ile bilimkurgunun öncüsü oldu.",
+        "en": "Born on 8 February 1828 in Nantes, France, he pioneered science fiction with Twenty Thousand Leagues Under the Sea and Around the World in Eighty Days.",
+        "es": "Nació el 8 de febrero de 1828 en Nantes, Francia; fue pionero de la ciencia ficción con Veinte mil leguas de viaje submarino y La vuelta al mundo en ochenta días.",
+        "fr": "Né le 8 février 1828 à Nantes, il fut un pionnier de la science-fiction avec Vingt Mille Lieues sous les mers et Le Tour du monde en quatre-vingts jours.",
+        "de": "Am 8. Februar 1828 in Nantes geboren, wurde er mit 20.000 Meilen unter dem Meer und In 80 Tagen um die Welt zum Pionier der Science-Fiction."
+      }
+    },
+    {
+      "id": "alfred-nobel",
+      "type": "inventor",
+      "year": 1833,
+      "title": {
+        "tr": "Alfred Nobel",
+        "en": "Alfred Nobel",
+        "es": "Alfred Nobel",
+        "fr": "Alfred Nobel",
+        "de": "Alfred Nobel"
+      },
+      "description": {
+        "tr": "21 Ekim 1833 tarihinde Stockholm'de doğdu; dinamiti icat eden kimyager, servetini Nobel Ödülleri'ni kurmak için bıraktı.",
+        "en": "Born on 21 October 1833 in Stockholm, the chemist invented dynamite and used his fortune to create the Nobel Prizes.",
+        "es": "Nació el 21 de octubre de 1833 en Estocolmo; el químico inventó la dinamita y legó su fortuna para crear los Premios Nobel.",
+        "fr": "Né le 21 octobre 1833 à Stockholm, le chimiste inventa la dynamite et légua sa fortune pour créer les prix Nobel.",
+        "de": "Am 21. Oktober 1833 in Stockholm geboren, erfand der Chemiker das Dynamit und stiftete mit seinem Vermögen die Nobelpreise."
+      }
+    },
+    {
+      "id": "mark-twain",
+      "type": "writer",
+      "year": 1835,
+      "title": {
+        "tr": "Mark Twain",
+        "en": "Mark Twain",
+        "es": "Mark Twain",
+        "fr": "Mark Twain",
+        "de": "Mark Twain"
+      },
+      "description": {
+        "tr": "30 Kasım 1835 tarihinde Missouri'deki Florida kasabasında doğdu; Tom Sawyer'ın Maceraları ve Huckleberry Finn'in Maceraları'nın yazarıdır.",
+        "en": "Born on 30 November 1835 in Florida, Missouri, he wrote The Adventures of Tom Sawyer and Adventures of Huckleberry Finn.",
+        "es": "Nació el 30 de noviembre de 1835 en Florida, Misuri; escribió Las aventuras de Tom Sawyer y Las aventuras de Huckleberry Finn.",
+        "fr": "Né le 30 novembre 1835 à Florida, dans le Missouri, il écrivit Les Aventures de Tom Sawyer et Les Aventures de Huckleberry Finn.",
+        "de": "Am 30. November 1835 in Florida, Missouri, geboren, schrieb er Die Abenteuer des Tom Sawyer und Die Abenteuer des Huckleberry Finn."
+      }
+    },
+    {
+      "id": "pyotr-ilyich-tchaikovsky",
+      "type": "musician",
+      "year": 1840,
+      "title": {
+        "tr": "Pyotr İlyiç Çaykovski",
+        "en": "Pyotr Ilyich Tchaikovsky",
+        "es": "Piotr Ilich Chaikovski",
+        "fr": "Piotr Ilitch Tchaïkovski",
+        "de": "Pjotr Iljitsch Tschaikowski"
+      },
+      "description": {
+        "tr": "7 Mayıs 1840 tarihinde Rusya'nın Votkinsk kasabasında doğdu; Kuğu Gölü ve Fındıkkıran balelerinin bestecisidir.",
+        "en": "Born on 7 May 1840 in Votkinsk, Russia, the composer wrote the ballets Swan Lake and The Nutcracker.",
+        "es": "Nació el 7 de mayo de 1840 en Vótkinsk, Rusia; el compositor escribió los ballets El lago de los cisnes y El cascanueces.",
+        "fr": "Né le 7 mai 1840 à Votkinsk, en Russie, le compositeur écrivit les ballets Le Lac des cygnes et Casse-Noisette.",
+        "de": "Am 7. Mai 1840 im russischen Wotkinsk geboren, komponierte er die Ballette Schwanensee und Der Nussknacker."
+      }
+    },
+    {
+      "id": "claude-monet",
+      "type": "artist",
+      "year": 1840,
+      "title": {
+        "tr": "Claude Monet",
+        "en": "Claude Monet",
+        "es": "Claude Monet",
+        "fr": "Claude Monet",
+        "de": "Claude Monet"
+      },
+      "description": {
+        "tr": "14 Kasım 1840 tarihinde Paris'te doğdu; adını İzlenim, Gün Doğumu tablosundan alan Empresyonizmin kurucusu ve ünlü Nilüferler serisinin ressamıdır.",
+        "en": "Born on 14 November 1840 in Paris, the painter founded Impressionism, a movement named after his work Impression, Sunrise, and painted his famous Water Lilies.",
+        "es": "Nació el 14 de noviembre de 1840 en París; fundó el impresionismo, que toma su nombre de su cuadro Impresión, sol naciente, y pintó sus célebres Nenúfares.",
+        "fr": "Né le 14 novembre 1840 à Paris, le peintre fonda l'impressionnisme, nommé d'après son tableau Impression, soleil levant, et peignit les célèbres Nymphéas.",
+        "de": "Am 14. November 1840 in Paris geboren, begründete der Maler den Impressionismus, benannt nach seinem Bild Impression, Sonnenaufgang, und malte die berühmten Seerosen."
+      }
+    },
+    {
+      "id": "friedrich-nietzsche",
+      "type": "philosopher",
+      "year": 1844,
+      "title": {
+        "tr": "Friedrich Nietzsche",
+        "en": "Friedrich Nietzsche",
+        "es": "Friedrich Nietzsche",
+        "fr": "Friedrich Nietzsche",
+        "de": "Friedrich Nietzsche"
+      },
+      "description": {
+        "tr": "15 Ekim 1844 tarihinde Prusya'nın Röcken köyünde doğdu; Böyle Buyurdu Zerdüşt'ü yazan ve 'Tanrı öldü' sözüyle tanınan filozoftur.",
+        "en": "Born on 15 October 1844 in Röcken, Prussia, the philosopher wrote Thus Spoke Zarathustra and famously declared that 'God is dead'.",
+        "es": "Nació el 15 de octubre de 1844 en Röcken, Prusia; el filósofo escribió Así habló Zaratustra y proclamó la célebre frase «Dios ha muerto».",
+        "fr": "Né le 15 octobre 1844 à Röcken, en Prusse, le philosophe écrivit Ainsi parlait Zarathoustra et proclama que « Dieu est mort ».",
+        "de": "Am 15. Oktober 1844 im preußischen Röcken geboren, schrieb der Philosoph Also sprach Zarathustra und verkündete „Gott ist tot“."
+      }
+    },
+    {
+      "id": "alexander-graham-bell",
+      "type": "inventor",
+      "year": 1847,
+      "title": {
+        "tr": "Alexander Graham Bell",
+        "en": "Alexander Graham Bell",
+        "es": "Alexander Graham Bell",
+        "fr": "Alexander Graham Bell",
+        "de": "Alexander Graham Bell"
+      },
+      "description": {
+        "tr": "3 Mart 1847 tarihinde İskoçya'nın Edinburgh kentinde doğdu; 1876'da ilk kullanışlı telefonun patentini almasıyla tanınır.",
+        "en": "Born on 3 March 1847 in Edinburgh, Scotland, he is credited with patenting the first practical telephone in 1876.",
+        "es": "Nació el 3 de marzo de 1847 en Edimburgo, Escocia; se le atribuye la patente del primer teléfono práctico en 1876.",
+        "fr": "Né le 3 mars 1847 à Édimbourg, en Écosse, il est connu pour avoir breveté le premier téléphone pratique en 1876.",
+        "de": "Am 3. März 1847 im schottischen Edinburgh geboren, ließ er 1876 das erste praxistaugliche Telefon patentieren."
+      }
+    },
+    {
+      "id": "thomas-edison",
+      "type": "inventor",
+      "year": 1847,
+      "title": {
+        "tr": "Thomas Edison",
+        "en": "Thomas Edison",
+        "es": "Thomas Edison",
+        "fr": "Thomas Edison",
+        "de": "Thomas Edison"
+      },
+      "description": {
+        "tr": "11 Şubat 1847 tarihinde Ohio'daki Milan kasabasında doğdu; fonografı ve uzun ömürlü ampulü geliştiren, binden fazla patente sahip mucittir.",
+        "en": "Born on 11 February 1847 in Milan, Ohio, the inventor developed the phonograph and a long-lasting light bulb, holding over a thousand patents.",
+        "es": "Nació el 11 de febrero de 1847 en Milan, Ohio; el inventor creó el fonógrafo y una bombilla duradera, y registró más de mil patentes.",
+        "fr": "Né le 11 février 1847 à Milan, dans l'Ohio, l'inventeur mit au point le phonographe et une ampoule durable, et déposa plus de mille brevets.",
+        "de": "Am 11. Februar 1847 in Milan, Ohio, geboren, entwickelte der Erfinder den Phonographen und eine langlebige Glühbirne und hielt über tausend Patente."
+      }
+    },
+    {
+      "id": "vincent-van-gogh",
+      "type": "artist",
+      "year": 1853,
+      "title": {
+        "tr": "Vincent van Gogh",
+        "en": "Vincent van Gogh",
+        "es": "Vincent van Gogh",
+        "fr": "Vincent van Gogh",
+        "de": "Vincent van Gogh"
+      },
+      "description": {
+        "tr": "30 Mart 1853 tarihinde Hollanda'nın Zundert köyünde doğdu; Yıldızlı Gece ve Ayçiçekleri'nin ressamı, hayattayken neredeyse hiç tablo satamadı.",
+        "en": "Born on 30 March 1853 in Zundert, Netherlands, the painter of The Starry Night and Sunflowers sold almost nothing in his lifetime.",
+        "es": "Nació el 30 de marzo de 1853 en Zundert, Países Bajos; el pintor de La noche estrellada y Los girasoles apenas vendió obras en vida.",
+        "fr": "Né le 30 mars 1853 à Zundert, aux Pays-Bas, le peintre de La Nuit étoilée et des Tournesols ne vendit presque rien de son vivant.",
+        "de": "Am 30. März 1853 im niederländischen Zundert geboren, verkaufte der Maler der Sternennacht und der Sonnenblumen zu Lebzeiten kaum ein Bild."
+      }
+    },
+    {
+      "id": "nikola-tesla",
+      "type": "inventor",
+      "year": 1856,
+      "title": {
+        "tr": "Nikola Tesla",
+        "en": "Nikola Tesla",
+        "es": "Nikola Tesla",
+        "fr": "Nikola Tesla",
+        "de": "Nikola Tesla"
+      },
+      "description": {
+        "tr": "10 Temmuz 1856 tarihinde bugünkü Hırvatistan'daki Smiljan köyünde doğdu; modern dünyaya güç veren alternatif akım sistemlerinin öncüsüdür.",
+        "en": "Born on 10 July 1856 in Smiljan, in today's Croatia, the inventor pioneered alternating current systems that power the modern world.",
+        "es": "Nació el 10 de julio de 1856 en Smiljan, en la actual Croacia; el inventor fue pionero de la corriente alterna que hoy mueve el mundo.",
+        "fr": "Né le 10 juillet 1856 à Smiljan, dans l'actuelle Croatie, l'inventeur fut le pionnier du courant alternatif qui alimente le monde moderne.",
+        "de": "Am 10. Juli 1856 in Smiljan im heutigen Kroatien geboren, war der Erfinder ein Pionier des Wechselstroms, der die moderne Welt antreibt."
+      }
+    },
+    {
+      "id": "sigmund-freud",
+      "type": "scientist",
+      "year": 1856,
+      "title": {
+        "tr": "Sigmund Freud",
+        "en": "Sigmund Freud",
+        "es": "Sigmund Freud",
+        "fr": "Sigmund Freud",
+        "de": "Sigmund Freud"
+      },
+      "description": {
+        "tr": "6 Mayıs 1856 tarihinde Moravya'nın Freiberg kasabasında (bugün Çekya'daki Příbor) doğdu; psikanalizin kurucusu olan nörologdur.",
+        "en": "Born on 6 May 1856 in Freiberg, Moravia (today's Příbor, Czech Republic), the neurologist founded psychoanalysis.",
+        "es": "Nació el 6 de mayo de 1856 en Freiberg, Moravia (actual Příbor, República Checa); el neurólogo fundó el psicoanálisis.",
+        "fr": "Né le 6 mai 1856 à Freiberg, en Moravie (actuelle Příbor, en Tchéquie), le neurologue fonda la psychanalyse.",
+        "de": "Am 6. Mai 1856 in Freiberg in Mähren (heute Příbor, Tschechien) geboren, begründete der Neurologe die Psychoanalyse."
+      }
+    },
+    {
+      "id": "henry-ford",
+      "type": "business",
+      "year": 1863,
+      "title": {
+        "tr": "Henry Ford",
+        "en": "Henry Ford",
+        "es": "Henry Ford",
+        "fr": "Henry Ford",
+        "de": "Henry Ford"
+      },
+      "description": {
+        "tr": "30 Temmuz 1863 tarihinde Michigan'daki Springfield Township'te doğdu; Model T'yi montaj hattında seri üreterek dünyayı otomobille tanıştıran sanayicidir.",
+        "en": "Born on 30 July 1863 in Springfield Township, Michigan, the industrialist mass-produced the Model T on the assembly line and put the world on wheels.",
+        "es": "Nació el 30 de julio de 1863 en Springfield Township, Míchigan; el industrial fabricó en cadena el Modelo T y puso al mundo sobre ruedas.",
+        "fr": "Né le 30 juillet 1863 à Springfield Township, dans le Michigan, l'industriel produisit en série la Ford T à la chaîne et motorisa le monde.",
+        "de": "Am 30. Juli 1863 in Springfield Township, Michigan, geboren, ließ der Industrielle das Model T am Fließband bauen und motorisierte die Welt."
+      }
+    },
+    {
+      "id": "marie-curie",
+      "type": "scientist",
+      "year": 1867,
+      "title": {
+        "tr": "Marie Curie",
+        "en": "Marie Curie",
+        "es": "Marie Curie",
+        "fr": "Marie Curie",
+        "de": "Marie Curie"
+      },
+      "description": {
+        "tr": "7 Kasım 1867 tarihinde Polonya'nın başkenti Varşova'da doğdu; radyoaktivite araştırmalarının öncüsü ve iki farklı bilim dalında Nobel kazanan ilk kişidir.",
+        "en": "Born on 7 November 1867 in Warsaw, Poland, she pioneered research on radioactivity and was the first person to win Nobel Prizes in two sciences.",
+        "es": "Nació el 7 de noviembre de 1867 en Varsovia, Polonia; pionera en el estudio de la radiactividad, fue la primera persona en ganar el Nobel en dos ciencias.",
+        "fr": "Née le 7 novembre 1867 à Varsovie, en Pologne, pionnière de la radioactivité, elle fut la première personne lauréate du Nobel dans deux sciences.",
+        "de": "Am 7. November 1867 in Warschau geboren, war sie Pionierin der Radioaktivitätsforschung und erhielt als erster Mensch Nobelpreise in zwei Wissenschaften."
+      }
+    },
+    {
+      "id": "mahatma-gandhi",
+      "type": "leader",
+      "year": 1869,
+      "title": {
+        "tr": "Mahatma Gandhi",
+        "en": "Mahatma Gandhi",
+        "es": "Mahatma Gandhi",
+        "fr": "Mahatma Gandhi",
+        "de": "Mahatma Gandhi"
+      },
+      "description": {
+        "tr": "2 Ekim 1869 tarihinde Hindistan'ın Porbandar kentinde doğdu; Hindistan'ın bağımsızlık hareketini şiddetsiz direnişle yönetti.",
+        "en": "Born on 2 October 1869 in Porbandar, India, he led India's independence movement through nonviolent resistance.",
+        "es": "Nació el 2 de octubre de 1869 en Porbandar, India; lideró el movimiento de independencia indio mediante la resistencia no violenta.",
+        "fr": "Né le 2 octobre 1869 à Porbandar, en Inde, il mena le mouvement d'indépendance indien par la résistance non violente.",
+        "de": "Am 2. Oktober 1869 im indischen Porbandar geboren, führte er die indische Unabhängigkeitsbewegung mit gewaltlosem Widerstand an."
+      }
+    },
+    {
+      "id": "vladimir-lenin",
+      "type": "leader",
+      "year": 1870,
+      "title": {
+        "tr": "Vladimir Lenin",
+        "en": "Vladimir Lenin",
+        "es": "Vladímir Lenin",
+        "fr": "Lénine",
+        "de": "Lenin"
+      },
+      "description": {
+        "tr": "22 Nisan 1870 tarihinde Rusya'nın Simbirsk kentinde doğdu; 1917'de Bolşevikleri iktidara taşıyan ve Sovyet devletini kuran devrimcidir.",
+        "en": "Born on 22 April 1870 in Simbirsk, Russia, the revolutionary led the Bolsheviks to power in 1917 and founded the Soviet state.",
+        "es": "Nació el 22 de abril de 1870 en Simbirsk, Rusia; el revolucionario llevó a los bolcheviques al poder en 1917 y fundó el Estado soviético.",
+        "fr": "Né le 22 avril 1870 à Simbirsk, en Russie, le révolutionnaire porta les bolcheviks au pouvoir en 1917 et fonda l'État soviétique.",
+        "de": "Am 22. April 1870 im russischen Simbirsk geboren, führte der Revolutionär 1917 die Bolschewiki an die Macht und gründete den Sowjetstaat."
+      }
+    },
+    {
+      "id": "winston-churchill",
+      "type": "leader",
+      "year": 1874,
+      "title": {
+        "tr": "Winston Churchill",
+        "en": "Winston Churchill",
+        "es": "Winston Churchill",
+        "fr": "Winston Churchill",
+        "de": "Winston Churchill"
+      },
+      "description": {
+        "tr": "30 Kasım 1874 tarihinde İngiltere'nin Oxfordshire bölgesindeki Blenheim Sarayı'nda doğdu; İkinci Dünya Savaşı boyunca Britanya'yı başbakan olarak yönetti.",
+        "en": "Born on 30 November 1874 at Blenheim Palace in Oxfordshire, England, he led Britain as Prime Minister through the Second World War.",
+        "es": "Nació el 30 de noviembre de 1874 en el palacio de Blenheim, Oxfordshire, Inglaterra; como primer ministro guio a Gran Bretaña durante la Segunda Guerra Mundial.",
+        "fr": "Né le 30 novembre 1874 au palais de Blenheim, dans l'Oxfordshire, il dirigea le Royaume-Uni comme Premier ministre pendant la Seconde Guerre mondiale.",
+        "de": "Am 30. November 1874 auf Blenheim Palace in Oxfordshire geboren, führte er Großbritannien als Premierminister durch den Zweiten Weltkrieg."
+      }
+    },
+    {
+      "id": "joseph-stalin",
+      "type": "leader",
+      "year": 1878,
+      "title": {
+        "tr": "Josef Stalin",
+        "en": "Joseph Stalin",
+        "es": "Iósif Stalin",
+        "fr": "Joseph Staline",
+        "de": "Josef Stalin"
+      },
+      "description": {
+        "tr": "18 Aralık 1878 tarihinde Gürcistan'ın Gori kasabasında doğdu; Sovyetler Birliği'ni hızlı sanayileşme ve acımasız baskıyla yaklaşık otuz yıl yönetti.",
+        "en": "Born on 18 December 1878 in Gori, Georgia, he ruled the Soviet Union for nearly three decades through rapid industrialization and brutal repression.",
+        "es": "Nació el 18 de diciembre de 1878 en Gori, Georgia; gobernó la Unión Soviética durante casi tres décadas con una rápida industrialización y una brutal represión.",
+        "fr": "Né le 18 décembre 1878 à Gori, en Géorgie, il dirigea l'Union soviétique près de trente ans, entre industrialisation forcée et répression brutale.",
+        "de": "Am 18. Dezember 1878 im georgischen Gori geboren, regierte er die Sowjetunion fast drei Jahrzehnte mit rascher Industrialisierung und brutaler Unterdrückung."
+      }
+    },
+    {
+      "id": "albert-einstein",
+      "type": "scientist",
+      "year": 1879,
+      "title": {
+        "tr": "Albert Einstein",
+        "en": "Albert Einstein",
+        "es": "Albert Einstein",
+        "fr": "Albert Einstein",
+        "de": "Albert Einstein"
+      },
+      "description": {
+        "tr": "14 Mart 1879 tarihinde Almanya'nın Ulm kentinde doğdu; görelilik kuramını ve E = mc² denklemini geliştiren fizikçidir.",
+        "en": "Born on 14 March 1879 in Ulm, Germany, the physicist developed the theory of relativity and the equation E = mc².",
+        "es": "Nació el 14 de marzo de 1879 en Ulm, Alemania; el físico desarrolló la teoría de la relatividad y la ecuación E = mc².",
+        "fr": "Né le 14 mars 1879 à Ulm, en Allemagne, le physicien élabora la théorie de la relativité et l'équation E = mc².",
+        "de": "Am 14. März 1879 in Ulm geboren, entwickelte der Physiker die Relativitätstheorie und die Formel E = mc²."
+      }
+    },
+    {
+      "id": "mustafa-kemal-ataturk",
+      "type": "leader",
+      "year": 1881,
+      "title": {
+        "tr": "Mustafa Kemal Atatürk",
+        "en": "Mustafa Kemal Atatürk",
+        "es": "Mustafa Kemal Atatürk",
+        "fr": "Mustafa Kemal Atatürk",
+        "de": "Mustafa Kemal Atatürk"
+      },
+      "description": {
+        "tr": "1881 yılında o dönem Osmanlı İmparatorluğu'na bağlı olan Selanik'te doğdu; Kurtuluş Savaşı'na önderlik etti ve Türkiye Cumhuriyeti'ni kurdu.",
+        "en": "Born in 1881 in Thessaloniki, then part of the Ottoman Empire, he led the Turkish War of Independence and founded the Republic of Turkey.",
+        "es": "Nació en 1881 en Salónica, entonces parte del Imperio otomano; dirigió la guerra de independencia turca y fundó la República de Turquía.",
+        "fr": "Né en 1881 à Salonique, alors dans l'Empire ottoman, il mena la guerre d'indépendance turque et fonda la République de Turquie.",
+        "de": "1881 in Thessaloniki, damals Teil des Osmanischen Reiches, geboren, führte er den türkischen Befreiungskrieg und gründete die Republik Türkei."
+      }
+    },
+    {
+      "id": "pablo-picasso",
+      "type": "artist",
+      "year": 1881,
+      "title": {
+        "tr": "Pablo Picasso",
+        "en": "Pablo Picasso",
+        "es": "Pablo Picasso",
+        "fr": "Pablo Picasso",
+        "de": "Pablo Picasso"
+      },
+      "description": {
+        "tr": "25 Ekim 1881 tarihinde İspanya'nın Málaga kentinde doğdu; Kübizmin kurucularından olan ve en güçlü savaş karşıtı imgelerden Guernica'yı yaratan ressamdır.",
+        "en": "Born on 25 October 1881 in Málaga, Spain, the painter co-founded Cubism and created Guernica, one of the most powerful anti-war images.",
+        "es": "Nació el 25 de octubre de 1881 en Málaga, España; cofundador del cubismo, pintó el Guernica, una de las imágenes antibélicas más poderosas.",
+        "fr": "Né le 25 octobre 1881 à Malaga, en Espagne, le cofondateur du cubisme peignit Guernica, l'une des plus fortes images contre la guerre.",
+        "de": "Am 25. Oktober 1881 im spanischen Málaga geboren, begründete der Maler den Kubismus mit und schuf Guernica, eines der eindringlichsten Antikriegsbilder."
+      }
+    },
+    {
+      "id": "franklin-d-roosevelt",
+      "type": "leader",
+      "year": 1882,
+      "title": {
+        "tr": "Franklin D. Roosevelt",
+        "en": "Franklin D. Roosevelt",
+        "es": "Franklin D. Roosevelt",
+        "fr": "Franklin D. Roosevelt",
+        "de": "Franklin D. Roosevelt"
+      },
+      "description": {
+        "tr": "30 Ocak 1882 tarihinde New York'taki Hyde Park'ta doğdu; dört kez seçilen tek ABD başkanı olarak ülkeyi Büyük Buhran ve İkinci Dünya Savaşı'nda yönetti.",
+        "en": "Born on 30 January 1882 in Hyde Park, New York, the only U.S. President elected four times led the country through the Great Depression and World War II.",
+        "es": "Nació el 30 de enero de 1882 en Hyde Park, Nueva York; el único presidente de EE. UU. elegido cuatro veces guio al país en la Gran Depresión y la Segunda Guerra Mundial.",
+        "fr": "Né le 30 janvier 1882 à Hyde Park, dans l'État de New York, le seul président américain élu quatre fois dirigea le pays pendant la Grande Dépression et la guerre.",
+        "de": "Am 30. Januar 1882 in Hyde Park, New York, geboren, führte der einzige viermal gewählte US-Präsident das Land durch die Weltwirtschaftskrise und den Zweiten Weltkrieg."
+      }
+    },
+    {
+      "id": "coco-chanel",
+      "type": "business",
+      "year": 1883,
+      "title": {
+        "tr": "Coco Chanel",
+        "en": "Coco Chanel",
+        "es": "Coco Chanel",
+        "fr": "Coco Chanel",
+        "de": "Coco Chanel"
+      },
+      "description": {
+        "tr": "19 Ağustos 1883 tarihinde Fransa'nın Saumur kasabasında doğdu; küçük siyah elbise ve Chanel No. 5 parfümüyle kadın modasında devrim yapan tasarımcıdır.",
+        "en": "Born on 19 August 1883 in Saumur, France, the designer revolutionized women's fashion with the little black dress and the perfume Chanel No. 5.",
+        "es": "Nació el 19 de agosto de 1883 en Saumur, Francia; la diseñadora revolucionó la moda femenina con el vestidito negro y el perfume Chanel n.º 5.",
+        "fr": "Née le 19 août 1883 à Saumur, la créatrice révolutionna la mode féminine avec la petite robe noire et le parfum Chanel n° 5.",
+        "de": "Am 19. August 1883 im französischen Saumur geboren, revolutionierte die Designerin die Damenmode mit dem kleinen Schwarzen und dem Parfüm Chanel Nº 5."
+      }
+    },
+    {
+      "id": "adolf-hitler",
+      "type": "leader",
+      "year": 1889,
+      "title": {
+        "tr": "Adolf Hitler",
+        "en": "Adolf Hitler",
+        "es": "Adolf Hitler",
+        "fr": "Adolf Hitler",
+        "de": "Adolf Hitler"
+      },
+      "description": {
+        "tr": "20 Nisan 1889 tarihinde Avusturya'nın Braunau am Inn kasabasında doğdu; İkinci Dünya Savaşı'nı başlatan ve Holokost'tan sorumlu olan Nazi Almanyası diktatörüdür.",
+        "en": "Born on 20 April 1889 in Braunau am Inn, Austria, the Nazi dictator of Germany started the Second World War and was responsible for the Holocaust.",
+        "es": "Nació el 20 de abril de 1889 en Braunau am Inn, Austria; el dictador nazi de Alemania desencadenó la Segunda Guerra Mundial y fue responsable del Holocausto.",
+        "fr": "Né le 20 avril 1889 à Braunau am Inn, en Autriche, le dictateur nazi de l'Allemagne déclencha la Seconde Guerre mondiale et fut responsable de la Shoah.",
+        "de": "Am 20. April 1889 im österreichischen Braunau am Inn geboren, entfesselte der NS-Diktator den Zweiten Weltkrieg und war für den Holocaust verantwortlich."
+      }
+    },
+    {
+      "id": "charlie-chaplin",
+      "type": "actor",
+      "year": 1889,
+      "title": {
+        "tr": "Charlie Chaplin",
+        "en": "Charlie Chaplin",
+        "es": "Charles Chaplin",
+        "fr": "Charlie Chaplin",
+        "de": "Charlie Chaplin"
+      },
+      "description": {
+        "tr": "16 Nisan 1889 tarihinde Londra'da doğdu; Şarlo karakterini yaratan ve Asri Zamanlar ile Büyük Diktatör gibi klasikleri çeken sessiz sinema yıldızıdır.",
+        "en": "Born on 16 April 1889 in London, the silent-film star created the Little Tramp and made classics like Modern Times and The Great Dictator.",
+        "es": "Nació el 16 de abril de 1889 en Londres; la estrella del cine mudo creó a Charlot y rodó clásicos como Tiempos modernos y El gran dictador.",
+        "fr": "Né le 16 avril 1889 à Londres, la star du muet créa Charlot et réalisa des classiques comme Les Temps modernes et Le Dictateur.",
+        "de": "Am 16. April 1889 in London geboren, erschuf der Stummfilmstar den Tramp und drehte Klassiker wie Moderne Zeiten und Der große Diktator."
+      }
+    },
+    {
+      "id": "agatha-christie",
+      "type": "writer",
+      "year": 1890,
+      "title": {
+        "tr": "Agatha Christie",
+        "en": "Agatha Christie",
+        "es": "Agatha Christie",
+        "fr": "Agatha Christie",
+        "de": "Agatha Christie"
+      },
+      "description": {
+        "tr": "15 Eylül 1890 tarihinde İngiltere'nin Torquay kasabasında doğdu; Hercule Poirot ve Miss Marple'ı yaratan 'Polisiyenin Kraliçesi', tüm zamanların en çok satan romancılarındandır.",
+        "en": "Born on 15 September 1890 in Torquay, England, the 'Queen of Crime' created Hercule Poirot and Miss Marple and is one of the best-selling novelists ever.",
+        "es": "Nació el 15 de septiembre de 1890 en Torquay, Inglaterra; la «reina del crimen» creó a Hércules Poirot y a Miss Marple y es una de las novelistas más vendidas.",
+        "fr": "Née le 15 septembre 1890 à Torquay, en Angleterre, la « reine du crime » créa Hercule Poirot et Miss Marple et figure parmi les romancières les plus vendues.",
+        "de": "Am 15. September 1890 im englischen Torquay geboren, schuf die „Queen of Crime“ Hercule Poirot und Miss Marple und ist eine der meistverkauften Autorinnen."
+      }
+    },
+    {
+      "id": "j-r-r-tolkien",
+      "type": "writer",
+      "year": 1892,
+      "title": {
+        "tr": "J. R. R. Tolkien",
+        "en": "J. R. R. Tolkien",
+        "es": "J. R. R. Tolkien",
+        "fr": "J. R. R. Tolkien",
+        "de": "J. R. R. Tolkien"
+      },
+      "description": {
+        "tr": "3 Ocak 1892 tarihinde Güney Afrika'nın Bloemfontein kentinde doğdu; Hobbit ve Yüzüklerin Efendisi'ni yazan Oxford profesörüdür.",
+        "en": "Born on 3 January 1892 in Bloemfontein, South Africa, the Oxford professor wrote The Hobbit and The Lord of the Rings.",
+        "es": "Nació el 3 de enero de 1892 en Bloemfontein, Sudáfrica; el profesor de Oxford escribió El hobbit y El Señor de los Anillos.",
+        "fr": "Né le 3 janvier 1892 à Bloemfontein, en Afrique du Sud, le professeur d'Oxford écrivit Le Hobbit et Le Seigneur des anneaux.",
+        "de": "Am 3. Januar 1892 im südafrikanischen Bloemfontein geboren, schrieb der Oxford-Professor Der Hobbit und Der Herr der Ringe."
+      }
+    },
+    {
+      "id": "mao-zedong",
+      "type": "leader",
+      "year": 1893,
+      "title": {
+        "tr": "Mao Zedong",
+        "en": "Mao Zedong",
+        "es": "Mao Zedong",
+        "fr": "Mao Zedong",
+        "de": "Mao Zedong"
+      },
+      "description": {
+        "tr": "26 Aralık 1893 tarihinde Hunan eyaletindeki Shaoshan köyünde doğdu; komünist devrime önderlik etti ve 1949'da Çin Halk Cumhuriyeti'ni kurdu.",
+        "en": "Born on 26 December 1893 in Shaoshan, Hunan province, he led the Communist revolution and founded the People's Republic of China in 1949.",
+        "es": "Nació el 26 de diciembre de 1893 en Shaoshan, provincia de Hunan; dirigió la revolución comunista y fundó la República Popular China en 1949.",
+        "fr": "Né le 26 décembre 1893 à Shaoshan, dans la province du Hunan, il mena la révolution communiste et fonda la République populaire de Chine en 1949.",
+        "de": "Am 26. Dezember 1893 in Shaoshan in der Provinz Hunan geboren, führte er die kommunistische Revolution an und gründete 1949 die Volksrepublik China."
+      }
+    },
+    {
+      "id": "ernest-hemingway",
+      "type": "writer",
+      "year": 1899,
+      "title": {
+        "tr": "Ernest Hemingway",
+        "en": "Ernest Hemingway",
+        "es": "Ernest Hemingway",
+        "fr": "Ernest Hemingway",
+        "de": "Ernest Hemingway"
+      },
+      "description": {
+        "tr": "21 Temmuz 1899 tarihinde Illinois'deki Oak Park'ta doğdu; ünlü yalın üslubuyla Yaşlı Adam ve Deniz'i yazan Nobel ödüllü yazardır.",
+        "en": "Born on 21 July 1899 in Oak Park, Illinois, the Nobel-winning writer wrote The Old Man and the Sea in his famously spare style.",
+        "es": "Nació el 21 de julio de 1899 en Oak Park, Illinois; el escritor ganador del Nobel escribió El viejo y el mar con su célebre estilo sobrio.",
+        "fr": "Né le 21 juillet 1899 à Oak Park, dans l'Illinois, l'écrivain lauréat du Nobel écrivit Le Vieil Homme et la Mer dans son style dépouillé.",
+        "de": "Am 21. Juli 1899 in Oak Park, Illinois, geboren, schrieb der Nobelpreisträger in seinem berühmt knappen Stil Der alte Mann und das Meer."
+      }
+    },
+    {
+      "id": "walt-disney",
+      "type": "business",
+      "year": 1901,
+      "title": {
+        "tr": "Walt Disney",
+        "en": "Walt Disney",
+        "es": "Walt Disney",
+        "fr": "Walt Disney",
+        "de": "Walt Disney"
+      },
+      "description": {
+        "tr": "5 Aralık 1901 tarihinde Chicago'da doğdu; Mickey Mouse'un yaratıcılarından olan animasyon öncüsü, ilk Disneyland dâhil bir eğlence imparatorluğu kurdu.",
+        "en": "Born on 5 December 1901 in Chicago, the animation pioneer co-created Mickey Mouse and built an entertainment empire, including the first Disneyland.",
+        "es": "Nació el 5 de diciembre de 1901 en Chicago; pionero de la animación, cocreó a Mickey Mouse y levantó un imperio del entretenimiento, incluido el primer Disneyland.",
+        "fr": "Né le 5 décembre 1901 à Chicago, le pionnier de l'animation cocréa Mickey Mouse et bâtit un empire du divertissement, dont le premier Disneyland.",
+        "de": "Am 5. Dezember 1901 in Chicago geboren, erschuf der Animationspionier Micky Maus mit und baute ein Unterhaltungsimperium samt erstem Disneyland auf."
+      }
+    },
+    {
+      "id": "george-orwell",
+      "type": "writer",
+      "year": 1903,
+      "title": {
+        "tr": "George Orwell",
+        "en": "George Orwell",
+        "es": "George Orwell",
+        "fr": "George Orwell",
+        "de": "George Orwell"
+      },
+      "description": {
+        "tr": "Eric Blair adıyla 25 Haziran 1903 tarihinde Britanya Hindistanı'ndaki Motihari'de doğdu; distopya klasikleri 1984 ve Hayvan Çiftliği'nin yazarıdır.",
+        "en": "Born Eric Blair on 25 June 1903 in Motihari, British India, he wrote the dystopian classics 1984 and Animal Farm.",
+        "es": "Nació como Eric Blair el 25 de junio de 1903 en Motihari, India británica; escribió los clásicos distópicos 1984 y Rebelión en la granja.",
+        "fr": "Né Eric Blair le 25 juin 1903 à Motihari, en Inde britannique, il écrivit les classiques dystopiques 1984 et La Ferme des animaux.",
+        "de": "Als Eric Blair am 25. Juni 1903 in Motihari in Britisch-Indien geboren, schrieb er die dystopischen Klassiker 1984 und Farm der Tiere."
+      }
+    },
+    {
+      "id": "salvador-dali",
+      "type": "artist",
+      "year": 1904,
+      "title": {
+        "tr": "Salvador Dalí",
+        "en": "Salvador Dalí",
+        "es": "Salvador Dalí",
+        "fr": "Salvador Dalí",
+        "de": "Salvador Dalí"
+      },
+      "description": {
+        "tr": "11 Mayıs 1904 tarihinde Katalonya'nın Figueres kasabasında doğdu; eriyen saatleriyle Belleğin Azmi'ni yapan Sürrealist ressamdır.",
+        "en": "Born on 11 May 1904 in Figueres, Catalonia, the Surrealist painted The Persistence of Memory with its melting clocks.",
+        "es": "Nació el 11 de mayo de 1904 en Figueras, Cataluña; el surrealista pintó La persistencia de la memoria, con sus relojes blandos.",
+        "fr": "Né le 11 mai 1904 à Figueras, en Catalogne, le surréaliste peignit La Persistance de la mémoire et ses montres molles.",
+        "de": "Am 11. Mai 1904 im katalanischen Figueres geboren, malte der Surrealist Die Beständigkeit der Erinnerung mit ihren zerfließenden Uhren."
+      }
+    },
+    {
+      "id": "frida-kahlo",
+      "type": "artist",
+      "year": 1907,
+      "title": {
+        "tr": "Frida Kahlo",
+        "en": "Frida Kahlo",
+        "es": "Frida Kahlo",
+        "fr": "Frida Kahlo",
+        "de": "Frida Kahlo"
+      },
+      "description": {
+        "tr": "6 Temmuz 1907 tarihinde Mexico City'nin Coyoacán semtinde doğdu; acı ve Meksika kültürüyle şekillenen yoğun otoportreleriyle tanınan ressamdır.",
+        "en": "Born on 6 July 1907 in Coyoacán, Mexico City, she painted intense self-portraits shaped by pain and Mexican culture.",
+        "es": "Nació el 6 de julio de 1907 en Coyoacán, Ciudad de México; pintó intensos autorretratos marcados por el dolor y la cultura mexicana.",
+        "fr": "Née le 6 juillet 1907 à Coyoacán, à Mexico, elle peignit d'intenses autoportraits marqués par la douleur et la culture mexicaine.",
+        "de": "Am 6. Juli 1907 in Coyoacán in Mexiko-Stadt geboren, malte sie eindringliche Selbstbildnisse, geprägt von Schmerz und mexikanischer Kultur."
+      }
+    },
+    {
+      "id": "mother-teresa",
+      "type": "religious",
+      "year": 1910,
+      "title": {
+        "tr": "Rahibe Teresa",
+        "en": "Mother Teresa",
+        "es": "Madre Teresa de Calcuta",
+        "fr": "Mère Teresa",
+        "de": "Mutter Teresa"
+      },
+      "description": {
+        "tr": "26 Ağustos 1910 tarihinde o dönem Osmanlı İmparatorluğu'na bağlı olan Üsküp'te doğdu; Kalküta'daki en yoksullara hizmet eden ve Nobel Barış Ödülü alan Katolik rahibedir.",
+        "en": "Born on 26 August 1910 in Skopje, then in the Ottoman Empire, the Catholic nun served the poorest in Calcutta and won the Nobel Peace Prize.",
+        "es": "Nació el 26 de agosto de 1910 en Skopie, entonces en el Imperio otomano; la monja católica sirvió a los más pobres de Calcuta y ganó el Nobel de la Paz.",
+        "fr": "Née le 26 août 1910 à Skopje, alors dans l'Empire ottoman, la religieuse catholique servit les plus pauvres de Calcutta et reçut le prix Nobel de la paix.",
+        "de": "Am 26. August 1910 in Skopje, damals im Osmanischen Reich, geboren, diente die katholische Ordensfrau den Ärmsten in Kalkutta und erhielt den Friedensnobelpreis."
+      }
+    },
+    {
+      "id": "alan-turing",
+      "type": "scientist",
+      "year": 1912,
+      "title": {
+        "tr": "Alan Turing",
+        "en": "Alan Turing",
+        "es": "Alan Turing",
+        "fr": "Alan Turing",
+        "de": "Alan Turing"
+      },
+      "description": {
+        "tr": "23 Haziran 1912 tarihinde Londra'da doğdu; bilgisayar biliminin temellerini atan ve Almanların Enigma şifresinin kırılmasına katkı veren matematikçidir.",
+        "en": "Born on 23 June 1912 in London, the mathematician laid the foundations of computer science and helped break Germany's Enigma code.",
+        "es": "Nació el 23 de junio de 1912 en Londres; el matemático sentó las bases de la informática y ayudó a descifrar el código alemán Enigma.",
+        "fr": "Né le 23 juin 1912 à Londres, le mathématicien posa les fondements de l'informatique et contribua à casser le code allemand Enigma.",
+        "de": "Am 23. Juni 1912 in London geboren, legte der Mathematiker die Grundlagen der Informatik und half, die deutsche Enigma zu knacken."
+      }
+    },
+    {
+      "id": "john-f-kennedy",
+      "type": "leader",
+      "year": 1917,
+      "title": {
+        "tr": "John F. Kennedy",
+        "en": "John F. Kennedy",
+        "es": "John F. Kennedy",
+        "fr": "John F. Kennedy",
+        "de": "John F. Kennedy"
+      },
+      "description": {
+        "tr": "29 Mayıs 1917 tarihinde Massachusetts'teki Brookline'da doğdu; Küba Füze Krizi'ni yöneten 35. ABD başkanı, 1963'te Dallas'ta suikaste kurban gitti.",
+        "en": "Born on 29 May 1917 in Brookline, Massachusetts, the 35th U.S. President faced the Cuban Missile Crisis and was assassinated in Dallas in 1963.",
+        "es": "Nació el 29 de mayo de 1917 en Brookline, Massachusetts; el 35.º presidente de EE. UU. afrontó la crisis de los misiles y fue asesinado en Dallas en 1963.",
+        "fr": "Né le 29 mai 1917 à Brookline, dans le Massachusetts, le 35e président américain affronta la crise des missiles de Cuba et fut assassiné à Dallas en 1963.",
+        "de": "Am 29. Mai 1917 in Brookline, Massachusetts, geboren, bewältigte der 35. US-Präsident die Kubakrise und wurde 1963 in Dallas ermordet."
+      }
+    },
+    {
+      "id": "nelson-mandela",
+      "type": "leader",
+      "year": 1918,
+      "title": {
+        "tr": "Nelson Mandela",
+        "en": "Nelson Mandela",
+        "es": "Nelson Mandela",
+        "fr": "Nelson Mandela",
+        "de": "Nelson Mandela"
+      },
+      "description": {
+        "tr": "18 Temmuz 1918 tarihinde Güney Afrika'nın Mvezo köyünde doğdu; apartheide karşı mücadelesi yüzünden 27 yıl hapis yattı ve ülkenin ilk siyahi devlet başkanı oldu.",
+        "en": "Born on 18 July 1918 in Mvezo, South Africa, he spent 27 years in prison fighting apartheid and became the country's first Black president.",
+        "es": "Nació el 18 de julio de 1918 en Mvezo, Sudáfrica; pasó 27 años en prisión por luchar contra el apartheid y fue el primer presidente negro del país.",
+        "fr": "Né le 18 juillet 1918 à Mvezo, en Afrique du Sud, il passa 27 ans en prison pour sa lutte contre l'apartheid et devint le premier président noir du pays.",
+        "de": "Am 18. Juli 1918 im südafrikanischen Mvezo geboren, saß er für seinen Kampf gegen die Apartheid 27 Jahre in Haft und wurde erster schwarzer Präsident des Landes."
+      }
+    },
+    {
+      "id": "pope-john-paul-ii",
+      "type": "religious",
+      "year": 1920,
+      "title": {
+        "tr": "Papa II. Ioannes Paulus",
+        "en": "Pope John Paul II",
+        "es": "Papa Juan Pablo II",
+        "fr": "Pape Jean-Paul II",
+        "de": "Papst Johannes Paul II."
+      },
+      "description": {
+        "tr": "Karol Wojtyła adıyla 18 Mayıs 1920 tarihinde Polonya'nın Wadowice kasabasında doğdu; 450 yılı aşkın sürede İtalyan olmayan ilk papa olarak Katolik Kilisesi'ni 26 yıl yönetti.",
+        "en": "Born Karol Wojtyła on 18 May 1920 in Wadowice, Poland, he was the first non-Italian pope in over 450 years and led the Catholic Church for 26 years.",
+        "es": "Nació como Karol Wojtyła el 18 de mayo de 1920 en Wadowice, Polonia; fue el primer papa no italiano en más de 450 años y guio a la Iglesia católica durante 26 años.",
+        "fr": "Né Karol Wojtyła le 18 mai 1920 à Wadowice, en Pologne, il fut le premier pape non italien depuis plus de 450 ans et dirigea l'Église catholique pendant 26 ans.",
+        "de": "Als Karol Wojtyła am 18. Mai 1920 im polnischen Wadowice geboren, war er der erste nicht-italienische Papst seit über 450 Jahren und leitete die Kirche 26 Jahre lang."
+      }
+    },
+    {
+      "id": "queen-elizabeth-ii",
+      "type": "leader",
+      "year": 1926,
+      "title": {
+        "tr": "Kraliçe II. Elizabeth",
+        "en": "Queen Elizabeth II",
+        "es": "Isabel II del Reino Unido",
+        "fr": "Élisabeth II",
+        "de": "Elisabeth II."
+      },
+      "description": {
+        "tr": "21 Nisan 1926 tarihinde Londra'nın Mayfair semtinde doğdu; 70 yıl hüküm sürerek tahtta en uzun kalan İngiliz hükümdarı oldu.",
+        "en": "Born on 21 April 1926 in Mayfair, London, she reigned for 70 years, longer than any other British monarch.",
+        "es": "Nació el 21 de abril de 1926 en Mayfair, Londres; reinó durante 70 años, más que ningún otro monarca británico.",
+        "fr": "Née le 21 avril 1926 à Mayfair, à Londres, elle régna 70 ans, plus longtemps que tout autre monarque britannique.",
+        "de": "Am 21. April 1926 im Londoner Stadtteil Mayfair geboren, regierte sie 70 Jahre – länger als jeder andere britische Monarch."
+      }
+    },
+    {
+      "id": "marilyn-monroe",
+      "type": "actor",
+      "year": 1926,
+      "title": {
+        "tr": "Marilyn Monroe",
+        "en": "Marilyn Monroe",
+        "es": "Marilyn Monroe",
+        "fr": "Marilyn Monroe",
+        "de": "Marilyn Monroe"
+      },
+      "description": {
+        "tr": "Norma Jeane Mortenson adıyla 1 Haziran 1926 tarihinde Los Angeles'ta doğdu; Bazıları Sıcak Sever gibi filmlerle Hollywood'un en ikonik yıldızı oldu.",
+        "en": "Born Norma Jeane Mortenson on 1 June 1926 in Los Angeles, she became Hollywood's most iconic star in films like Some Like It Hot.",
+        "es": "Nació como Norma Jeane Mortenson el 1 de junio de 1926 en Los Ángeles; se convirtió en la estrella más icónica de Hollywood con películas como Con faldas y a lo loco.",
+        "fr": "Née Norma Jeane Mortenson le 1er juin 1926 à Los Angeles, elle devint la star la plus emblématique d'Hollywood avec des films comme Certains l'aiment chaud.",
+        "de": "Als Norma Jeane Mortenson am 1. Juni 1926 in Los Angeles geboren, wurde sie mit Filmen wie Manche mögen's heiß zum größten Hollywood-Idol."
+      }
+    },
+    {
+      "id": "gabriel-garcia-marquez",
+      "type": "writer",
+      "year": 1927,
+      "title": {
+        "tr": "Gabriel García Márquez",
+        "en": "Gabriel García Márquez",
+        "es": "Gabriel García Márquez",
+        "fr": "Gabriel García Márquez",
+        "de": "Gabriel García Márquez"
+      },
+      "description": {
+        "tr": "6 Mart 1927 tarihinde Kolombiya'nın Aracataca kasabasında doğdu; büyülü gerçekçiliğin başyapıtı Yüzyıllık Yalnızlık'ı yazan Nobel ödüllü yazardır.",
+        "en": "Born on 6 March 1927 in Aracataca, Colombia, the Nobel laureate wrote One Hundred Years of Solitude, the landmark of magical realism.",
+        "es": "Nació el 6 de marzo de 1927 en Aracataca, Colombia; el premio Nobel escribió Cien años de soledad, obra cumbre del realismo mágico.",
+        "fr": "Né le 6 mars 1927 à Aracataca, en Colombie, le lauréat du Nobel écrivit Cent ans de solitude, chef-d'œuvre du réalisme magique.",
+        "de": "Am 6. März 1927 im kolumbianischen Aracataca geboren, schrieb der Nobelpreisträger Hundert Jahre Einsamkeit, das Hauptwerk des magischen Realismus."
+      }
+    },
+    {
+      "id": "che-guevara",
+      "type": "leader",
+      "year": 1928,
+      "title": {
+        "tr": "Che Guevara",
+        "en": "Che Guevara",
+        "es": "Ernesto «Che» Guevara",
+        "fr": "Che Guevara",
+        "de": "Che Guevara"
+      },
+      "description": {
+        "tr": "14 Haziran 1928 tarihinde Arjantin'in Rosario kentinde doğdu; doktorken devrimciye dönüşüp Küba'da Fidel Castro'yla birlikte savaşan ve küresel bir simgeye dönüşen isimdir.",
+        "en": "Born on 14 June 1928 in Rosario, Argentina, the doctor-turned-revolutionary fought alongside Fidel Castro in Cuba and became a global icon.",
+        "es": "Nació el 14 de junio de 1928 en Rosario, Argentina; médico convertido en revolucionario, luchó junto a Fidel Castro en Cuba y se volvió un icono mundial.",
+        "fr": "Né le 14 juin 1928 à Rosario, en Argentine, le médecin devenu révolutionnaire combattit aux côtés de Fidel Castro à Cuba et devint une icône mondiale.",
+        "de": "Am 14. Juni 1928 im argentinischen Rosario geboren, kämpfte der Arzt und Revolutionär an der Seite Fidel Castros auf Kuba und wurde zur weltweiten Ikone."
+      }
+    },
+    {
+      "id": "martin-luther-king-jr",
+      "type": "leader",
+      "year": 1929,
+      "title": {
+        "tr": "Martin Luther King Jr.",
+        "en": "Martin Luther King Jr.",
+        "es": "Martin Luther King Jr.",
+        "fr": "Martin Luther King Jr.",
+        "de": "Martin Luther King Jr."
+      },
+      "description": {
+        "tr": "15 Ocak 1929 tarihinde Georgia'nın Atlanta kentinde doğdu; Amerikan sivil haklar hareketine önderlik eden ve 'Bir Hayalim Var' konuşmasını yapan Baptist rahiptir.",
+        "en": "Born on 15 January 1929 in Atlanta, Georgia, the Baptist minister led the American civil rights movement and gave the 'I Have a Dream' speech.",
+        "es": "Nació el 15 de enero de 1929 en Atlanta, Georgia; el pastor bautista lideró el movimiento por los derechos civiles y pronunció el discurso «Tengo un sueño».",
+        "fr": "Né le 15 janvier 1929 à Atlanta, en Géorgie, le pasteur baptiste mena le mouvement des droits civiques et prononça le discours « I Have a Dream ».",
+        "de": "Am 15. Januar 1929 in Atlanta, Georgia, geboren, führte der Baptistenpastor die US-Bürgerrechtsbewegung an und hielt die Rede „I Have a Dream“."
+      }
+    },
+    {
+      "id": "anne-frank",
+      "type": "writer",
+      "year": 1929,
+      "title": {
+        "tr": "Anne Frank",
+        "en": "Anne Frank",
+        "es": "Ana Frank",
+        "fr": "Anne Frank",
+        "de": "Anne Frank"
+      },
+      "description": {
+        "tr": "12 Haziran 1929 tarihinde Almanya'nın Frankfurt kentinde doğdu; Amsterdam'da Nazilerden saklanan Yahudi kızın günlüğü dünyanın en çok okunan kitaplarından biri oldu.",
+        "en": "Born on 12 June 1929 in Frankfurt, Germany, the Jewish girl hid from the Nazis in Amsterdam, and her diary became one of the most-read books on Earth.",
+        "es": "Nació el 12 de junio de 1929 en Fráncfort, Alemania; la niña judía se escondió de los nazis en Ámsterdam y su diario es uno de los libros más leídos del mundo.",
+        "fr": "Née le 12 juin 1929 à Francfort, en Allemagne, la jeune fille juive se cacha des nazis à Amsterdam ; son journal est l'un des livres les plus lus au monde.",
+        "de": "Am 12. Juni 1929 in Frankfurt am Main geboren, versteckte sich das jüdische Mädchen in Amsterdam vor den Nazis; ihr Tagebuch gehört zu den meistgelesenen Büchern der Welt."
+      }
+    },
+    {
+      "id": "neil-armstrong",
+      "type": "explorer",
+      "year": 1930,
+      "title": {
+        "tr": "Neil Armstrong",
+        "en": "Neil Armstrong",
+        "es": "Neil Armstrong",
+        "fr": "Neil Armstrong",
+        "de": "Neil Armstrong"
+      },
+      "description": {
+        "tr": "5 Ağustos 1930 tarihinde Ohio'daki Wapakoneta kasabasında doğdu; 1969'da Ay'da yürüyen ilk insan olan astronottur.",
+        "en": "Born on 5 August 1930 in Wapakoneta, Ohio, the astronaut became the first person to walk on the Moon in 1969.",
+        "es": "Nació el 5 de agosto de 1930 en Wapakoneta, Ohio; el astronauta fue la primera persona en caminar sobre la Luna en 1969.",
+        "fr": "Né le 5 août 1930 à Wapakoneta, dans l'Ohio, l'astronaute fut le premier homme à marcher sur la Lune en 1969.",
+        "de": "Am 5. August 1930 in Wapakoneta, Ohio, geboren, betrat der Astronaut 1969 als erster Mensch den Mond."
+      }
+    },
+    {
+      "id": "yuri-gagarin",
+      "type": "explorer",
+      "year": 1934,
+      "title": {
+        "tr": "Yuri Gagarin",
+        "en": "Yuri Gagarin",
+        "es": "Yuri Gagarin",
+        "fr": "Youri Gagarine",
+        "de": "Juri Gagarin"
+      },
+      "description": {
+        "tr": "9 Mart 1934 tarihinde Rusya'nın Kluşino köyünde doğdu; 1961'de uzaya giden ilk insan olan Sovyet kozmonottur.",
+        "en": "Born on 9 March 1934 in Klushino, Russia, the Soviet cosmonaut became the first human to travel into space in 1961.",
+        "es": "Nació el 9 de marzo de 1934 en Klúshino, Rusia; el cosmonauta soviético fue el primer ser humano en viajar al espacio en 1961.",
+        "fr": "Né le 9 mars 1934 à Klouchino, en Russie, le cosmonaute soviétique fut le premier homme à voyager dans l'espace en 1961.",
+        "de": "Am 9. März 1934 im russischen Kluschino geboren, flog der sowjetische Kosmonaut 1961 als erster Mensch ins All."
+      }
+    },
+    {
+      "id": "elvis-presley",
+      "type": "musician",
+      "year": 1935,
+      "title": {
+        "tr": "Elvis Presley",
+        "en": "Elvis Presley",
+        "es": "Elvis Presley",
+        "fr": "Elvis Presley",
+        "de": "Elvis Presley"
+      },
+      "description": {
+        "tr": "8 Ocak 1935 tarihinde Mississippi'deki Tupelo kasabasında doğdu; tarihin en çok satan solo sanatçılarından biri olan 'Rock and Roll'un Kralı'dır.",
+        "en": "Born on 8 January 1935 in Tupelo, Mississippi, the 'King of Rock and Roll' became one of the best-selling solo artists in history.",
+        "es": "Nació el 8 de enero de 1935 en Tupelo, Misisipi; el «Rey del rock and roll» es uno de los solistas más vendidos de la historia.",
+        "fr": "Né le 8 janvier 1935 à Tupelo, dans le Mississippi, le « King du rock'n'roll » est l'un des artistes solo les plus vendus de l'histoire.",
+        "de": "Am 8. Januar 1935 in Tupelo, Mississippi, geboren, ist der „King of Rock 'n' Roll“ einer der erfolgreichsten Solokünstler der Geschichte."
+      }
+    },
+    {
+      "id": "dalai-lama",
+      "type": "religious",
+      "year": 1935,
+      "title": {
+        "tr": "14. Dalay Lama",
+        "en": "14th Dalai Lama",
+        "es": "XIV dalái lama",
+        "fr": "14e dalaï-lama",
+        "de": "14. Dalai Lama"
+      },
+      "description": {
+        "tr": "Lhamo Dhondup adıyla 6 Temmuz 1935 tarihinde Tibet'in Amdo bölgesindeki Taktser köyünde doğdu; Tibet Budizminin ruhani lideri 1989'da Nobel Barış Ödülü'nü aldı.",
+        "en": "Born Lhamo Dhondup on 6 July 1935 in Taktser, in the Amdo region of Tibet, the spiritual leader of Tibetan Buddhism won the Nobel Peace Prize in 1989.",
+        "es": "Nació como Lhamo Dhondup el 6 de julio de 1935 en Taktser, en la región tibetana de Amdo; el líder espiritual del budismo tibetano ganó el Nobel de la Paz en 1989.",
+        "fr": "Né Lhamo Dhondup le 6 juillet 1935 à Taktser, dans la région tibétaine de l'Amdo, le chef spirituel du bouddhisme tibétain reçut le prix Nobel de la paix en 1989.",
+        "de": "Als Lhamo Dhondup am 6. Juli 1935 in Taktser in der tibetischen Region Amdo geboren, erhielt das geistliche Oberhaupt des tibetischen Buddhismus 1989 den Friedensnobelpreis."
+      }
+    },
+    {
+      "id": "bruce-lee",
+      "type": "actor",
+      "year": 1940,
+      "title": {
+        "tr": "Bruce Lee",
+        "en": "Bruce Lee",
+        "es": "Bruce Lee",
+        "fr": "Bruce Lee",
+        "de": "Bruce Lee"
+      },
+      "description": {
+        "tr": "27 Kasım 1940 tarihinde San Francisco'nun Çin Mahallesi'nde doğdu; Ejderha'nın Dönüşü gibi filmlerle kung fu'yu dünya sinemasına taşıyan dövüş sanatçısı ve oyuncudur.",
+        "en": "Born on 27 November 1940 in San Francisco's Chinatown, the martial artist and actor brought kung fu to world cinema with films like Enter the Dragon.",
+        "es": "Nació el 27 de noviembre de 1940 en el barrio chino de San Francisco; el artista marcial y actor llevó el kung-fu al cine mundial con películas como Operación Dragón.",
+        "fr": "Né le 27 novembre 1940 dans le quartier chinois de San Francisco, l'artiste martial et acteur fit connaître le kung-fu au monde avec des films comme Opération Dragon.",
+        "de": "Am 27. November 1940 in San Franciscos Chinatown geboren, brachte der Kampfkünstler und Schauspieler mit Filmen wie Der Mann mit der Todeskralle Kung-Fu ins Weltkino."
+      }
+    },
+    {
+      "id": "pele",
+      "type": "athlete",
+      "year": 1940,
+      "title": {
+        "tr": "Pelé",
+        "en": "Pelé",
+        "es": "Pelé",
+        "fr": "Pelé",
+        "de": "Pelé"
+      },
+      "description": {
+        "tr": "Edson Arantes do Nascimento adıyla 23 Ekim 1940 tarihinde Brezilya'nın Três Corações kasabasında doğdu; üç Dünya Kupası kazanan tek futbolcudur.",
+        "en": "Born Edson Arantes do Nascimento on 23 October 1940 in Três Corações, Brazil, he is the only footballer to win three World Cups.",
+        "es": "Nació como Edson Arantes do Nascimento el 23 de octubre de 1940 en Três Corações, Brasil; es el único futbolista que ha ganado tres Mundiales.",
+        "fr": "Né Edson Arantes do Nascimento le 23 octobre 1940 à Três Corações, au Brésil, il est le seul footballeur à avoir remporté trois Coupes du monde.",
+        "de": "Als Edson Arantes do Nascimento am 23. Oktober 1940 im brasilianischen Três Corações geboren, ist er der einzige Fußballer mit drei WM-Titeln."
+      }
+    },
+    {
+      "id": "john-lennon",
+      "type": "musician",
+      "year": 1940,
+      "title": {
+        "tr": "John Lennon",
+        "en": "John Lennon",
+        "es": "John Lennon",
+        "fr": "John Lennon",
+        "de": "John Lennon"
+      },
+      "description": {
+        "tr": "9 Ekim 1940 tarihinde İngiltere'nin Liverpool kentinde doğdu; Beatles'ın kurucularından biridir ve sonradan solo marşı 'Imagine'ı yazdı.",
+        "en": "Born on 9 October 1940 in Liverpool, England, he co-founded the Beatles and later wrote the solo anthem 'Imagine'.",
+        "es": "Nació el 9 de octubre de 1940 en Liverpool, Inglaterra; cofundó los Beatles y más tarde compuso el himno en solitario «Imagine».",
+        "fr": "Né le 9 octobre 1940 à Liverpool, en Angleterre, il cofonda les Beatles et écrivit plus tard l'hymne en solo « Imagine ».",
+        "de": "Am 9. Oktober 1940 im englischen Liverpool geboren, gründete er die Beatles mit und schrieb später als Solokünstler die Hymne „Imagine“."
+      }
+    },
+    {
+      "id": "bob-dylan",
+      "type": "musician",
+      "year": 1941,
+      "title": {
+        "tr": "Bob Dylan",
+        "en": "Bob Dylan",
+        "es": "Bob Dylan",
+        "fr": "Bob Dylan",
+        "de": "Bob Dylan"
+      },
+      "description": {
+        "tr": "Robert Zimmerman adıyla 24 Mayıs 1941 tarihinde Minnesota'daki Duluth kentinde doğdu; Nobel Edebiyat Ödülü'nü kazanan ilk müzisyen olan şarkıcı-söz yazarıdır.",
+        "en": "Born Robert Zimmerman on 24 May 1941 in Duluth, Minnesota, the singer-songwriter became the first musician to win the Nobel Prize in Literature.",
+        "es": "Nació como Robert Zimmerman el 24 de mayo de 1941 en Duluth, Minnesota; el cantautor fue el primer músico en ganar el Nobel de Literatura.",
+        "fr": "Né Robert Zimmerman le 24 mai 1941 à Duluth, dans le Minnesota, l'auteur-compositeur-interprète fut le premier musicien à recevoir le prix Nobel de littérature.",
+        "de": "Als Robert Zimmerman am 24. Mai 1941 in Duluth, Minnesota, geboren, erhielt der Singer-Songwriter als erster Musiker den Literaturnobelpreis."
+      }
+    },
+    {
+      "id": "muhammad-ali",
+      "type": "athlete",
+      "year": 1942,
+      "title": {
+        "tr": "Muhammad Ali",
+        "en": "Muhammad Ali",
+        "es": "Muhammad Ali",
+        "fr": "Mohamed Ali",
+        "de": "Muhammad Ali"
+      },
+      "description": {
+        "tr": "Cassius Clay adıyla 17 Ocak 1942 tarihinde Kentucky'deki Louisville kentinde doğdu; kendini 'En Büyük' ilan eden üç kez ağır sıklet dünya şampiyonudur.",
+        "en": "Born Cassius Clay on 17 January 1942 in Louisville, Kentucky, the three-time heavyweight champion called himself 'The Greatest'.",
+        "es": "Nació como Cassius Clay el 17 de enero de 1942 en Louisville, Kentucky; el triple campeón de los pesos pesados se hacía llamar «El más grande».",
+        "fr": "Né Cassius Clay le 17 janvier 1942 à Louisville, dans le Kentucky, le triple champion du monde des poids lourds se proclamait « le plus grand ».",
+        "de": "Als Cassius Clay am 17. Januar 1942 in Louisville, Kentucky, geboren, nannte sich der dreifache Schwergewichtsweltmeister „The Greatest“."
+      }
+    },
+    {
+      "id": "stephen-hawking",
+      "type": "scientist",
+      "year": 1942,
+      "title": {
+        "tr": "Stephen Hawking",
+        "en": "Stephen Hawking",
+        "es": "Stephen Hawking",
+        "fr": "Stephen Hawking",
+        "de": "Stephen Hawking"
+      },
+      "description": {
+        "tr": "8 Ocak 1942 tarihinde İngiltere'nin Oxford kentinde doğdu; motor nöron hastalığına rağmen kara delikleri inceleyen ve Zamanın Kısa Tarihi'ni yazan fizikçidir.",
+        "en": "Born on 8 January 1942 in Oxford, England, the physicist studied black holes and wrote A Brief History of Time despite living with motor neurone disease.",
+        "es": "Nació el 8 de enero de 1942 en Oxford, Inglaterra; el físico estudió los agujeros negros y escribió Breve historia del tiempo pese a padecer una enfermedad de la neurona motora.",
+        "fr": "Né le 8 janvier 1942 à Oxford, en Angleterre, le physicien étudia les trous noirs et écrivit Une brève histoire du temps malgré la maladie de Charcot.",
+        "de": "Am 8. Januar 1942 in Oxford geboren, erforschte der Physiker trotz seiner ALS-Erkrankung Schwarze Löcher und schrieb Eine kurze Geschichte der Zeit."
+      }
+    },
+    {
+      "id": "bob-marley",
+      "type": "musician",
+      "year": 1945,
+      "title": {
+        "tr": "Bob Marley",
+        "en": "Bob Marley",
+        "es": "Bob Marley",
+        "fr": "Bob Marley",
+        "de": "Bob Marley"
+      },
+      "description": {
+        "tr": "6 Şubat 1945 tarihinde Jamaika'nın Nine Mile köyünde doğdu; reggae müziğini ve barış mesajını tüm dünyaya ulaştıran müzisyendir.",
+        "en": "Born on 6 February 1945 in Nine Mile, Jamaica, he carried reggae music and its message of peace to audiences around the world.",
+        "es": "Nació el 6 de febrero de 1945 en Nine Mile, Jamaica; llevó el reggae y su mensaje de paz a públicos de todo el mundo.",
+        "fr": "Né le 6 février 1945 à Nine Mile, en Jamaïque, il fit découvrir au monde entier le reggae et son message de paix.",
+        "de": "Am 6. Februar 1945 in Nine Mile auf Jamaika geboren, trug er den Reggae und seine Friedensbotschaft in die ganze Welt."
+      }
+    },
+    {
+      "id": "freddie-mercury",
+      "type": "musician",
+      "year": 1946,
+      "title": {
+        "tr": "Freddie Mercury",
+        "en": "Freddie Mercury",
+        "es": "Freddie Mercury",
+        "fr": "Freddie Mercury",
+        "de": "Freddie Mercury"
+      },
+      "description": {
+        "tr": "Farrokh Bulsara adıyla 5 Eylül 1946 tarihinde Zanzibar'ın Stone Town kentinde doğdu; 'Bohemian Rhapsody'yi yazan Queen solisti, rock'ın en büyük seslerinden biridir.",
+        "en": "Born Farrokh Bulsara on 5 September 1946 in Stone Town, Zanzibar, the Queen frontman wrote 'Bohemian Rhapsody' and became one of rock's greatest voices.",
+        "es": "Nació como Farrokh Bulsara el 5 de septiembre de 1946 en Stone Town, Zanzíbar; el líder de Queen compuso «Bohemian Rhapsody» y fue una de las grandes voces del rock.",
+        "fr": "Né Farrokh Bulsara le 5 septembre 1946 à Stone Town, à Zanzibar, le chanteur de Queen écrivit « Bohemian Rhapsody » et devint l'une des plus grandes voix du rock.",
+        "de": "Als Farrokh Bulsara am 5. September 1946 in Stone Town auf Sansibar geboren, schrieb der Queen-Sänger „Bohemian Rhapsody“ und wurde zu einer der größten Rockstimmen."
+      }
+    },
+    {
+      "id": "steven-spielberg",
+      "type": "director",
+      "year": 1946,
+      "title": {
+        "tr": "Steven Spielberg",
+        "en": "Steven Spielberg",
+        "es": "Steven Spielberg",
+        "fr": "Steven Spielberg",
+        "de": "Steven Spielberg"
+      },
+      "description": {
+        "tr": "18 Aralık 1946 tarihinde Ohio'daki Cincinnati kentinde doğdu; Jaws, E.T. ve Jurassic Park'ı çeken, tarihin en başarılı yönetmenlerinden biridir.",
+        "en": "Born on 18 December 1946 in Cincinnati, Ohio, the director made Jaws, E.T. and Jurassic Park and is one of the most successful filmmakers ever.",
+        "es": "Nació el 18 de diciembre de 1946 en Cincinnati, Ohio; el director de Tiburón, E.T. y Parque Jurásico es uno de los cineastas más exitosos de la historia.",
+        "fr": "Né le 18 décembre 1946 à Cincinnati, dans l'Ohio, le réalisateur des Dents de la mer, d'E.T. et de Jurassic Park est l'un des cinéastes les plus populaires.",
+        "de": "Am 18. Dezember 1946 in Cincinnati, Ohio, geboren, drehte der Regisseur Der weiße Hai, E.T. und Jurassic Park und ist einer der erfolgreichsten Filmemacher."
+      }
+    },
+    {
+      "id": "donald-trump",
+      "type": "leader",
+      "year": 1946,
+      "title": {
+        "tr": "Donald Trump",
+        "en": "Donald Trump",
+        "es": "Donald Trump",
+        "fr": "Donald Trump",
+        "de": "Donald Trump"
+      },
+      "description": {
+        "tr": "14 Haziran 1946 tarihinde New York'un Queens ilçesinde doğdu; emlak işadamı ve televizyon yıldızı olarak ABD'nin 45. ve 47. başkanı oldu.",
+        "en": "Born on 14 June 1946 in Queens, New York City, the real-estate businessman and TV personality became the 45th and 47th President of the United States.",
+        "es": "Nació el 14 de junio de 1946 en Queens, Nueva York; el empresario inmobiliario y figura televisiva fue el 45.º y el 47.º presidente de EE. UU.",
+        "fr": "Né le 14 juin 1946 dans le Queens, à New York, l'homme d'affaires de l'immobilier et vedette de télévision devint le 45e puis le 47e président des États-Unis.",
+        "de": "Am 14. Juni 1946 in Queens, New York, geboren, wurde der Immobilienunternehmer und TV-Star 45. und 47. Präsident der USA."
+      }
+    },
+    {
+      "id": "david-bowie",
+      "type": "musician",
+      "year": 1947,
+      "title": {
+        "tr": "David Bowie",
+        "en": "David Bowie",
+        "es": "David Bowie",
+        "fr": "David Bowie",
+        "de": "David Bowie"
+      },
+      "description": {
+        "tr": "David Jones adıyla 8 Ocak 1947 tarihinde Londra'nın Brixton semtinde doğdu; Ziggy Stardust gibi karakterler yaratan, sürekli kabuk değiştiren rock yıldızıdır.",
+        "en": "Born David Jones on 8 January 1947 in Brixton, London, the shape-shifting rock star created personas like Ziggy Stardust.",
+        "es": "Nació como David Jones el 8 de enero de 1947 en Brixton, Londres; la camaleónica estrella del rock creó personajes como Ziggy Stardust.",
+        "fr": "Né David Jones le 8 janvier 1947 à Brixton, à Londres, la rock star caméléon créa des personnages comme Ziggy Stardust.",
+        "de": "Als David Jones am 8. Januar 1947 im Londoner Stadtteil Brixton geboren, erfand der wandelbare Rockstar Kunstfiguren wie Ziggy Stardust."
+      }
+    },
+    {
+      "id": "arnold-schwarzenegger",
+      "type": "actor",
+      "year": 1947,
+      "title": {
+        "tr": "Arnold Schwarzenegger",
+        "en": "Arnold Schwarzenegger",
+        "es": "Arnold Schwarzenegger",
+        "fr": "Arnold Schwarzenegger",
+        "de": "Arnold Schwarzenegger"
+      },
+      "description": {
+        "tr": "30 Temmuz 1947 tarihinde Avusturya'nın Thal köyünde doğdu; vücut geliştirme şampiyonu, Terminatör'de başrol oynadı ve sonra Kaliforniya valisi oldu.",
+        "en": "Born on 30 July 1947 in Thal, Austria, the bodybuilding champion starred as the Terminator and later served as Governor of California.",
+        "es": "Nació el 30 de julio de 1947 en Thal, Austria; el campeón de culturismo protagonizó Terminator y después fue gobernador de California.",
+        "fr": "Né le 30 juillet 1947 à Thal, en Autriche, le champion de culturisme incarna Terminator puis devint gouverneur de Californie.",
+        "de": "Am 30. Juli 1947 im österreichischen Thal geboren, spielte der Bodybuilding-Champion den Terminator und wurde später Gouverneur von Kalifornien."
+      }
+    },
+    {
+      "id": "vladimir-putin",
+      "type": "leader",
+      "year": 1952,
+      "title": {
+        "tr": "Vladimir Putin",
+        "en": "Vladimir Putin",
+        "es": "Vladímir Putin",
+        "fr": "Vladimir Poutine",
+        "de": "Wladimir Putin"
+      },
+      "description": {
+        "tr": "7 Ekim 1952 tarihinde Leningrad'da (bugünkü Sankt Peterburg) doğdu; eski KGB subayı, 1999'dan bu yana Rusya'yı devlet başkanı ya da başbakan olarak yönetiyor.",
+        "en": "Born on 7 October 1952 in Leningrad (today's Saint Petersburg), the former KGB officer has led Russia as president or prime minister since 1999.",
+        "es": "Nació el 7 de octubre de 1952 en Leningrado (actual San Petersburgo); el antiguo agente del KGB dirige Rusia como presidente o primer ministro desde 1999.",
+        "fr": "Né le 7 octobre 1952 à Léningrad (actuelle Saint-Pétersbourg), l'ancien officier du KGB dirige la Russie comme président ou Premier ministre depuis 1999.",
+        "de": "Am 7. Oktober 1952 in Leningrad (heute Sankt Petersburg) geboren, führt der ehemalige KGB-Offizier Russland seit 1999 als Präsident oder Regierungschef."
+      }
+    },
+    {
+      "id": "jackie-chan",
+      "type": "actor",
+      "year": 1954,
+      "title": {
+        "tr": "Jackie Chan",
+        "en": "Jackie Chan",
+        "es": "Jackie Chan",
+        "fr": "Jackie Chan",
+        "de": "Jackie Chan"
+      },
+      "description": {
+        "tr": "7 Nisan 1954 tarihinde Hong Kong'da doğdu; kung fu'yu komediyle ve kendi yaptığı cüretkâr dublörlük sahneleriyle harmanlamasıyla ünlü oyuncudur.",
+        "en": "Born on 7 April 1954 in Hong Kong, the actor is famous for blending kung fu, comedy and daring stunts he performs himself.",
+        "es": "Nació el 7 de abril de 1954 en Hong Kong; el actor es famoso por combinar kung-fu, humor y arriesgadas acrobacias que realiza él mismo.",
+        "fr": "Né le 7 avril 1954 à Hong Kong, l'acteur est célèbre pour son mélange de kung-fu, de comédie et de cascades audacieuses qu'il exécute lui-même.",
+        "de": "Am 7. April 1954 in Hongkong geboren, ist der Schauspieler berühmt für seine Mischung aus Kung-Fu, Komik und waghalsigen Stunts, die er selbst ausführt."
+      }
+    },
+    {
+      "id": "oprah-winfrey",
+      "type": "business",
+      "year": 1954,
+      "title": {
+        "tr": "Oprah Winfrey",
+        "en": "Oprah Winfrey",
+        "es": "Oprah Winfrey",
+        "fr": "Oprah Winfrey",
+        "de": "Oprah Winfrey"
+      },
+      "description": {
+        "tr": "29 Ocak 1954 tarihinde Mississippi'deki Kosciusko kasabasında doğdu; yoksulluktan gelip televizyonun en çok izlenen talk show'larından birini sundu ve bir medya imparatorluğu kurdu.",
+        "en": "Born on 29 January 1954 in Kosciusko, Mississippi, she rose from poverty to host one of TV's most-watched talk shows and build a media empire.",
+        "es": "Nació el 29 de enero de 1954 en Kosciusko, Misisipi; pasó de la pobreza a presentar uno de los programas de entrevistas más vistos y a crear un imperio mediático.",
+        "fr": "Née le 29 janvier 1954 à Kosciusko, dans le Mississippi, elle passa de la pauvreté à l'animation de l'un des talk-shows les plus regardés et bâtit un empire médiatique.",
+        "de": "Am 29. Januar 1954 in Kosciusko, Mississippi, geboren, arbeitete sie sich aus der Armut zur Moderatorin einer der meistgesehenen Talkshows und zur Medienunternehmerin hoch."
+      }
+    },
+    {
+      "id": "bill-gates",
+      "type": "business",
+      "year": 1955,
+      "title": {
+        "tr": "Bill Gates",
+        "en": "Bill Gates",
+        "es": "Bill Gates",
+        "fr": "Bill Gates",
+        "de": "Bill Gates"
+      },
+      "description": {
+        "tr": "28 Ekim 1955 tarihinde Washington eyaletinin Seattle kentinde doğdu; Microsoft'u kurdu, kişisel bilgisayarı yaygınlaştırdı ve sonra hayırseverliğe yöneldi.",
+        "en": "Born on 28 October 1955 in Seattle, Washington, he co-founded Microsoft, brought personal computing to the masses and later turned to philanthropy.",
+        "es": "Nació el 28 de octubre de 1955 en Seattle, Washington; cofundó Microsoft, llevó la informática personal a las masas y después se dedicó a la filantropía.",
+        "fr": "Né le 28 octobre 1955 à Seattle, il cofonda Microsoft, démocratisa l'informatique personnelle puis se consacra à la philanthropie.",
+        "de": "Am 28. Oktober 1955 in Seattle geboren, gründete er Microsoft mit, brachte den PC in die Haushalte und widmete sich später der Philanthropie."
+      }
+    },
+    {
+      "id": "steve-jobs",
+      "type": "business",
+      "year": 1955,
+      "title": {
+        "tr": "Steve Jobs",
+        "en": "Steve Jobs",
+        "es": "Steve Jobs",
+        "fr": "Steve Jobs",
+        "de": "Steve Jobs"
+      },
+      "description": {
+        "tr": "24 Şubat 1955 tarihinde San Francisco'da doğdu; Apple'ın kurucularındandır ve Macintosh, iPod ve iPhone gibi ürünleri tanıttı.",
+        "en": "Born on 24 February 1955 in San Francisco, he co-founded Apple and introduced products like the Macintosh, iPod and iPhone.",
+        "es": "Nació el 24 de febrero de 1955 en San Francisco; cofundó Apple y presentó productos como el Macintosh, el iPod y el iPhone.",
+        "fr": "Né le 24 février 1955 à San Francisco, il cofonda Apple et lança des produits comme le Macintosh, l'iPod et l'iPhone.",
+        "de": "Am 24. Februar 1955 in San Francisco geboren, gründete er Apple mit und brachte Produkte wie den Macintosh, den iPod und das iPhone heraus."
+      }
+    },
+    {
+      "id": "michael-jackson",
+      "type": "musician",
+      "year": 1958,
+      "title": {
+        "tr": "Michael Jackson",
+        "en": "Michael Jackson",
+        "es": "Michael Jackson",
+        "fr": "Michael Jackson",
+        "de": "Michael Jackson"
+      },
+      "description": {
+        "tr": "29 Ağustos 1958 tarihinde Indiana'daki Gary kentinde doğdu; tüm zamanların en çok satan albümü Thriller'ı kaydeden 'Pop'un Kralı'dır.",
+        "en": "Born on 29 August 1958 in Gary, Indiana, the 'King of Pop' recorded Thriller, the best-selling album of all time.",
+        "es": "Nació el 29 de agosto de 1958 en Gary, Indiana; el «Rey del pop» grabó Thriller, el álbum más vendido de todos los tiempos.",
+        "fr": "Né le 29 août 1958 à Gary, dans l'Indiana, le « roi de la pop » enregistra Thriller, l'album le plus vendu de tous les temps.",
+        "de": "Am 29. August 1958 in Gary, Indiana, geboren, nahm der „King of Pop“ Thriller auf, das meistverkaufte Album aller Zeiten."
+      }
+    },
+    {
+      "id": "madonna",
+      "type": "musician",
+      "year": 1958,
+      "title": {
+        "tr": "Madonna",
+        "en": "Madonna",
+        "es": "Madonna",
+        "fr": "Madonna",
+        "de": "Madonna"
+      },
+      "description": {
+        "tr": "16 Ağustos 1958 tarihinde Michigan'daki Bay City kentinde doğdu; kendini sürekli yeniden yaratan 'Pop'un Kraliçesi', tüm zamanların en çok satan kadın sanatçısıdır.",
+        "en": "Born on 16 August 1958 in Bay City, Michigan, the 'Queen of Pop' constantly reinvented herself and is the best-selling female recording artist ever.",
+        "es": "Nació el 16 de agosto de 1958 en Bay City, Míchigan; la «Reina del pop» se ha reinventado sin cesar y es la artista femenina con más discos vendidos.",
+        "fr": "Née le 16 août 1958 à Bay City, dans le Michigan, la « reine de la pop » n'a cessé de se réinventer et est l'artiste féminine la plus vendue au monde.",
+        "de": "Am 16. August 1958 in Bay City, Michigan, geboren, erfand sich die „Queen of Pop“ immer wieder neu und ist die erfolgreichste Solokünstlerin aller Zeiten."
+      }
+    },
+    {
+      "id": "diego-maradona",
+      "type": "athlete",
+      "year": 1960,
+      "title": {
+        "tr": "Diego Maradona",
+        "en": "Diego Maradona",
+        "es": "Diego Armando Maradona",
+        "fr": "Diego Maradona",
+        "de": "Diego Maradona"
+      },
+      "description": {
+        "tr": "30 Ekim 1960 tarihinde Arjantin'in Lanús kentinde doğdu; 'Tanrı'nın Eli' golü ve efsanevi solo golüyle ülkesini 1986 Dünya Kupası şampiyonluğuna taşıdı.",
+        "en": "Born on 30 October 1960 in Lanús, Argentina, he led his country to the 1986 World Cup title with both the 'Hand of God' and a legendary solo goal.",
+        "es": "Nació el 30 de octubre de 1960 en Lanús, Argentina; llevó a su país al título del Mundial de 1986 con «la mano de Dios» y un legendario gol en solitario.",
+        "fr": "Né le 30 octobre 1960 à Lanús, en Argentine, il mena son pays au titre mondial en 1986, entre la « main de Dieu » et un but solitaire légendaire.",
+        "de": "Am 30. Oktober 1960 im argentinischen Lanús geboren, führte er sein Land 1986 mit der „Hand Gottes“ und einem legendären Solotor zum WM-Titel."
+      }
+    },
+    {
+      "id": "barack-obama",
+      "type": "leader",
+      "year": 1961,
+      "title": {
+        "tr": "Barack Obama",
+        "en": "Barack Obama",
+        "es": "Barack Obama",
+        "fr": "Barack Obama",
+        "de": "Barack Obama"
+      },
+      "description": {
+        "tr": "4 Ağustos 1961 tarihinde Hawaii'nin Honolulu kentinde doğdu; ABD'nin 44. ve ilk Afrikalı Amerikalı başkanı oldu.",
+        "en": "Born on 4 August 1961 in Honolulu, Hawaii, he became the 44th and first African American President of the United States.",
+        "es": "Nació el 4 de agosto de 1961 en Honolulu, Hawái; fue el 44.º presidente de EE. UU. y el primer afroamericano en ocupar el cargo.",
+        "fr": "Né le 4 août 1961 à Honolulu, à Hawaï, il devint le 44e président des États-Unis, le premier Afro-Américain à ce poste.",
+        "de": "Am 4. August 1961 in Honolulu auf Hawaii geboren, wurde er der 44. und erste afroamerikanische Präsident der USA."
+      }
+    },
+    {
+      "id": "princess-diana",
+      "type": "leader",
+      "year": 1961,
+      "title": {
+        "tr": "Prenses Diana",
+        "en": "Princess Diana",
+        "es": "Diana de Gales",
+        "fr": "Lady Diana",
+        "de": "Prinzessin Diana"
+      },
+      "description": {
+        "tr": "Diana Spencer adıyla 1 Temmuz 1961 tarihinde İngiltere'nin Norfolk bölgesindeki Sandringham'da doğdu; Galler Prensesi hayır işleriyle tüm dünyada sevildi.",
+        "en": "Born Diana Spencer on 1 July 1961 at Sandringham, Norfolk, England, the Princess of Wales was admired worldwide for her charity work.",
+        "es": "Nació como Diana Spencer el 1 de julio de 1961 en Sandringham, Norfolk, Inglaterra; la princesa de Gales fue admirada en todo el mundo por su labor benéfica.",
+        "fr": "Née Diana Spencer le 1er juillet 1961 à Sandringham, dans le Norfolk, la princesse de Galles fut admirée dans le monde entier pour son engagement caritatif.",
+        "de": "Als Diana Spencer am 1. Juli 1961 in Sandringham in Norfolk geboren, wurde die Prinzessin von Wales weltweit für ihr soziales Engagement bewundert."
+      }
+    },
+    {
+      "id": "michael-jordan",
+      "type": "athlete",
+      "year": 1963,
+      "title": {
+        "tr": "Michael Jordan",
+        "en": "Michael Jordan",
+        "es": "Michael Jordan",
+        "fr": "Michael Jordan",
+        "de": "Michael Jordan"
+      },
+      "description": {
+        "tr": "17 Şubat 1963 tarihinde New York'un Brooklyn ilçesinde doğdu; Chicago Bulls ile altı NBA şampiyonluğu kazandı ve basketbolun en büyük oyuncusu sayılır.",
+        "en": "Born on 17 February 1963 in Brooklyn, New York, he won six NBA championships with the Chicago Bulls and is widely seen as basketball's greatest player.",
+        "es": "Nació el 17 de febrero de 1963 en Brooklyn, Nueva York; ganó seis anillos de la NBA con los Chicago Bulls y es considerado el mejor jugador de baloncesto.",
+        "fr": "Né le 17 février 1963 à Brooklyn, à New York, il remporta six titres NBA avec les Chicago Bulls et est considéré comme le plus grand basketteur de l'histoire.",
+        "de": "Am 17. Februar 1963 in Brooklyn, New York, geboren, gewann er mit den Chicago Bulls sechs NBA-Titel und gilt als größter Basketballspieler aller Zeiten."
+      }
+    },
+    {
+      "id": "j-k-rowling",
+      "type": "writer",
+      "year": 1965,
+      "title": {
+        "tr": "J. K. Rowling",
+        "en": "J. K. Rowling",
+        "es": "J. K. Rowling",
+        "fr": "J. K. Rowling",
+        "de": "J. K. Rowling"
+      },
+      "description": {
+        "tr": "31 Temmuz 1965 tarihinde İngiltere'de Bristol yakınlarındaki Yate kasabasında doğdu; tarihin en çok satan kitap serilerinden Harry Potter'ın yazarıdır.",
+        "en": "Born on 31 July 1965 in Yate, near Bristol, England, she wrote the Harry Potter series, one of the best-selling book series in history.",
+        "es": "Nació el 31 de julio de 1965 en Yate, cerca de Bristol, Inglaterra; escribió la saga Harry Potter, una de las más vendidas de la historia.",
+        "fr": "Née le 31 juillet 1965 à Yate, près de Bristol, en Angleterre, elle écrivit la saga Harry Potter, l'une des séries les plus vendues de l'histoire.",
+        "de": "Am 31. Juli 1965 in Yate bei Bristol geboren, schrieb sie die Harry-Potter-Reihe, eine der meistverkauften Buchserien der Geschichte."
+      }
+    },
+    {
+      "id": "elon-musk",
+      "type": "business",
+      "year": 1971,
+      "title": {
+        "tr": "Elon Musk",
+        "en": "Elon Musk",
+        "es": "Elon Musk",
+        "fr": "Elon Musk",
+        "de": "Elon Musk"
+      },
+      "description": {
+        "tr": "28 Haziran 1971 tarihinde Güney Afrika'nın Pretoria kentinde doğdu; Tesla ve SpaceX'i yöneten girişimci, dünyanın en zengin insanları arasındadır.",
+        "en": "Born on 28 June 1971 in Pretoria, South Africa, the entrepreneur leads Tesla and SpaceX and is among the world's richest people.",
+        "es": "Nació el 28 de junio de 1971 en Pretoria, Sudáfrica; el empresario dirige Tesla y SpaceX y está entre las personas más ricas del mundo.",
+        "fr": "Né le 28 juin 1971 à Pretoria, en Afrique du Sud, l'entrepreneur dirige Tesla et SpaceX et figure parmi les personnes les plus riches du monde.",
+        "de": "Am 28. Juni 1971 im südafrikanischen Pretoria geboren, leitet der Unternehmer Tesla und SpaceX und zählt zu den reichsten Menschen der Welt."
+      }
+    },
+    {
+      "id": "leonardo-dicaprio",
+      "type": "actor",
+      "year": 1974,
+      "title": {
+        "tr": "Leonardo DiCaprio",
+        "en": "Leonardo DiCaprio",
+        "es": "Leonardo DiCaprio",
+        "fr": "Leonardo DiCaprio",
+        "de": "Leonardo DiCaprio"
+      },
+      "description": {
+        "tr": "11 Kasım 1974 tarihinde Los Angeles'ta doğdu; Titanik ve Başlangıç'ta oynayan ve Diriliş ile Oscar kazanan oyuncudur.",
+        "en": "Born on 11 November 1974 in Los Angeles, the actor starred in Titanic and Inception and won an Oscar for The Revenant.",
+        "es": "Nació el 11 de noviembre de 1974 en Los Ángeles; el actor protagonizó Titanic y Origen y ganó el Óscar por El renacido.",
+        "fr": "Né le 11 novembre 1974 à Los Angeles, l'acteur joua dans Titanic et Inception et remporta l'Oscar pour The Revenant.",
+        "de": "Am 11. November 1974 in Los Angeles geboren, spielte der Schauspieler in Titanic und Inception und gewann für The Revenant den Oscar."
+      }
+    },
+    {
+      "id": "roger-federer",
+      "type": "athlete",
+      "year": 1981,
+      "title": {
+        "tr": "Roger Federer",
+        "en": "Roger Federer",
+        "es": "Roger Federer",
+        "fr": "Roger Federer",
+        "de": "Roger Federer"
+      },
+      "description": {
+        "tr": "8 Ağustos 1981 tarihinde İsviçre'nin Basel kentinde doğdu; Wimbledon'da rekor sekiz şampiyonluk dâhil 20 Grand Slam kazanan zarif tenisçidir.",
+        "en": "Born on 8 August 1981 in Basel, Switzerland, the elegant tennis player won 20 Grand Slam titles, including a record eight at Wimbledon.",
+        "es": "Nació el 8 de agosto de 1981 en Basilea, Suiza; el elegante tenista ganó 20 títulos de Grand Slam, entre ellos un récord de ocho en Wimbledon.",
+        "fr": "Né le 8 août 1981 à Bâle, en Suisse, l'élégant joueur de tennis a remporté 20 titres du Grand Chelem, dont un record de huit à Wimbledon.",
+        "de": "Am 8. August 1981 in Basel geboren, gewann der elegante Tennisspieler 20 Grand-Slam-Titel, darunter den Rekord von acht Wimbledon-Siegen."
+      }
+    },
+    {
+      "id": "beyonce",
+      "type": "musician",
+      "year": 1981,
+      "title": {
+        "tr": "Beyoncé",
+        "en": "Beyoncé",
+        "es": "Beyoncé",
+        "fr": "Beyoncé",
+        "de": "Beyoncé"
+      },
+      "description": {
+        "tr": "4 Eylül 1981 tarihinde Teksas'ın Houston kentinde doğdu; Destiny's Child ile ünlenen şarkıcı, en çok Grammy kazanma rekorunu elinde tutuyor.",
+        "en": "Born on 4 September 1981 in Houston, Texas, the singer rose to fame with Destiny's Child and holds the record for the most Grammy wins.",
+        "es": "Nació el 4 de septiembre de 1981 en Houston, Texas; la cantante se hizo famosa con Destiny's Child y tiene el récord de más premios Grammy.",
+        "fr": "Née le 4 septembre 1981 à Houston, au Texas, la chanteuse révélée par Destiny's Child détient le record de Grammy Awards remportés.",
+        "de": "Am 4. September 1981 in Houston, Texas, geboren, wurde die Sängerin mit Destiny's Child berühmt und hält den Rekord für die meisten Grammys."
+      }
+    },
+    {
+      "id": "mark-zuckerberg",
+      "type": "business",
+      "year": 1984,
+      "title": {
+        "tr": "Mark Zuckerberg",
+        "en": "Mark Zuckerberg",
+        "es": "Mark Zuckerberg",
+        "fr": "Mark Zuckerberg",
+        "de": "Mark Zuckerberg"
+      },
+      "description": {
+        "tr": "14 Mayıs 1984 tarihinde New York eyaletindeki White Plains'te doğdu; 2004'te Harvard'daki yurt odasından Facebook'u başlattı.",
+        "en": "Born on 14 May 1984 in White Plains, New York, he launched Facebook from his Harvard dorm room in 2004.",
+        "es": "Nació el 14 de mayo de 1984 en White Plains, Nueva York; lanzó Facebook desde su habitación de la residencia de Harvard en 2004.",
+        "fr": "Né le 14 mai 1984 à White Plains, dans l'État de New York, il lança Facebook depuis sa chambre d'étudiant à Harvard en 2004.",
+        "de": "Am 14. Mai 1984 in White Plains, New York, geboren, gründete er 2004 Facebook in seinem Studentenzimmer in Harvard."
+      }
+    },
+    {
+      "id": "cristiano-ronaldo",
+      "type": "athlete",
+      "year": 1985,
+      "title": {
+        "tr": "Cristiano Ronaldo",
+        "en": "Cristiano Ronaldo",
+        "es": "Cristiano Ronaldo",
+        "fr": "Cristiano Ronaldo",
+        "de": "Cristiano Ronaldo"
+      },
+      "description": {
+        "tr": "5 Şubat 1985 tarihinde Portekiz'in Madeira adasındaki Funchal'da doğdu; erkekler milli takım futbolunun tüm zamanların en golcü oyuncusudur.",
+        "en": "Born on 5 February 1985 in Funchal, on the Portuguese island of Madeira, the forward is the all-time top scorer in men's international football.",
+        "es": "Nació el 5 de febrero de 1985 en Funchal, en la isla portuguesa de Madeira; el delantero es el máximo goleador de la historia del fútbol de selecciones masculino.",
+        "fr": "Né le 5 février 1985 à Funchal, sur l'île portugaise de Madère, l'attaquant est le meilleur buteur de l'histoire du football international masculin.",
+        "de": "Am 5. Februar 1985 in Funchal auf der portugiesischen Insel Madeira geboren, ist der Stürmer Rekordtorschütze im Männer-Länderspielfußball."
+      }
+    },
+    {
+      "id": "usain-bolt",
+      "type": "athlete",
+      "year": 1986,
+      "title": {
+        "tr": "Usain Bolt",
+        "en": "Usain Bolt",
+        "es": "Usain Bolt",
+        "fr": "Usain Bolt",
+        "de": "Usain Bolt"
+      },
+      "description": {
+        "tr": "21 Ağustos 1986 tarihinde Jamaika'nın Sherwood Content köyünde doğdu; 100 ve 200 metrede dünya rekorlarını elinde tutan ve sekiz olimpiyat altını kazanan sprinterdir.",
+        "en": "Born on 21 August 1986 in Sherwood Content, Jamaica, the sprinter holds the world records in the 100 and 200 metres and won eight Olympic golds.",
+        "es": "Nació el 21 de agosto de 1986 en Sherwood Content, Jamaica; el velocista tiene los récords mundiales de 100 y 200 metros y ganó ocho oros olímpicos.",
+        "fr": "Né le 21 août 1986 à Sherwood Content, en Jamaïque, le sprinteur détient les records du monde du 100 et du 200 mètres et a remporté huit titres olympiques.",
+        "de": "Am 21. August 1986 in Sherwood Content auf Jamaika geboren, hält der Sprinter die Weltrekorde über 100 und 200 Meter und gewann acht olympische Goldmedaillen."
+      }
+    },
+    {
+      "id": "lionel-messi",
+      "type": "athlete",
+      "year": 1987,
+      "title": {
+        "tr": "Lionel Messi",
+        "en": "Lionel Messi",
+        "es": "Lionel Messi",
+        "fr": "Lionel Messi",
+        "de": "Lionel Messi"
+      },
+      "description": {
+        "tr": "24 Haziran 1987 tarihinde Arjantin'in Rosario kentinde doğdu; rekor sekiz Ballon d'Or kazanan ve Arjantin'i 2022 Dünya Kupası şampiyonluğuna taşıyan forvettir.",
+        "en": "Born on 24 June 1987 in Rosario, Argentina, the forward has won a record eight Ballon d'Or awards and led Argentina to the 2022 World Cup.",
+        "es": "Nació el 24 de junio de 1987 en Rosario, Argentina; el delantero ha ganado un récord de ocho Balones de Oro y llevó a Argentina al Mundial de 2022.",
+        "fr": "Né le 24 juin 1987 à Rosario, en Argentine, l'attaquant a remporté un record de huit Ballons d'or et mené l'Argentine au titre mondial en 2022.",
+        "de": "Am 24. Juni 1987 im argentinischen Rosario geboren, gewann der Stürmer die Rekordzahl von acht Ballons d'Or und führte Argentinien 2022 zum WM-Titel."
+      }
+    },
+    {
+      "id": "rihanna",
+      "type": "musician",
+      "year": 1988,
+      "title": {
+        "tr": "Rihanna",
+        "en": "Rihanna",
+        "es": "Rihanna",
+        "fr": "Rihanna",
+        "de": "Rihanna"
+      },
+      "description": {
+        "tr": "20 Şubat 1988 tarihinde Barbados'un Saint Michael bölgesinde doğdu; 'Umbrella' gibi hitlerin şarkıcısı, Fenty güzellik imparatorluğunu da kurdu.",
+        "en": "Born on 20 February 1988 in Saint Michael, Barbados, the singer behind hits like 'Umbrella' also built the Fenty beauty empire.",
+        "es": "Nació el 20 de febrero de 1988 en Saint Michael, Barbados; la cantante de éxitos como «Umbrella» también creó el imperio de belleza Fenty.",
+        "fr": "Née le 20 février 1988 à Saint Michael, à la Barbade, la chanteuse de tubes comme « Umbrella » a aussi bâti l'empire de beauté Fenty.",
+        "de": "Am 20. Februar 1988 in Saint Michael auf Barbados geboren, landete die Sängerin Hits wie „Umbrella“ und baute das Beauty-Imperium Fenty auf."
+      }
+    },
+    {
+      "id": "taylor-swift",
+      "type": "musician",
+      "year": 1989,
+      "title": {
+        "tr": "Taylor Swift",
+        "en": "Taylor Swift",
+        "es": "Taylor Swift",
+        "fr": "Taylor Swift",
+        "de": "Taylor Swift"
+      },
+      "description": {
+        "tr": "13 Aralık 1989 tarihinde Pennsylvania'daki West Reading'de doğdu; country'den pop'a geçen şarkıcı-söz yazarı, tarihin en çok hasılat yapan konser turnesini gerçekleştirdi.",
+        "en": "Born on 13 December 1989 in West Reading, Pennsylvania, the singer-songwriter moved from country to pop and staged the highest-grossing concert tour ever.",
+        "es": "Nació el 13 de diciembre de 1989 en West Reading, Pensilvania; la cantautora pasó del country al pop y realizó la gira de conciertos más taquillera de la historia.",
+        "fr": "Née le 13 décembre 1989 à West Reading, en Pennsylvanie, l'autrice-compositrice passée de la country à la pop a mené la tournée la plus lucrative de l'histoire.",
+        "de": "Am 13. Dezember 1989 in West Reading, Pennsylvania, geboren, wechselte die Singer-Songwriterin vom Country zum Pop und spielte die umsatzstärkste Tournee aller Zeiten."
+      }
+    },
+    {
+      "id": "malala-yousafzai",
+      "type": "activist",
+      "year": 1997,
+      "title": {
+        "tr": "Malala Yusufzay",
+        "en": "Malala Yousafzai",
+        "es": "Malala Yousafzai",
+        "fr": "Malala Yousafzai",
+        "de": "Malala Yousafzai"
+      },
+      "description": {
+        "tr": "12 Temmuz 1997 tarihinde Pakistan'ın Swat Vadisi'ndeki Mingora kentinde doğdu; Taliban saldırısından sağ kurtuldu ve 17 yaşında en genç Nobel Barış Ödülü sahibi oldu.",
+        "en": "Born on 12 July 1997 in Mingora, in Pakistan's Swat Valley, she survived a Taliban attack and at 17 became the youngest Nobel Peace Prize laureate.",
+        "es": "Nació el 12 de julio de 1997 en Mingora, en el valle de Swat (Pakistán); sobrevivió a un ataque talibán y a los 17 años fue la ganadora más joven del Nobel de la Paz.",
+        "fr": "Née le 12 juillet 1997 à Mingora, dans la vallée de Swat au Pakistan, elle survécut à une attaque des talibans et devint à 17 ans la plus jeune lauréate du Nobel de la paix.",
+        "de": "Am 12. Juli 1997 in Mingora im pakistanischen Swat-Tal geboren, überlebte sie einen Taliban-Anschlag und wurde mit 17 jüngste Friedensnobelpreisträgerin."
+      }
+    }
+  ]
+}

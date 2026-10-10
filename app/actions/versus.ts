@@ -17,7 +17,9 @@ import {
 } from "@/lib/db/matches";
 import { paneBounds, TIMELINE_PANES } from "@/lib/game/timeline";
 import {
+  DEFAULT_VERSUS_MODE,
   isInviteCode,
+  isVersusMode,
   normalizeInviteCode,
   type MatchView,
   type Seat,
@@ -51,11 +53,29 @@ export type CreateResult =
   | { ok: true; matchId: string; code: string; seat: Seat; token: string }
   | ActionFailure;
 
-export async function createVersusMatch(): Promise<CreateResult> {
+/**
+ * Open a match on one of the date-guessing pools.
+ *
+ * The mode is the only argument, and it is the one thing on this surface a
+ * client is allowed to choose — which is safe because it chooses between
+ * pools the player could already play solo, not between pools and privileges.
+ * It is still validated rather than passed through: an unrecognised string
+ * would reach `match.mode` and leave a row naming a game that does not exist.
+ * Refused rather than defaulted, because a silent fallback here is a match in
+ * a mode the player did not pick, and they would only find out at question
+ * one.
+ */
+export async function createVersusMatch(
+  mode: string = DEFAULT_VERSUS_MODE,
+): Promise<CreateResult> {
+  if (typeof mode !== "string" || !isVersusMode(mode)) {
+    return { ok: false, reason: "bad-mode" };
+  }
+
   const admin = createAdminDbClient();
 
   try {
-    const credentials = await createMatch(admin);
+    const credentials = await createMatch(admin, mode);
     return { ok: true, ...credentials };
   } catch (error) {
     console.error("createVersusMatch failed", error);

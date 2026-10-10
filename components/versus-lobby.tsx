@@ -6,7 +6,7 @@ import { QrCode } from "@/components/qr-code";
 import { publicEnv } from "@/lib/env";
 import { format, type Dict } from "@/lib/i18n/dictionary";
 import type { MatchView, Seat } from "@/lib/game/versus";
-import { otherSeat } from "@/lib/game/versus";
+import { otherSeat, versusModeSpec } from "@/lib/game/versus";
 
 /**
  * The invitation screen: everything between creating a match and the first
@@ -50,10 +50,27 @@ export function VersusLobby({
 
   return (
     <div className="flex min-h-0 w-full flex-1 items-center justify-center py-2">
-      <div className="set-summary-in flex max-h-full w-full max-w-md flex-col gap-5 overflow-y-auto rounded-3xl border border-white/12 bg-black/45 px-7 py-7 text-center shadow-2xl shadow-black/70 backdrop-blur-2xl">
-        <div>
+      {/* **The head is outside the scroll container, not the first thing in
+          it.** The whole panel used to scroll, so on a short window — a phone
+          in landscape, a laptop at 520px of usable height — the first flick
+          carried "Karşı karşıya · Tarih tahmini" and "Arkadaşını davet et" up
+          under the panel's own rounded edge and cut them in half. The heading
+          is what tells the second player, arriving cold off a link, which game
+          they have been invited to; it is the one thing on this screen that
+          must still be on it when the QR code is. So the panel is a column
+          with a fixed head and a scrolling body, and the padding is split
+          between them accordingly: `pt-7` on the head, `pb-7` on the body, and
+          the horizontal padding on both so the two edges line up. */}
+      <div className="set-summary-in flex max-h-full w-full max-w-md flex-col overflow-hidden rounded-3xl border border-white/12 bg-black/45 text-center shadow-2xl shadow-black/70 backdrop-blur-2xl">
+        <div className="shrink-0 px-7 pb-5 pt-7">
+          {/* The kicker names the game as well as the mode. A match is ten
+              questions from one pool and the second player arrives here off a
+              link, so this is the first and only place they are told which of
+              the date-guessing games they have been invited to. */}
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
             {t.versusTitle}
+            <span className="px-1.5 text-white/30">·</span>
+            {t[versusModeSpec(view.mode).titleKey]}
           </p>
           <h2 className="mt-1 font-display text-xl font-semibold text-ink">
             {t.versusInviteTitle}
@@ -63,82 +80,84 @@ export function VersusLobby({
           </p>
         </div>
 
-        {/* Only while there is still somebody to invite. Once they are in,
-            the link is clutter standing between the player and the button
-            they are waiting to press. */}
-        {!theyJoined && inviteUrl && (
-          <>
-            <div className="flex flex-col items-center gap-3">
-              <div className="rounded-2xl bg-white p-2 shadow-lg shadow-black/40">
-                <QrCode value={inviteUrl} size={148} />
+        <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-7 pb-7">
+          {/* Only while there is still somebody to invite. Once they are in,
+              the link is clutter standing between the player and the button
+              they are waiting to press. */}
+          {!theyJoined && inviteUrl && (
+            <>
+              <div className="flex flex-col items-center gap-3">
+                <div className="rounded-2xl bg-white p-2 shadow-lg shadow-black/40">
+                  <QrCode value={inviteUrl} size={148} />
+                </div>
+                <p className="text-xs text-white/50">{t.versusScanHint}</p>
               </div>
-              <p className="text-xs text-white/50">{t.versusScanHint}</p>
-            </div>
 
-            <div className="flex flex-col gap-2.5">
-              <WhatsAppButton
-                url={inviteUrl}
-                label={t.versusShareWhatsApp}
-                template={t.versusInviteMessage}
-              />
-              <CopyLinkButton
-                url={inviteUrl}
-                label={t.versusCopyLink}
-                copiedLabel={t.versusLinkCopied}
-              />
-            </div>
+              <div className="flex flex-col gap-2.5">
+                <WhatsAppButton
+                  url={inviteUrl}
+                  label={t.versusShareWhatsApp}
+                  template={t.versusInviteMessage}
+                />
+                <CopyLinkButton
+                  url={inviteUrl}
+                  label={t.versusCopyLink}
+                  copiedLabel={t.versusLinkCopied}
+                />
+              </div>
 
-            <div className="border-t border-white/10 pt-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">
-                {t.versusMatchCode}
-              </p>
-              <p className="mt-1 font-display text-2xl font-semibold tracking-[0.24em] text-ink">
-                {view.code}
-              </p>
-            </div>
-          </>
-        )}
+              <div className="border-t border-white/10 pt-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">
+                  {t.versusMatchCode}
+                </p>
+                <p className="mt-1 font-display text-2xl font-semibold tracking-[0.24em] text-ink">
+                  {view.code}
+                </p>
+              </div>
+            </>
+          )}
 
-        <div className="flex flex-col gap-3">
-          <SeatRow
-            label={t.versusYou}
-            joined
-            ready={youReady}
-            t={t}
-          />
-          <SeatRow
-            label={t.versusOpponent}
-            joined={theyJoined}
-            ready={theyReady}
-            t={t}
-          />
-        </div>
-
-        {theyJoined ? (
-          <div className="flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={onReady}
-              disabled={youReady || busy}
-              aria-busy={busy}
-              className={`w-full rounded-full border px-6 py-2.5 text-sm font-semibold transition ${
-                youReady
-                  ? "cursor-default border-white/20 bg-transparent text-white/50"
-                  : "border-transparent bg-ink text-page hover:opacity-85"
-              }`}
-            >
-              {youReady ? t.versusYouAreReady : t.versusReady}
-            </button>
-            {youReady && !theyReady && (
-              <Waiting label={t.versusReadyWaiting} />
-            )}
-            {youReady && theyReady && (
-              <p className="text-xs text-white/55">{t.versusStarting}</p>
-            )}
+          <div className="flex flex-col gap-3">
+            <SeatRow
+              label={t.versusYou}
+              joined
+              ready={youReady}
+              t={t}
+            />
+            <SeatRow
+              label={t.versusOpponent}
+              joined={theyJoined}
+              ready={theyReady}
+              t={t}
+            />
           </div>
-        ) : (
-          <Waiting label={t.versusWaitingToJoin} />
-        )}
+
+          {theyJoined ? (
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={onReady}
+                disabled={youReady || busy}
+                aria-busy={busy}
+                className={`w-full rounded-full border px-6 py-2.5 text-sm font-semibold transition ${
+                  youReady
+                    ? "cursor-default border-white/20 bg-transparent text-white/50"
+                    : "border-transparent bg-ink text-page hover:opacity-85"
+                }`}
+              >
+                {youReady ? t.versusYouAreReady : t.versusReady}
+              </button>
+              {youReady && !theyReady && (
+                <Waiting label={t.versusReadyWaiting} />
+              )}
+              {youReady && theyReady && (
+                <p className="text-xs text-white/55">{t.versusStarting}</p>
+              )}
+            </div>
+          ) : (
+            <Waiting label={t.versusWaitingToJoin} />
+          )}
+        </div>
       </div>
     </div>
   );

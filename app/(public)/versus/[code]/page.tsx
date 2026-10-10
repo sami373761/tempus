@@ -26,16 +26,24 @@ export default async function VersusMatchPage({
   const code = normalizeInviteCode(raw);
 
   return (
-    // The same one-viewport box the solo game uses, reading the same bar-height
+    // The same one-viewport box the solo games use, reading the same bar-height
     // token. See app/(public)/guess/page.tsx for why both sides of that
     // subtraction have to be the one number.
-    <div className="mx-auto flex h-[calc(100dvh-var(--site-bar-h))] max-w-6xl flex-col overflow-y-auto px-6 pb-6 pt-2">
+    //
+    // The *width* is the game's own, not this page's: a match can be any of
+    // the date-guessing pools and they do not all want the same container —
+    // the film & television layout reads the site bar's full width so the
+    // poster lines up under the wordmark, and the one-column modes keep
+    // `/guess`'s narrower column. This page cannot know which: it deliberately
+    // fetches nothing, and the mode is on the match row. So it owns the height
+    // budget and `VersusGame` owns the container inside it.
+    <div className="flex h-[calc(100dvh-var(--site-bar-h))] flex-col overflow-y-auto">
       <h1 className="sr-only">{t.versusTitle}</h1>
 
       {isInviteCode(code) ? (
         <VersusGame code={code} t={t} locale={locale} />
       ) : (
-        <p className="flex flex-1 items-center justify-center text-center text-ink-dim">
+        <p className="flex flex-1 items-center justify-center px-6 text-center text-ink-dim">
           {t.versusMatchNotFound}
         </p>
       )}

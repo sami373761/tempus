@@ -42,22 +42,42 @@ import type { Dict } from "@/lib/i18n/dictionary";
  * of these subtracted from another and a fixed box is what lets the halves
  * cross by translating.
  *
- * 72px of chip clears the longest abbreviation the dictionary has ("av. J.-C."
- * in French, "n. Chr." in German) at this weight and size; the rest is the
- * number's, and 132px holds the eleven tabular digits of 10,000,000,000 BCE —
- * the oldest year the timeline reaches, and the only case that comes close to
- * filling it — without the number crowding the era beside it.
+ * **196px is the room the round's row actually has**, not a width chosen for
+ * the control's own sake. The entry hangs off the left of the advance button,
+ * which stands at the centre of the card above it, so what is left for the
+ * pill is half the card (`CARD_BOX_WIDE`, 36rem, the cap it takes while the
+ * rail is folded away) less half that button and the gap between the two. Any
+ * wider and the entry starts to the left of the photograph it belongs to,
+ * which reads as the row having slipped rather than as a control standing
+ * beside a button. A language whose "lock in guess" is long enough —
+ * German's is 206px — overruns that budget on its own and the entry reaches
+ * past the card again; nothing this file can set would fix that, since the
+ * overrun is the button's.
+ *
+ * The two halves then take what the width allows: 64px of chip clears the
+ * longest abbreviation the dictionary has ("ap. J.-C." in French, 51px at
+ * this weight and size), and the 118px left over holds the eleven tabular
+ * digits of 10,000,000,000 BCE — the oldest year the timeline reaches, and
+ * the only case that comes anywhere near filling it.
  */
-const PILL_W = 216;
+const PILL_W = 196;
 const PILL_PAD = 4;
-const CHIP_W = 72;
-const HALF_GAP = 8;
+const CHIP_W = 64;
+const HALF_GAP = 6;
 
 /** Where the number sits with CE on the left, and how far it travels. */
 const FIELD_LEFT = PILL_PAD + CHIP_W + HALF_GAP;
 const FIELD_W = PILL_W - PILL_PAD - FIELD_LEFT;
 /** The chip's own journey: from the near edge to the far one. */
 const CHIP_TRAVEL = PILL_W - PILL_PAD * 2 - CHIP_W;
+
+/**
+ * The pill with no era half at all (`eraHidden`): the chip's width and the gap
+ * beside it come off, so what is left is the number's own box with the same
+ * padding around it. Written as a subtraction rather than as a second constant
+ * so it cannot drift from the box the field already had.
+ */
+const BARE_PILL_W = PILL_W - CHIP_W - HALF_GAP;
 
 /**
  * `ROUND_BUTTON`'s height, written out, because the pill lays its halves out
@@ -78,6 +98,8 @@ export function DateEntry({
   invalid = false,
   shown,
   focusDelayMs = 0,
+  eraHidden = false,
+  placeholder,
   t,
 }: {
   value: DateEntryValue;
@@ -92,9 +114,30 @@ export function DateEntry({
   shown: boolean;
   /** How long the shell takes to open. Focusing a clipped field scrolls the page. */
   focusDelayMs?: number;
+  /**
+   * The game has no BCE years to guess, so the era half is not drawn at all.
+   *
+   * A subject game whose rail starts after year 1 — film & television from
+   * 1900, football from 1850 — can only ever refuse a BCE date. A switch whose
+   * every result is the warning underneath reads as an invitation, and a dead
+   * chip left in its place is a control that cannot be pressed: both are worse
+   * than the era simply not being part of the question. So the chip goes, the
+   * pill comes in by exactly the chip's width plus its gap, and what is left
+   * is a field for a number — which is all this game ever asks for, since
+   * every year it deals is a four-digit CE one.
+   */
+  eraHidden?: boolean;
+  /**
+   * What the empty field says. Defaults to the word "Year"; a game with a
+   * narrow rail passes its own span instead ("1900–2026"), which is the one
+   * place the limits can be stated before a date is refused for missing them.
+   */
+  placeholder?: string;
   t: Dict;
 }) {
-  const bce = value.era === "BCE";
+  // With no era half there is no press that can reach BCE, so the number is
+  // never drawn as if one had: it stays in the one place the bare pill has.
+  const bce = !eraHidden && value.era === "BCE";
   const field = useRef<HTMLInputElement>(null);
 
   // Arriving in this mode should mean being able to type, not having to click
@@ -129,50 +172,52 @@ export function DateEntry({
           ? "border-bad/70 bg-bad/10"
           : "border-white/45 bg-black/45 hover:border-white/60"
       }`}
-      style={{ width: PILL_W, height: ENTRY_H }}
+      style={{ width: eraHidden ? BARE_PILL_W : PILL_W, height: ENTRY_H }}
     >
       {/* The era, which is also the control that turns the pill over. Solid
           enough to read as the thing to press, but short of the advance
           button's flat white — there is one primary action in this row and it
-          is not this. */}
-      <button
-        type="button"
-        onClick={switchEra}
-        disabled={disabled}
-        aria-label={t.eraSwitch}
-        className={`${SLIDE} absolute top-1/2 flex items-center justify-center rounded-full border border-white/20 bg-white/15 text-[13px] font-semibold tracking-tight text-ink hover:bg-white/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:pointer-events-none disabled:opacity-60`}
-        style={{
-          left: PILL_PAD,
-          width: CHIP_W,
-          height: `calc(${ENTRY_H} - ${PILL_PAD * 2}px)`,
-          // The vertical centring is written out here rather than left to a
-          // `-translate-y-1/2` class, because Tailwind v4 compiles that to the
-          // `translate` *property* and this is the `transform` one — the two
-          // compose instead of overriding, so the pair would centre the half
-          // twice and the chip would sit a full height above the pill.
-          transform: `translate(${bce ? CHIP_TRAVEL : 0}px, -50%)`,
-        }}
-      >
-        {/* Two labels in one box, stacked and crossfaded. The chip travels and
-            the word dissolves inside it, which is what makes this one control
-            changing state rather than two chips trading places. */}
-        <span className="relative block h-[1.1em] w-full overflow-hidden">
-          <span
-            className={`absolute inset-0 flex items-center justify-center whitespace-nowrap transition-opacity duration-[300ms] ${
-              bce ? "opacity-0" : "opacity-100"
-            }`}
-          >
-            {t.commonEra}
+          is not this. Absent entirely where the game has only one era. */}
+      {!eraHidden && (
+        <button
+          type="button"
+          onClick={switchEra}
+          disabled={disabled}
+          aria-label={t.eraSwitch}
+          className={`${SLIDE} absolute top-1/2 flex items-center justify-center rounded-full border border-white/20 bg-white/15 text-[13px] font-semibold tracking-tight text-ink hover:bg-white/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:pointer-events-none disabled:opacity-60`}
+          style={{
+            left: PILL_PAD,
+            width: CHIP_W,
+            height: `calc(${ENTRY_H} - ${PILL_PAD * 2}px)`,
+            // The vertical centring is written out here rather than left to a
+            // `-translate-y-1/2` class, because Tailwind v4 compiles that to
+            // the `translate` *property* and this is the `transform` one — the
+            // two compose instead of overriding, so the pair would centre the
+            // half twice and the chip would sit a full height above the pill.
+            transform: `translate(${bce ? CHIP_TRAVEL : 0}px, -50%)`,
+          }}
+        >
+          {/* Two labels in one box, stacked and crossfaded. The chip travels
+              and the word dissolves inside it, which is what makes this one
+              control changing state rather than two chips trading places. */}
+          <span className="relative block h-[1.1em] w-full overflow-hidden">
+            <span
+              className={`absolute inset-0 flex items-center justify-center whitespace-nowrap transition-opacity duration-[300ms] ${
+                bce ? "opacity-0" : "opacity-100"
+              }`}
+            >
+              {t.commonEra}
+            </span>
+            <span
+              className={`absolute inset-0 flex items-center justify-center whitespace-nowrap transition-opacity duration-[300ms] ${
+                bce ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              {t.bce}
+            </span>
           </span>
-          <span
-            className={`absolute inset-0 flex items-center justify-center whitespace-nowrap transition-opacity duration-[300ms] ${
-              bce ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            {t.bce}
-          </span>
-        </span>
-      </button>
+        </button>
+      )}
 
       <input
         ref={field}
@@ -192,7 +237,7 @@ export function DateEntry({
         // is what actually holds the cap, including for a paste, but this
         // stops the browser from ever showing a character it will not keep.
         maxLength={maxDigits(value.era)}
-        placeholder={t.yearLabel}
+        placeholder={placeholder ?? t.yearLabel}
         onChange={(event) =>
           onChange({
             era: value.era,
@@ -206,8 +251,11 @@ export function DateEntry({
         }}
         className={`${SLIDE} absolute top-1/2 rounded-full bg-transparent text-center text-base font-semibold tabular-nums text-ink outline-none placeholder:text-[13px] placeholder:font-normal placeholder:tracking-tight placeholder:text-ink-dim focus-visible:outline-none disabled:opacity-70`}
         style={{
-          left: FIELD_LEFT,
-          width: FIELD_W,
+          // With the era gone the field is the pill: it starts at the padding
+          // and takes everything inside it, rather than sitting in the half
+          // the chip left over.
+          left: eraHidden ? PILL_PAD : FIELD_LEFT,
+          width: eraHidden ? BARE_PILL_W - PILL_PAD * 2 : FIELD_W,
           // Centred here for the same reason as the chip above.
           transform: `translate(${bce ? PILL_PAD - FIELD_LEFT : 0}px, -50%)`,
         }}

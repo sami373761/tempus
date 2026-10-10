@@ -28,20 +28,24 @@ import { createHash, randomBytes } from "node:crypto";
 
 import type { Database } from "./database.types.ts";
 import type { DbClient } from "./queries.ts";
-import { eventsByIds, randomEvents } from "./queries.ts";
+import { eventCategorySlugs, eventsByIds, randomEvents } from "./queries.ts";
 import { DEFAULT_LOCALE } from "./types.ts";
+import { screenFormatOf } from "../game/screen.ts";
 import { gradeGuess, roundPoints } from "../game/scoring.ts";
 import {
+  asVersusMode,
   maskEvent,
   makeInviteCode,
   parseMatchHistory,
   REVEAL_SECONDS,
   ROUND_SECONDS,
   ROUNDS_PER_MATCH,
+  versusModeSpec,
   type MaskedEvent,
   type MatchPhase,
   type MatchView,
   type Seat,
+  type VersusMode,
 } from "../game/versus.ts";
 
 type MatchRow = Database["public"]["Tables"]["match"]["Row"];
@@ -132,13 +136,21 @@ async function dealRounds(
   matchId: string,
   generation: number,
   totalRounds: number,
+  mode: VersusMode,
 ): Promise<void> {
-  const events = await randomEvents(client, { count: totalRounds });
+  const { topicSlug } = versusModeSpec(mode);
+  const events = await randomEvents(client, {
+    count: totalRounds,
+    // Null for the general library, which is also the pool every topic is
+    // excluded from — so one argument is both halves of "a football match
+    // deals football events and nothing else deals them". See `randomEvents`.
+    ...(topicSlug === null ? {} : { topicSlug }),
+  });
 
   if (events.length < totalRounds) {
     throw new Error(
-      `Not enough playable events to deal a match: wanted ${totalRounds}, ` +
-        `the pool has ${events.length}.`,
+      `Not enough playable events to deal a ${mode} match: wanted ` +
+        `${totalRounds}, the pool has ${events.length}.`,
     );
   }
 
@@ -163,6 +175,7 @@ async function dealRounds(
  */
 export async function createMatch(
   client: DbClient,
+  mode: VersusMode,
 ): Promise<SeatCredentials> {
   let lastError: unknown = null;
 
@@ -173,6 +186,7 @@ export async function createMatch(
       .from("match")
       .insert({
         code,
+        mode,
         total_rounds: ROUNDS_PER_MATCH,
         round_seconds: ROUND_SECONDS,
         reveal_seconds: REVEAL_SECONDS,
@@ -197,7 +211,7 @@ export async function createMatch(
     });
     if (seatError) throw seatError;
 
-    await dealRounds(client, data.id, 1, ROUNDS_PER_MATCH);
+    await dealRounds(client, data.id, 1, ROUNDS_PER_MATCH, mode);
 
     return { matchId: data.id, code: data.code, seat: 1, token };
   }
@@ -372,7 +386,17 @@ export async function submitGuess(
 
   if (eventError) throw eventError;
 
-  const accuracy = gradeGuess(guess, event.year);
+  // The mode's own tolerance ladder, not the general one. A football guess
+  // nine years out is a bad answer and the same nine years on the formation of
+  // the Earth is a perfect one, which is the whole reason `BandSet` is a
+  // parameter — see lib/game/scoring.ts. The mode is read off the match rather
+  // than taken from the client for the usual reason: it decides what a guess
+  // is worth.
+  const accuracy = gradeGuess(
+    guess,
+    event.year,
+    versusModeSpec(asVersusMode(match.mode)).bands,
+  );
   const startedAt = match.round_started_at
     ? Date.parse(match.round_started_at)
     : Date.now();
@@ -430,7 +454,7 @@ export async function acceptRematch(
 ): Promise<void> {
   const { data: match, error } = await client
     .from("match")
-    .select("generation, total_rounds, phase")
+    .select("generation, total_rounds, phase, mode")
     .eq("id", matchId)
     .single();
 
@@ -450,7 +474,15 @@ export async function acceptRematch(
   if (countError) throw countError;
 
   if ((count ?? 0) < match.total_rounds) {
-    await dealRounds(client, matchId, next, match.total_rounds);
+    // The match's own mode, never the default: a rematch is another ten
+    // questions of the game the invitation was for.
+    await dealRounds(
+      client,
+      matchId,
+      next,
+      match.total_rounds,
+      asVersusMode(match.mode),
+    );
   }
 
   const { error: startError } = await client.rpc("versus_start_rematch", {
@@ -504,14 +536,17 @@ export async function buildMatchView(
     databaseNow(client),
   ]);
 
+  const mode = asVersusMode(match.mode);
+
   const [events, own] = await Promise.all([
-    visibleEvents(client, match, locale),
+    visibleEvents(client, match, locale, mode),
     seatAnswer(client, match, seat),
   ]);
 
   return {
     matchId: match.id,
     code: match.code,
+    mode,
     seat,
     phase: match.phase,
     generation: match.generation,
@@ -583,6 +618,7 @@ async function visibleEvents(
   client: DbClient,
   match: MatchRow,
   locale: string,
+  mode: VersusMode,
 ): Promise<Record<number, MaskedEvent>> {
   if (match.phase === "lobby" || match.phase === "abandoned") return {};
 
@@ -601,13 +637,32 @@ async function visibleEvents(
   if (!rounds || rounds.length === 0) return {};
 
   const ids = rounds.map((round) => round.event_id);
-  const events = await eventsByIds(client, ids, locale);
+
+  // The film & television mode's one extra fact, resolved here for the same
+  // reason the solo game resolves it in its dealer rather than on the client:
+  // whether a round is a film or a series decides what the question *means*
+  // (a release or a premiere), and `kind = 'other'` categories are not
+  // something a client should be able to ask this table for. Skipped
+  // altogether for the modes that have no formats, so no other mode pays for
+  // a second query.
+  const [events, formats] = await Promise.all([
+    eventsByIds(client, ids, locale),
+    mode === "screen"
+      ? eventCategorySlugs(client, ids, { kind: "other" })
+      : Promise.resolve(new Map<string, string[]>()),
+  ]);
+
   const byId = new Map(events.map((event) => [event.id, event]));
 
   const visible: Record<number, MaskedEvent> = {};
   for (const round of rounds) {
     const event = byId.get(round.event_id);
-    if (event) visible[round.idx] = maskEvent(event);
+    if (event) {
+      visible[round.idx] = maskEvent(
+        event,
+        screenFormatOf(formats.get(event.id)),
+      );
+    }
   }
   return visible;
 }

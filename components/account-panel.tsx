@@ -104,6 +104,14 @@ export function AccountPanel({
                 required
                 minLength={3}
                 maxLength={20}
+                /* The column's own character set, so the browser refuses a
+                   Turkish ş here rather than at the end of a round trip. It
+                   is a courtesy and not the rule — `validateUsername` on the
+                   server is — but it is the one that answers while the name
+                   is still being typed. Case is not part of it: "Ali" is
+                   accepted and stored as "ali". */
+                pattern="[A-Za-z0-9_]+"
+                title={t.authUsernameHint}
                 aria-label={t.accountUsernameTitle}
                 className={FIELD}
               />
@@ -440,6 +448,7 @@ function errorText(t: Dict, code: AuthErrorCode): string {
     "password-weak": t.authErrPasswordWeak,
     "password-mismatch": t.authErrPasswordMismatch,
     "username-invalid": t.authErrUsernameInvalid,
+    "username-chars": t.authErrUsernameChars,
     "username-taken": t.authErrUsernameTaken,
     "rate-limited": t.authErrRateLimited,
     "provider-failed": t.authErrProviderFailed,

@@ -14,10 +14,12 @@ import {
   comparisonSectionDistance,
   comparisonVerdict,
   COMPARISON_SECTIONS,
+  EXCLUDED_EVENT_LIMIT,
   isComparisonCorrect,
   ROUND_PHOTO_FADE_MS,
   ROUND_QUEUE_DEPTH,
   ROUND_QUEUE_TARGET,
+  roundEventIds,
   sectionSide,
   type ComparisonRound,
   type ComparisonSide,
@@ -30,7 +32,7 @@ import {
 import { survivalResult } from "@/lib/game/survival";
 import { VERDICT_COLORS } from "@/lib/game/verdict-style";
 import { formatHistoricalDate } from "@/lib/historical-date";
-import { format, type Dict } from "@/lib/i18n/dictionary";
+import { dateLabels, format, type Dict } from "@/lib/i18n/dictionary";
 
 /**
  * Comparison game.
@@ -147,6 +149,9 @@ export function ComparisonGame({
   mode?: ComparisonMode;
 }) {
   const survival = mode === "survival";
+  // How a date is written in this language: the era's abbreviation and where
+  // it sits relative to the number. See `dateLabels`.
+  const labels = dateLabels(t);
   const [fraction, setFraction] = useState(0.5);
   const [dragging, setDragging] = useState(false);
   // Which of the six sections the player locked in, which is a finer record of
@@ -162,6 +167,12 @@ export function ComparisonGame({
   // The set so far: one entry per question already answered *and* advanced
   // past, so its length is both the score and the position in the set.
   const [results, setResults] = useState<SetResult[]>([]);
+  // Which events this set has already used — all three per round, anchors
+  // included, because a round built from anchors the player has just been
+  // shown reads as a repeat even when the event being guessed is new. Kept
+  // beside `results` rather than derived from one, which records a verdict and
+  // not the round that earned it.
+  const [played, setPlayed] = useState<string[]>([]);
   // Latched when the player presses "Next round" before the queue has a round
   // to give them — see the note on `ROUND_QUEUE_TARGET`. The button must never
   // be dead, only late.
@@ -182,25 +193,45 @@ export function ComparisonGame({
   // than on its contents, so playing a round triggers exactly one refill;
   // `refillAttempt` is what lets a failed one be tried again, since a failure
   // leaves the length — and therefore the dependencies — unchanged.
+  //
+  // **The draw is told which events this set has already used.** A refill tops
+  // up two rounds at a time, so left to itself each draw knows only what the
+  // game is holding — which keeps a round from repeating the one before it and
+  // does nothing about question nine repeating question two. The pool is a few
+  // hundred events and a set of ten spends thirty of them, which is well
+  // inside the range where chance alone produces duplicates. The exclusion is
+  // a preference on the server's side rather than a filter (see `exclude` in
+  // lib/db/queries.ts), so a pool too small to honour it still returns a full
+  // draw.
   useEffect(() => {
     if (queue.length >= ROUND_QUEUE_TARGET) return;
 
     let cancelled = false;
     let retry: number | null = null;
 
-    dealComparisonRounds(ROUND_QUEUE_DEPTH)
+    // Everything this set has in play: the rounds left behind, plus the three
+    // events of every round still queued. Most recent last, since that is the
+    // end `EXCLUDED_EVENT_LIMIT` keeps.
+    const dealt = [...played, ...queue.flatMap(roundEventIds)];
+
+    dealComparisonRounds(ROUND_QUEUE_DEPTH, dealt.slice(-EXCLUDED_EVENT_LIMIT))
       .then((fresh) => {
         if (cancelled) return;
-        // Rounds are identified by the event being guessed: two rounds built
-        // from different anchors are different rounds even if one event repeats,
-        // but the same target twice running would read as a repeat.
-        setQueue((current) => [
-          ...current,
-          ...fresh.filter(
+        setQueue((current) => {
+          // Belt and braces for the one case the server cannot honour: a pool
+          // with nothing unseen left in it degrades to repeating something, so
+          // drop a round whose target is already in hand. Rounds are
+          // identified by the event being guessed — two rounds built from
+          // different anchors are different rounds even if one event repeats.
+          // **Never the whole batch**, though: this effect is keyed on the
+          // queue's length, so a draw that added nothing would never be
+          // retried and the queue would stop growing.
+          const added = fresh.filter(
             (candidate) =>
               !current.some((held) => held.target.id === candidate.target.id),
-          ),
-        ]);
+          );
+          return [...current, ...(added.length > 0 ? added : fresh)];
+        });
       })
       .catch(() => {
         if (cancelled) return;
@@ -214,6 +245,11 @@ export function ComparisonGame({
       cancelled = true;
       if (retry !== null) window.clearTimeout(retry);
     };
+    // `queue` and `played` are read for the exclusion list but deliberately
+    // not depended on: a draw already in flight has no reason to be restarted
+    // because the player answered a round, and the length is what says a
+    // refill is owed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queue.length, refillAttempt]);
 
   // Pull the next round's three photographs while this one is still being
@@ -326,9 +362,27 @@ export function ComparisonGame({
         : comparisonResult(correct),
     ]);
 
+    // Banked alongside the result, so the next refill can ask for events this
+    // set has not already shown. Trimmed to the same limit the draw applies,
+    // which only ever bites on a run with no end to it.
+    setPlayed((current) =>
+      [...current, ...roundEventIds(round)].slice(-EXCLUDED_EVENT_LIMIT),
+    );
+
     setPicked(null);
     setFraction(0.5);
     setQueue((current) => current.slice(1));
+  }
+
+  /**
+   * Start over. The round underneath has already advanced to a fresh question,
+   * so there is nothing to deal — but a new set does start over on which
+   * events count as repeats, or a long session would end up asking the draw to
+   * avoid the whole pool.
+   */
+  function playAgain() {
+    setResults([]);
+    setPlayed([]);
   }
 
   /**
@@ -401,18 +455,14 @@ export function ComparisonGame({
     // is a count with no ceiling, so almost nothing one of them says is true
     // of the other (see lib/game/survival.ts).
     return survival ? (
-      <SurvivalSummary
-        results={results}
-        onPlayAgain={() => setResults([])}
-        t={t}
-      />
+      <SurvivalSummary results={results} onPlayAgain={playAgain} t={t} />
     ) : (
       <SetSummary
         results={results}
         title={t.comparisonTitle}
         otherHref="/guess"
         otherLabel={t.tryTimeline}
-        onPlayAgain={() => setResults([])}
+        onPlayAgain={playAgain}
         t={t}
       />
     );
@@ -500,7 +550,7 @@ export function ComparisonGame({
                 tail="down"
                 caption={
                   answered
-                    ? formatHistoricalDate(round.target, locale)
+                    ? formatHistoricalDate(round.target, locale, labels)
                     : HIDDEN_DATE
                 }
                 captionClassName={answered ? "text-good" : "text-white/75"}
@@ -602,7 +652,7 @@ export function ComparisonGame({
                 tail="up"
                 caption={
                   answered
-                    ? formatHistoricalDate(round.left, locale)
+                    ? formatHistoricalDate(round.left, locale, labels)
                     : HIDDEN_DATE
                 }
                 // Dim once it is a fact; the same white as the floating
@@ -620,7 +670,7 @@ export function ComparisonGame({
                 tail="up"
                 caption={
                   answered
-                    ? formatHistoricalDate(round.right, locale)
+                    ? formatHistoricalDate(round.right, locale, labels)
                     : HIDDEN_DATE
                 }
                 // Dim once it is a fact; the same white as the floating
@@ -666,7 +716,7 @@ export function ComparisonGame({
                   },
                   {
                     label: t.actualDate,
-                    value: formatHistoricalDate(round.target, locale),
+                    value: formatHistoricalDate(round.target, locale, labels),
                   },
                 ]}
                 t={t}
@@ -1085,9 +1135,23 @@ function ActionButton({
       // soon as the draw lands, which is what keeps it from going dead for the
       // whole of a slow refill.
       aria-busy={pending}
-      className={`${base} ${pending ? "cursor-progress opacity-60" : ""}`}
+      className={`${base} relative ${pending ? "cursor-progress opacity-60" : ""}`}
     >
       {final ? t.seeResults : t.nextRound}
+      {/* The home board's loading trace, run around the button rather than a
+          card (`.round-trace` in app/globals.css). It draws in `currentColor`,
+          which on this button is `text-page` — the dark ink of a solid white
+          pill, where the board's near-white arc would not show at all.
+          Mounted only while the press is latched, so the comet starts from the
+          top each time instead of rejoining a lap that has been running
+          invisibly. */}
+      {pending && (
+        <span aria-hidden="true" className="round-trace">
+          <i />
+          <i />
+          <i />
+        </span>
+      )}
     </button>
   ) : (
     <button type="button" onClick={onSubmit} className={base}>

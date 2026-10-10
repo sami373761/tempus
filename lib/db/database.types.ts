@@ -339,6 +339,7 @@ export type Database = {
         Row: {
           id: string;
           code: string;
+          mode: string;
           phase: Database["public"]["Enums"]["match_phase"];
           generation: number;
           total_rounds: number;
@@ -365,6 +366,7 @@ export type Database = {
         Insert: {
           id?: string;
           code: string;
+          mode?: string;
           phase?: Database["public"]["Enums"]["match_phase"];
           generation?: number;
           total_rounds: number;
@@ -389,6 +391,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          mode?: string;
           phase?: Database["public"]["Enums"]["match_phase"];
           generation?: number;
           current_idx?: number;

@@ -81,7 +81,10 @@ export default async function DailyPage() {
         <DailyGame
           puzzleDate={puzzleDate}
           audience={audience}
-          questions={questions.map(maskEvent)}
+          // `(event) => maskEvent(event)` rather than the bare
+          // reference: `maskEvent` takes an optional second argument
+          // (the film/series format) and `map` would hand it the index.
+          questions={questions.map((event) => maskEvent(event))}
           answers={attempt.answers}
           bankedPoints={attempt.points}
           completed={attempt.completedAt !== null}

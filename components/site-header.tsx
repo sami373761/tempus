@@ -55,6 +55,10 @@ export const TRANSPARENT_ROUTES = [
   "/survival",
   "/versus",
   "/football",
+  // The basketball game is `/football`'s screen with another pool behind it
+  // (app/(public)/basketball/page.tsx), so it gets the same bar: a route whose
+  // full-bleed backdrop runs behind it needs the glass pill, not a card.
+  "/basketball",
 ];
 
 /**

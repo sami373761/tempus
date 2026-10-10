@@ -30,6 +30,8 @@ npm run image:attach -- …   # link one R2 object to an event
 npm run images:attach -- …  # link a whole R2 prefix, filename == event slug
 npm run backdrops:derive -- --prefix <folder>/          # rebuild -1440/-2560 widths
 npm run backdrops:derive -- --key <key> --widths 800,1600
+npm run images:shrink       # cap event images at 1600px; run LAST, after any attach
+npm run images:shrink -- --dry-run --prefix film-dizi/
 
 # Confirmed QA account (no mailbox needed). Writes creds to .env.test.local, never prints them.
 node --experimental-strip-types scripts/make-test-account.ts
@@ -115,6 +117,15 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
 - Slugs turn apostrophes and initials into separate segments:
   `caesar-s-gallic-wars`, `u-s-president`. Mismatched filenames are refused,
   never fuzzy-matched; fix with `image:attach --event <slug> --key <key>`.
+- **`images:shrink` runs last — after every attach, never before.** Attaching
+  demotes the event's current primary and inserts the new key as primary, so a
+  bulk attach after a shrink puts the multi-megabyte masters back on the
+  download path and leaves the shrunk `-<width>` rows as non-primary orphans.
+  Those orphans are invisible (only `is_primary` is ever read) and they block
+  the next shrink run on `image_object_unique`; clearing them is a deletion,
+  which is the user's call. A 600-900KB result at the 1600px cap is normal
+  single-encode output, not a missed row. The master is never touched, and
+  backdrops are out of reach by construction — they have no `public.image` row.
 - **Attaching:** `--source-url` and `--license` are mandatory. **Never invent an
   attribution** — ask for the real source. The script reads size, type, hash
   and dimensions from R2 bytes; never hand-type them. Valid licenses:

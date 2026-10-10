@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 
 import type { Dict } from "@/lib/i18n/dictionary";
 import type { BoardPhoto } from "@/lib/storage/images";
@@ -230,21 +230,21 @@ export function GameBoard({
           index={1}
         />
         <BoardCard
+          href="/basketball"
           title={t.basketballTitle}
           blurb={t.cardBasketballBlurb}
           kicker={t.timelineTitle}
           icon={<BasketballIcon />}
           photo={photos.basketball}
-          soon={t.comingSoon}
           index={2}
         />
         <BoardCard
+          href="/screen"
           title={t.screenTitle}
           blurb={t.cardScreenBlurb}
           kicker={t.timelineTitle}
           icon={<ClapperIcon />}
           photo={photos.screen}
-          soon={t.comingSoon}
           index={3}
         />
         {/* The last two slots stood empty until 2026-10-06. They are named
@@ -261,12 +261,12 @@ export function GameBoard({
           index={4}
         />
         <BoardCard
+          href="/when-born"
           title={t.whenBornTitle}
           blurb={t.cardWhenBornBlurb}
           kicker={t.timelineTitle}
           icon={<PersonIcon />}
           photo={photos.whenBorn}
-          soon={t.comingSoon}
           index={5}
         />
         <BoardCard
@@ -370,11 +370,25 @@ function BoardView({
  * it would be card colour over card colour, and inside a dashed placeholder it
  * would read as a fill the card is not meant to have.
  */
+/**
+ * The ground a card's text stands on, over whatever photograph it was dealt.
+ *
+ * **It is sized to the text, not to the picture.** Every card anchors its
+ * block to the lower edge, so the fade has to be opaque enough to read on
+ * through the title *and* the kicker above it — and the artwork underneath is
+ * not negotiable with: the 1v1 card is gold and blue heraldry at full
+ * saturation, which at the old `via-card/55` left "1v1" and "TARİH TAHMİNİ"
+ * printed over fleurs-de-lis under about 30% of a wash. The stops were
+ * re-measured against that card — the worst one on the board, which is the one
+ * worth measuring against: at 85% up to 42% of the fade, the bottom third,
+ * where every card's words are, is near-solid, and above it the fade is as
+ * gentle as it was and the photograph still reads as a photograph.
+ */
 function CardScrim() {
   return (
     <span
       aria-hidden="true"
-      className="pointer-events-none absolute inset-x-0 bottom-0 h-[72%] bg-gradient-to-t from-card via-card/55 to-transparent"
+      className="pointer-events-none absolute inset-x-0 bottom-0 h-[78%] bg-gradient-to-t from-card from-5% via-card/85 via-42% to-transparent"
     />
   );
 }
@@ -546,7 +560,7 @@ function CoverCard({
             two lines of `text-xs` in it, which is a line more than the card
             has. Unchanged from `sm` up. */}
         {kicker ? (
-          <span className="mb-1 block text-[10px] uppercase leading-[1.35] tracking-[0.08em] text-white/70 sm:text-xs sm:leading-4 sm:tracking-[0.1em]">
+          <span className={`mb-1 block text-[10px] uppercase leading-[1.35] tracking-[0.08em] text-white/85 sm:text-xs sm:leading-4 sm:tracking-[0.1em] ${ON_PHOTO_SHADOW}`}>
             {kicker}
           </span>
         ) : null}
@@ -578,7 +592,7 @@ function CoverCard({
      and a cover's 20px padding and 30px headline inside a 155px box read as a
      card that had been scaled rather than laid out. Other Games keeps its
      `span="full"`, so the row under them is unchanged. */
-  const shape = `board-card group relative flex ${CARD_HEIGHT} flex-col justify-between overflow-hidden rounded-2xl border border-hairline bg-card p-3.5 text-left sm:p-4 md:col-span-3 md:rounded-3xl md:p-5`;
+  const shape = `board-card group relative flex ${CARD_HEIGHT} flex-col justify-between overflow-hidden rounded-2xl border-[1.5px] border-hairline bg-card p-3.5 text-left sm:p-4 md:col-span-3 md:rounded-3xl md:p-5`;
 
   if (!href) {
     return (
@@ -606,6 +620,7 @@ function CoverCard({
       className={`${shape} transition-colors hover:border-ink/25 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent`}
     >
       {inner}
+      <CardTrace />
     </Link>
   );
 }
@@ -688,7 +703,7 @@ function BoardCard({
   span?: "wide" | "full";
   index: number;
 }) {
-  const surface = "border border-hairline bg-card";
+  const surface = "border-[1.5px] border-hairline bg-card";
 
   const inner = (
     <>
@@ -753,7 +768,7 @@ function BoardCard({
         {kicker ? (
           <span
             className={`mb-0.5 block text-[10px] uppercase leading-[1.35] tracking-[0.08em] sm:text-xs sm:leading-4 sm:tracking-[0.1em] ${
-              photo ? "text-white/70" : "text-ink-dim"
+              photo ? `text-white/85 ${ON_PHOTO_SHADOW}` : "text-ink-dim"
             }`}
           >
             {kicker}
@@ -845,8 +860,37 @@ function BoardCard({
       className={`${shape} transition-colors hover:border-ink/25 hover:bg-card-raised focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent`}
     >
       {inner}
+      <CardTrace />
     </Link>
   );
+}
+
+/**
+ * The ring that runs around a card while the click it answered is still being
+ * fetched.
+ *
+ * A game route is a database read — the board deals a round before it can
+ * render one — so a press is followed by a wait the page cannot shorten, and
+ * before this the card gave no sign it had been heard. The arc is the whole of
+ * the feedback: no spinner, no overlay, nothing that moves the card or hides
+ * the picture.
+ *
+ * `useLinkStatus` is why this is a child component rather than a branch in the
+ * card: the hook reads the pending state of the `Link` it sits inside, which
+ * means the router owns the state and nothing here has to guess when a
+ * navigation ended. It is also why the two `button` cards have no trace — the
+ * view swap is a state change, there is nothing to wait for.
+ *
+ * Mounted only while pending, so the animation starts from zero on every press
+ * instead of rejoining a loop that has been running invisibly. The ring itself
+ * is `.board-card-trace` in app/globals.css.
+ */
+function CardTrace() {
+  const { pending } = useLinkStatus();
+
+  if (!pending) return null;
+
+  return <span aria-hidden className="board-card-trace" />;
 }
 
 function SoonChip({ label, onDark }: { label: string; onDark?: boolean }) {

@@ -69,10 +69,49 @@ const PANE_WASH: Record<TimelinePane, string> = {
   // Football's own, and the one pane whose wash is not an era: floodlit turf.
   // It is the pane set's only member, so this is also the whole of what the
   // football game degrades to when R2 is unreachable — see the note on
-  // `TIMELINE_BACKDROP_BASE_NAMES`, where that pane currently shares the
-  // common era's photograph.
+  // `TIMELINE_BACKDROP_PLATES`, where that pane currently shares the common
+  // era's photograph.
   football:
     "radial-gradient(120% 110% at 50% 4%, #1f5c33 0%, #113021 48%, #030705 100%)",
+  // Basketball's own, and a subject rather than an era like football's and
+  // film's: varnished hardwood under arena lights. It is the pane set's only
+  // member, so this is also the whole of what the basketball game degrades to
+  // when R2 is unreachable — and like the film wash it had to be checked
+  // against the verdict ladder rather than against itself, since `wayOff` red
+  // sits on top of it. Its brightest stop is a warm 27% lightness, far enough
+  // from `--color-bad` in hue and saturation that the verdict still reads as a
+  // signal over it.
+  basketball:
+    "radial-gradient(120% 110% at 50% 4%, #8a5420 0%, #3d2410 48%, #0a0603 100%)",
+  // Film & television's own: the red of a cinema curtain under a house light,
+  // which like football's is a subject rather than an era. It is also the
+  // whole of what this game degrades to when R2 is unreachable, since its
+  // pane set has one member — and the only one of the seven washes that had to
+  // be checked against something other than itself, because the verdict
+  // ladder's `wayOff` red sits on top of it. It is dark and desaturated enough
+  // (its brightest stop is 28% lightness) that `--color-bad` still reads as a
+  // signal over it rather than as more of the same.
+  screen:
+    "radial-gradient(120% 110% at 50% 2%, #5c1f2e 0%, #2b1019 48%, #070304 100%)",
+  // The "Born When?" game's three rails, and the only pane set whose washes
+  // form a *sequence* rather than three unrelated colours. These panes are
+  // stretches of history, so they borrow the eras' own hues — the antiquity
+  // rail takes the civilisation pane's sunbaked ochre, and the two common-era
+  // rails the steel blue of recorded history — which is what makes the pan
+  // across the 1 BCE hinge read as walking out of antiquity.
+  //
+  // The two common-era rails are deliberately *not* identical. They share the
+  // same photograph (see `TIMELINE_BACKDROP_PLATES`), so the wash is the only
+  // thing that can mark the seam at AD 1500, and the modern rail's is a few
+  // points cooler and brighter — enough to register as a step when the camera
+  // crosses it, not enough to read as a different place. A player who pans
+  // from 1200 to 1800 should feel they have moved, not teleported.
+  "born-antiquity":
+    "radial-gradient(120% 110% at 28% 10%, #7a4a1f 0%, #39200d 48%, #0d0704 100%)",
+  "born-premodern":
+    "radial-gradient(120% 110% at 62% 8%, #27405c 0%, #141f2d 48%, #04060b 100%)",
+  "born-modern":
+    "radial-gradient(120% 110% at 74% 4%, #2b5478 0%, #16263a 48%, #050810 100%)",
 };
 
 export function TimelineBackdrop({

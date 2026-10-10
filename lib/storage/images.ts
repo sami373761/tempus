@@ -145,22 +145,36 @@ export function randomHomepageHeroUrl(): string {
  * outside the era folders and `parseImageObjectKey()` rejects their keys by
  * design. Uploaded by hand, not by `attach-image`.
  *
- * **A base name says nothing about which pane shows it.** Three of the five
- * were re-dressed on 2026-10-07 with photographs uploaded under the names they
- * arrived with (`game-backgrounds-00N`), so this map is the only place the
- * pairing is written down — the two that still match their pane's slug do so
- * by history, not by rule. Renaming an object in the bucket to match its pane
- * means regenerating its derived widths, which is why they were left alone.
+ * **A key says nothing about which pane shows it.** Most were uploaded under
+ * the names they arrived with (`game-backgrounds-00N`, `siyah_perde_8K`), so
+ * this map is the only place the pairing is written down — the ones that match
+ * their pane's slug do so by history, not by rule. Renaming an object in the
+ * bucket to match its pane means regenerating its derived widths, which is why
+ * they are left alone.
+ *
+ * The folder travels with the base name because a plate does not have to live
+ * under `date-guessing-game/`: the film & television pane wears art uploaded
+ * for that game under its own prefix, and a pane's plate is a pair of strings
+ * precisely so the next one can come from wherever it was uploaded. A folder
+ * new to this list has to be added to the dev proxy as well
+ * (app/api/r2/[...key]/route.ts), or it fails exactly like a missing object.
  *
  * A pane with no photo is not representable: the record is total, so adding a
- * sixth pane forces a sixth key rather than silently falling back to black.
+ * pane forces a plate rather than silently falling back to black.
  */
-const TIMELINE_BACKDROP_BASE_NAMES: Record<TimelinePane, string> = {
-  cosmos: "cosmos",
-  evolution: "game-backgrounds-003",
-  civilization: "game-backgrounds-002",
-  ce: "game-backgrounds-001",
-  future: "future",
+interface BackdropPlate {
+  /** R2 prefix, no trailing slash. */
+  folder: string;
+  /** Object name without the `-<width>.jpg` the derivatives carry. */
+  base: string;
+}
+
+const TIMELINE_BACKDROP_PLATES: Record<TimelinePane, BackdropPlate> = {
+  cosmos: { folder: "date-guessing-game", base: "cosmos" },
+  evolution: { folder: "date-guessing-game", base: "game-backgrounds-003" },
+  civilization: { folder: "date-guessing-game", base: "game-backgrounds-002" },
+  ce: { folder: "date-guessing-game", base: "game-backgrounds-001" },
+  future: { folder: "date-guessing-game", base: "future" },
   // The football rail covers 1850–2026, which sits wholly inside the common
   // era, so until a plate of its own is uploaded it wears the common era's —
   // art the site already has, which is the rule the explorer's stage follows
@@ -170,7 +184,48 @@ const TIMELINE_BACKDROP_BASE_NAMES: Record<TimelinePane, string> = {
   // crop. Giving football its own plate is this one line plus
   // `npm run backdrops:derive`; the pane's wash in
   // components/timeline-backdrop.tsx is already its own.
-  football: "game-backgrounds-001",
+  football: { folder: "date-guessing-game", base: "game-backgrounds-001" },
+  // The basketball rail covers 1875–2026, which like football's sits wholly
+  // inside the common era, so it wears the common era's plate until one of its
+  // own is uploaded — art the site already has, which is the rule football's
+  // pane and the explorer's stage both follow. The bucket's only basketball
+  // photography is `homepage/basketball.jpg`, the master the board's card was
+  // cut from, and at 2047x1803 it is narrower than the 2560 a full-bleed
+  // backdrop is stored at — so the pair derived from it would be upscaled at
+  // the width that matters. Giving this pane its own plate is this one line plus
+  // `npm run backdrops:derive`; its wash in components/timeline-backdrop.tsx
+  // is already its own.
+  basketball: { folder: "date-guessing-game", base: "game-backgrounds-001" },
+  // The film & television pane has its own plate: a black cinema curtain,
+  // uploaded under `film-dizi/` with the posters it belongs with. It is not a
+  // photograph of anything — which is the point. The subject's own imagery is
+  // all stills and posters under copyright (the bucket's `homepage/movies-1.jpg`
+  // is one, see CLAUDE.md's known gaps), so the room this game plays in is the
+  // auditorium rather than the picture: drawn art, cleared by being drawn, and
+  // near enough black that the posters on it are the only lit thing on screen.
+  screen: { folder: "film-dizi", base: "siyah_perde_8K" },
+  // The "Born When?" game's three rails, which share two of the general
+  // timeline's own plates rather than bringing art of their own — the rule
+  // football's pane already follows, and for a better reason here: these panes
+  // *are* stretches of history (1500 BCE to 1 BCE, AD 1 to 1500, 1500 to now)
+  // rather than a subject, so the plates that stand for antiquity and for
+  // recorded history are the right pictures and not a stand-in for a missing
+  // one.
+  //
+  // So the antiquity rail wears the civilisation pane's photograph and the two
+  // common-era rails wear the common era's, which also means the crossfade
+  // between the second and third rails is a hold rather than a dissolve: the
+  // seam at 1500 is a change of scale, not a change of era, and nothing behind
+  // it should move. The one visible transition is the pan across the 1 BCE
+  // hinge, which is exactly where a player *has* crossed into another age.
+  //
+  // Both plates already have their 1440/2560 derivatives in the bucket, so
+  // this game needs no `backdrops:derive` run. Giving any of the three a plate
+  // of its own is one line here plus that command; each pane's wash in
+  // components/timeline-backdrop.tsx is already its own.
+  "born-antiquity": { folder: "date-guessing-game", base: "game-backgrounds-002" },
+  "born-premodern": { folder: "date-guessing-game", base: "game-backgrounds-001" },
+  "born-modern": { folder: "date-guessing-game", base: "game-backgrounds-001" },
 };
 
 /**
@@ -218,11 +273,8 @@ export function timelineBackdropObjectKey(
   pane: TimelinePane,
   width: BackdropWidth,
 ): string {
-  return backdropObjectKey(
-    "date-guessing-game",
-    TIMELINE_BACKDROP_BASE_NAMES[pane],
-    width,
-  );
+  const { folder, base } = TIMELINE_BACKDROP_PLATES[pane];
+  return backdropObjectKey(folder, base, width);
 }
 
 export function timelineBackdropUrl(pane: TimelinePane): string {
@@ -231,10 +283,8 @@ export function timelineBackdropUrl(pane: TimelinePane): string {
 
 /** All stored widths, for a full-bleed `sizes="100vw"` backdrop. */
 export function timelineBackdropSrcSet(pane: TimelinePane): string {
-  return backdropSrcSet(
-    "date-guessing-game",
-    TIMELINE_BACKDROP_BASE_NAMES[pane],
-  );
+  const { folder, base } = TIMELINE_BACKDROP_PLATES[pane];
+  return backdropSrcSet(folder, base);
 }
 
 /**

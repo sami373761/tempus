@@ -30,7 +30,11 @@ import {
   EMPTY_DATE_ENTRY,
   type DateEntryValue,
 } from "@/lib/game/date-entry";
-import { ROUND_QUEUE_DEPTH, ROUND_QUEUE_TARGET } from "@/lib/game/rounds";
+import {
+  EXCLUDED_EVENT_LIMIT,
+  ROUND_QUEUE_DEPTH,
+  ROUND_QUEUE_TARGET,
+} from "@/lib/game/rounds";
 import { gradeGuess, type BandSet } from "@/lib/game/scoring";
 import {
   QUESTIONS_PER_SET,
@@ -146,8 +150,14 @@ export function TimelineGame({
    * here, because the pool is the one thing that must not be decidable on the
    * client: the football game and the date-guessing game differ in which
    * action they call and in nothing else.
+   *
+   * The second argument is the events this game has already dealt — see the
+   * refill effect for why the draw has to be told.
    */
-  deal?: (count: number) => Promise<LocalizedEvent[]>;
+  deal?: (
+    count: number,
+    exclude: readonly string[],
+  ) => Promise<LocalizedEvent[]>;
   /** The set summary's heading. Defaults to the date-guessing game's. */
   title?: string;
   /** Where the summary's "try the other game" link goes. */
@@ -178,6 +188,10 @@ export function TimelineGame({
   // The set so far: one entry per question already answered *and* advanced
   // past, so its length is both the score and the position in the set.
   const [results, setResults] = useState<SetResult[]>([]);
+  // Which events this set has already used. Kept beside `results` rather than
+  // derived from it, because a result records a verdict and not the question
+  // that earned it — and it is the question a draw has to avoid repeating.
+  const [played, setPlayed] = useState<string[]>([]);
   // Typing the date rather than dragging for it. A preference, not a round's
   // state: it survives the reveal and the next round, because a player who
   // wanted to type one date almost certainly wants to type the next.
@@ -211,25 +225,41 @@ export function TimelineGame({
   // than on its contents, so playing a round triggers exactly one refill;
   // `refillAttempt` is what lets a failed one be tried again, since a failure
   // leaves the length — and therefore the dependencies — unchanged.
+  //
+  // **The draw is told what this set has already used.** A refill tops up two
+  // rounds at a time, so left to itself each draw knows only what the game is
+  // holding — which stops an event repeating *in a row* and does nothing about
+  // it coming back on question nine. The pools are a few hundred events and
+  // football's is 66, where that put a duplicate in about half of all sets.
+  // The exclusion is a preference on the server's side rather than a filter
+  // (see `exclude` in lib/db/queries.ts), so a pool too small to honour it
+  // still returns a full draw.
   useEffect(() => {
     if (queue.length >= ROUND_QUEUE_TARGET) return;
 
     let cancelled = false;
     let retry: number | null = null;
 
-    deal(ROUND_QUEUE_DEPTH)
+    // Everything this set has in play: answered and left behind, plus the
+    // rounds still queued ahead of the one on screen. Most recent last, since
+    // that is the end `EXCLUDED_EVENT_LIMIT` keeps.
+    const dealt = [...played, ...queue.map((held) => held.id)];
+
+    deal(ROUND_QUEUE_DEPTH, dealt.slice(-EXCLUDED_EVENT_LIMIT))
       .then((fresh) => {
         if (cancelled) return;
-        // A draw is distinct within itself but can repeat what is already in
-        // hand; dropping those is what stops the same event appearing twice in
-        // a row. A batch can never be filtered away entirely, so the queue
-        // always grows and this effect always settles.
-        setQueue((current) => [
-          ...current,
-          ...fresh.filter(
+        setQueue((current) => {
+          // Belt and braces for the one case the server cannot honour: a pool
+          // with nothing unseen left in it degrades to repeating something, so
+          // drop anything already in hand to keep a duplicate out of adjacent
+          // rounds. **Never the whole batch**, though — this effect is keyed on
+          // the queue's length, so a draw that added nothing would never be
+          // retried and the queue would stop growing.
+          const added = fresh.filter(
             (candidate) => !current.some((held) => held.id === candidate.id),
-          ),
-        ]);
+          );
+          return [...current, ...(added.length > 0 ? added : fresh)];
+        });
       })
       .catch(() => {
         if (cancelled) return;
@@ -244,7 +274,12 @@ export function TimelineGame({
       if (retry !== null) window.clearTimeout(retry);
     };
     // `deal` is a module-level Server Action reference at every call site, so
-    // it is stable; naming it keeps the dependency array honest.
+    // it is stable; naming it keeps the dependency array honest. `queue` and
+    // `played` are read for the exclusion list but deliberately not depended
+    // on: a draw already in flight has no reason to be restarted because the
+    // player answered a question, and the length is what says a refill is
+    // owed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queue.length, refillAttempt, deal]);
 
   // Pull the next round's photograph while the current one is being guessed, so
@@ -271,6 +306,23 @@ export function TimelineGame({
     min: paneBounds(panes[0]!).min,
     max: paneBounds(panes[panes.length - 1]!).max,
   };
+
+  /**
+   * Whether the era is part of the question at all.
+   *
+   * Read off the rails rather than passed in: a game whose oldest pane starts
+   * after year 1 — football's 1850, and any subject rail added after it — has
+   * no BCE year to guess, so the chip's every outcome is `directYear`
+   * returning null and the warning underneath. A switch that can only ever be
+   * wrong is worse than one that is not there: it invites the press, costs the
+   * player a round, and takes half the pill's width to do it. The entry drops
+   * it and states the span it does accept instead, which is the film game's
+   * own arrangement (`/screen`) generalised to whichever rails it is handed.
+   *
+   * `> 0` and not `>= 0`: astronomical 0 is 1 BCE, so a rail reaching it does
+   * still hold a BCE year.
+   */
+  const eraHidden = entryRange.min > 0;
 
   const move = useCallback((nextPane: TimelinePane, nextFraction: number) => {
     setFractions((current) => ({ ...current, [nextPane]: nextFraction }));
@@ -346,7 +398,7 @@ export function TimelineGame({
    */
   /** Advance for real. Callers are responsible for there being a round to take. */
   function advance() {
-    if (!upcoming || !accuracy) return;
+    if (!upcoming || !accuracy || !event) return;
 
     // Banked here rather than at `submit`, so `results.length` is always the
     // number of questions *left behind* — which makes it the index of the one
@@ -354,6 +406,10 @@ export function TimelineGame({
     // and the round underneath advances anyway: the summary covers a fresh
     // question 1, so "Play again" is a state change with nothing to deal.
     setResults((current) => [...current, timelineResult(accuracy.verdict)]);
+    // Banked alongside the verdict, so the next refill can ask for something
+    // this set has not already shown. Trimmed to the same limit the draw
+    // applies, which only ever bites on a run with no end to it.
+    setPlayed((current) => [...current, event.id].slice(-EXCLUDED_EVENT_LIMIT));
 
     const from = pane;
     const travel =
@@ -365,9 +421,15 @@ export function TimelineGame({
     setGuess(null);
     setGuessPane(null);
     setGuessTyped(false);
-    // The era is kept and only the digits are cleared: the next round is a
-    // fresh year, not a fresh opinion about which half of history it is in.
-    setEntry((current) => ({ era: current.era, digits: "" }));
+    // **Both halves are cleared, era included.** The era used to be carried
+    // over on the grounds that it was an opinion about the round rather than
+    // an answer to it. It is not: a player who typed a BCE year last round
+    // types "1492" into a pill that still says BCE and locks in 1492 BCE,
+    // which is the one way this control can take a guess the player did not
+    // make. A fresh round asks a fresh question, so it starts at the entry's
+    // own zero (`EMPTY_DATE_ENTRY`) — CE, empty — and a BCE answer costs the
+    // one press it costs on the first round of a set.
+    setEntry(EMPTY_DATE_ENTRY);
     setInvalid(false);
     setQueue((current) => current.slice(1));
     setFractions((current) => ({ ...current, [homePane]: 0.5 }));
@@ -450,7 +512,14 @@ export function TimelineGame({
           title={title ?? t.timelineTitle}
           otherHref={otherHref}
           otherLabel={otherLabel ?? t.tryComparison}
-          onPlayAgain={() => setResults([])}
+          // The round underneath has already advanced to a fresh question, so
+          // a new set has nothing to deal — but it does start over on which
+          // events count as repeats, or a long session would eventually be
+          // asking the draw to avoid the whole pool.
+          onPlayAgain={() => {
+            setResults([]);
+            setPlayed([]);
+          }}
           t={t}
         />
       ) : (
@@ -653,6 +722,16 @@ export function TimelineGame({
                     invalid={invalid}
                     shown={direct}
                     focusDelayMs={RAIL_FOLD_MS}
+                    // On a rail that starts after year 1 the era is not a
+                    // question, so the pill is a field for a number and the
+                    // empty field names the span it will take — rather than
+                    // waiting to refuse a year outside it.
+                    eraHidden={eraHidden}
+                    placeholder={
+                      eraHidden
+                        ? `${entryRange.min}\u2013${entryRange.max}`
+                        : undefined
+                    }
                     t={t}
                   />
                 </div>
@@ -699,11 +778,24 @@ export function TimelineGame({
                     // disabling it here is what left it dead for the whole of the
                     // first draw, on question 2 of every game.
                     aria-busy={pendingNext}
-                    className={`${ROUND_BUTTON} border border-white/45 bg-black/45 text-ink backdrop-blur-md hover:bg-black/65 ${
+                    className={`${ROUND_BUTTON} relative border border-white/45 bg-black/45 text-ink backdrop-blur-md hover:bg-black/65 ${
                       pendingNext ? "cursor-progress opacity-60" : ""
                     }`}
                   >
                     {lastQuestion ? t.seeResults : t.nextRound}
+                    {/* The home board's loading trace, run around the button
+                        instead of around a card (`.round-trace` in
+                        app/globals.css). Mounted only while the press is
+                        latched, so the comet starts from the top every time
+                        rather than rejoining a lap that has been running
+                        invisibly. */}
+                    {pendingNext && (
+                      <span aria-hidden="true" className="round-trace">
+                        <i />
+                        <i />
+                        <i />
+                      </span>
+                    )}
                   </button>
                 </div>
               </div>

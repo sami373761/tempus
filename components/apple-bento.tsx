@@ -24,8 +24,11 @@
  * breakpoints change. Below `md` it unstacks into a single column, where fixed
  * ratios would squash the text.
  *
- * Copy and icons are placeholders, per the brief — the visual treatment is the
- * part being matched.
+ * The icons are placeholders, per the brief — the visual treatment is the part
+ * being matched. The copy is not: it reads the dictionary like every other
+ * string on the site, and the cards wrap to their own width rather than
+ * breaking their lines by hand, because the line that reads well in English
+ * breaks in the wrong place in German.
  *
  * The colour is **not** transcribed. The reference's blue/purple/pink and green
  * sweeps were the only chroma on an otherwise neutral page, so every gradient
@@ -37,25 +40,26 @@
  * card's sun keeps its amber. Don't "finish" the grey pass by neutralising it.
  */
 
+import type { Dict } from "@/lib/i18n/dictionary";
 import { randomHomepageHeroUrl } from "@/lib/storage/images";
 
 const CARD =
   "relative overflow-hidden rounded-[clamp(16px,1.6cqw,30px)] bg-card text-left transition-transform duration-500 ease-out will-change-transform hover:scale-[1.012] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent";
 
-export function AppleBento() {
+export function AppleBento({ t }: { t: Dict }) {
   return (
     <div className="@container w-full">
       <div className="grid grid-cols-1 gap-[clamp(12px,1.95cqw,24px)] md:aspect-[1751/960] md:grid-cols-[855fr_862fr]">
         {/* Left column: the photo card 15% shorter, the icon card unchanged. */}
         <div className="grid grid-cols-1 gap-[clamp(12px,2.2cqw,24px)] md:grid-rows-[356fr_228fr]">
-          <HeroCard />
-          <IconCard />
+          <HeroCard t={t} />
+          <IconCard t={t} />
         </div>
 
         {/* Right column: the tall card 15% shorter, the ring card unchanged. */}
         <div className="grid grid-cols-1 gap-[clamp(12px,2.2cqw,24px)] md:grid-rows-[198fr_386fr]">
-          <IntelligenceCard />
-          <EventsCard />
+          <IntelligenceCard t={t} />
+          <EventsCard t={t} />
         </div>
       </div>
     </div>
@@ -73,7 +77,7 @@ export function AppleBento() {
  * The mesh gradient stays underneath as the loading/failure state: the card
  * is never a bare rectangle while the photo is in flight.
  */
-function HeroCard() {
+function HeroCard({ t }: { t: Dict }) {
   return (
     <button type="button" className={`${CARD} min-h-[272px] md:min-h-0`}>
       <div
@@ -98,10 +102,8 @@ function HeroCard() {
 
       <div className="relative flex h-full flex-col justify-between p-[clamp(20px,3.8cqw,46px)]">
         <BookIcon />
-        <h3 className="max-w-[86%] font-display text-[clamp(22px,3.15cqw,56px)] font-semibold leading-[1.07] tracking-[-0.022em] text-white">
-          Browse the whole
-          <br />
-          timeline, event by event.
+        <h3 className="max-w-[86%] text-pretty font-display text-[clamp(22px,3.15cqw,56px)] font-semibold leading-[1.07] tracking-[-0.022em] text-white">
+          {t.bentoBrowseTitle}
         </h3>
       </div>
     </button>
@@ -109,54 +111,96 @@ function HeroCard() {
 }
 
 /** Icon left, headline right, both vertically centred. */
-function IconCard() {
+function IconCard({ t }: { t: Dict }) {
   return (
     <button
       type="button"
       className={`${CARD} flex items-center gap-[clamp(16px,3.5cqw,42px)] px-[clamp(20px,4.45cqw,54px)] py-[clamp(20px,3.5cqw,42px)]`}
     >
       <SunIcon />
-      <h3 className="font-display text-[clamp(18px,2.75cqw,48px)] font-semibold leading-[1.1] tracking-[-0.022em] text-ink">
-        A growing library
-        <br />
-        of historical
-        <br />
-        imagery.
+      <h3 className="text-pretty font-display text-[clamp(18px,2.75cqw,48px)] font-semibold leading-[1.1] tracking-[-0.022em] text-ink">
+        {t.bentoLibraryTitle}
       </h3>
     </button>
   );
 }
 
 /** The gradient-stroked card: 2px conic ring, gradient glyph, gradient type. */
-function IntelligenceCard() {
+function IntelligenceCard({ t }: { t: Dict }) {
   return (
     <button
       type="button"
       className={`${CARD} gradient-ring flex items-center gap-[clamp(14px,2.7cqw,34px)] px-[clamp(18px,4.2cqw,50px)] py-[clamp(18px,3cqw,36px)]`}
     >
       <IntelligenceIcon />
-      <h3 className="font-display text-[clamp(18px,2.5cqw,44px)] font-semibold leading-[1.18] tracking-[-0.022em] text-ink">
-        Built for
-        <br />
-        <span className="text-sweep-dim">daily challenges.</span>
+      <h3 className="text-pretty font-display text-[clamp(18px,2.5cqw,44px)] font-semibold leading-[1.18] tracking-[-0.022em] text-ink">
+        <Highlighted
+          template={t.bentoDailyTitle}
+          slot="highlight"
+          value={t.bentoDailyHighlight}
+          className="text-sweep-dim"
+        />
       </h3>
     </button>
   );
 }
 
 /** The tall card: glyph alone in the upper area, headline pinned to the bottom. */
-function EventsCard() {
+function EventsCard({ t }: { t: Dict }) {
   return (
     <button
       type="button"
       className={`${CARD} flex min-h-[221px] flex-col justify-end gap-[clamp(18px,4.2cqw,50px)] p-[clamp(20px,3.8cqw,46px)] md:min-h-0`}
     >
       <TempleIcon />
-      <h3 className="font-display text-[clamp(18px,2.85cqw,50px)] font-semibold leading-[1.15] tracking-[-0.022em] text-ink">
-        Up to <span className="text-sweep-bright">500 more events</span> on the
-        way. <span className="text-ink-dim">(More every week.)</span>
+      <h3 className="text-pretty font-display text-[clamp(18px,2.85cqw,50px)] font-semibold leading-[1.15] tracking-[-0.022em] text-ink">
+        <Highlighted
+          template={t.bentoEventsTitle}
+          slot="events"
+          value={t.bentoEventsCount}
+          className="text-sweep-bright"
+        />{" "}
+        <span className="text-ink-dim">{t.bentoEventsNote}</span>
       </h3>
     </button>
+  );
+}
+
+/**
+ * A headline with one phrase painted in a gradient sweep.
+ *
+ * The sentence arrives as a template with a single `{slot}` in it rather than
+ * as the two or three fragments around the sweep, because the sweep does not
+ * sit in the same place in every language: it opens the Turkish sentence and
+ * closes the English one. Concatenated fragments would hard-code English word
+ * order into all five.
+ *
+ * A template with no slot in it simply renders as itself, which is the right
+ * answer for a translation that chose not to highlight anything.
+ */
+function Highlighted({
+  template,
+  slot,
+  value,
+  className,
+}: {
+  template: string;
+  slot: string;
+  value: string;
+  className: string;
+}) {
+  const [before, ...rest] = template.split(`{${slot}}`);
+
+  return (
+    <>
+      {before}
+      {rest.length > 0 && (
+        <>
+          <span className={className}>{value}</span>
+          {rest.join(`{${slot}}`)}
+        </>
+      )}
+    </>
   );
 }
 

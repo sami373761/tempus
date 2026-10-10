@@ -120,6 +120,124 @@ export const FOOTBALL_BANDS: readonly Band[] = [
 ];
 
 /**
+ * The basketball game's bands.
+ *
+ * Graded in plain years for the reason football's and film's are: every event
+ * in the pool is between 2 and 135 years old, so `relative * depth` would
+ * always resolve to the floor and an event's age carries no information when
+ * every event in the pool is roughly as old as every other. `relative` is 0
+ * throughout — a statement, not a placeholder.
+ *
+ * The numbers are between the two existing subject sets, because this pool's
+ * shape is: the rail is 151 years wide (`BASKETBALL_MIN_YEAR` to the present),
+ * which sits between football's 176 and film's 126, and like film it is dense
+ * at the right-hand end — 54 of the 105 events are 2000 or later, which is 17%
+ * of the rail, and 80 of them are 1980 or later, which is 30%.
+ *
+ * So `great` takes film's ±2 rather than football's ±3: inside a cluster that
+ * tight, three years spans most of a dynasty and the Warriors' 2015–2019 run
+ * would grade the same whichever of its five seasons a player named. The two
+ * wider bands keep football's share of the rail instead of film's, because the
+ * events themselves are decades apart in a way premieres are not — ±7 / ±20 is
+ * 4.6% / 13.2% of this rail, against football's 4.5% / 14% and film's 4.8% /
+ * 11.9%. `wayOff` beyond 20 years still means a wrong era of the sport rather
+ * than a wrong guess at the era's end.
+ *
+ * `perfect` stays the exact year and nothing else, reachable on purpose with
+ * the arrow keys or the date entry. Both sequences are monotonic, which is what
+ * the first-match search below relies on. Retuning this game's difficulty is
+ * this array and nothing else.
+ */
+export const BASKETBALL_BANDS: readonly Band[] = [
+  { verdict: "perfect", relative: 0, floorYears: 0 },
+  { verdict: "great", relative: 0, floorYears: 2 },
+  { verdict: "good", relative: 0, floorYears: 7 },
+  { verdict: "bad", relative: 0, floorYears: 20 },
+];
+
+/**
+ * The film & television game's bands.
+ *
+ * Graded in plain years for the same reason football's are — every entry in
+ * the pool is between 2 and 95 years old, so an event's age carries no
+ * information and `relative` is 0 throughout — but the numbers are not
+ * football's, because the two pools are not shaped alike.
+ *
+ * The rail is 126 years wide (`SCREEN_MIN_YEAR` to the present) and more than
+ * half the 200 entries sit in the twenty years from 2000, which is 16% of it.
+ * So the game is decided inside the cluster, and the bands have to be narrow
+ * enough to say something there: at football's ±8 for `good`, a player who
+ * knew nothing beyond "it looks recent" and parked the marker on 2010 would
+ * earn `good` or better on roughly a quarter of the pool.
+ *
+ * ±2 / ±6 / ±15 is 1.6% / 4.8% / 11.9% of the rail, against football's 1.7% /
+ * 4.5% / 14%. Tighter at the floor and at the top, which is the right trade
+ * for a dataset this dense: a five-year window for `great` is what a player
+ * who reads a poster's typography, cast and film stock can actually hit, and
+ * `wayOff` beyond 15 years still means a wrong decade rather than a wrong
+ * guess at the decade's end.
+ *
+ * `perfect` stays the exact year and nothing else, reachable on purpose with
+ * the arrow keys or the date entry. Both sequences are monotonic, which is
+ * what the first-match search below relies on. Retuning this game's
+ * difficulty is this array and nothing else.
+ */
+export const SCREEN_BANDS: readonly Band[] = [
+  { verdict: "perfect", relative: 0, floorYears: 0 },
+  { verdict: "great", relative: 0, floorYears: 2 },
+  { verdict: "good", relative: 0, floorYears: 6 },
+  { verdict: "bad", relative: 0, floorYears: 15 },
+];
+
+/**
+ * The "Born When?" game's bands — and the one subject pool that goes back to
+ * depth rather than to plain years.
+ *
+ * Football and film are graded in plain years because their pools are thin
+ * slices of time: every entry is 2 to 154 years old, so `relative * depth` is
+ * always smaller than the floor and the relative term carries no information.
+ * This pool is the opposite case. Its people were born between 1341 BCE and
+ * 1997, so depth runs from 29 years to 3,367 — a factor of 116, which is the
+ * situation the general `BANDS` were designed for.
+ *
+ * It matters because knowing a birth year is not equally hard across that
+ * span. Pythagoras is dated "around 570 BCE" by the sources themselves; the
+ * year is genuinely uncertain and a player who answers 600 BCE has understood
+ * the question. Einstein's 1879 is a fact, and 1909 is not a near miss. Plain
+ * years cannot say both: ±12 for Pythagoras is a tolerance no one can honestly
+ * hit, and ±65 for Einstein rewards not knowing. Depth says both at once.
+ *
+ * **The three rails are what make depth safe here.** The general ladder's
+ * `bad: 0.85` would put Tutankhamun's bottom band at 2,862 years — 191% of the
+ * rail he stands on, so every possible drag would score `bad` or better and
+ * `wayOff` would be unreachable. That is the same failure the football note
+ * describes, arriving from the other direction. These bands are tightened until
+ * the widest tolerance in the pool fits inside its own rail with room to miss:
+ *
+ *   great 0.025 / 12y     Einstein ±12 (2.3% of his rail), Pythagoras ±65 (4.3%)
+ *   good  0.10  / 30y     Einstein ±30 (5.7%),             Pythagoras ±260 (17.3%)
+ *   bad   0.20  / 75y     Einstein ±75 (14.3%),            Pythagoras ±519 (34.6%)
+ *
+ * Calibrated the way `BANDS` was, against a player who lands within a given
+ * share of the rail's width: at ~4% that gives great 22% / good 52% / bad 25%,
+ * and at ~8% great 11% / good 30% / bad 43% / way off 16%. So the ladder keeps
+ * reporting at both ends — which is the whole test a band set has to pass.
+ *
+ * `perfect` is the exact year and nothing else, as on every other ladder. Each
+ * rail steps one year per arrow press (`keyStepFraction`), so it is reachable
+ * on all three.
+ *
+ * Both sequences are monotonic, which is what the first-match search below
+ * relies on. Retuning this game's difficulty is this array and nothing else.
+ */
+export const WHEN_BORN_BANDS: readonly Band[] = [
+  { verdict: "perfect", relative: 0, floorYears: 0 },
+  { verdict: "great", relative: 0.025, floorYears: 12 },
+  { verdict: "good", relative: 0.1, floorYears: 30 },
+  { verdict: "bad", relative: 0.2, floorYears: 75 },
+];
+
+/**
  * A tolerance ladder, worst tier implied.
  *
  * Passed wherever a guess is graded or scored, so the subject games can bring

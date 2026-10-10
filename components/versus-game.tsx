@@ -11,52 +11,77 @@ import {
   setMatchReady,
   submitVersusGuess,
 } from "@/app/actions/versus";
+import { DateEntry, InputModeToggle } from "@/components/date-entry";
 import { RoundTimer } from "@/components/round-timer";
+import { SetProgress } from "@/components/set-summary";
 import { TimelineBackdrop } from "@/components/timeline-backdrop";
 import {
   openingFractions,
   panDuration,
   PAN_MS,
+  PosterCard,
+  RAIL_FOLD_MS,
   REVEAL_HOLD_MS,
   RoundCard,
   ROUND_BUTTON,
+  ROUND_BUTTON_LG,
   railGap,
   TimelinePaneView,
 } from "@/components/timeline-stage";
 import { VersusLobby, Waiting } from "@/components/versus-lobby";
 import type { SupportedLocale } from "@/lib/db/types";
 import {
+  directYear,
+  EMPTY_DATE_ENTRY,
+  type DateEntryValue,
+} from "@/lib/game/date-entry";
+import {
   applyMatchRow,
   matchOutcome,
   otherSeat,
   revealedRound,
+  versusModeSpec,
+  type MaskedEvent,
   type MatchView,
   type RoundResult,
   type Seat,
   type SeatAnswer,
+  type VersusModeSpec,
 } from "@/lib/game/versus";
 import {
-  DEFAULT_PANE,
   entryFraction,
   fractionAtYear,
+  paneBounds,
   paneForYear,
-  TIMELINE_PANES,
   type TimelinePane,
   yearAtFraction,
 } from "@/lib/game/timeline";
 import { VERDICT_COLORS, VERDICT_LABEL_KEYS } from "@/lib/game/verdict-style";
 import { formatYear } from "@/lib/historical-date";
 import { subscribeToMatch } from "@/lib/realtime/match-channel";
-import { format, type Dict } from "@/lib/i18n/dictionary";
+import { dateLabels, format, type Dict } from "@/lib/i18n/dictionary";
 
 /**
  * The two-player date-guessing game.
  *
- * It is the solo game's screen with a second person in it, and that is meant
- * literally: the backdrop, the photograph, the ruler, the marker and the
- * button are all the same components the solo game draws
- * (components/timeline-stage.tsx). What this file adds is only what a second
- * player makes necessary — a countdown, a wait, a shared result, a rematch.
+ * It is a solo game's screen with a second person in it, and that is meant
+ * literally: the backdrop, the picture, the ruler, the marker, the typed-date
+ * entry and the button are all the same components the solo games draw
+ * (components/timeline-stage.tsx, components/date-entry.tsx). What this file
+ * adds is only what a second player makes necessary — a countdown, a wait, a
+ * shared result, a rematch.
+ *
+ * **Which solo game depends on the match.** A match names the pool it is
+ * played over (`match.mode`), and that one fact brings a rail, a tolerance
+ * ladder and a layout with it — see `VERSUS_MODE_SPEC` in lib/game/versus.ts.
+ * The general library and football are the one-column stage; film &
+ * television is the poster split, because a 2:3 poster in a one-column game is
+ * either cropped to a letterbox or leaves no room for a ruler (the argument is
+ * written out in full on `ScreenGame`). So there are two round bodies below
+ * and they are the two the solo side already has, with the head-to-head
+ * chrome dropped into the slots those layouts already reserve for chrome: the
+ * countdown in the card's top-right corner, the score beside the progress
+ * counter, the result over the picture's foot.
  *
  * **It renders state; it does not own it.** Every decision in a match is made
  * in Postgres (supabase/migrations/20261005120000_versus_matches.sql) and
@@ -82,6 +107,14 @@ import { format, type Dict } from "@/lib/i18n/dictionary";
  * two devices. The cost is that closing the tab gives the seat up — that is a
  * real limitation, and it is why the opponent's clock keeps running rather
  * than the match ending.
+ *
+ * **Where the guess lives.** The match state is here; the *rail* state — which
+ * era is on camera, where each marker stands, whether the player is typing the
+ * date rather than dragging for it — belongs to whichever round body is on
+ * screen. That split is what lets the two layouts differ in everything except
+ * the one thing they must agree on: a round is answered by handing a year to
+ * `submit`, and nothing downstream of it knows which layout, or which of the
+ * two inputs, produced it.
  */
 
 /** How often the countdown repaints. Fine enough that the ring moves smoothly. */
@@ -124,21 +157,11 @@ export function VersusGame({
   const [now, setNow] = useState(() => Date.now());
 
   // Server clock minus this browser's clock, measured NTP-style on a real
-  // request (see `adoptMeasured`). Every deadline on screen is rendered
-  // through it, so a player whose laptop clock is ten minutes out still sees
-  // the same twenty seconds as their opponent.
+  // request (see `refresh`). Every deadline on screen is rendered through it,
+  // so a player whose laptop clock is ten minutes out still sees the same
+  // twenty seconds as their opponent.
   const clockOffset = useRef(0);
 
-  // The rail, exactly as the solo game keeps it.
-  const [pane, setPane] = useState<TimelinePane>(DEFAULT_PANE);
-  const [fractions, setFractions] =
-    useState<Record<TimelinePane, number>>(openingFractions);
-  const [localGuess, setLocalGuess] = useState<number | null>(null);
-  const [guessPane, setGuessPane] = useState<TimelinePane | null>(null);
-  const [panMs, setPanMs] = useState(PAN_MS);
-
-  const travelTimer = useRef<number | null>(null);
-  const resetTimer = useRef<number | null>(null);
   // The last prompt sent, as (generation, round, phase) and when. A stamp
   // rather than a latch, so a prompt that fails or lands early is retried —
   // see PROMPT_RETRY_MS.
@@ -146,15 +169,6 @@ export function VersusGame({
   // One question fetch per round, with the key cleared on failure so a
   // dropped request is retried rather than leaving a blank card.
   const fetchedRound = useRef<string | null>(null);
-
-  useEffect(
-    () => () => {
-      if (travelTimer.current !== null)
-        window.clearTimeout(travelTimer.current);
-      if (resetTimer.current !== null) window.clearTimeout(resetTimer.current);
-    },
-    [],
-  );
 
   /**
    * Fold a freshly fetched view in.
@@ -308,6 +322,12 @@ export function VersusGame({
   const currentIdx = view?.currentIdx ?? 0;
   const generation = view?.generation ?? 0;
 
+  // The prompt stamp belongs to one round and would otherwise throttle the
+  // next one's first prompt by up to a second.
+  useEffect(() => {
+    prompted.current = null;
+  }, [generation, currentIdx]);
+
   useEffect(() => {
     if (!session || !view) return;
     if (view.phase !== "playing" && view.phase !== "revealed") return;
@@ -326,7 +346,7 @@ export function VersusGame({
     });
   }, [session, view, refresh]);
 
-  // Next round's photograph, pulled while this one is still being played.
+  // Next round's picture, pulled while this one is still being played.
   const upcomingUrl = view?.events[currentIdx + 1]?.image?.url;
   useEffect(() => {
     if (!upcomingUrl) return;
@@ -334,131 +354,36 @@ export function VersusGame({
     preload.src = upcomingUrl;
   }, [upcomingUrl]);
 
-  /* --- the rail, round by round ------------------------------------------ */
-
-  // The pane, readable from an effect without taking it as a dependency.
-  //
-  // The two effects below need to know where the camera *is* in order to
-  // decide how far it has to fly, but neither should re-run when it moves —
-  // they are triggered by the round changing and by the round closing. A ref
-  // is how that is expressed. (Reading it out of a `setPane` updater instead
-  // would be worse than untidy: React invokes updaters twice in development,
-  // so the timers scheduled inside one get scheduled twice and only one of
-  // them can be cleared.)
-  const paneRef = useRef(pane);
-  useEffect(() => {
-    paneRef.current = pane;
-  }, [pane]);
-
-  // A new round resets the rails and flies the camera home, exactly as
-  // `advance` does in the solo game — and for the same reason the solo game
-  // splits it in two: the pane being landed on is reset now because it is
-  // off-camera, and the rest only once the journey is over, or the flight
-  // passes visibly jumping markers.
-  useEffect(() => {
-    setLocalGuess(null);
-    setGuessPane(null);
-    prompted.current = null;
-
-    const from = paneRef.current;
-    const travel = from === DEFAULT_PANE ? 0 : panDuration(from, DEFAULT_PANE);
-
-    if (travelTimer.current !== null) window.clearTimeout(travelTimer.current);
-    if (resetTimer.current !== null) window.clearTimeout(resetTimer.current);
-
-    setFractions((current) => ({ ...current, [DEFAULT_PANE]: 0.5 }));
-    if (travel > 0) setPanMs(travel);
-    setPane(DEFAULT_PANE);
-
-    resetTimer.current = window.setTimeout(() => {
-      resetTimer.current = null;
-      setFractions(openingFractions());
-    }, travel);
-    // Keyed on the round, not on the view: this must run once when the
-    // question changes and never on an unrelated state push.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [generation, currentIdx]);
-
-  // Put the player's own marker back after a reload.
-  //
-  // `localGuess` is how this component normally knows where the marker goes,
-  // and a reload throws it away — so a player who answered and then refreshed
-  // met a locked rail with nothing on it, and then a result quoting a guess
-  // that was nowhere on screen. The server knows their guess (it is their
-  // own, so the view carries it); this puts the rail back where they left it.
-  useEffect(() => {
-    if (!view || view.yourGuess === null || localGuess !== null) return;
-
-    const year = view.yourGuess;
-    const home = paneForYear(year);
-
-    // The round-change effect above has just scheduled the rails back to
-    // their opening positions, which is right for a round that is starting
-    // and wrong for one this player has already answered. Cancelling it is
-    // what makes the restore stick.
-    if (resetTimer.current !== null) {
-      window.clearTimeout(resetTimer.current);
-      resetTimer.current = null;
-    }
-
-    setLocalGuess(year);
-    setGuessPane(home);
-    setFractions((current) => ({
-      ...current,
-      [home]: fractionAtYear(home, year),
-    }));
-  }, [view, localGuess]);
-
-  const revealed = view ? revealedRound(view) : null;
-
-  // The answer is on a rail that may be four eras away, so the camera travels
-  // to it when the round closes — the solo game's reveal, on the server's cue
-  // rather than on this player's.
-  useEffect(() => {
-    if (!revealed) return;
-
-    const from = paneRef.current;
-    const target = paneForYear(revealed.year);
-    if (target === from) return;
-
-    if (travelTimer.current !== null) window.clearTimeout(travelTimer.current);
-    travelTimer.current = window.setTimeout(() => {
-      travelTimer.current = null;
-      setPanMs(panDuration(from, target));
-      setPane(target);
-    }, REVEAL_HOLD_MS);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [revealed?.idx, revealed?.year, generation]);
-
   /* --- moves ------------------------------------------------------------- */
 
-  const answered = localGuess !== null || view?.youAnswered === true;
+  /**
+   * Lock a year in.
+   *
+   * Takes the year rather than reading it off a rail, because the two layouts
+   * keep their rails differently and both can also be answered by typing. The
+   * boolean is what the caller needs to know: `false` means the round is still
+   * live and the marker should come back off, and it is deliberately only
+   * returned for a *hard* failure — "closed" and "stale" are not failures,
+   * they are the server having got there first, and the marker stays where the
+   * player put it.
+   */
+  const submit = useCallback(
+    async (year: number): Promise<boolean> => {
+      if (!session || !view || view.phase !== "playing") return false;
 
-  async function submit() {
-    if (!session || !view || answered || view.phase !== "playing") return;
+      const result = await submitVersusGuess(
+        session.matchId,
+        session.token,
+        view.currentIdx,
+        year,
+      );
 
-    const year = yearAtFraction(pane, fractions[pane]);
-    setLocalGuess(year);
-    setGuessPane(pane);
-
-    const result = await submitVersusGuess(
-      session.matchId,
-      session.token,
-      view.currentIdx,
-      year,
-    );
-
-    // A hard failure is the only case worth undoing: the round is still live
-    // and they should be able to try again. "closed" and "stale" are not
-    // failures — the server simply got there first, and the marker stays
-    // where they put it.
-    if (!result.ok) {
-      setLocalGuess(null);
-      setGuessPane(null);
-      return;
-    }
-    adopt(result.view);
-  }
+      if (!result.ok) return false;
+      adopt(result.view);
+      return true;
+    },
+    [session, view, adopt],
+  );
 
   async function ready() {
     if (!session || busy) return;
@@ -488,35 +413,50 @@ export function VersusGame({
     setBusy(false);
   }
 
-  function move(nextPane: TimelinePane, nextFraction: number) {
-    setFractions((current) => ({ ...current, [nextPane]: nextFraction }));
-  }
-
-  function enter(nextPane: TimelinePane) {
-    move(nextPane, entryFraction(nextPane, pane));
-    setPanMs(PAN_MS);
-    setPane(nextPane);
-  }
-
   /* --- render ------------------------------------------------------------ */
 
   if (fatal) return <FatalNotice message={fatal} t={t} />;
   if (!view) return <LoadingNotice label={t.versusJoining} />;
 
-  const them = otherSeat(view.seat);
+  const spec = versusModeSpec(view.mode);
   const event = view.events[view.currentIdx] ?? null;
-  const answerPane = revealed ? paneForYear(revealed.year) : null;
-  const answerDelayMs =
-    guessPane === null || answerPane === null || guessPane === answerPane
-      ? 0
-      : REVEAL_HOLD_MS + panDuration(guessPane, answerPane);
+  const revealed = revealedRound(view);
 
   const remainingMs = deadline === null ? 0 : deadline - serverNow;
-  const revealSecondsLeft = Math.max(0, Math.ceil(remainingMs / 1000));
+  const secondsLeft = Math.max(0, Math.ceil(remainingMs / 1000));
+
+  // Whether one of the two round bodies is what is on screen. A match in a
+  // playing phase whose question has not arrived yet is *not* — the fetch for
+  // it is in flight — and that gap is why this is one flag rather than a test
+  // on the phase: the round bodies draw their own backdrop, so a phase-only
+  // test left the "starting..." moment with none at all, i.e. a black page.
+  const showRound =
+    event !== null &&
+    view.phase !== "lobby" &&
+    view.phase !== "complete" &&
+    view.phase !== "abandoned";
+
+  const round = { view, spec, event, revealed, remainingMs, secondsLeft, onSubmit: submit, t, locale };
 
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-4 sm:gap-5">
-      <TimelineBackdrop pane={pane} />
+    // The game's own container, not the page's: the two layouts want different
+    // widths — the poster split reads the site bar's full `max-w-7xl` so the
+    // poster's left edge lands under the wordmark, and the one-column stage
+    // keeps the `max-w-6xl` `/guess` uses. The page above owns the one-viewport
+    // box; this owns how wide the game is inside it.
+    <div
+      className={`mx-auto flex min-h-0 w-full flex-1 flex-col ${
+        spec.layout === "poster"
+          ? "max-w-7xl px-6 pb-5 pt-5"
+          : "max-w-6xl px-6 pb-6 pt-2"
+      }`}
+    >
+      {/* The backdrop belongs to whatever is on screen. The round bodies draw
+          their own, because theirs follows the camera; everything else is the
+          mode's home era, held still. */}
+      {!showRound && (
+        <TimelineBackdrop pane={spec.homePane} panes={spec.panes} />
+      )}
 
       {view.phase === "lobby" ? (
         <VersusLobby view={view} onReady={ready} busy={busy} t={t} />
@@ -528,69 +468,333 @@ export function VersusGame({
           busy={busy}
           t={t}
         />
-      ) : event ? (
-        <>
-          <RoundCard
-            event={event}
-            t={t}
-            counter={
-              <>
-                <span className="rounded-full border border-white/20 bg-black/55 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-white/80 backdrop-blur-md">
-                  {format(t.setProgress, {
-                    n: view.currentIdx + 1,
-                    total: view.totalRounds,
-                  })}
-                </span>
-                <span className="rounded-full border border-white/20 bg-black/55 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-white/80 backdrop-blur-md">
-                  {t.versusYouLabel} {view.seats[view.seat].score}
-                  <span className="px-1 text-white/35">·</span>
-                  {view.seats[them].score} {t.versusThemLabel}
-                </span>
-              </>
-            }
-            aside={
-              view.phase === "playing" ? (
-                <RoundTimer
-                  remainingMs={remainingMs}
-                  totalMs={view.roundSeconds * 1000}
-                  label={t.versusSecondsLeft.replace(
-                    "{n}",
-                    String(revealSecondsLeft),
-                  )}
-                />
-              ) : null
-            }
-            badge={
-              revealed ? (
-                <RoundOutcome
-                  round={revealed}
-                  you={view.seat}
-                  locale={locale}
-                  t={t}
-                />
-              ) : answered ? (
-                <WaitingBadge label={t.versusWaitingForOpponent} />
-              ) : null
-            }
-          />
+      ) : event === null ? (
+        <LoadingNotice label={t.versusStarting} />
+      ) : spec.layout === "poster" ? (
+        <PosterRound key={view.mode} {...round} event={event} />
+      ) : (
+        <StageRound key={view.mode} {...round} event={event} />
+      )}
 
-          <div className="w-full shrink-0 overflow-hidden">
+      {/* Advisory only: the match never pauses for a missing opponent, it just
+          says so. Hidden in the lobby, where "not here yet" is the screen's
+          whole subject and this would be saying it twice. */}
+      {view.phase !== "lobby" && !opponentOnline && (
+        <p className="pointer-events-none fixed inset-x-0 bottom-3 z-30 text-center text-[11px] text-white/45">
+          {connected ? t.versusOpponentOffline : t.versusReconnecting}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------
+   The round, in each of the two layouts
+   ------------------------------------------------------------------------- */
+
+interface RoundProps {
+  view: MatchView;
+  spec: VersusModeSpec;
+  event: MaskedEvent;
+  revealed: RoundResult | null;
+  remainingMs: number;
+  secondsLeft: number;
+  onSubmit: (year: number) => Promise<boolean>;
+  t: Dict;
+  locale: SupportedLocale;
+}
+
+/** The player's answer to the live round, as the rail has to draw it. */
+interface RailGuess {
+  year: number;
+  /** Which rail it was made on, which is not always the one on camera later. */
+  pane: TimelinePane;
+  /**
+   * Whether it was typed rather than dragged for. The marker's bubble has to
+   * quote the player's own number: the year the rail reads back at that
+   * position is snapped to the pane's grid, which on the deep panes is a step
+   * of a hundred years.
+   */
+  typed: boolean;
+}
+
+/**
+ * The one-column round: picture, rail, button — the general library's game and
+ * football's, with a countdown in the corner.
+ *
+ * Everything about the camera lives here rather than in `VersusGame`, because
+ * it is the same thing `TimelineGame` keeps and for the same reasons: a round
+ * opens at the mode's home era, a locked-in guess holds for a beat and then
+ * flies to the era the answer is in, and every pane remembers where its own
+ * marker was left.
+ */
+function StageRound({
+  view,
+  spec,
+  event,
+  revealed,
+  remainingMs,
+  secondsLeft,
+  onSubmit,
+  t,
+  locale,
+}: RoundProps) {
+  const { panes, homePane } = spec;
+
+  const [pane, setPane] = useState<TimelinePane>(homePane);
+  const [fractions, setFractions] = useState<Record<TimelinePane, number>>(() =>
+    openingFractions(panes, homePane),
+  );
+  const [panMs, setPanMs] = useState(PAN_MS);
+  const [guess, setGuess] = useState<RailGuess | null>(null);
+  // Typing the date rather than dragging for it. A preference, not a round's
+  // state: a player who wanted to type one date almost certainly wants to type
+  // the next.
+  const [direct, setDirect] = useState(false);
+  const [entry, setEntry] = useState<DateEntryValue>(EMPTY_DATE_ENTRY);
+  const [invalid, setInvalid] = useState(false);
+
+  const travelTimer = useRef<number | null>(null);
+  const resetTimer = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (travelTimer.current !== null)
+        window.clearTimeout(travelTimer.current);
+      if (resetTimer.current !== null) window.clearTimeout(resetTimer.current);
+    },
+    [],
+  );
+
+  // The pane, readable from an effect without taking it as a dependency.
+  //
+  // The two effects below need to know where the camera *is* in order to
+  // decide how far it has to fly, but neither should re-run when it moves —
+  // they are triggered by the round changing and by the round closing. A ref
+  // is how that is expressed. (Reading it out of a `setPane` updater instead
+  // would be worse than untidy: React invokes updaters twice in development,
+  // so the timers scheduled inside one get scheduled twice and only one of
+  // them can be cleared.)
+  const paneRef = useRef(pane);
+  useEffect(() => {
+    paneRef.current = pane;
+  }, [pane]);
+
+  const generation = view.generation;
+  const currentIdx = view.currentIdx;
+
+  // A new round resets the rails and flies the camera home, exactly as
+  // `advance` does in the solo game — and for the same reason the solo game
+  // splits it in two: the pane being landed on is reset now because it is
+  // off-camera, and the rest only once the journey is over, or the flight
+  // passes visibly jumping markers.
+  useEffect(() => {
+    setGuess(null);
+    setInvalid(false);
+    // **Both halves are cleared, era included.** The era used to be carried
+    // over on the grounds that it was an opinion about the round rather than
+    // an answer to it. It is not: a player who typed a BCE year last round
+    // types "1492" into a pill that still says BCE and locks in 1492 BCE,
+    // which is the one way this control can take a guess the player did not
+    // make. A fresh round asks a fresh question, so it starts at the entry's
+    // own zero (`EMPTY_DATE_ENTRY`) — CE, empty — and a BCE answer costs the
+    // one press it costs on the first round of a set.
+    setEntry(EMPTY_DATE_ENTRY);
+
+    const from = paneRef.current;
+    const travel = from === homePane ? 0 : panDuration(from, homePane, panes);
+
+    if (travelTimer.current !== null) window.clearTimeout(travelTimer.current);
+    if (resetTimer.current !== null) window.clearTimeout(resetTimer.current);
+
+    setFractions((current) => ({ ...current, [homePane]: 0.5 }));
+    if (travel > 0) setPanMs(travel);
+    setPane(homePane);
+
+    resetTimer.current = window.setTimeout(() => {
+      resetTimer.current = null;
+      setFractions(openingFractions(panes, homePane));
+    }, travel);
+    // Keyed on the round, not on the view: this must run once when the
+    // question changes and never on an unrelated state push.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [generation, currentIdx]);
+
+  // Put the player's own marker back after a reload.
+  //
+  // `guess` is how this component normally knows where the marker goes, and a
+  // reload throws it away — so a player who answered and then refreshed met a
+  // locked rail with nothing on it, and then a result quoting a guess that was
+  // nowhere on screen. The server knows their guess (it is their own, so the
+  // view carries it); this puts the rail back where they left it.
+  useEffect(() => {
+    if (view.yourGuess === null || guess !== null) return;
+
+    const year = view.yourGuess;
+    const home = paneForYear(year, panes);
+
+    // The round-change effect above has just scheduled the rails back to
+    // their opening positions, which is right for a round that is starting
+    // and wrong for one this player has already answered. Cancelling it is
+    // what makes the restore stick.
+    if (resetTimer.current !== null) {
+      window.clearTimeout(resetTimer.current);
+      resetTimer.current = null;
+    }
+
+    setPanMs(0);
+    setPane(home);
+    setGuess({ year, pane: home, typed: false });
+    setFractions((current) => ({
+      ...current,
+      [home]: fractionAtYear(home, year),
+    }));
+  }, [view.yourGuess, guess, panes]);
+
+  // The answer is on a rail that may be four eras away, so the camera travels
+  // to it when the round closes — the solo game's reveal, on the server's cue
+  // rather than on this player's.
+  useEffect(() => {
+    if (!revealed) return;
+
+    const from = paneRef.current;
+    const target = paneForYear(revealed.year, panes);
+    if (target === from) return;
+
+    if (travelTimer.current !== null) window.clearTimeout(travelTimer.current);
+    travelTimer.current = window.setTimeout(() => {
+      travelTimer.current = null;
+      setPanMs(panDuration(from, target, panes));
+      setPane(target);
+    }, REVEAL_HOLD_MS);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revealed?.idx, revealed?.year, generation]);
+
+  const answered = guess !== null || view.youAnswered;
+  // The rail folds away while a date is being typed and comes back for the
+  // reveal, exactly as `/guess` folds it — so it is the *unanswered* half of
+  // direct mode that has no rail. The phase is part of the test because this
+  // screen has a state the solo game does not: a round that closed on the
+  // clock with nothing typed, where an empty folded rail would hide the answer
+  // about to be marked on it.
+  const folded = direct && !answered && view.phase === "playing";
+
+  // What a typed date may name: the two ends of the rails this mode shows.
+  const entryRange = {
+    min: paneBounds(panes[0]!).min,
+    max: paneBounds(panes[panes.length - 1]!).max,
+  };
+
+  function move(nextPane: TimelinePane, nextFraction: number) {
+    setFractions((current) => ({ ...current, [nextPane]: nextFraction }));
+  }
+
+  function enter(nextPane: TimelinePane) {
+    move(nextPane, entryFraction(nextPane, pane, panes));
+    setPanMs(PAN_MS);
+    setPane(nextPane);
+  }
+
+  async function lockIn() {
+    if (answered || view.phase !== "playing") return;
+
+    // Where the guess came from. Dragging has already put the camera and the
+    // marker where they belong; a typed date has to be *placed*, and it is
+    // placed while the rail is still folded, with the pan at zero, so the
+    // camera's jump to another era is spent behind the fold instead of being
+    // watched.
+    let from = pane;
+    let year = yearAtFraction(pane, fractions[pane]);
+
+    if (direct) {
+      const typed = directYear(entry, entryRange);
+      if (typed === null) {
+        setInvalid(true);
+        return;
+      }
+
+      year = typed;
+      from = paneForYear(typed, panes);
+
+      setPanMs(0);
+      setPane(from);
+      move(from, fractionAtYear(from, typed));
+    }
+
+    setGuess({ year, pane: from, typed: direct });
+    if (!(await onSubmit(year))) setGuess(null);
+  }
+
+  const answerPane = revealed ? paneForYear(revealed.year, panes) : null;
+  const guessPane = guess?.pane ?? null;
+  const answerDelayMs =
+    guessPane === null || answerPane === null || guessPane === answerPane
+      ? 0
+      : REVEAL_HOLD_MS + panDuration(guessPane, answerPane, panes);
+
+  const them = otherSeat(view.seat);
+
+  return (
+    <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-4 sm:gap-5">
+      <TimelineBackdrop pane={pane} panes={panes} />
+
+      <RoundCard
+        event={event}
+        t={t}
+        // The picture grows into the room the rail gives up, so folding it
+        // away leaves no hole in the column and the button below does not
+        // move.
+        wide={folded}
+        counter={<MatchCounters view={view} t={t} />}
+        aside={
+          view.phase === "playing" ? (
+            <RoundTimer
+              remainingMs={remainingMs}
+              totalMs={view.roundSeconds * 1000}
+              label={format(t.versusSecondsLeft, { n: secondsLeft })}
+            />
+          ) : null
+        }
+        badge={
+          revealed ? (
+            <RoundOutcome round={revealed} you={view.seat} locale={locale} t={t} />
+          ) : answered ? (
+            <WaitingBadge label={t.versusWaitingForOpponent} />
+          ) : null
+        }
+      />
+
+      {/* The rail, and the fold that takes it away when the player would
+          rather type the date — the same three boxes `/guess` uses, and the
+          same `.rail-fold` rule in app/globals.css. `inert` rather than a
+          conditional render, so the band has a closing frame to animate and a
+          folded rail's slider and era doors are off the tab order. */}
+      <div className="rail-fold w-full shrink-0" data-folded={folded} inert={folded}>
+        <div>
+          <div className="rail-fold-inner w-full overflow-hidden">
             <div
               className="flex transition-transform ease-[cubic-bezier(0.65,0,0.35,1)]"
               style={{
-                transform: `translateX(-${TIMELINE_PANES.indexOf(pane) * 100}%)`,
+                transform: `translateX(-${panes.indexOf(pane) * 100}%)`,
                 transitionDuration: `${panMs}ms`,
               }}
             >
-              {TIMELINE_PANES.map((candidate) => (
+              {panes.map((candidate) => (
                 <TimelinePaneView
                   key={candidate}
                   pane={candidate}
+                  panes={panes}
                   active={candidate === pane}
                   fraction={fractions[candidate]}
                   onFractionChange={(next) => move(candidate, next)}
                   answered={answered}
                   showGuess={!answered || guessPane === candidate}
+                  // A typed date is exact, and the year this rail reads back at
+                  // that position is snapped to the pane's grid — so the bubble
+                  // is told the player's own number.
+                  guessYear={
+                    guess?.typed && guessPane === candidate ? guess.year : null
+                  }
                   answerYear={
                     answerPane === candidate && revealed ? revealed.year : null
                   }
@@ -609,6 +813,7 @@ export function VersusGame({
                           answerPane,
                           answerYear: revealed.year,
                           answerDelayMs,
+                          panes,
                         })
                       : null
                   }
@@ -621,8 +826,7 @@ export function VersusGame({
                       : null
                   }
                   opponentYear={
-                    revealed &&
-                    paneFor(revealed.seats[them].guess) === candidate
+                    revealed && paneFor(revealed.seats[them].guess, panes) === candidate
                       ? revealed.seats[them].guess
                       : null
                   }
@@ -634,87 +838,514 @@ export function VersusGame({
               ))}
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Three states, one grid cell — so the thing under the player's
-              pointer never moves between guessing, waiting and the result.
-              Same rule as the solo game's two. */}
-          <div className="grid shrink-0 place-items-center">
-            <div
-              className={`col-start-1 row-start-1 transition-opacity duration-300 ${
-                !answered && view.phase === "playing"
-                  ? "opacity-100"
-                  : "opacity-0"
-              }`}
-              inert={answered || view.phase !== "playing"}
-            >
-              <button
-                type="button"
-                onClick={submit}
-                className={`${ROUND_BUTTON} bg-ink text-page hover:opacity-85`}
-              >
-                {t.submitGuess}
-              </button>
+      <RoundControls
+        phase={view.phase}
+        answered={answered}
+        secondsLeft={secondsLeft}
+        direct={direct}
+        onDirect={() => {
+          setDirect((current) => !current);
+          setInvalid(false);
+        }}
+        entry={entry}
+        onEntry={(next) => {
+          setEntry(next);
+          setInvalid(false);
+        }}
+        invalid={invalid}
+        onSubmit={lockIn}
+        eraHidden={!spec.eraInEntry}
+        entryPlaceholder={
+          spec.eraInEntry
+            ? undefined
+            : `${entryRange.min}–${entryRange.max}`
+        }
+        // The entry opens into the room the rail gives up, so focusing it has
+        // to wait for the fold exactly as it does in the solo game.
+        focusDelayMs={RAIL_FOLD_MS}
+        size="sm"
+        t={t}
+      />
+    </div>
+  );
+}
+
+/**
+ * The poster round: film & television, head to head.
+ *
+ * The solo screen with a second player in it, down to the geometry — the
+ * three custom properties below are `ScreenGame`'s own and are kept in step
+ * with it, because the thing they decide is the same thing: the poster's
+ * width sets its height, and its height is the height of the row the right-hand
+ * column stands in.
+ *
+ * What the second player adds lands in slots this layout already had. The
+ * countdown and the score go in the head beside the progress counter, where
+ * the solo game has the counter alone; the round's result goes over the
+ * poster's foot, which is where the solo game paints its verdict on a narrow
+ * screen. The one thing that goes rather than moves is the result row under
+ * the controls: it exists in the solo game to hold the verdict card and the
+ * note about the event, and a match has neither — both players' answers are
+ * one strip, and it belongs on the picture they are both looking at.
+ */
+function PosterRound({
+  view,
+  spec,
+  event,
+  revealed,
+  remainingMs,
+  secondsLeft,
+  onSubmit,
+  t,
+  locale,
+}: RoundProps) {
+  const pane = spec.homePane;
+  const panes = spec.panes;
+  const bounds = paneBounds(pane);
+
+  // One rail, so one position — the stage round needs a record keyed by pane
+  // because panning away and back must not lose the marker, and there is
+  // nowhere to pan to here.
+  const [fraction, setFraction] = useState(0.5);
+  const [guess, setGuess] = useState<number | null>(null);
+  const [direct, setDirect] = useState(false);
+  const [entry, setEntry] = useState<DateEntryValue>(EMPTY_DATE_ENTRY);
+  const [invalid, setInvalid] = useState(false);
+
+  const generation = view.generation;
+  const currentIdx = view.currentIdx;
+
+  useEffect(() => {
+    setGuess(null);
+    setFraction(0.5);
+    setInvalid(false);
+    // Cleared whole, era included — see the note on the other seat's reset.
+    setEntry(EMPTY_DATE_ENTRY);
+  }, [generation, currentIdx]);
+
+  // Put the player's own marker back after a reload — see the stage round.
+  useEffect(() => {
+    if (view.yourGuess === null || guess !== null) return;
+    setGuess(view.yourGuess);
+    setFraction(fractionAtYear(pane, view.yourGuess));
+  }, [view.yourGuess, guess, pane]);
+
+  const answered = guess !== null || view.youAnswered;
+  const typed = direct ? directYear(entry, bounds) : null;
+
+  // While a year is being typed the marker follows it, which is what makes
+  // keeping the rail on screen worth doing. It falls back to wherever the
+  // marker was left as soon as the field is empty or holds a year off the
+  // rail, rather than jumping to an edge.
+  const railFraction =
+    direct && !answered && typed !== null
+      ? fractionAtYear(pane, typed)
+      : fraction;
+
+  async function lockIn() {
+    if (answered || view.phase !== "playing") return;
+
+    let year = yearAtFraction(pane, railFraction);
+
+    if (direct) {
+      if (typed === null) {
+        setInvalid(true);
+        return;
+      }
+      // The marker is already standing on the typed year — it has been
+      // tracking the field — so this only makes that position the one the
+      // round keeps.
+      year = typed;
+      setFraction(fractionAtYear(pane, year));
+    }
+
+    setGuess(year);
+    if (!(await onSubmit(year))) setGuess(null);
+  }
+
+  const them = otherSeat(view.seat);
+  const overlay = revealed !== null || answered;
+
+  return (
+    <div className="flex min-h-0 w-full flex-1 flex-col">
+      {/* One pane, so there is nothing to crossfade — it holds for the whole
+          match. */}
+      <TimelineBackdrop pane={pane} panes={panes} />
+
+      <div
+        // Kept in step with `ScreenGame`'s copy: the poster's width decides
+        // its height, and its height decides where the bottom of the column
+        // beside it falls. `--result-h` is not needed here — this layout has
+        // no result row, because a match's result is a strip on the picture.
+        style={
+          {
+            "--poster-w": "clamp(15rem, 27vw, 26rem)",
+            "--poster-h": "calc(var(--poster-w) * 1.5)",
+          } as React.CSSProperties
+        }
+        className="flex min-h-0 flex-1 flex-col gap-4 min-[1120px]:grid min-[1120px]:h-[var(--poster-h)] min-[1120px]:max-h-full min-[1120px]:flex-none min-[1120px]:grid-cols-[var(--poster-w)_minmax(0,1fr)] min-[1120px]:gap-7"
+      >
+        <PosterCard
+          event={event}
+          // At every width, not just the narrow one the solo game hides it at:
+          // the match's result and its wait are both painted here, and a title
+          // under either of them is two strings on top of each other.
+          titleHidden={overlay}
+          badge={
+            revealed ? (
+              <RoundOutcome
+                round={revealed}
+                you={view.seat}
+                locale={locale}
+                t={t}
+              />
+            ) : answered ? (
+              <WaitingBadge label={t.versusWaitingForOpponent} />
+            ) : null
+          }
+          t={t}
+        />
+
+        <div className="mx-auto flex w-full min-h-0 max-w-5xl flex-col">
+          <div className="flex shrink-0 items-start justify-between gap-4 px-8 pt-1 sm:px-12">
+            <div className="min-w-0">
+              <h2 className="font-display text-xl font-semibold tracking-tight text-ink sm:text-2xl">
+                {t[spec.titleKey]}
+              </h2>
+              {/* Not a flourish: the stored year is a release for a film and a
+                  premiere for a series, and a player shown the poster of a show
+                  that ran eight years has to be told which of the two is being
+                  asked. See lib/game/screen.ts. */}
+              <p className="on-photo mt-1 text-sm leading-snug text-white/60">
+                {t.screenYearAsked}
+              </p>
             </div>
 
-            <div
-              className={`col-start-1 row-start-1 transition-opacity duration-300 ${
-                answered && view.phase === "playing"
-                  ? "opacity-100"
-                  : "opacity-0"
-              }`}
-              inert={!answered || view.phase !== "playing"}
-            >
-              <div
-                className={`${ROUND_BUTTON} border-white/30 bg-black/45 text-ink backdrop-blur-md`}
-              >
-                <Waiting label={t.versusWaitingForOpponent} />
+            {/* The head-to-head chrome, in the corner the solo game keeps for
+                the progress counter: the counter, the score, and the clock.
+                The timer is last and largest, which is the order it is read
+                in once the round is running. */}
+            <div className="flex shrink-0 items-center gap-2.5 pt-0.5">
+              <div className="flex flex-col items-end gap-1.5">
+                <SetProgress
+                  played={view.currentIdx}
+                  total={view.totalRounds}
+                  size="md"
+                  t={t}
+                />
+                <ScorePill view={view} t={t} />
               </div>
-            </div>
-
-            <div
-              className={`col-start-1 row-start-1 transition-opacity duration-300 ${
-                view.phase === "revealed" ? "opacity-100" : "opacity-0"
-              }`}
-              inert={view.phase !== "revealed"}
-            >
               <div
-                className={`${ROUND_BUTTON} border-white/30 bg-black/45 text-ink backdrop-blur-md`}
+                className={`transition-opacity duration-300 ${
+                  view.phase === "playing" ? "opacity-100" : "opacity-0"
+                }`}
               >
-                {format(t.versusNextRoundIn, { n: revealSecondsLeft })}
+                <RoundTimer
+                  remainingMs={remainingMs}
+                  totalMs={view.roundSeconds * 1000}
+                  label={format(t.versusSecondsLeft, { n: secondsLeft })}
+                />
               </div>
             </div>
           </div>
-        </>
-      ) : (
-        <LoadingNotice label={t.versusStarting} />
-      )}
 
-      {/* Advisory only: the match never pauses for a missing opponent, it just
-          says so. Hidden in the lobby, where "not here yet" is the screen's
-          whole subject and this would be saying it twice. */}
-      {view.phase !== "lobby" && !opponentOnline && (
-        <p className="pointer-events-none fixed inset-x-0 bottom-3 z-30 text-center text-[11px] text-white/45">
-          {connected ? t.versusOpponentOffline : t.versusReconnecting}
+          {/* The rail, at the foot of whatever the column has left over rather
+              than centred in it: the button under it is the answer to the rail,
+              and half the slack standing between the two reads as a gap between
+              two unrelated rows. See `ScreenGame` for the rest of the note. */}
+          <div className="flex min-h-fit flex-1 items-end">
+            <TimelinePaneView
+              pane={pane}
+              panes={panes}
+              active
+              compact
+              heading={false}
+              fraction={railFraction}
+              onFractionChange={setFraction}
+              answered={answered}
+              // Shown but not draggable while a year is being typed: the marker
+              // is the readout of the field, so it must not also be something
+              // the pointer can move.
+              locked={direct && !answered}
+              showGuess
+              guessYear={direct && typed !== null ? typed : null}
+              answerYear={revealed ? revealed.year : null}
+              answerDelayMs={0}
+              // One pane, so the distance between the guess and the truth is
+              // always the ordinary same-rail case: one bar between two
+              // markers.
+              gap={
+                revealed
+                  ? railGap({
+                      pane,
+                      guessPane: guess === null ? null : pane,
+                      guessFraction: fraction,
+                      answerPane: pane,
+                      answerYear: revealed.year,
+                      answerDelayMs: 0,
+                      panes,
+                    })
+                  : null
+              }
+              gapColor={
+                revealed
+                  ? VERDICT_COLORS[revealed.seats[view.seat].verdict]
+                  : null
+              }
+              opponentYear={revealed ? revealed.seats[them].guess : null}
+              opponentLabel={t.versusThemLabel}
+              locale={locale}
+              t={t}
+              // A one-pane set has no doors, so `paneEntrances` returns none
+              // and nothing can call this.
+              onEnter={() => {}}
+            />
+          </div>
+
+          <RoundControls
+            phase={view.phase}
+            answered={answered}
+            secondsLeft={secondsLeft}
+            direct={direct}
+            onDirect={() => {
+              setDirect((current) => !current);
+              setInvalid(false);
+            }}
+            entry={entry}
+            onEntry={(next) => {
+              setEntry(next);
+              setInvalid(false);
+            }}
+            invalid={invalid}
+            onSubmit={lockIn}
+            eraHidden={!spec.eraInEntry}
+            entryPlaceholder={`${bounds.min}–${bounds.max}`}
+            size="lg"
+            t={t}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------
+   Shared round chrome
+   ------------------------------------------------------------------------- */
+
+/**
+ * The round's controls: how the date is entered, the one button that answers
+ * it, and the switch between the two.
+ *
+ * **A three-column grid with equal flexible sides, not a flex row.** The
+ * middle column is therefore the column's own centre whatever the two sides
+ * are holding, so the button stands in exactly the same place with the entry
+ * open as with it folded away. That button is the one position on these
+ * screens which must not move — it is the same rule, and the same markup, as
+ * the solo games'.
+ *
+ * It has **three** states stacked in that middle cell rather than the solo
+ * game's two, and the third is the whole difference a second player makes:
+ * lock in, then wait for them, then the count to the next round. All three are
+ * the same box with the same padding, so they share a centre and each appears
+ * exactly where the last one was.
+ */
+function RoundControls({
+  phase,
+  answered,
+  secondsLeft,
+  direct,
+  onDirect,
+  entry,
+  onEntry,
+  invalid,
+  onSubmit,
+  eraHidden,
+  entryPlaceholder,
+  focusDelayMs = 0,
+  size,
+  t,
+}: {
+  phase: MatchView["phase"];
+  answered: boolean;
+  secondsLeft: number;
+  direct: boolean;
+  onDirect: () => void;
+  entry: DateEntryValue;
+  onEntry: (value: DateEntryValue) => void;
+  invalid: boolean;
+  onSubmit: () => void;
+  eraHidden: boolean;
+  entryPlaceholder?: string;
+  /** How long the rail's fold takes, where there is one. See `DateEntry`. */
+  focusDelayMs?: number;
+  /** `lg` is the split layout's, which has a row of its own to stand in. */
+  size: "sm" | "lg";
+  t: Dict;
+}) {
+  const button = size === "lg" ? ROUND_BUTTON_LG : ROUND_BUTTON;
+  const playing = phase === "playing";
+
+  return (
+    <div
+      className={`relative grid w-full shrink-0 justify-items-center md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-center ${
+        size === "lg" ? "pt-2" : ""
+      }`}
+    >
+      {/* Always mounted and folded by `data-shown`, like the rail: it has to
+          animate out as well as in, and `inert` is what takes a clipped field
+          out of reach. */}
+      <div
+        className="entry-shell md:justify-self-end"
+        data-shown={direct}
+        inert={!direct}
+      >
+        <div>
+          <div>
+            <DateEntry
+              value={entry}
+              onChange={onEntry}
+              onSubmit={onSubmit}
+              // Locked in, or the clock took the round: either way the entry
+              // stays on screen reporting the year, but it is no longer a
+              // control.
+              disabled={answered || !playing}
+              invalid={invalid}
+              shown={direct}
+              focusDelayMs={focusDelayMs}
+              eraHidden={eraHidden}
+              placeholder={entryPlaceholder}
+              t={t}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Below `md` the three do not fit across a phone, so the entry takes a
+          row of its own above them while the button and the switch stay side
+          by side — which is what this wrapper's `md:contents` is for: above the
+          breakpoint it stops being a box and its two children become the grid's
+          own middle and right cells. */}
+      <div className="flex items-center gap-3 md:contents">
+        <div className="grid place-items-center">
+          <div
+            className={`col-start-1 row-start-1 transition-opacity duration-300 ${
+              !answered && playing ? "opacity-100" : "opacity-0"
+            }`}
+            inert={answered || !playing}
+          >
+            <button
+              type="button"
+              onClick={onSubmit}
+              className={`${button} bg-ink text-page hover:opacity-85`}
+            >
+              {t.submitGuess}
+            </button>
+          </div>
+
+          <div
+            className={`col-start-1 row-start-1 transition-opacity duration-300 ${
+              answered && playing ? "opacity-100" : "opacity-0"
+            }`}
+            inert={!answered || !playing}
+          >
+            <div
+              className={`${button} border-white/30 bg-black/45 text-ink backdrop-blur-md`}
+            >
+              <Waiting label={t.versusWaitingForOpponent} />
+            </div>
+          </div>
+
+          <div
+            className={`col-start-1 row-start-1 transition-opacity duration-300 ${
+              phase === "revealed" ? "opacity-100" : "opacity-0"
+            }`}
+            inert={phase !== "revealed"}
+          >
+            <div
+              className={`${button} border-white/30 bg-black/45 text-ink backdrop-blur-md`}
+            >
+              {format(t.versusNextRoundIn, { n: secondsLeft })}
+            </div>
+          </div>
+        </div>
+
+        {/* Faded and inert once the round is answered rather than unmounted, so
+            its cell keeps its width and the button beside it stays centred.
+            There is nothing to switch to mid-reveal anyway: the rail is back on
+            screen carrying the answer. */}
+        <div
+          className={`transition-opacity duration-300 md:ml-3 md:justify-self-start ${
+            size === "lg" ? "sm:[--menu-btn:46px]" : ""
+          } ${answered || !playing ? "opacity-0" : "opacity-100"}`}
+          inert={answered || !playing}
+        >
+          <InputModeToggle direct={direct} onToggle={onDirect} t={t} />
+        </div>
+      </div>
+
+      {/* The refusal, under the row and out of the flow: a sentence that
+          appears only when a date is refused must not be able to move the
+          button it was refused by. */}
+      {invalid && (
+        <p
+          role="alert"
+          // No `-translate-x-1/2`: Tailwind v4 compiles that to the `translate`
+          // property and the keyframe animates `transform`, so the two would
+          // compose and pull it a whole width left. Both keyframes carry the
+          // -50% instead.
+          className="entry-warning on-photo absolute left-1/2 top-full mt-2 whitespace-nowrap text-[12px] font-medium text-bad"
+        >
+          {t.invalidDate}
         </p>
       )}
     </div>
   );
 }
 
+/** Where the match has got to: the question number, and the score. */
+function MatchCounters({ view, t }: { view: MatchView; t: Dict }) {
+  return (
+    <>
+      <SetProgress played={view.currentIdx} total={view.totalRounds} t={t} />
+      <ScorePill view={view} t={t} />
+    </>
+  );
+}
+
+/** Both scores on one pill, this player's first — it is always theirs. */
+function ScorePill({ view, t }: { view: MatchView; t: Dict }) {
+  const them = otherSeat(view.seat);
+
+  return (
+    <span className="rounded-full border border-white/20 bg-black/55 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-white/80 backdrop-blur-md">
+      {t.versusYouLabel} {view.seats[view.seat].score}
+      <span className="px-1 text-white/35">·</span>
+      {view.seats[them].score} {t.versusThemLabel}
+    </span>
+  );
+}
+
 /** Which pane a guess belongs on, tolerating the null a timeout leaves. */
-function paneFor(year: number | null): TimelinePane | null {
-  return year === null ? null : paneForYear(year);
+function paneFor(
+  year: number | null,
+  panes: VersusModeSpec["panes"],
+): TimelinePane | null {
+  return year === null ? null : paneForYear(year, panes);
 }
 
 /**
- * The round's result, over the photograph.
+ * The round's result, over the picture.
  *
  * Both answers on one row with the verdict between them, because the question
  * a player has the instant a round closes is not "how did I do" but "did I
  * beat them" — and two numbers side by side answer it without being read.
- * Overlaid rather than laid out for the reason the solo verdict is: this
- * screen is one viewport and a result in the flow pushes the footer off the
- * bottom of it.
+ * Overlaid rather than laid out for the reason the solo verdict is: these
+ * screens are one viewport and a result in the flow pushes the footer off the
+ * bottom of them.
  */
 function RoundOutcome({
   round,
@@ -734,26 +1365,20 @@ function RoundOutcome({
   return (
     <div
       role="status"
-      className="versus-overlay-in pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center gap-1.5 bg-gradient-to-t from-black/92 via-black/65 to-transparent px-4 pb-3 pt-12 text-center"
+      className="versus-overlay-in pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-1.5 bg-gradient-to-t from-black/92 via-black/65 to-transparent px-4 pb-3 pt-12 text-center"
     >
       <p className="on-photo text-[11px] font-semibold uppercase tracking-[0.16em] text-white/60">
-        {round.yearLabel}
+        {/* Formatted here rather than taken from `round.yearLabel`, which is
+            SQL's `historical_year_label()` and is English by construction: the
+            era beside a year is chrome, and this screen speaks the player's
+            language. */}
+        {formatYear(round.year, dateLabels(t))}
       </p>
 
       <div className="flex w-full items-start justify-center gap-5">
-        <SeatOutcome
-          label={t.versusYouLabel}
-          answer={mine}
-          locale={locale}
-          t={t}
-        />
+        <SeatOutcome label={t.versusYouLabel} answer={mine} locale={locale} t={t} />
         <span className="mt-1 text-sm font-semibold text-white/30">·</span>
-        <SeatOutcome
-          label={t.versusThemLabel}
-          answer={theirs}
-          locale={locale}
-          t={t}
-        />
+        <SeatOutcome label={t.versusThemLabel} answer={theirs} locale={locale} t={t} />
       </div>
     </div>
   );
@@ -783,7 +1408,7 @@ function SeatOutcome({
           : t[VERDICT_LABEL_KEYS[answer.verdict]]}
       </p>
       <p className="on-photo text-[11px] tabular-nums text-white/70">
-        {answer.guess === null ? "—" : formatYear(answer.guess)}
+        {answer.guess === null ? "—" : formatYear(answer.guess, dateLabels(t))}
         <span className="px-1 text-white/30">·</span>
         {format(t.versusRoundPoints, { n: answer.points })}
       </p>
@@ -794,7 +1419,7 @@ function SeatOutcome({
 /** The wait, in the place the result will appear. */
 function WaitingBadge({ label }: { label: string }) {
   return (
-    <div className="versus-overlay-in pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center bg-gradient-to-t from-black/90 via-black/55 to-transparent px-4 pb-4 pt-12 text-center">
+    <div className="versus-overlay-in pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center bg-gradient-to-t from-black/90 via-black/55 to-transparent px-4 pb-4 pt-12 text-center">
       <div className="on-photo">
         <Waiting label={label} />
       </div>
@@ -827,6 +1452,7 @@ function VersusSummary({
   const panel = useRef<HTMLDivElement>(null);
   const them = otherSeat(view.seat);
   const outcome = matchOutcome(view);
+  const modeName = t[versusModeSpec(view.mode).titleKey];
 
   // The match ending is a change of screen and the button that was pressed is
   // gone, so focus has to be moved or a keyboard user is dropped at the top of
@@ -857,8 +1483,13 @@ function VersusSummary({
         className="set-summary-in flex max-h-full w-full max-w-md flex-col gap-5 overflow-y-auto rounded-3xl border border-white/12 bg-black/45 px-7 py-7 text-center shadow-2xl shadow-black/70 backdrop-blur-2xl focus:outline-none"
       >
         <div>
+          {/* The kicker names the game as well as the mode, because a match
+              can now be any of the date-guessing pools and the result screen
+              is the one place the whole of it is being read. */}
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
             {t.versusTitle}
+            <span className="px-1.5 text-white/30">·</span>
+            {modeName}
           </p>
           <h2
             className="mt-1 font-display text-3xl font-semibold leading-none tracking-tight"
@@ -918,7 +1549,7 @@ function VersusSummary({
             <p className="text-xs text-white/55">{t.versusRematchDeclined}</p>
           )}
 
-          <ShareMatchButton view={view} t={t} />
+          <ShareMatchButton view={view} modeName={modeName} t={t} />
         </div>
 
         <Link
@@ -1020,7 +1651,16 @@ const SHARE_FEEDBACK_MS = 2000;
  * grid, link. The grid is per round and says who took it, which spoils none of
  * the questions — so it can be pasted to somebody who has not played.
  */
-function ShareMatchButton({ view, t }: { view: MatchView; t: Dict }) {
+function ShareMatchButton({
+  view,
+  modeName,
+  t,
+}: {
+  view: MatchView;
+  /** The mode's name, so a shared result says which game it was. */
+  modeName: string;
+  t: Dict;
+}) {
   const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
   const timer = useRef<number | null>(null);
 
@@ -1051,7 +1691,7 @@ function ShareMatchButton({ view, t }: { view: MatchView; t: Dict }) {
       .join("");
 
     const text = [
-      `TEMPUS · ${t.versusTitle}`,
+      `TEMPUS · ${t.versusTitle} · ${modeName}`,
       `${view.seats[view.seat].score} – ${view.seats[them].score}`,
       "",
       squares,

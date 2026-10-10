@@ -1,0 +1,1892 @@
+[
+  {
+    "id": "invention-of-basketball",
+    "title": {
+      "en": "Invention of Basketball",
+      "es": "Invención del baloncesto",
+      "de": "Erfindung des Basketballs",
+      "tr": "Basketbolun İcadı",
+      "fr": "Invention du basket-ball"
+    },
+    "description": {
+      "en": "Dr. James Naismith invented basketball in Springfield using peach baskets. It was created as an indoor activity to keep athletes fit during winter.",
+      "es": "El Dr. James Naismith inventó el baloncesto en Springfield utilizando cestas de melocotón. Se creó como una actividad de interior para mantener a los atletas en forma durante el invierno.",
+      "de": "Dr. James Naismith erfand Basketball in Springfield mit Pfirsichkörben. Es wurde als Hallenaktivität entwickelt, um Athleten im Winter fit zu halten.",
+      "tr": "Dr. James Naismith, şeftali sepetleri kullanarak basketbolu icat etti. Sporcuları kış aylarında formda tutmak için kapalı alan bir aktivite olarak tasarlandı.",
+      "fr": "Le Dr James Naismith a inventé le basket-ball à Springfield en utilisant des paniers de pêches. Il a été créé comme une activité d'intérieur pour maintenir les athlètes en forme pendant l'hiver."
+    },
+    "year": 1891
+  },
+  {
+    "id": "nba-founded",
+    "title": {
+      "en": "Foundation of the NBA (BAA)",
+      "es": "Fundación de la NBA (BAA)",
+      "de": "Gründung der NBA (BAA)",
+      "tr": "NBA'in (BAA) Kuruluşu",
+      "fr": "Fondation de la NBA (BAA)"
+    },
+    "description": {
+      "en": "The Basketball Association of America (BAA), which would later become the NBA, was founded in New York City. It later merged with the NBL to form the modern NBA.",
+      "es": "La Basketball Association of America (BAA), que más tarde sería la NBA, se fundó en Nueva York. Posteriormente se fusionó con la NBL para formar la NBA moderna.",
+      "de": "Die Basketball Association of America (BAA, später NBA) wurde in New York City gegründet. Sie fusionierte später mit der NBL zur modernen NBA.",
+      "tr": "Daha sonra NBA adını alacak olan Basketball Association of America (BAA) New York'ta kuruldu. Daha sonra NBL ile birleşerek modern NBA'i oluşturdu.",
+      "fr": "La Basketball Association of America (BAA), qui deviendra la NBA, a été fondée à New York. Elle a ensuite fusionné avec la NBL pour former la NBA moderne."
+    },
+    "year": 1946
+  },
+  {
+    "id": "shot-clock-introduced",
+    "title": {
+      "en": "Introduction of the 24-Second Shot Clock",
+      "es": "Introducción del reloj de posesión de 24 segundos",
+      "de": "Einführung der 24-Sekunden-Wurfuhr",
+      "tr": "24 Saniyelik Şut Saatinin Tanıtılması",
+      "fr": "Introduction de l'horloge des 24 secondes"
+    },
+    "description": {
+      "en": "To speed up the game and prevent stalling, the NBA introduced the 24-second shot clock. This completely revolutionized the pace of basketball.",
+      "es": "Para acelerar el juego y evitar pérdidas de tiempo, la NBA introdujo el reloj de posesión de 24 segundos. Esto revolucionó por completo el ritmo del baloncesto.",
+      "de": "Um das Spiel zu beschleunigen und Zeitspiel zu verhindern, führte die NBA die 24-Sekunden-Wurfuhr ein. Dies revolutionierte das Tempo des Basketballs völlig.",
+      "tr": "Oyunu hızlandırmak ve zaman geçirmeyi önlemek için NBA, 24 saniyelik şut saatini getirdi. Bu, basketbolun temposunda tamamen devrim yarattı.",
+      "fr": "Pour accélérer le jeu et éviter les pertes de temps, la NBA a introduit l'horloge des 24 secondes. Cela a complètement révolutionné le rythme du basket-ball."
+    },
+    "year": 1954
+  },
+  {
+    "id": "wilt-100-points",
+    "title": {
+      "en": "Wilt Chamberlain's 100-Point Game",
+      "es": "El partido de 100 puntos de Wilt Chamberlain",
+      "de": "Wilt Chamberlains 100-Punkte-Spiel",
+      "tr": "Wilt Chamberlain'in 100 Sayılık Maçı",
+      "fr": "Le match à 100 points de Wilt Chamberlain"
+    },
+    "description": {
+      "en": "Wilt Chamberlain scored an unbelievable 100 points in a single game for the Philadelphia Warriors. This remains an unbroken scoring record in NBA history.",
+      "es": "Wilt Chamberlain anotó unos increíbles 100 puntos en un solo partido para los Philadelphia Warriors. Sigue siendo un récord imbatido en la historia de la NBA.",
+      "de": "Wilt Chamberlain erzielte unglaubliche 100 Punkte in einem einzigen Spiel für die Philadelphia Warriors. Dies bleibt ein ungebrochener Rekord in der NBA-Geschichte.",
+      "tr": "Wilt Chamberlain, Philadelphia Warriors formasıyla tek bir maçta inanılmaz bir şekilde 100 sayı attı. Bu, NBA tarihinde hâlâ kırılamamış bir skordur.",
+      "fr": "Wilt Chamberlain a marqué l'incroyable total de 100 points en un seul match pour les Warriors de Philadelphie. Cela reste un record inégalé dans l'histoire de la NBA."
+    },
+    "year": 1962
+  },
+  {
+    "id": "celtics-8-straight-titles",
+    "title": {
+      "en": "Celtics Win 8th Consecutive Championship",
+      "es": "Los Celtics ganan su octavo campeonato consecutivo",
+      "de": "Celtics gewinnen die 8. Meisterschaft in Folge",
+      "tr": "Celtics'in Üst Üste 8. Şampiyonluğu",
+      "fr": "Les Celtics remportent un 8ème championnat consécutif"
+    },
+    "description": {
+      "en": "Led by Bill Russell and Red Auerbach, the Boston Celtics won their 8th straight NBA title. It is the longest championship streak in major US sports history.",
+      "es": "Liderados por Bill Russell y Red Auerbach, los Boston Celtics ganaron su octavo título consecutivo de la NBA. Es la racha más larga en los deportes de EE. UU.",
+      "de": "Angeführt von Bill Russell und Red Auerbach gewannen die Boston Celtics ihren 8. NBA-Titel in Folge. Es ist die längste Meisterschaftsserie in der US-Sportgeschichte.",
+      "tr": "Bill Russell ve Red Auerbach liderliğindeki Boston Celtics, üst üste 8. NBA şampiyonluğunu kazandı. Bu, ABD spor tarihindeki en uzun şampiyonluk serisidir.",
+      "fr": "Emmenés par Bill Russell et Red Auerbach, les Celtics de Boston ont remporté leur 8ème titre NBA consécutif. C'est la plus longue série de championnats de l'histoire du sport américain."
+    },
+    "year": 1966
+  },
+  {
+    "id": "nba-aba-merger",
+    "title": {
+      "en": "NBA-ABA Merger",
+      "es": "Fusión de la NBA y la ABA",
+      "de": "NBA-ABA-Fusion",
+      "tr": "NBA-ABA Birleşmesi",
+      "fr": "Fusion de la NBA et de l'ABA"
+    },
+    "description": {
+      "en": "The American Basketball Association (ABA) officially merged with the NBA. Four ABA teams joined the league, and the 3-point line was eventually adapted.",
+      "es": "La ABA se fusionó oficialmente con la NBA. Cuatro equipos de la ABA se unieron a la liga y, finalmente, se adoptó la línea de 3 puntos.",
+      "de": "Die ABA fusionierte offiziell mit der NBA. Vier ABA-Teams traten der Liga bei, und die 3-Punkte-Linie wurde schließlich übernommen.",
+      "tr": "ABA, resmi olarak NBA ile birleşti. Dört ABA takımı lige katıldı ve 3 sayı çizgisi kültürü lige dahil edilmiş oldu.",
+      "fr": "L'ABA a officiellement fusionné avec la NBA. Quatre équipes de l'ABA ont rejoint la ligue, et la ligne des 3 points a finalement été adoptée."
+    },
+    "year": 1976
+  },
+  {
+    "id": "magic-bird-ncaa",
+    "title": {
+      "en": "Magic vs. Bird NCAA Final",
+      "es": "Final de la NCAA: Magic contra Bird",
+      "de": "NCAA-Finale: Magic gegen Bird",
+      "tr": "Magic ve Bird NCAA Finali",
+      "fr": "Finale de la NCAA : Magic contre Bird"
+    },
+    "description": {
+      "en": "Magic Johnson and Larry Bird faced off in the highest-rated college basketball game ever. This rivalry saved the NBA's popularity in the following decade.",
+      "es": "Magic Johnson y Larry Bird se enfrentaron en el partido de baloncesto universitario con más audiencia de la historia. Esta rivalidad salvó la popularidad de la NBA.",
+      "de": "Magic Johnson und Larry Bird trafen im meistgesehenen College-Basketballspiel aller Zeiten aufeinander. Diese Rivalität rettete später die Popularität der NBA.",
+      "tr": "Magic Johnson ve Larry Bird, tarihin en çok izlenen kolej basketbolu maçında karşı karşıya geldi. Bu rekabet, sonraki on yılda NBA'in popülaritesini kurtaracaktı.",
+      "fr": "Magic Johnson et Larry Bird se sont affrontés dans le match de basket universitaire le plus regardé de l'histoire. Cette rivalité a sauvé la popularité de la NBA par la suite."
+    },
+    "year": 1979
+  },
+  {
+    "id": "michael-jordan-drafted",
+    "title": {
+      "en": "Michael Jordan Drafted by the Bulls",
+      "es": "Michael Jordan es reclutado por los Bulls",
+      "de": "Michael Jordan von den Bulls gedraftet",
+      "tr": "Michael Jordan'ın Bulls Tarafından Draft Edilmesi",
+      "fr": "Michael Jordan drafté par les Bulls"
+    },
+    "description": {
+      "en": "The Chicago Bulls selected Michael Jordan with the third overall pick in the NBA Draft. It marked the beginning of a legendary career that transformed the sport globally.",
+      "es": "Los Chicago Bulls seleccionaron a Michael Jordan con la tercera selección global en el Draft. Marcó el comienzo de una carrera legendaria que transformó el deporte.",
+      "de": "Die Chicago Bulls wählten Michael Jordan an dritter Stelle im Draft. Es markierte den Beginn einer legendären Karriere, die den Sport weltweit veränderte.",
+      "tr": "Chicago Bulls, NBA Draft seçimlerinde Michael Jordan'ı üçüncü sıradan seçti. Bu, sporu küresel çapta dönüştüren efsanevi bir kariyerin başlangıcıydı.",
+      "fr": "Les Bulls de Chicago ont sélectionné Michael Jordan avec le troisième choix global de la Draft. Cela a marqué le début d'une carrière légendaire qui a transformé le sport."
+    },
+    "year": 1984
+  },
+  {
+    "id": "magic-johnson-hiv",
+    "title": {
+      "en": "Magic Johnson Announces HIV Diagnosis",
+      "es": "Magic Johnson anuncia su diagnóstico de VIH",
+      "de": "Magic Johnson gibt HIV-Diagnose bekannt",
+      "tr": "Magic Johnson'ın HIV Teşhisini Açıklaması",
+      "fr": "Magic Johnson annonce son diagnostic de VIH"
+    },
+    "description": {
+      "en": "Magic Johnson shocked the world by announcing he was HIV positive and retiring from basketball immediately. His announcement drastically changed public perception of the virus.",
+      "es": "Magic Johnson conmocionó al mundo al anunciar que era seropositivo y retirarse del baloncesto. Su anuncio cambió drásticamente la percepción pública del virus.",
+      "de": "Magic Johnson schockierte die Welt, als er seine HIV-Infektion bekannt gab und sofort zurücktrat. Seine Ankündigung veränderte die öffentliche Wahrnehmung des Virus drastisch.",
+      "tr": "Magic Johnson, HIV pozitif olduğunu ve basketbolu derhal bıraktığını açıklayarak dünyayı şoke etti. Bu duyurusu, virüs hakkındaki kamuoyu algısını büyük ölçüde değiştirdi.",
+      "fr": "Magic Johnson a choqué le monde en annonçant sa séropositivité et en se retirant immédiatement du basket. Son annonce a radicalement changé la perception publique du virus."
+    },
+    "year": 1991
+  },
+  {
+    "id": "dream-team-barcelona",
+    "title": {
+      "en": "The Dream Team Wins Gold",
+      "es": "El Dream Team gana el oro",
+      "de": "Das Dream Team gewinnt Gold",
+      "tr": "Rüya Takım (Dream Team) Altın Madalya Kazandı",
+      "fr": "La Dream Team remporte l'or"
+    },
+    "description": {
+      "en": "The USA fielded professional NBA players for the first time at the Barcelona Olympics. Known as the 'Dream Team', they dominated the tournament and popularized basketball globally.",
+      "es": "Estados Unidos presentó jugadores profesionales de la NBA por primera vez en los Juegos Olímpicos de Barcelona. Dominaron el torneo y popularizaron el baloncesto mundialmente.",
+      "de": "Die USA setzten bei den Olympischen Spielen in Barcelona erstmals NBA-Profis ein. Das 'Dream Team' dominierte das Turnier und popularisierte den Basketball weltweit.",
+      "tr": "ABD, Barselona Olimpiyatları'nda ilk kez profesyonel NBA oyuncularını sahaya sürdü. 'Dream Team' olarak bilinen takım turnuvayı domine etti ve basketbolu küreselleştirdi.",
+      "fr": "Les États-Unis ont aligné des joueurs professionnels de la NBA pour la première fois aux Jeux de Barcelone. Connue sous le nom de 'Dream Team', elle a dominé le tournoi."
+    },
+    "year": 1992
+  },
+  {
+    "id": "drazen-petrovic-death",
+    "title": {
+      "en": "Tragic Death of Dražen Petrović",
+      "es": "Muerte trágica de Dražen Petrović",
+      "de": "Tragischer Tod von Dražen Petrović",
+      "tr": "Dražen Petrović'in Trajik Ölümü",
+      "fr": "Décès tragique de Dražen Petrović"
+    },
+    "description": {
+      "en": "Croatian basketball legend Dražen Petrović died in a tragic car accident in Germany at age 28. He was one of the first European pioneers to star in the NBA.",
+      "es": "La leyenda del baloncesto croata Dražen Petrović murió en un trágico accidente automovilístico en Alemania a los 28 años. Fue uno de los primeros pioneros europeos en la NBA.",
+      "de": "Die kroatische Basketball-Legende Dražen Petrović starb im Alter von 28 Jahren bei einem Autounfall in Deutschland. Er war einer der ersten europäischen Stars der NBA.",
+      "tr": "Hırvat basketbol efsanesi Dražen Petrović, 28 yaşında Almanya'da geçirdiği trafik kazasında hayatını kaybetti. NBA'de yıldızlaşan ilk Avrupalı oyunculardan biriydi.",
+      "fr": "La légende du basket croate Dražen Petrović est décédée dans un tragique accident de voiture en Allemagne à 28 ans. Il fut l'un des premiers pionniers européens en NBA."
+    },
+    "year": 1993
+  },
+  {
+    "id": "jordan-im-back",
+    "title": {
+      "en": "Michael Jordan: 'I'm Back'",
+      "es": "Michael Jordan: 'He vuelto'",
+      "de": "Michael Jordan: 'Ich bin zurück'",
+      "tr": "Michael Jordan: 'Geri Döndüm' (I'm Back)",
+      "fr": "Michael Jordan : 'Je suis de retour'"
+    },
+    "description": {
+      "en": "After retiring to play baseball, Michael Jordan announced his return to the NBA with a simple two-word fax: 'I'm back.' He rejoined the Bulls for the end of the season.",
+      "es": "Tras retirarse para jugar al béisbol, Michael Jordan anunció su regreso a la NBA con un sencillo fax de dos palabras: 'I'm back'. Se reincorporó a los Bulls.",
+      "de": "Nach seinem Rücktritt, um Baseball zu spielen, kündigte Michael Jordan seine Rückkehr in die NBA mit einem Fax an: 'I'm back'. Er schloss sich wieder den Bulls an.",
+      "tr": "Beyzbol oynamak için emekli olduktan sonra Michael Jordan, iki kelimelik bir faksla NBA'e dönüşünü duyurdu: 'Geri döndüm.' Sezon sonuna doğru Bulls'a yeniden katıldı.",
+      "fr": "Après s'être retiré pour jouer au baseball, Michael Jordan a annoncé son retour en NBA avec un simple fax de deux mots : 'I'm back'. Il a rejoint les Bulls."
+    },
+    "year": 1995
+  },
+  {
+    "id": "wnba-founded",
+    "title": {
+      "en": "WNBA Founded",
+      "es": "Fundación de la WNBA",
+      "de": "Gründung der WNBA",
+      "tr": "WNBA'in Kurulması",
+      "fr": "Fondation de la WNBA"
+    },
+    "description": {
+      "en": "The Women's National Basketball Association (WNBA) was officially approved by the NBA Board of Governors. It provided a permanent professional platform for female players.",
+      "es": "La Asociación Nacional de Baloncesto Femenino (WNBA) fue aprobada oficialmente por la NBA. Proporcionó una plataforma profesional permanente para las jugadoras.",
+      "de": "Die Women's National Basketball Association (WNBA) wurde offiziell von der NBA genehmigt. Sie bot weiblichen Spielern eine dauerhafte professionelle Plattform.",
+      "tr": "Kadınlar Ulusal Basketbol Birliği (WNBA) resmi olarak NBA Yönetim Kurulu tarafından onaylandı. Kadın basketbolcular için kalıcı bir profesyonel platform sağlamış oldu.",
+      "fr": "La Women's National Basketball Association (WNBA) a été officiellement approuvée par la NBA. Elle a fourni une plateforme professionnelle permanente pour les joueuses."
+    },
+    "year": 1996
+  },
+  {
+    "id": "jordan-flu-game",
+    "title": {
+      "en": "The Flu Game",
+      "es": "El 'Flu Game' de Jordan",
+      "de": "Das 'Flu Game'",
+      "tr": "Grip Maçı (The Flu Game)",
+      "fr": "Le 'Flu Game' de Jordan"
+    },
+    "description": {
+      "en": "Visibly ill and dehydrated, Michael Jordan scored 38 points in Game 5 of the NBA Finals. This iconic performance helped the Bulls secure a crucial victory.",
+      "es": "Visiblemente enfermo, Michael Jordan anotó 38 puntos en el quinto partido de las Finales de la NBA. Esta actuación icónica ayudó a los Bulls a asegurar una victoria crucial.",
+      "de": "Sichtlich krank erzielte Michael Jordan im 5. Spiel der NBA Finals 38 Punkte. Diese ikonische Leistung half den Bulls, einen entscheidenden Sieg zu sichern.",
+      "tr": "Gözle görülür şekilde hasta ve bitkin olan Michael Jordan, NBA Finalleri 5. maçında 38 sayı attı. Bu ikonik performans Bulls'un kritik bir galibiyet almasını sağladı.",
+      "fr": "Visiblement malade, Michael Jordan a marqué 38 points lors du 5ème match des Finales NBA. Cette performance emblématique a aidé les Bulls à remporter une victoire cruciale."
+    },
+    "year": 1997
+  },
+  {
+    "id": "vince-carter-dunk-olympics",
+    "title": {
+      "en": "Vince Carter's 'Dunk of Death'",
+      "es": "El 'Mate de la Muerte' de Vince Carter",
+      "de": "Vince Carters 'Dunk of Death'",
+      "tr": "Vince Carter'ın 'Ölüm Smacı'",
+      "fr": "Le 'Dunk de la mort' de Vince Carter"
+    },
+    "description": {
+      "en": "During the Sydney Olympics, Vince Carter literally jumped over a 7-foot-2 French center to dunk the ball. It is widely considered the greatest in-game dunk in history.",
+      "es": "Durante los Juegos de Sídney, Vince Carter saltó literalmente sobre un pívot francés de 2,18 metros para machacar. Es considerado el mejor mate de la historia.",
+      "de": "Während der Olympischen Spiele in Sydney sprang Vince Carter buchstäblich über einen 2,18 m großen französischen Center. Es gilt als der beste Dunk der Geschichte.",
+      "tr": "Sidney Olimpiyatları'nda Vince Carter, 2.18'lik Fransız pivotun tam üzerinden atlayarak smaç bastı. Bu, tarihin maç içinde yapılmış en iyi smacı olarak kabul edilir.",
+      "fr": "Pendant les Jeux de Sydney, Vince Carter a littéralement sauté par-dessus un pivot français de 2,18 mètres pour dunker. C'est considéré comme le plus grand dunk de l'histoire."
+    },
+    "year": 2000
+  },
+  {
+    "id": "lakers-kings-game-6-scandal",
+    "title": {
+      "en": "Lakers-Kings Game 6 Officiating Controversy",
+      "es": "Controversia arbitral del 6º partido Lakers-Kings",
+      "de": "Lakers-Kings Spiel 6 Schiedsrichter-Skandal",
+      "tr": "Lakers-Kings 6. Maç Hakem Skandalı",
+      "fr": "Controverse d'arbitrage du match 6 Lakers-Kings"
+    },
+    "description": {
+      "en": "Game 6 of the Western Conference Finals featured heavily debated referee decisions that favored the Lakers. Fans and analysts still cite it as one of the most controversial games.",
+      "es": "El 6º partido de las Finales del Oeste presentó decisiones arbitrales muy debatidas que favorecieron a los Lakers. Sigue siendo uno de los partidos más controvertidos.",
+      "de": "Spiel 6 der Western Conference Finals war geprägt von umstrittenen Schiedsrichterentscheidungen zugunsten der Lakers. Es gilt als eines der umstrittensten Spiele.",
+      "tr": "Batı Konferansı Finalleri 6. maçında Lakers lehine verilen çok tartışmalı hakem kararları oldu. Taraftarlar ve analistler bu maçı hâlâ en büyük skandallardan biri sayar.",
+      "fr": "Le match 6 des finales de conférence Ouest a été marqué par des décisions d'arbitrage très contestées en faveur des Lakers. C'est l'un des matchs les plus controversés."
+    },
+    "year": 2002
+  },
+  {
+    "id": "pistons-2004-upset",
+    "title": {
+      "en": "Detroit Pistons Massive Finals Upset",
+      "es": "Gran sorpresa de los Detroit Pistons en las Finales",
+      "de": "Riesige Überraschung der Detroit Pistons",
+      "tr": "Detroit Pistons'ın Büyük Sürpriz Şampiyonluğu",
+      "fr": "L'énorme surprise des Detroit Pistons en finale"
+    },
+    "description": {
+      "en": "A starless Detroit Pistons team defeated the heavily favored Lakers featuring Shaq and Kobe in 5 games. They proved that elite team defense could overcome individual superstars.",
+      "es": "Un equipo de los Detroit Pistons sin superestrellas derrotó a los favoritos Lakers de Shaq y Kobe en 5 partidos. Demostraron que la defensa de equipo puede superar a los individuos.",
+      "de": "Ein sternenloses Team der Detroit Pistons besiegte die favorisierten Lakers mit Shaq und Kobe in 5 Spielen. Sie bewiesen, dass Teamverteidigung Superstars schlagen kann.",
+      "tr": "Süperstarı olmayan bir Detroit Pistons takımı, Shaq ve Kobe'li favori Lakers'ı 5 maçta yendi. Elit takım savunmasının bireysel süperstarları alt edebileceğini kanıtladılar.",
+      "fr": "L'équipe des Detroit Pistons, sans grande star, a battu les grands favoris, les Lakers de Shaq et Kobe, en 5 matchs. Ils ont prouvé qu'une défense collective peut vaincre les superstars."
+    },
+    "year": 2004
+  },
+  {
+    "id": "malice-at-the-palace",
+    "title": {
+      "en": "Malice at the Palace",
+      "es": "El incidente 'Malice at the Palace'",
+      "de": "Malice at the Palace",
+      "tr": "Malice at the Palace (Sarardaki Kötülük)",
+      "fr": "Malice at the Palace"
+    },
+    "description": {
+      "en": "An infamous brawl broke out between Indiana Pacers players and Detroit Pistons fans in the stands. It resulted in massive suspensions and forever changed NBA security protocols.",
+      "es": "Una infame pelea estalló entre jugadores de los Indiana Pacers y aficionados de los Detroit Pistons en las gradas. Resultó en suspensiones masivas y cambió los protocolos de seguridad.",
+      "de": "Eine berüchtigte Schlägerei brach zwischen Spielern der Indiana Pacers und Fans der Detroit Pistons aus. Sie führte zu massiven Sperren und veränderte die Sicherheitsprotokolle der NBA.",
+      "tr": "Indiana Pacers oyuncuları ile Detroit Pistons taraftarları arasında tribünlere sıçrayan rezil bir kavga çıktı. Bu olay devasa cezalara yol açtı ve NBA güvenlik kurallarını değiştirdi.",
+      "fr": "Une violente bagarre a éclaté entre les joueurs des Indiana Pacers et les fans des Detroit Pistons dans les tribunes. Cela a entraîné des suspensions massives et modifié les protocoles de sécurité."
+    },
+    "year": 2004
+  },
+  {
+    "id": "kobe-81-points",
+    "title": {
+      "en": "Kobe Bryant's 81-Point Game",
+      "es": "El partido de 81 puntos de Kobe Bryant",
+      "de": "Kobe Bryants 81-Punkte-Spiel",
+      "tr": "Kobe Bryant'ın 81 Sayılık Maçı",
+      "fr": "Le match à 81 points de Kobe Bryant"
+    },
+    "description": {
+      "en": "Kobe Bryant scored 81 points against the Toronto Raptors. It remains the second-highest single-game scoring performance in NBA history, behind only Wilt Chamberlain's 100.",
+      "es": "Kobe Bryant anotó 81 puntos contra los Toronto Raptors. Sigue siendo la segunda mayor actuación anotadora en la historia de la NBA, solo detrás de los 100 de Wilt.",
+      "de": "Kobe Bryant erzielte 81 Punkte gegen die Toronto Raptors. Es bleibt die zweithöchste Punkteausbeute in der Geschichte der NBA, nur hinter Wilts 100 Punkten.",
+      "tr": "Kobe Bryant, Toronto Raptors'a karşı 81 sayı attı. Bu, Wilt Chamberlain'in 100 sayısından sonra NBA tarihinin en yüksek ikinci bireysel skor performansı olarak kalmaya devam ediyor.",
+      "fr": "Kobe Bryant a marqué 81 points contre les Raptors de Toronto. Cela reste la deuxième meilleure performance de l'histoire de la NBA, juste derrière les 100 points de Wilt."
+    },
+    "year": 2006
+  },
+  {
+    "id": "tim-donaghy-scandal",
+    "title": {
+      "en": "Tim Donaghy Betting Scandal",
+      "es": "Escándalo de apuestas de Tim Donaghy",
+      "de": "Tim Donaghy Wettskandal",
+      "tr": "Tim Donaghy Bahis Skandalı",
+      "fr": "Le scandale des paris de Tim Donaghy"
+    },
+    "description": {
+      "en": "Former NBA referee Tim Donaghy pleaded guilty to betting on games he officiated. The scandal rocked the sports world and forced the NBA to review all refereeing processes.",
+      "es": "El ex árbitro de la NBA Tim Donaghy se declaró culpable de apostar en partidos que arbitró. El escándalo sacudió al mundo del deporte y obligó a la NBA a revisar sus procesos.",
+      "de": "Der ehemalige NBA-Schiedsrichter Tim Donaghy bekannte sich schuldig, auf Spiele gewettet zu haben, die er leitete. Der Skandal erschütterte die Sportwelt zutiefst.",
+      "tr": "Eski NBA hakemi Tim Donaghy, yönettiği maçlara bahis oynadığını itiraf etti. Skandal spor dünyasını sarstı ve NBA'i tüm hakem süreçlerini gözden geçirmeye zorladı.",
+      "fr": "L'ancien arbitre de la NBA, Tim Donaghy, a plaidé coupable d'avoir parié sur des matchs qu'il arbitrait. Ce scandale a secoué le monde du sport et forcé la NBA à réviser ses procédures."
+    },
+    "year": 2007
+  },
+  {
+    "id": "lebron-the-decision",
+    "title": {
+      "en": "LeBron James' 'The Decision'",
+      "es": "'La Decisión' de LeBron James",
+      "de": "LeBron James' 'The Decision'",
+      "tr": "LeBron James'in 'The Decision' Kararı",
+      "fr": "'The Decision' de LeBron James"
+    },
+    "description": {
+      "en": "LeBron James announced on live television that he was leaving his hometown team to join the Miami Heat. It sparked massive outrage in Cleveland and altered player agency in the NBA.",
+      "es": "LeBron James anunció en televisión en vivo que dejaba su equipo natal para unirse a los Miami Heat. Provocó gran indignación en Cleveland y alteró el poder de los jugadores.",
+      "de": "LeBron James verkündete im Live-Fernsehen, dass er sein Heimatteam verlassen werde, um zu den Miami Heat zu wechseln. Es löste große Empörung in Cleveland aus.",
+      "tr": "LeBron James, canlı yayında doğup büyüdüğü şehrin takımını bırakıp Miami Heat'e katılacağını açıkladı. Cleveland'da büyük bir öfke yarattı ve NBA'de oyuncu gücünü değiştirdi.",
+      "fr": "LeBron James a annoncé en direct à la télévision qu'il quittait son équipe de cœur pour rejoindre le Heat de Miami. Cela a provoqué la colère à Cleveland et changé le pouvoir des joueurs."
+    },
+    "year": 2010
+  },
+  {
+    "id": "mavericks-2011-upset",
+    "title": {
+      "en": "Mavericks Upset the Heat 'Big 3'",
+      "es": "Los Mavericks sorprenden al 'Big 3' de los Heat",
+      "de": "Mavericks besiegen die 'Big 3' der Heat",
+      "tr": "Mavericks'in Heat 'Büyük 3'lüsünü Yıkması",
+      "fr": "Les Mavericks font chuter le 'Big 3' du Heat"
+    },
+    "description": {
+      "en": "Led by Dirk Nowitzki, the Dallas Mavericks stunned the heavily favored Miami Heat 'Big 3' in the Finals. It is celebrated as one of the greatest underdog championship runs.",
+      "es": "Liderados por Dirk Nowitzki, los Mavericks sorprendieron a los grandes favoritos, los Miami Heat, en las Finales. Se celebra como una de las mejores victorias de un equipo no favorito.",
+      "de": "Angeführt von Dirk Nowitzki besiegten die Dallas Mavericks die favorisierten Miami Heat in den Finals. Es gilt als einer der größten Außenseiter-Erfolge.",
+      "tr": "Dirk Nowitzki önderliğindeki Dallas Mavericks, Finallerde büyük favori gösterilen Miami Heat'i şaşkına çevirdi. Tarihin en büyük sürpriz şampiyonluk yürüyüşlerinden biri kabul edilir.",
+      "fr": "Emmenés par Dirk Nowitzki, les Mavericks de Dallas ont surpris le Heat de Miami, grand favori, en finale. C'est l'une des plus belles victoires d'un outsider dans l'histoire."
+    },
+    "year": 2011
+  },
+  {
+    "id": "ray-allen-game-6-shot",
+    "title": {
+      "en": "Ray Allen's Game 6 Miracle Shot",
+      "es": "El tiro milagroso de Ray Allen en el 6º partido",
+      "de": "Ray Allens Wunderwurf in Spiel 6",
+      "tr": "Ray Allen'ın 6. Maç Mucizevi Şutu",
+      "fr": "Le tir miracle de Ray Allen au match 6"
+    },
+    "description": {
+      "en": "With seconds remaining and the Heat facing elimination, Ray Allen hit a miracle step-back 3-pointer. The shot forced overtime, saving the Finals for Miami.",
+      "es": "A falta de segundos y con los Heat al borde de la eliminación, Ray Allen anotó un triple milagroso. El tiro forzó la prórroga y salvó las Finales para Miami.",
+      "de": "Wenige Sekunden vor Schluss traf Ray Allen einen wundersamen 3-Punkte-Wurf, als die Heat vor dem Ausscheiden standen. Der Wurf erzwang die Verlängerung und rettete Miami.",
+      "tr": "Saniyeler kala ve Heat elenmenin eşiğindeyken, Ray Allen geriye çekilerek mucizevi bir 3'lük attı. Şut maçı uzatmaya taşıdı ve Miami'yi Finallerde hayatta tuttu.",
+      "fr": "À quelques secondes de la fin et le Heat au bord de l'élimination, Ray Allen a réussi un tir à 3 points miraculeux. Ce tir a forcé la prolongation et sauvé Miami."
+    },
+    "year": 2013
+  },
+  {
+    "id": "warriors-73-wins",
+    "title": {
+      "en": "Warriors Win 73 Regular Season Games",
+      "es": "Los Warriors ganan 73 partidos en la temporada regular",
+      "de": "Warriors gewinnen 73 Spiele in der regulären Saison",
+      "tr": "Warriors'ın Normal Sezonda 73 Galibiyet Alması",
+      "fr": "Les Warriors remportent 73 victoires en saison régulière"
+    },
+    "description": {
+      "en": "The Golden State Warriors broke the 1995-96 Bulls' record by going 73-9 in the regular season. However, they failed to win the championship that year.",
+      "es": "Los Golden State Warriors batieron el récord de los Bulls de 1995-96 logrando 73-9 en la temporada regular. Sin embargo, no lograron ganar el campeonato ese año.",
+      "de": "Die Golden State Warriors brachen den Rekord der Bulls von 1995-96 mit 73-9 in der regulären Saison. Sie verpassten jedoch in diesem Jahr den Meistertitel.",
+      "tr": "Golden State Warriors, normal sezonda 73-9'luk derece yaparak 1995-96 Bulls'un rekorunu kırdı. Ancak o yıl şampiyonluğu kazanmayı başaramadılar.",
+      "fr": "Les Warriors de Golden State ont battu le record des Bulls de 1995-96 en terminant avec 73 victoires et 9 défaites. Cependant, ils n'ont pas réussi à remporter le championnat cette année-là."
+    },
+    "year": 2016
+  },
+  {
+    "id": "cavs-3-1-comeback",
+    "title": {
+      "en": "Cavaliers 3-1 Finals Comeback",
+      "es": "Remontada 3-1 de los Cavaliers en las Finales",
+      "de": "3:1-Comeback der Cavaliers in den Finals",
+      "tr": "Cavaliers'ın 3-1'lik Finaller Geri Dönüşü",
+      "fr": "Le retour de 3-1 des Cavaliers en finale"
+    },
+    "description": {
+      "en": "The Cleveland Cavaliers became the first team in NBA history to recover from a 3-1 deficit in the Finals. They defeated the 73-win Warriors to bring Cleveland its first title.",
+      "es": "Los Cleveland Cavaliers fueron el primer equipo en remontar un 3-1 en las Finales de la NBA. Derrotaron a los Warriors de 73 victorias para darle a Cleveland su primer título.",
+      "de": "Die Cleveland Cavaliers erholten sich als erstes Team der Geschichte von einem 1:3-Rückstand in den Finals. Sie besiegten die 73-Siege-Warriors und holten den ersten Titel für Cleveland.",
+      "tr": "Cleveland Cavaliers, NBA Finallerinde 3-1 geriden gelip şampiyon olan ilk takım oldu. 73 galibiyetli Warriors'ı yenerek Cleveland'a ilk şampiyonluğunu getirdiler.",
+      "fr": "Les Cavaliers de Cleveland sont devenus la première équipe à remonter un déficit de 3-1 lors des Finales NBA. Ils ont battu les Warriors pour offrir à Cleveland son premier titre."
+    },
+    "year": 2016
+  },
+  {
+    "id": "kawhi-the-shot",
+    "title": {
+      "en": "Kawhi Leonard's Game 7 Buzzer-Beater",
+      "es": "El tiro sobre la bocina de Kawhi Leonard en el 7º partido",
+      "de": "Kawhi Leonards Buzzer-Beater in Spiel 7",
+      "tr": "Kawhi Leonard'ın 7. Maçı Kazandıran Son Saniye Şutu",
+      "fr": "Le tir au buzzer de Kawhi Leonard au match 7"
+    },
+    "description": {
+      "en": "Kawhi Leonard hit a highly improbable, bouncing buzzer-beater in Game 7 against the Sixers. It is the only Game 7 buzzer-beater in NBA Playoff history.",
+      "es": "Kawhi Leonard anotó un improbable tiro sobre la bocina tras rebotar en el aro en el 7º partido contra los Sixers. Es el único tiro sobre la bocina en un 7º partido en la historia de los Playoffs.",
+      "de": "Kawhi Leonard traf in Spiel 7 gegen die Sixers einen unglaublichen Buzzer-Beater. Es ist der einzige Game-7-Buzzer-Beater in der Geschichte der NBA-Playoffs.",
+      "tr": "Kawhi Leonard, Sixers'a karşı 7. maçta potada sekerek giren imkansız bir son saniye şutu attı. Bu, NBA Playoff tarihindeki ilk ve tek 7. maç son saniye basketidir.",
+      "fr": "Kawhi Leonard a réussi un tir improbable au buzzer lors du match 7 contre les Sixers, le ballon rebondissant plusieurs fois. C'est le seul tir au buzzer d'un match 7 de l'histoire des Playoffs."
+    },
+    "year": 2019
+  },
+  {
+    "id": "kobe-bryant-helicopter-crash",
+    "title": {
+      "en": "Kobe Bryant Helicopter Crash",
+      "es": "Accidente de helicóptero de Kobe Bryant",
+      "de": "Kobe Bryants Hubschrauberabsturz",
+      "tr": "Kobe Bryant'ın Helikopter Kazası",
+      "fr": "L'accident d'hélicoptère de Kobe Bryant"
+    },
+    "description": {
+      "en": "Basketball legend Kobe Bryant, his daughter Gianna, and seven others died in a tragic helicopter crash in California. The entire sports world went into mourning.",
+      "es": "La leyenda del baloncesto Kobe Bryant, su hija Gianna y otras siete personas murieron en un trágico accidente de helicóptero. El mundo del deporte se vistió de luto.",
+      "de": "Die Basketball-Legende Kobe Bryant, seine Tochter Gianna und sieben weitere Personen starben bei einem Hubschrauberabsturz in Kalifornien. Die gesamte Sportwelt trauerte.",
+      "tr": "Basketbol efsanesi Kobe Bryant, kızı Gianna ve diğer yedi kişi Kaliforniya'daki trajik bir helikopter kazasında hayatını kaybetti. Tüm spor dünyası yasa boğuldu.",
+      "fr": "La légende du basket Kobe Bryant, sa fille Gianna et sept autres personnes sont décédées dans un tragique accident d'hélicoptère. Le monde entier du sport a été plongé dans le deuil."
+    },
+    "year": 2020
+  },
+  {
+    "id": "nba-bubble",
+    "title": {
+      "en": "The NBA Bubble",
+      "es": "La Burbuja de la NBA",
+      "de": "Die NBA Bubble",
+      "tr": "NBA Balonu (The Bubble)",
+      "fr": "La Bulle de la NBA"
+    },
+    "description": {
+      "en": "Due to the COVID-19 pandemic, the NBA suspended its season and later finished it in an isolated 'Bubble' at Disney World. The Lakers won the championship under these unprecedented conditions.",
+      "es": "Debido a la pandemia, la NBA suspendió su temporada y la terminó en una 'burbuja' aislada en Disney World. Los Lakers ganaron el campeonato en estas condiciones sin precedentes.",
+      "de": "Aufgrund der COVID-19-Pandemie beendete die NBA ihre Saison in einer isolierten 'Bubble' in Disney World. Die Lakers gewannen unter diesen beispiellosen Bedingungen die Meisterschaft.",
+      "tr": "COVID-19 salgını nedeniyle NBA sezonu durdurdu ve ardından Disney World'deki izole bir 'Balon' içinde tamamladı. Lakers, bu benzeri görülmemiş şartlar altında şampiyon oldu.",
+      "fr": "En raison de la pandémie, la NBA a suspendu sa saison et l'a terminée dans une 'Bulle' isolée à Disney World. Les Lakers ont remporté le championnat dans ces conditions inédites."
+    },
+    "year": 2020
+  },
+  {
+    "id": "lebron-scoring-record",
+    "title": {
+      "en": "LeBron James Breaks All-Time Scoring Record",
+      "es": "LeBron James rompe el récord histórico de anotación",
+      "de": "LeBron James bricht den All-Time-Scoring-Rekord",
+      "tr": "LeBron James'in Tüm Zamanların Sayı Rekorunu Kırması",
+      "fr": "LeBron James bat le record de points de tous les temps"
+    },
+    "description": {
+      "en": "LeBron James surpassed Kareem Abdul-Jabbar to become the NBA's all-time leading scorer. Kareem had held the record for nearly four decades.",
+      "es": "LeBron James superó a Kareem Abdul-Jabbar para convertirse en el máximo anotador de la historia de la NBA. Kareem mantuvo el récord durante casi cuatro décadas.",
+      "de": "LeBron James überholte Kareem Abdul-Jabbar und wurde zum besten Punktesammler der NBA-Geschichte. Kareem hatte den Rekord fast vier Jahrzehnte lang gehalten.",
+      "tr": "LeBron James, Kareem Abdul-Jabbar'ı geride bırakarak NBA tarihinin en skorer oyuncusu oldu. Kareem bu rekoru yaklaşık kırk yıl boyunca elinde tutmuştu.",
+      "fr": "LeBron James a dépassé Kareem Abdul-Jabbar pour devenir le meilleur marqueur de l'histoire de la NBA. Kareem détenait ce record depuis près de quatre décennies."
+    },
+    "year": 2023
+  },
+  {
+    "id": "celtics-18th-championship",
+    "title": {
+      "en": "Celtics Win 18th Championship",
+      "es": "Los Celtics ganan su campeonato número 18",
+      "de": "Celtics gewinnen 18. Meisterschaft",
+      "tr": "Celtics'in 18. Şampiyonluğunu Kazanması",
+      "fr": "Les Celtics remportent leur 18ème championnat"
+    },
+    "description": {
+      "en": "The Boston Celtics defeated the Dallas Mavericks to secure their 18th NBA Championship. This broke their tie with the Lakers for the most titles in league history.",
+      "es": "Los Boston Celtics derrotaron a los Dallas Mavericks para asegurar su 18º Campeonato de la NBA. Esto rompió su empate con los Lakers con más títulos en la historia.",
+      "de": "Die Boston Celtics besiegten die Dallas Mavericks und sicherten sich ihre 18. NBA-Meisterschaft. Damit lösten sie den Gleichstand mit den Lakers um die meisten Titel ab.",
+      "tr": "Boston Celtics, Dallas Mavericks'i yenerek 18. NBA Şampiyonluğunu elde etti. Böylece Lakers ile paylaştıkları lig tarihindeki en çok şampiyonluk rekorunda tek başlarına zirveye oturdular.",
+      "fr": "Les Celtics de Boston ont battu les Mavericks de Dallas pour remporter leur 18ème championnat NBA. Cela a brisé leur égalité avec les Lakers pour le plus grand nombre de titres de l'histoire."
+    },
+    "year": 2024
+  },
+  {
+    "id": "fiba-founded",
+    "title": {
+      "en": "FIBA Founded",
+      "es": "Fundación de la FIBA",
+      "de": "Gründung der FIBA",
+      "tr": "FIBA'nın Kuruluşu",
+      "fr": "Fondation de la FIBA"
+    },
+    "description": {
+      "en": "The International Basketball Federation (FIBA) was founded in Geneva. This organization would go on to govern international basketball competitions worldwide.",
+      "es": "La Federación Internacional de Baloncesto (FIBA) se fundó en Ginebra. Esta organización pasaría a gobernar las competiciones internacionales de baloncesto.",
+      "de": "Der Internationale Basketballverband (FIBA) wurde in Genf gegründet. Diese Organisation leitet seitdem die internationalen Basketballwettbewerbe weltweit.",
+      "tr": "Uluslararası Basketbol Federasyonu (FIBA) Cenevre'de kuruldu. Bu organizasyon dünya çapında uluslararası basketbol müsabakalarını yönetmeye başladı.",
+      "fr": "La Fédération Internationale de Basketball (FIBA) a été fondée à Genève. Cette organisation allait diriger les compétitions internationales de basket-ball dans le monde entier."
+    },
+    "year": 1932
+  },
+  {
+    "id": "first-ncaa-tournament",
+    "title": {
+      "en": "First NCAA Tournament",
+      "es": "Primer Torneo de la NCAA",
+      "de": "Erstes NCAA-Turnier",
+      "tr": "İlk NCAA Turnuvası",
+      "fr": "Premier tournoi de la NCAA"
+    },
+    "description": {
+      "en": "The first NCAA Men's Basketball Tournament was held, with Oregon defeating Ohio State. This event would later grow into the massive 'March Madness' phenomenon.",
+      "es": "Se celebró el primer Torneo de Baloncesto Masculino de la NCAA, en el que Oregon derrotó a Ohio State. Este evento se convertiría más tarde en el fenómeno 'March Madness'.",
+      "de": "Das erste NCAA-Basketballturnier der Männer fand statt, bei dem Oregon Ohio State besiegte. Dieses Ereignis entwickelte sich später zum Phänomen 'March Madness'.",
+      "tr": "Oregon'un Ohio State'i yendiği ilk NCAA Erkekler Basketbol Turnuvası düzenlendi. Bu etkinlik daha sonra devasa 'March Madness' çılgınlığına dönüşecekti.",
+      "fr": "Le premier tournoi de basket-ball masculin de la NCAA a eu lieu, avec la victoire de l'Oregon sur Ohio State. Cet événement deviendra plus tard le phénomène de la 'March Madness'."
+    },
+    "year": 1939
+  },
+  {
+    "id": "first-nba-all-star-game",
+    "title": {
+      "en": "First NBA All-Star Game",
+      "es": "Primer All-Star Game de la NBA",
+      "de": "Erstes NBA All-Star Game",
+      "tr": "İlk NBA All-Star Maçı",
+      "fr": "Premier All-Star Game de la NBA"
+    },
+    "description": {
+      "en": "The first NBA All-Star Game was played at the Boston Garden. Ed Macauley was named the MVP as the East defeated the West.",
+      "es": "El primer All-Star Game de la NBA se jugó en el Boston Garden. Ed Macauley fue nombrado MVP en la victoria del Este sobre el Oeste.",
+      "de": "Das erste NBA All-Star Game wurde im Boston Garden gespielt. Ed Macauley wurde zum MVP ernannt, als der Osten den Westen besiegte.",
+      "tr": "NBA tarihindeki ilk All-Star maçı Boston Garden'da oynandı. Doğu takımı Batı'yı yenerken, Ed Macauley ilk All-Star MVP'si oldu.",
+      "fr": "Le premier All-Star Game de la NBA a été joué au Boston Garden. Ed Macauley a été nommé MVP lors de la victoire de l'Est sur l'Ouest."
+    },
+    "year": 1951
+  },
+  {
+    "id": "naismith-hall-of-fame-opens",
+    "title": {
+      "en": "Naismith Hall of Fame Opens",
+      "es": "Apertura del Salón de la Fama Naismith",
+      "de": "Eröffnung der Naismith Hall of Fame",
+      "tr": "Naismith Hall of Fame'in Açılması",
+      "fr": "Ouverture du Naismith Hall of Fame"
+    },
+    "description": {
+      "en": "The Naismith Memorial Basketball Hall of Fame was established in Springfield, Massachusetts. It honors the greatest players, coaches, and contributors to the sport.",
+      "es": "El Salón de la Fama del Baloncesto Naismith Memorial se estableció en Springfield, Massachusetts. Honra a los mejores jugadores, entrenadores y contribuyentes del deporte.",
+      "de": "Die Naismith Memorial Basketball Hall of Fame wurde in Springfield, Massachusetts, gegründet. Sie ehrt die größten Spieler, Trainer und Förderer des Sports.",
+      "tr": "Naismith Memorial Basketball Hall of Fame (Şöhretler Müzesi), Springfield'da kuruldu. Spora katkı sağlayan en büyük oyuncuları ve koçları onurlandırmak için tasarlandı.",
+      "fr": "Le Naismith Memorial Basketball Hall of Fame a été créé à Springfield, dans le Massachusetts. Il honore les plus grands joueurs, entraîneurs et contributeurs de ce sport."
+    },
+    "year": 1959
+  },
+  {
+    "id": "wilt-55-rebounds",
+    "title": {
+      "en": "Wilt Chamberlain's 55 Rebounds",
+      "es": "Los 55 rebotes de Wilt Chamberlain",
+      "de": "Wilt Chamberlains 55 Rebounds",
+      "tr": "Wilt Chamberlain'in 55 Ribaundu",
+      "fr": "Les 55 rebonds de Wilt Chamberlain"
+    },
+    "description": {
+      "en": "Wilt Chamberlain pulled down 55 rebounds in a single game against Bill Russell's Celtics. This remains the unbreakable NBA record for most rebounds in a game.",
+      "es": "Wilt Chamberlain capturó 55 rebotes en un solo partido contra los Celtics de Bill Russell. Sigue siendo el récord inquebrantable de la NBA de más rebotes en un partido.",
+      "de": "Wilt Chamberlain holte 55 Rebounds in einem einzigen Spiel gegen Bill Russells Celtics. Dies bleibt der ungebrochene NBA-Rekord für die meisten Rebounds in einem Spiel.",
+      "tr": "Wilt Chamberlain, Bill Russell'ın Celtics'ine karşı tek bir maçta tam 55 ribaund aldı. Bu sayı, bir maçta alınan en çok ribaund olarak kırılmaz bir NBA rekorudur.",
+      "fr": "Wilt Chamberlain a capturé 55 rebonds lors d'un seul match contre les Celtics de Bill Russell. Cela reste le record absolu de la NBA pour le plus grand nombre de rebonds dans un match."
+    },
+    "year": 1960
+  },
+  {
+    "id": "oscar-robertson-triple-double-season",
+    "title": {
+      "en": "Oscar Robertson Averages a Triple-Double",
+      "es": "Oscar Robertson promedia un triple-doble",
+      "de": "Oscar Robertson erzielt ein Triple-Double im Durchschnitt",
+      "tr": "Oscar Robertson'ın Triple-Double Sezonu",
+      "fr": "Oscar Robertson tourne à un triple-double de moyenne"
+    },
+    "description": {
+      "en": "Oscar Robertson became the first player in NBA history to average a triple-double over an entire regular season. It was a statistical marvel considered impossible to repeat for decades.",
+      "es": "Oscar Robertson se convirtió en el primer jugador en promediar un triple-doble durante toda una temporada. Fue una maravilla estadística considerada imposible de repetir.",
+      "de": "Oscar Robertson war der erste Spieler der NBA-Geschichte, der über eine gesamte Saison ein Triple-Double im Durchschnitt erzielte. Ein statistisches Wunder, das jahrzehntelang als unerreicht galt.",
+      "tr": "Oscar Robertson, tüm bir normal sezon boyunca triple-double ortalaması yakalayan ilk NBA oyuncusu oldu. Bu, on yıllar boyunca tekrarlanması imkansız görülen istatistiksel bir mucizeydi.",
+      "fr": "Oscar Robertson est devenu le premier joueur de l'histoire de la NBA à réaliser un triple-double de moyenne sur une saison entière. C'était une merveille statistique jugée impossible à répéter."
+    },
+    "year": 1962
+  },
+  {
+    "id": "munich-1972-final-controversy",
+    "title": {
+      "en": "1972 Munich Olympics Final Controversy",
+      "es": "Controversia en la final olímpica de Múnich 1972",
+      "de": "Finale der Olympischen Spiele 1972 Skandal",
+      "tr": "1972 Münih Olimpiyatları Final Skandalı",
+      "fr": "Controverse de la finale olympique de Munich 1972"
+    },
+    "description": {
+      "en": "The Soviet Union defeated the USA in the Olympic final after officials confusingly reset the game clock multiple times. The US team refused to accept their silver medals in protest.",
+      "es": "La Unión Soviética derrotó a EE. UU. en la final olímpica después de que los árbitros reiniciaran el reloj varias veces. El equipo de EE. UU. se negó a aceptar la plata.",
+      "de": "Die Sowjetunion besiegte die USA im Olympia-Finale, nachdem die Schiedsrichter die Uhr mehrfach zurücksetzten. Das US-Team weigerte sich aus Protest, die Silbermedaillen anzunehmen.",
+      "tr": "Hakemlerin maç saatini kafa karıştırıcı şekilde defalarca sıfırlamasının ardından Sovyetler Birliği olimpiyat finalinde ABD'yi yendi. ABD takımı protesto olarak gümüş madalyaları reddetti.",
+      "fr": "L'Union Soviétique a battu les États-Unis en finale olympique après que les officiels ont réinitialisé l'horloge plusieurs fois. L'équipe américaine a refusé d'accepter ses médailles d'argent."
+    },
+    "year": 1972
+  },
+  {
+    "id": "lakers-33-game-win-streak",
+    "title": {
+      "en": "Lakers' 33-Game Winning Streak",
+      "es": "Racha de 33 victorias de los Lakers",
+      "de": "Lakers' 33-Spiele-Siegesserie",
+      "tr": "Lakers'ın 33 Maçlık Galibiyet Serisi",
+      "fr": "Série de 33 victoires des Lakers"
+    },
+    "description": {
+      "en": "The Los Angeles Lakers won 33 consecutive regular-season games, establishing the longest winning streak in NBA history. Wilt Chamberlain and Jerry West led this historic squad.",
+      "es": "Los Lakers ganaron 33 partidos consecutivos, estableciendo la racha ganadora más larga de la NBA. Wilt Chamberlain y Jerry West lideraron este equipo histórico.",
+      "de": "Die Los Angeles Lakers gewannen 33 reguläre Saisonspiele in Folge und stellten die längste Siegesserie der NBA-Geschichte auf. Wilt und Jerry West führten dieses historische Team an.",
+      "tr": "Los Angeles Lakers üst üste 33 normal sezon maçı kazanarak NBA tarihinin en uzun galibiyet serisini kurdu. Bu tarihi kadroya Wilt Chamberlain ve Jerry West liderlik ediyordu.",
+      "fr": "Les Lakers de Los Angeles ont remporté 33 matchs de saison régulière consécutifs, établissant la plus longue série de victoires de l'histoire de la NBA. Wilt et Jerry West menaient cette équipe."
+    },
+    "year": 1972
+  },
+  {
+    "id": "kermit-washington-punch",
+    "title": {
+      "en": "Kermit Washington Punches Rudy Tomjanovich",
+      "es": "El puñetazo de Kermit Washington a Rudy Tomjanovich",
+      "de": "Kermit Washingtons Schlag gegen Rudy Tomjanovich",
+      "tr": "Kermit Washington'ın Rudy Tomjanovich'e Attığı Yumruk",
+      "fr": "Le coup de poing de Kermit Washington sur Rudy Tomjanovich"
+    },
+    "description": {
+      "en": "During a scuffle, Kermit Washington threw a devastating punch that nearly killed Rudy Tomjanovich on the court. It drastically changed how the NBA handles on-court violence.",
+      "es": "Durante una escaramuza, Kermit Washington lanzó un devastador puñetazo que casi mata a Rudy Tomjanovich. Cambió drásticamente cómo la NBA maneja la violencia.",
+      "de": "Während eines Handgemenges schlug Kermit Washington Rudy Tomjanovich so hart, dass dieser fast starb. Es veränderte drastisch den Umgang der NBA mit Gewalt auf dem Spielfeld.",
+      "tr": "Bir arbede sırasında Kermit Washington, parkede Rudy Tomjanovich'i neredeyse öldürecek yıkıcı bir yumruk attı. Bu olay, NBA'in saha içi şiddete yaklaşımını tamamen değiştirdi.",
+      "fr": "Lors d'une bagarre, Kermit Washington a asséné un coup de poing dévastateur qui a failli tuer Rudy Tomjanovich sur le terrain. Cela a changé la gestion de la violence en NBA."
+    },
+    "year": 1977
+  },
+  {
+    "id": "nba-3-point-line-introduced",
+    "title": {
+      "en": "Introduction of the 3-Point Line",
+      "es": "Introducción de la línea de 3 puntos",
+      "de": "Einführung der 3-Punkte-Linie",
+      "tr": "3 Sayı Çizgisinin Gelmesi",
+      "fr": "Introduction de la ligne des 3 points"
+    },
+    "description": {
+      "en": "The NBA officially adopted the 3-point line, a rule inherited from the ABA. Chris Ford of the Boston Celtics made the first official 3-pointer in league history.",
+      "es": "La NBA adoptó oficialmente la línea de 3 puntos, una regla heredada de la ABA. Chris Ford, de los Celtics, anotó el primer triple oficial de la historia.",
+      "de": "Die NBA übernahm offiziell die 3-Punkte-Linie, eine Regel aus der ABA. Chris Ford von den Celtics warf den ersten offiziellen Dreier der Liga.",
+      "tr": "NBA, ABA'den miras kalan 3 sayı çizgisini resmen kabul etti. Lig tarihindeki ilk resmi 3 sayılık basketi Boston Celtics'ten Chris Ford attı.",
+      "fr": "La NBA a officiellement adopté la ligne des 3 points, une règle héritée de l'ABA. Chris Ford des Celtics a marqué le premier panier à 3 points officiel de la ligue."
+    },
+    "year": 1979
+  },
+  {
+    "id": "len-bias-tragedy",
+    "title": {
+      "en": "Tragic Death of Len Bias",
+      "es": "Muerte trágica de Len Bias",
+      "de": "Tragischer Tod von Len Bias",
+      "tr": "Len Bias Trajedisi",
+      "fr": "Décès tragique de Len Bias"
+    },
+    "description": {
+      "en": "Just two days after being drafted second overall by the Boston Celtics, superstar prospect Len Bias died of a cocaine overdose. It was a massive shock to the basketball world.",
+      "es": "Solo dos días después de ser reclutado por los Celtics, la joven estrella Len Bias murió de una sobredosis de cocaína. Fue un gran impacto para el mundo del baloncesto.",
+      "de": "Nur zwei Tage nachdem er von den Celtics gedraftet wurde, starb das Nachwuchstalent Len Bias an einer Überdosis Kokain. Es war ein gewaltiger Schock für die Basketballwelt.",
+      "tr": "Boston Celtics tarafından Draft edildikten sadece iki gün sonra yıldız adayı Len Bias aşırı dozdan hayatını kaybetti. Bu olay basketbol dünyasında çok büyük bir şok yarattı.",
+      "fr": "Deux jours seulement après avoir été drafté par les Celtics, la jeune star Len Bias est décédée d'une overdose de cocaïne. Ce fut un choc énorme pour le monde du basket."
+    },
+    "year": 1986
+  },
+  {
+    "id": "chris-webber-phantom-timeout",
+    "title": {
+      "en": "Chris Webber's Phantom Timeout",
+      "es": "El tiempo muerto inexistente de Chris Webber",
+      "de": "Chris Webbers Phantom-Auszeit",
+      "tr": "Chris Webber'ın Hayalet Molası",
+      "fr": "Le temps mort fantôme de Chris Webber"
+    },
+    "description": {
+      "en": "In the NCAA Championship game, Chris Webber mistakenly called a timeout his team didn't have. This resulted in a technical foul that cost Michigan the national title.",
+      "es": "En la final de la NCAA, Chris Webber pidió por error un tiempo muerto que su equipo no tenía. Esto resultó en una falta técnica que le costó el título a Michigan.",
+      "de": "Im NCAA-Meisterschaftsspiel nahm Chris Webber fälschlicherweise eine Auszeit, die sein Team nicht hatte. Dies führte zu einem technischen Foul, das Michigan den Titel kostete.",
+      "tr": "NCAA Şampiyonluk maçında Chris Webber takımı mola hakkını bitirmişken yanlışlıkla mola aldı. Teknik faulle sonuçlanan bu inanılmaz hata Michigan'a ulusal şampiyonluğa mal oldu.",
+      "fr": "Lors de la finale de la NCAA, Chris Webber a demandé par erreur un temps mort que son équipe n'avait pas. Cela a entraîné une faute technique qui a coûté le titre à Michigan."
+    },
+    "year": 1993
+  },
+  {
+    "id": "reggie-miller-8-points-9-seconds",
+    "title": {
+      "en": "Reggie Miller's 8 Points in 9 Seconds",
+      "es": "Los 8 puntos en 9 segundos de Reggie Miller",
+      "de": "Reggie Millers 8 Punkte in 9 Sekunden",
+      "tr": "Reggie Miller'ın 9 Saniyede 8 Sayısı",
+      "fr": "Les 8 points en 9 secondes de Reggie Miller"
+    },
+    "description": {
+      "en": "Reggie Miller famously scored 8 points in just 9 seconds during a Playoff game against the Knicks. It is considered one of the greatest clutch performances ever.",
+      "es": "Reggie Miller anotó 8 puntos en solo 9 segundos durante un partido de Playoffs contra los Knicks. Se considera una de las mejores actuaciones decisivas de la historia.",
+      "de": "Reggie Miller erzielte berühmt 8 Punkte in nur 9 Sekunden in einem Playoff-Spiel gegen die Knicks. Es gilt als eine der größten Clutch-Leistungen aller Zeiten.",
+      "tr": "Reggie Miller, Knicks'e karşı oynanan Playoff maçının son anlarında sadece 9 saniyede 8 sayı attı. Tarihin en inanılmaz geri dönüş performanslarından biridir.",
+      "fr": "Reggie Miller a marqué 8 points en seulement 9 secondes lors d'un match de Playoffs contre les Knicks. C'est considéré comme l'une des plus grandes performances décisives de l'histoire."
+    },
+    "year": 1995
+  },
+  {
+    "id": "bulls-72-10-season",
+    "title": {
+      "en": "Bulls Go 72-10",
+      "es": "Los Bulls logran un 72-10",
+      "de": "Bulls spielen 72-10",
+      "tr": "Bulls'un 72-10'luk Sezonu",
+      "fr": "Les Bulls terminent à 72-10"
+    },
+    "description": {
+      "en": "Driven by Michael Jordan, the Chicago Bulls finished the regular season with a 72-10 record. They eventually capped off the legendary season by winning the championship.",
+      "es": "Impulsados por Michael Jordan, los Chicago Bulls terminaron la temporada regular con un récord de 72-10. Finalmente culminaron la legendaria temporada ganando el campeonato.",
+      "de": "Angeführt von Michael Jordan beendeten die Chicago Bulls die reguläre Saison mit einer 72-10 Bilanz. Sie krönten die legendäre Saison schließlich mit dem Meistertitel.",
+      "tr": "Michael Jordan liderliğindeki Chicago Bulls, normal sezonu 72 galibiyet ve 10 mağlubiyetle tamamladı. Ardından şampiyon olarak bu efsanevi sezonu taçlandırdılar.",
+      "fr": "Portés par Michael Jordan, les Bulls de Chicago ont terminé la saison régulière avec un bilan de 72-10. Ils ont finalement couronné cette saison légendaire en remportant le championnat."
+    },
+    "year": 1996
+  },
+  {
+    "id": "kobe-bryant-draft-trade",
+    "title": {
+      "en": "Kobe Bryant Drafted and Traded",
+      "es": "Kobe Bryant es reclutado y traspasado",
+      "de": "Kobe Bryant gedraftet und getradet",
+      "tr": "Kobe Bryant'ın Draft Edilip Takaslanması",
+      "fr": "Kobe Bryant drafté et échangé"
+    },
+    "description": {
+      "en": "Kobe Bryant was selected 13th overall by the Hornets but was immediately traded to the Lakers for Vlade Divac. This pivotal trade changed the destiny of the Lakers franchise.",
+      "es": "Kobe Bryant fue seleccionado en el puesto 13 por los Hornets pero fue traspasado inmediatamente a los Lakers. Este traspaso crucial cambió el destino de los Lakers.",
+      "de": "Kobe Bryant wurde von den Hornets an 13. Stelle gedraftet, aber sofort für Vlade Divac zu den Lakers getradet. Dieser Trade veränderte das Schicksal der Lakers.",
+      "tr": "Kobe Bryant NBA Draft'ında Charlotte Hornets tarafından seçildi ancak anında Vlade Divac karşılığında Lakers'a takas edildi. Bu hamle Lakers'ın kaderini tamamen değiştirdi.",
+      "fr": "Kobe Bryant a été sélectionné en 13ème position par les Hornets mais a été immédiatement échangé aux Lakers contre Vlade Divac. Ce transfert a changé le destin des Lakers."
+    },
+    "year": 1996
+  },
+  {
+    "id": "iverson-practice-rant",
+    "title": {
+      "en": "Allen Iverson's 'Practice' Rant",
+      "es": "La queja sobre la 'Práctica' de Allen Iverson",
+      "de": "Allen Iversons 'Practice'-Rede",
+      "tr": "Allen Iverson'ın 'Antrenman' (Practice) Röportajı",
+      "fr": "Le coup de gueule 'Practice' d'Allen Iverson"
+    },
+    "description": {
+      "en": "In one of the most famous press conferences ever, Allen Iverson repeated the word 'practice' 22 times. He passionately defended himself against media criticism regarding his training habits.",
+      "es": "En una de las ruedas de prensa más famosas, Allen Iverson repitió la palabra 'práctica' 22 veces. Se defendió apasionadamente de las críticas sobre sus hábitos de entrenamiento.",
+      "de": "In einer der berühmtesten Pressekonferenzen wiederholte Allen Iverson das Wort 'Practice' 22 Mal. Er verteidigte sich leidenschaftlich gegen Kritik an seinen Trainingsgewohnheiten.",
+      "tr": "Tarihin en ünlü basın toplantılarından birinde Allen Iverson 'antrenman' kelimesini 22 kez tekrarladı. Antrenman alışkanlıkları hakkındaki eleştirilere karşı kendini tutkuyla savundu.",
+      "fr": "Lors d'une conférence de presse mythique, Allen Iverson a répété le mot 'practice' (entraînement) 22 fois. Il s'est défendu avec passion contre les critiques des médias."
+    },
+    "year": 2002
+  },
+  {
+    "id": "tmac-13-points-35-seconds",
+    "title": {
+      "en": "Tracy McGrady's 13 Points in 35 Seconds",
+      "es": "Los 13 puntos en 35 segundos de Tracy McGrady",
+      "de": "Tracy McGradys 13 Punkte in 35 Sekunden",
+      "tr": "Tracy McGrady'nin 35 Saniyede 13 Sayısı",
+      "fr": "Les 13 points en 35 secondes de Tracy McGrady"
+    },
+    "description": {
+      "en": "Down big to the Spurs, Tracy McGrady scored an impossible 13 points in the final 35 seconds to steal the win for the Rockets. It remains one of the wildest comebacks ever.",
+      "es": "Perdiendo ante los Spurs, Tracy McGrady anotó unos increíbles 13 puntos en los últimos 35 segundos para ganar el partido. Sigue siendo una de las remontadas más locas.",
+      "de": "Bei großem Rückstand gegen die Spurs erzielte Tracy McGrady unglaubliche 13 Punkte in den letzten 35 Sekunden. Es bleibt eines der wildesten Comebacks aller Zeiten.",
+      "tr": "Spurs'e karşı farkla geride olan Tracy McGrady, son 35 saniyede imkansız bir şekilde 13 sayı atarak maçı Rockets'a kazandırdı. Tüm zamanların en çılgın geri dönüşlerindendir.",
+      "fr": "Mené par les Spurs, Tracy McGrady a marqué 13 points impossibles dans les 35 dernières secondes pour arracher la victoire. Cela reste l'une des remontées les plus folles."
+    },
+    "year": 2004
+  },
+  {
+    "id": "we-believe-warriors-upset",
+    "title": {
+      "en": "Warriors 'We Believe' Upset",
+      "es": "La sorpresa de los Warriors 'We Believe'",
+      "de": "Die 'We Believe' Warriors Überraschung",
+      "tr": "Warriors'ın 'We Believe' Sürprizi",
+      "fr": "L'exploit des Warriors 'We Believe'"
+    },
+    "description": {
+      "en": "The 8th-seeded Golden State Warriors shocked the 1st-seeded Dallas Mavericks, led by MVP Dirk Nowitzki. The 'We Believe' team created one of the biggest upsets in Playoff history.",
+      "es": "Los Golden State Warriors, octavos, sorprendieron a los Dallas Mavericks, primeros. El equipo 'We Believe' creó una de las mayores sorpresas en la historia de los Playoffs.",
+      "de": "Die als 8. gesetzten Warriors schockten die topgesetzten Dallas Mavericks. Das 'We Believe'-Team sorgte für eine der größten Überraschungen der Playoff-Geschichte.",
+      "tr": "'We Believe' (İnanıyoruz) sloganıyla sekizinci sıradan Playoff yapan Golden State, birinci sıradaki MVP Dirk Nowitzki'li Dallas Mavericks'i eledi. Playoff tarihinin en büyük sürprizlerindendir.",
+      "fr": "Les Warriors de Golden State, 8èmes, ont choqué les Mavericks de Dallas, 1ers. L'équipe 'We Believe' a créé l'une des plus grandes surprises de l'histoire des Playoffs."
+    },
+    "year": 2007
+  },
+  {
+    "id": "paul-pierce-wheelchair-game",
+    "title": {
+      "en": "Paul Pierce's Wheelchair Game",
+      "es": "El partido de la silla de ruedas de Paul Pierce",
+      "de": "Paul Pierces Rollstuhl-Spiel",
+      "tr": "Paul Pierce'ın Tekerlekli Sandalye Maçı",
+      "fr": "Le match en fauteuil roulant de Paul Pierce"
+    },
+    "description": {
+      "en": "Paul Pierce was carried off in a wheelchair during Game 1 of the NBA Finals, only to return minutes later and hit back-to-back threes. The dramatic injury is still debated today.",
+      "es": "Paul Pierce fue sacado en silla de ruedas en el primer partido de las Finales, solo para regresar minutos después y anotar dos triples seguidos. La dramática lesión sigue siendo objeto de debate.",
+      "de": "Paul Pierce wurde in Spiel 1 der Finals in einem Rollstuhl vom Platz gefahren, nur um kurz darauf zurückzukehren und Dreier zu treffen. Die Verletzung wird bis heute diskutiert.",
+      "tr": "NBA Finalleri 1. maçında Paul Pierce tekerlekli sandalyeyle sahadan çıkarıldı, ancak dakikalar sonra dönüp üst üste üçlükler attı. Bu dramatik sakatlık bugün bile tartışılmaktadır.",
+      "fr": "Paul Pierce a quitté le terrain en fauteuil roulant lors du match 1 des Finales, pour revenir quelques minutes plus tard et marquer des trois points. Cette blessure dramatique fait toujours débat."
+    },
+    "year": 2008
+  },
+  {
+    "id": "rockets-22-game-win-streak",
+    "title": {
+      "en": "Rockets Win 22 Straight Games",
+      "es": "Los Rockets ganan 22 partidos seguidos",
+      "de": "Rockets gewinnen 22 Spiele in Folge",
+      "tr": "Rockets'ın 22 Maçlık Galibiyet Serisi",
+      "fr": "Les Rockets remportent 22 matchs de suite"
+    },
+    "description": {
+      "en": "Despite injuries to star Yao Ming, the Houston Rockets went on a magical 22-game winning streak. At the time, it was the second-longest win streak in NBA history.",
+      "es": "A pesar de las lesiones de Yao Ming, los Houston Rockets lograron una mágica racha de 22 victorias. En ese momento, era la segunda racha más larga en la historia de la NBA.",
+      "de": "Trotz Verletzungen von Star Yao Ming legten die Houston Rockets eine magische Serie von 22 Siegen hin. Damals war es die zweitlängste Siegesserie in der NBA-Geschichte.",
+      "tr": "Yıldız oyuncu Yao Ming'in sakatlığına rağmen Houston Rockets 22 maçlık büyülü bir galibiyet serisi yakaladı. O dönem bu, NBA tarihindeki en uzun ikinci seriydi.",
+      "fr": "Malgré les blessures de la star Yao Ming, les Rockets de Houston ont enchaîné 22 victoires consécutives. À l'époque, c'était la deuxième plus longue série de l'histoire de la NBA."
+    },
+    "year": 2008
+  },
+  {
+    "id": "linsanity",
+    "title": {
+      "en": "Linsanity",
+      "es": "Linsanity",
+      "de": "Linsanity",
+      "tr": "Linsanity Çılgınlığı",
+      "fr": "Linsanity"
+    },
+    "description": {
+      "en": "Undrafted point guard Jeremy Lin unexpectedly led a winning turnaround for the New York Knicks. His incredible performances sparked a global cultural phenomenon known as 'Linsanity'.",
+      "es": "El base no reclutado Jeremy Lin lideró inesperadamente una racha ganadora para los New York Knicks. Sus increíbles actuaciones desataron el fenómeno mundial 'Linsanity'.",
+      "de": "Der ungedraftete Jeremy Lin führte die New York Knicks unerwartet zu einer Siegesserie. Seine unglaublichen Leistungen lösten ein globales Phänomen namens 'Linsanity' aus.",
+      "tr": "Draft edilmemiş oyun kurucu Jeremy Lin, New York Knicks için beklenmedik bir şekilde galibiyet serisi başlattı. Performansı dünya çapında 'Linsanity' olarak bilinen bir fenomen yarattı.",
+      "fr": "Jeremy Lin, meneur non drafté, a mené de manière inattendue les Knicks de New York vers la victoire. Ses performances ont déclenché un phénomène culturel mondial appelé 'Linsanity'."
+    },
+    "year": 2012
+  },
+  {
+    "id": "miami-heat-27-game-win-streak",
+    "title": {
+      "en": "Heat's 27-Game Win Streak",
+      "es": "Racha de 27 victorias de los Heat",
+      "de": "Heat 27-Spiele-Siegesserie",
+      "tr": "Heat'in 27 Maçlık Galibiyet Serisi",
+      "fr": "Série de 27 victoires du Heat"
+    },
+    "description": {
+      "en": "LeBron James and the Miami Heat went on an unstoppable 27-game winning streak. It stands as the second-longest regular-season winning streak in NBA history.",
+      "es": "LeBron James y los Miami Heat lograron una imparable racha de 27 victorias. Se mantiene como la segunda racha ganadora más larga en la temporada regular de la NBA.",
+      "de": "LeBron James und die Miami Heat legten eine unaufhaltsame 27-Spiele-Siegesserie hin. Es ist die zweitlängste Siegesserie in der regulären Saison der NBA-Geschichte.",
+      "tr": "LeBron James ve Miami Heat durdurulamaz bir şekilde üst üste 27 maç kazandı. Bu rakam, NBA normal sezon tarihindeki en uzun ikinci galibiyet serisi olarak duruyor.",
+      "fr": "LeBron James et le Heat de Miami ont réalisé une série imparable de 27 victoires consécutives. C'est la deuxième plus longue série de victoires en saison régulière de l'histoire de la NBA."
+    },
+    "year": 2013
+  },
+  {
+    "id": "donald-sterling-lifetime-ban",
+    "title": {
+      "en": "Donald Sterling Lifetime Ban",
+      "es": "Suspensión de por vida a Donald Sterling",
+      "de": "Lebenslange Sperre für Donald Sterling",
+      "tr": "Donald Sterling'in Ömür Boyu Men Edilmesi",
+      "fr": "Bannissement à vie de Donald Sterling"
+    },
+    "description": {
+      "en": "Clippers owner Donald Sterling was banned from the NBA for life after racist audio recordings were leaked. The swift action by Commissioner Adam Silver forced the sale of the team.",
+      "es": "El propietario de los Clippers fue suspendido de por vida tras filtrarse audios racistas. La rápida acción del comisionado Adam Silver forzó la venta del equipo.",
+      "de": "Clippers-Besitzer Donald Sterling wurde lebenslang aus der NBA verbannt, nachdem rassistische Tonaufnahmen geleakt wurden. Die schnelle Aktion zwang zum Verkauf des Teams.",
+      "tr": "Los Angeles Clippers'ın sahibi Donald Sterling, ırkçı ses kayıtlarının sızdırılmasının ardından NBA'den ömür boyu men edildi. Takım kısa süre sonra mecburen satıldı.",
+      "fr": "Le propriétaire des Clippers a été banni à vie de la NBA après la fuite d'enregistrements audio racistes. L'action rapide du commissaire Adam Silver a forcé la vente de l'équipe."
+    },
+    "year": 2014
+  },
+  {
+    "id": "klay-thompson-37-point-quarter",
+    "title": {
+      "en": "Klay Thompson's 37-Point Quarter",
+      "es": "El cuarto de 37 puntos de Klay Thompson",
+      "de": "Klay Thompsons 37-Punkte-Viertel",
+      "tr": "Klay Thompson'ın 37 Sayılık Çeyreği",
+      "fr": "Le quart-temps à 37 points de Klay Thompson"
+    },
+    "description": {
+      "en": "Klay Thompson scored a record 37 points in a single quarter against the Kings without missing a single shot. It was an offensive explosion of epic proportions.",
+      "es": "Klay Thompson anotó un récord de 37 puntos en un solo cuarto contra los Kings sin fallar un solo tiro. Fue una explosión ofensiva de proporciones épicas.",
+      "de": "Klay Thompson erzielte rekordverdächtige 37 Punkte in einem einzigen Viertel gegen die Kings, ohne einen einzigen Wurf zu verfehlen. Eine unglaubliche offensive Explosion.",
+      "tr": "Klay Thompson, Kings'e karşı tek bir çeyrekte hiç şut kaçırmadan 37 sayı atarak inanılmaz bir NBA rekoruna imza attı. Tamamen kusursuz bir hücum patlamasıydı.",
+      "fr": "Klay Thompson a marqué un record de 37 points en un seul quart-temps contre les Kings sans rater le moindre tir. Ce fut une explosion offensive épique."
+    },
+    "year": 2015
+  },
+  {
+    "id": "kobe-bryant-farewell-game",
+    "title": {
+      "en": "Kobe Bryant's 60-Point Farewell Game",
+      "es": "El partido de despedida de 60 puntos de Kobe Bryant",
+      "de": "Kobe Bryants 60-Punkte-Abschiedsspiel",
+      "tr": "Kobe Bryant'ın 60 Sayılık Veda Maçı",
+      "fr": "Le match d'adieu à 60 points de Kobe Bryant"
+    },
+    "description": {
+      "en": "In the final game of his legendary 20-year career, a 37-year-old Kobe Bryant remarkably scored 60 points to lead the Lakers to a comeback victory. It was a perfect Hollywood ending.",
+      "es": "En el último partido de su carrera, Kobe Bryant, de 37 años, anotó sorprendentemente 60 puntos para liderar la victoria de los Lakers. Fue un final perfecto de Hollywood.",
+      "de": "Im letzten Spiel seiner 20-jährigen Karriere erzielte der 37-jährige Kobe Bryant erstaunliche 60 Punkte und führte die Lakers zum Sieg. Ein perfektes Hollywood-Ende.",
+      "tr": "20 yıllık efsanevi kariyerinin son maçında 37 yaşındaki Kobe Bryant olağanüstü bir şekilde 60 sayı atarak Lakers'ı geri dönüşe taşıdı. Bu tam bir Hollywood sonuydu.",
+      "fr": "Lors du dernier match de sa carrière, Kobe Bryant, 37 ans, a remarquablement marqué 60 points pour mener les Lakers à la victoire. Ce fut une fin parfaite digne d'Hollywood."
+    },
+    "year": 2016
+  },
+  {
+    "id": "kevin-durant-joins-warriors",
+    "title": {
+      "en": "Kevin Durant Joins the Warriors",
+      "es": "Kevin Durant se une a los Warriors",
+      "de": "Kevin Durant wechselt zu den Warriors",
+      "tr": "Kevin Durant'in Warriors'a Katılması",
+      "fr": "Kevin Durant rejoint les Warriors"
+    },
+    "description": {
+      "en": "In one of the most controversial free-agent moves ever, superstar Kevin Durant left OKC to join the 73-win Golden State Warriors. This instantly created a nearly unbeatable superteam.",
+      "es": "En uno de los movimientos más controvertidos, Kevin Durant dejó OKC para unirse a los Golden State Warriors de 73 victorias. Esto creó un superequipo casi imbatible.",
+      "de": "In einem der umstrittensten Wechsel der Geschichte verließ Kevin Durant OKC, um sich den Warriors anzuschließen. Dies schuf sofort ein fast unschlagbares Superteam.",
+      "tr": "NBA tarihinin en tartışmalı kararlarından birinde süperstar Kevin Durant, OKC'yi bırakıp 73 galibiyetli Warriors'a katıldı. Bu hamle neredeyse yenilmez bir süper takım yarattı.",
+      "fr": "Dans l'un des transferts les plus controversés, Kevin Durant a quitté OKC pour rejoindre les Warriors aux 73 victoires. Cela a instantanément créé une super-équipe presque imbattable."
+    },
+    "year": 2016
+  },
+  {
+    "id": "curry-400-threes",
+    "title": {
+      "en": "Stephen Curry Makes 400 Threes",
+      "es": "Stephen Curry anota 400 triples",
+      "de": "Stephen Curry trifft 400 Dreier",
+      "tr": "Stephen Curry'nin 400 Üçlüğü Geçmesi",
+      "fr": "Stephen Curry marque 400 trois points"
+    },
+    "description": {
+      "en": "Stephen Curry shattered his own NBA record by making 402 three-pointers in a single regular season. Before this, no player had ever reached even 300.",
+      "es": "Stephen Curry batió su propio récord anotando 402 triples en una sola temporada. Antes de esto, ningún jugador había llegado siquiera a los 300.",
+      "de": "Stephen Curry brach seinen eigenen NBA-Rekord, indem er in einer Saison 402 Dreier traf. Davor hatte noch nie ein Spieler auch nur 300 erreicht.",
+      "tr": "Stephen Curry, tek bir normal sezonda 402 üçlük atarak kendine ait NBA rekorunu paramparça etti. Bundan önce hiçbir oyuncu 300'e bile ulaşamamıştı.",
+      "fr": "Stephen Curry a pulvérisé son propre record en marquant 402 trois points en une seule saison. Avant cela, aucun joueur n'avait jamais atteint les 300."
+    },
+    "year": 2016
+  },
+  {
+    "id": "westbrook-breaks-triple-double-record",
+    "title": {
+      "en": "Westbrook Breaks Triple-Double Record",
+      "es": "Westbrook rompe el récord de triples-dobles",
+      "de": "Westbrook bricht Triple-Double-Rekord",
+      "tr": "Westbrook'un Triple-Double Rekorunu Kırması",
+      "fr": "Westbrook bat le record de triples-doubles"
+    },
+    "description": {
+      "en": "Russell Westbrook recorded 42 triple-doubles in a single season, breaking Oscar Robertson’s 55-year-old record. He also averaged a triple-double for the year.",
+      "es": "Russell Westbrook registró 42 triples-dobles en una sola temporada, rompiendo el récord de 55 años de Oscar Robertson. También promedió un triple-doble en el año.",
+      "de": "Russell Westbrook verbuchte 42 Triple-Doubles in einer einzigen Saison und brach damit Oscar Robertsons 55 Jahre alten Rekord. Zudem erzielte er im Schnitt ein Triple-Double.",
+      "tr": "Russell Westbrook tek sezonda 42 triple-double yaparak Oscar Robertson'ın 55 yıllık rekorunu kırdı. Ayrıca o yıl sezonu triple-double ortalamasıyla tamamladı.",
+      "fr": "Russell Westbrook a enregistré 42 triples-doubles en une seule saison, battant le record de 55 ans d'Oscar Robertson. Il a également réalisé un triple-double de moyenne cette année-là."
+    },
+    "year": 2017
+  },
+  {
+    "id": "devin-booker-70-points",
+    "title": {
+      "en": "Devin Booker Scores 70 Points",
+      "es": "Devin Booker anota 70 puntos",
+      "de": "Devin Booker erzielt 70 Punkte",
+      "tr": "Devin Booker'ın 70 Sayı Atması",
+      "fr": "Devin Booker marque 70 points"
+    },
+    "description": {
+      "en": "At just 20 years old, Devin Booker scored 70 points against the Boston Celtics. He became the youngest player in NBA history to score 60 or more points in a game.",
+      "es": "Con solo 20 años, Devin Booker anotó 70 puntos contra los Celtics. Se convirtió en el jugador más joven en la historia de la NBA en anotar 60 puntos o más en un partido.",
+      "de": "Mit nur 20 Jahren erzielte Devin Booker 70 Punkte gegen die Celtics. Er wurde der jüngste Spieler der NBA-Geschichte, der 60 oder mehr Punkte in einem Spiel erzielte.",
+      "tr": "Henüz 20 yaşında olan Devin Booker, Boston Celtics'e karşı 70 sayı attı. Bir maçta 60 ve üzeri sayı atan NBA tarihindeki en genç oyuncu unvanını aldı.",
+      "fr": "À seulement 20 ans, Devin Booker a marqué 70 points contre les Celtics. Il est devenu le plus jeune joueur de l'histoire de la NBA à marquer 60 points ou plus dans un match."
+    },
+    "year": 2017
+  },
+  {
+    "id": "giannis-50-point-finals-game",
+    "title": {
+      "en": "Giannis Drops 50 in Finals Closeout",
+      "es": "Giannis anota 50 para cerrar las Finales",
+      "de": "Giannis erzielt 50 im Finals-Abschluss",
+      "tr": "Giannis'in Finalleri Kapatan 50 Sayısı",
+      "fr": "Giannis marque 50 points pour conclure les Finales"
+    },
+    "description": {
+      "en": "Giannis Antetokounmpo scored an incredible 50 points in Game 6 of the NBA Finals. This historic performance brought the Milwaukee Bucks their first championship in 50 years.",
+      "es": "Giannis Antetokounmpo anotó unos increíbles 50 puntos en el 6º partido de las Finales. Esta actuación histórica dio a los Milwaukee Bucks su primer campeonato en 50 años.",
+      "de": "Giannis Antetokounmpo erzielte unglaubliche 50 Punkte im 6. Spiel der Finals. Diese historische Leistung bescherte den Milwaukee Bucks ihre erste Meisterschaft seit 50 Jahren.",
+      "tr": "Giannis Antetokounmpo, NBA Finalleri 6. maçında inanılmaz bir şekilde 50 sayı attı. Bu tarihi performans Milwaukee Bucks'a 50 yıl aradan sonra ilk şampiyonluğunu getirdi.",
+      "fr": "Giannis Antetokounmpo a marqué 50 points incroyables lors du 6ème match des Finales NBA. Cette performance historique a offert aux Bucks leur premier championnat en 50 ans."
+    },
+    "year": 2021
+  },
+  {
+    "id": "earl-lloyd-first-black-player",
+    "title": {
+      "en": "First Black Player in the NBA",
+      "es": "Primer jugador negro en la NBA",
+      "de": "Erster schwarzer Spieler in der NBA",
+      "tr": "NBA'deki İlk Siyahi Oyuncu",
+      "fr": "Premier joueur noir en NBA"
+    },
+    "description": {
+      "en": "Earl Lloyd became the first African American to play in an NBA game, breaking the color barrier in professional basketball.",
+      "es": "Earl Lloyd se convirtió en el primer afroamericano en jugar un partido de la NBA, rompiendo la barrera del color.",
+      "de": "Earl Lloyd wurde der erste Afroamerikaner, der in einem NBA-Spiel spielte und brach damit die Rassenschranke.",
+      "tr": "Earl Lloyd, profesyonel basketboldaki renk bariyerini yıkarak bir NBA maçında forma giyen ilk siyahi oyuncu oldu.",
+      "fr": "Earl Lloyd est devenu le premier Afro-Américain à jouer dans un match de la NBA, brisant la barrière raciale dans le basket professionnel."
+    },
+    "year": 1950
+  },
+  {
+    "id": "jerry-west-losing-finals-mvp",
+    "title": {
+      "en": "Jerry West Wins Finals MVP on Losing Team",
+      "es": "Jerry West gana el MVP de las Finales perdiendo",
+      "de": "Jerry West gewinnt Finals MVP im Verliererteam",
+      "tr": "Jerry West'in Kaybeden Takımda Finals MVP Olması",
+      "fr": "Jerry West remporte le MVP des Finales dans l'équipe perdante"
+    },
+    "description": {
+      "en": "Despite the Lakers losing the series to the Celtics, Jerry West was named Finals MVP. He remains the only player in history to win the award on a losing team.",
+      "es": "A pesar de que los Lakers perdieron ante los Celtics, Jerry West fue nombrado MVP. Es el único en ganarlo estando en el equipo perdedor.",
+      "de": "Obwohl die Lakers gegen die Celtics verloren, wurde Jerry West zum Finals MVP ernannt. Er ist der Einzige in der Geschichte, der den Preis in einem Verliererteam gewann.",
+      "tr": "Lakers seriyi Celtics'e kaybetmesine rağmen Jerry West, Finals MVP seçildi. Tarihte bu ödülü kaybeden bir takımda kazanan tek oyuncu olmaya devam ediyor.",
+      "fr": "Bien que les Lakers aient perdu la série contre les Celtics, Jerry West a été nommé MVP des Finales. Il reste le seul joueur de l'histoire à remporter ce prix dans une équipe perdante."
+    },
+    "year": 1969
+  },
+  {
+    "id": "willis-reed-game-7",
+    "title": {
+      "en": "Willis Reed's Game 7 Return",
+      "es": "El regreso de Willis Reed en el 7º partido",
+      "de": "Willis Reeds Rückkehr in Spiel 7",
+      "tr": "Willis Reed'in 7. Maç Dönüşü",
+      "fr": "Le retour de Willis Reed au match 7"
+    },
+    "description": {
+      "en": "Heavily injured, Willis Reed dramatically limped onto the court before Game 7 of the Finals. His emotional return inspired the Knicks to their first championship.",
+      "es": "Gravemente lesionado, Willis Reed saltó a la cancha cojeando dramáticamente antes del séptimo partido. Su regreso inspiró a los Knicks a ganar su primer campeonato.",
+      "de": "Schwer verletzt humpelte Willis Reed vor Spiel 7 der Finals dramatisch auf das Spielfeld. Seine emotionale Rückkehr inspirierte die Knicks zu ihrer ersten Meisterschaft.",
+      "tr": "Ağır sakatlığı bulunan Willis Reed, Finallerin 7. maçından hemen önce sekerek dramatik bir şekilde sahaya çıktı. Bu duygusal dönüşü, Knicks'e ilk şampiyonlukları için ilham verdi.",
+      "fr": "Gravement blessé, Willis Reed est entré en boitant de façon dramatique sur le terrain avant le match 7. Son retour émouvant a inspiré les Knicks pour leur premier championnat."
+    },
+    "year": 1970
+  },
+  {
+    "id": "dr-j-ft-line-dunk",
+    "title": {
+      "en": "Dr. J's Free Throw Line Dunk",
+      "es": "El mate desde el tiro libre de Dr. J",
+      "de": "Dr. J's Freiwurflinien-Dunk",
+      "tr": "Dr. J'nin Serbest Atış Çizgisinden Smacı",
+      "fr": "Le dunk de la ligne des lancers francs de Dr. J"
+    },
+    "description": {
+      "en": "Julius Erving (Dr. J) stunned fans by taking off from the free-throw line during the first-ever ABA Slam Dunk Contest. This iconic move paved the way for modern dunkers.",
+      "es": "Julius Erving sorprendió al despegar desde la línea de tiros libres en el primer Concurso de Mates de la ABA. Este movimiento icónico allanó el camino para los matadores modernos.",
+      "de": "Julius Erving sprang beim ersten ABA Dunk Contest von der Freiwurflinie ab und verblüffte die Fans. Dieser ikonische Move ebnete den Weg für moderne Dunker.",
+      "tr": "Julius Erving (Dr. J), tarihteki ilk ABA Smaç Yarışmasında serbest atış çizgisinden sıçrayarak hayranları şaşkına çevirdi. Bu ikonik hareket modern smaççılara ilham oldu.",
+      "fr": "Julius Erving (Dr. J) a stupéfié les fans en s'envolant de la ligne des lancers francs lors du tout premier concours de dunks de l'ABA. Ce mouvement emblématique a ouvert la voie aux dunkeurs modernes."
+    },
+    "year": 1976
+  },
+  {
+    "id": "david-stern-commissioner",
+    "title": {
+      "en": "David Stern Becomes NBA Commissioner",
+      "es": "David Stern se convierte en Comisionado de la NBA",
+      "de": "David Stern wird NBA-Commissioner",
+      "tr": "David Stern'in NBA Komisyoneri Olması",
+      "fr": "David Stern devient commissaire de la NBA"
+    },
+    "description": {
+      "en": "David Stern was named the fourth Commissioner of the NBA. Under his visionary leadership, the league transformed into a massive global entertainment empire.",
+      "es": "David Stern fue nombrado cuarto Comisionado de la NBA. Bajo su liderazgo visionario, la liga se transformó en un enorme imperio mundial del entretenimiento.",
+      "de": "David Stern wurde zum vierten Commissioner der NBA ernannt. Unter seiner Führung verwandelte sich die Liga in ein riesiges globales Unterhaltungsimperium.",
+      "tr": "David Stern, NBA'in dördüncü Komisyoneri seçildi. Onun vizyoner liderliği altında lig, küresel çapta devasa bir eğlence imparatorluğuna dönüştü.",
+      "fr": "David Stern a été nommé quatrième commissaire de la NBA. Sous sa direction visionnaire, la ligue s'est transformée en un immense empire mondial du divertissement."
+    },
+    "year": 1984
+  },
+  {
+    "id": "frozen-envelope-conspiracy",
+    "title": {
+      "en": "The Frozen Envelope Draft Lottery",
+      "es": "La lotería del sobre congelado",
+      "de": "Die Verschwörung um den gefrorenen Umschlag",
+      "tr": "Dondurulmuş Zarf Draft Komplosu",
+      "fr": "La conspiration de l'enveloppe gelée"
+    },
+    "description": {
+      "en": "In the first-ever NBA Draft Lottery, the Knicks won the #1 pick (Patrick Ewing). Conspiracy theories claim the envelope was frozen so David Stern could easily select it.",
+      "es": "En la primera Lotería del Draft, los Knicks ganaron la 1ª elección (Patrick Ewing). Teorías conspirativas afirman que el sobre estaba congelado para que David Stern lo eligiera.",
+      "de": "In der ersten NBA Draft Lottery gewannen die Knicks den 1. Pick (Patrick Ewing). Verschwörungstheorien behaupten, der Umschlag sei gefroren gewesen, damit David Stern ihn leicht ziehen konnte.",
+      "tr": "Tarihteki ilk NBA Draft Kurasında Knicks 1. sırayı (Patrick Ewing) kazandı. Komplo teorileri, David Stern'in kolayca seçebilmesi için zarfın dondurulduğunu iddia eder.",
+      "fr": "Lors de la toute première loterie de la Draft NBA, les Knicks ont obtenu le premier choix (Patrick Ewing). Des théories du complot affirment que l'enveloppe avait été gelée pour que David Stern puisse facilement la choisir."
+    },
+    "year": 1985
+  },
+  {
+    "id": "magic-johnson-baby-hook",
+    "title": {
+      "en": "Magic Johnson's 'Baby Hook'",
+      "es": "El 'Baby Hook' de Magic Johnson",
+      "de": "Magic Johnsons 'Baby Hook'",
+      "tr": "Magic Johnson'ın 'Baby Hook' Atışı",
+      "fr": "Le 'Baby Hook' de Magic Johnson"
+    },
+    "description": {
+      "en": "Magic Johnson hit a game-winning, sweeping hook shot against the Celtics in Game 4 of the Finals. He famously called it his 'junior, junior, junior sky-hook'.",
+      "es": "Magic Johnson anotó un gancho ganador contra los Celtics en el 4º partido de las Finales. Lo llamó su 'junior, junior, junior sky-hook'.",
+      "de": "Magic Johnson traf in Spiel 4 der Finals einen siegbringenden Hakenwurf gegen die Celtics. Er nannte ihn berühmt seinen 'junior, junior, junior sky-hook'.",
+      "tr": "Magic Johnson, Finallerin 4. maçında Celtics'e karşı maçı kazandıran efsanevi bir çengelli atış (hook) yaptı. Bu atışa esprili bir şekilde 'genç, genç, genç sky-hook' adını verdi.",
+      "fr": "Magic Johnson a réussi un bras roulé décisif contre les Celtics lors du match 4 des Finales. Il l'a rendu célèbre en l'appelant son 'junior, junior, junior sky-hook'."
+    },
+    "year": 1987
+  },
+  {
+    "id": "jordan-wilkins-dunk-contest",
+    "title": {
+      "en": "Jordan vs. Wilkins Dunk Contest",
+      "es": "Concurso de mates: Jordan contra Wilkins",
+      "de": "Jordan gegen Wilkins Dunk Contest",
+      "tr": "Jordan ve Wilkins Smaç Yarışması Düellosu",
+      "fr": "Concours de dunks : Jordan contre Wilkins"
+    },
+    "description": {
+      "en": "Michael Jordan and Dominique Wilkins engaged in arguably the greatest Slam Dunk Contest in NBA history. Jordan won with his iconic free-throw line leap.",
+      "es": "Michael Jordan y Dominique Wilkins protagonizaron el que probablemente sea el mejor Concurso de Mates de la historia. Jordan ganó saltando desde la línea de personal.",
+      "de": "Michael Jordan und Dominique Wilkins lieferten sich den wohl besten Dunk Contest der NBA-Geschichte. Jordan gewann mit seinem ikonischen Sprung von der Freiwurflinie.",
+      "tr": "Michael Jordan ve Dominique Wilkins, NBA tarihindeki tartışmasız en büyük Smaç Yarışması düellosunu sergiledi. Jordan serbest atış çizgisinden uçarak kazandı.",
+      "fr": "Michael Jordan et Dominique Wilkins se sont affrontés dans ce qui est sans doute le plus grand concours de dunks de l'histoire. Jordan a gagné grâce à son saut mythique de la ligne des lancers francs."
+    },
+    "year": 1988
+  },
+  {
+    "id": "jordan-the-shot",
+    "title": {
+      "en": "Michael Jordan's 'The Shot'",
+      "es": "'El Tiro' de Michael Jordan",
+      "de": "Michael Jordans 'The Shot'",
+      "tr": "Michael Jordan'ın Şutu (The Shot)",
+      "fr": "Le tir ('The Shot') de Michael Jordan"
+    },
+    "description": {
+      "en": "Michael Jordan hit a buzzer-beating, series-winning jumper over Craig Ehlo to eliminate the Cleveland Cavaliers. The celebration clip is deeply ingrained in NBA history.",
+      "es": "Michael Jordan anotó un tiro sobre la bocina sobre Craig Ehlo para ganar la serie y eliminar a los Cavaliers. La celebración está profundamente arraigada en la historia de la NBA.",
+      "de": "Michael Jordan traf mit der Schlusssirene einen Sprungwurf über Craig Ehlo, um die Serie zu gewinnen und die Cavaliers zu eliminieren. Der Jubel ist NBA-Geschichte.",
+      "tr": "Michael Jordan, Cleveland Cavaliers'ı elemek için Craig Ehlo'nun üzerinden son saniyede seriyi kazandıran şutu attı. Sonrasındaki ikonik sevinci NBA tarihine kazınmıştır.",
+      "fr": "Michael Jordan a réussi un tir au buzzer sur Craig Ehlo pour remporter la série et éliminer les Cavaliers. La vidéo de sa célébration est profondément ancrée dans l'histoire de la NBA."
+    },
+    "year": 1989
+  },
+  {
+    "id": "shaq-breaks-backboard",
+    "title": {
+      "en": "Shaq Breaks the Backboard",
+      "es": "Shaq rompe el tablero",
+      "de": "Shaq zerstört das Backboard",
+      "tr": "Shaq'in Potayı Kırması",
+      "fr": "Shaq brise le panneau"
+    },
+    "description": {
+      "en": "During his rookie season, a young Shaquille O'Neal dunked so powerfully that the entire backboard collapsed. This forced the NBA to reinforce their basketball hoops.",
+      "es": "En su primera temporada, Shaquille O'Neal hizo un mate con tanta fuerza que colapsó todo el tablero. Esto obligó a la NBA a reforzar sus canastas.",
+      "de": "In seiner Rookie-Saison dunkte Shaquille O'Neal so kraftvoll, dass das gesamte Backboard zusammenbrach. Dies zwang die NBA, ihre Basketballkörbe zu verstärken.",
+      "tr": "Rookie (çaylak) sezonunda genç Shaquille O'Neal o kadar güçlü smaç bastı ki tüm pota yıkıldı. Bu olay, NBA'i basketbol potalarını güçlendirmeye mecbur bıraktı.",
+      "fr": "Lors de sa saison rookie, un jeune Shaquille O'Neal a dunké avec une telle puissance que le panneau entier s'est effondré. Cela a forcé la NBA à renforcer ses paniers de basket."
+    },
+    "year": 1993
+  },
+  {
+    "id": "hakeem-mvp-dpoy-finals-mvp",
+    "title": {
+      "en": "Hakeem Olajuwon's Historic Triple Crown",
+      "es": "La histórica Triple Corona de Hakeem Olajuwon",
+      "de": "Hakeem Olajuwons historische Triple Crown",
+      "tr": "Hakeem Olajuwon'un Tarihi Üçlemesi",
+      "fr": "L'historique Triple Couronne de Hakeem Olajuwon"
+    },
+    "description": {
+      "en": "Hakeem Olajuwon won the NBA MVP, Defensive Player of the Year, and Finals MVP in the same season. It remains an unparalleled achievement of two-way dominance.",
+      "es": "Hakeem Olajuwon ganó el MVP, el Jugador Defensivo del Año y el MVP de las Finales en la misma temporada. Sigue siendo un logro inigualable de dominio.",
+      "de": "Hakeem Olajuwon gewann in derselben Saison den MVP, den Defensive Player of the Year und den Finals MVP. Es bleibt eine beispiellose Leistung beidseitiger Dominanz.",
+      "tr": "Hakeem Olajuwon aynı sezonda MVP, Yılın Savunmacısı ve Finals MVP ödüllerini kazandı. İki yönlü oyuncu dominasyonu açısından emsalsiz bir başarı olmaya devam ediyor.",
+      "fr": "Hakeem Olajuwon a remporté le titre de MVP, de Défenseur de l'année et de MVP des Finales au cours de la même saison. Cela reste un exploit inégalé de domination globale."
+    },
+    "year": 1994
+  },
+  {
+    "id": "tim-duncan-drafted",
+    "title": {
+      "en": "Tim Duncan Drafted by the Spurs",
+      "es": "Tim Duncan es reclutado por los Spurs",
+      "de": "Tim Duncan von den Spurs gedraftet",
+      "tr": "Tim Duncan'ın Spurs Tarafından Draft Edilmesi",
+      "fr": "Tim Duncan drafté par les Spurs"
+    },
+    "description": {
+      "en": "The San Antonio Spurs selected Tim Duncan with the first overall pick. This single draft choice secured two decades of relentless championship contention for the franchise.",
+      "es": "Los Spurs seleccionaron a Tim Duncan con la primera elección. Esta selección aseguró dos décadas de continua lucha por el campeonato para la franquicia.",
+      "de": "Die San Antonio Spurs wählten Tim Duncan an erster Stelle im Draft. Diese einzige Wahl sicherte der Franchise zwei Jahrzehnte ständige Meisterschaftschancen.",
+      "tr": "San Antonio Spurs, Tim Duncan'ı ilk sıradan Draft etti. Bu tek bir Draft seçimi, kulüp için amansız şampiyonluk yarışıyla geçecek dolu dolu yirmi yılı garantiledi.",
+      "fr": "Les Spurs de San Antonio ont sélectionné Tim Duncan avec le premier choix. Ce seul choix de draft a assuré à la franchise deux décennies de lutte acharnée pour le championnat."
+    },
+    "year": 1997
+  },
+  {
+    "id": "jordan-the-last-shot",
+    "title": {
+      "en": "Jordan's 'The Last Shot'",
+      "es": "'El Último Tiro' de Jordan",
+      "de": "Jordans 'The Last Shot'",
+      "tr": "Jordan'ın Son Şutu (The Last Shot)",
+      "fr": "Le 'Dernier Tir' de Jordan"
+    },
+    "description": {
+      "en": "In Game 6 of the NBA Finals, Michael Jordan stole the ball from Karl Malone and hit a legendary jumper. This 'Last Shot' secured his 6th championship.",
+      "es": "En el 6º partido de las Finales, Michael Jordan robó el balón a Karl Malone y anotó un tiro legendario. Este 'Último Tiro' aseguró su 6º campeonato.",
+      "de": "In Spiel 6 der Finals stahl Michael Jordan Karl Malone den Ball und traf einen legendären Wurf. Dieser 'Last Shot' sicherte ihm seine 6. Meisterschaft.",
+      "tr": "NBA Finalleri 6. maçında Michael Jordan topu Karl Malone'dan çaldı ve efsanevi bir şut attı. Bu 'Son Şut' ona 6. şampiyonluğunu kazandırdı.",
+      "fr": "Lors du 6ème match des Finales NBA, Michael Jordan a volé le ballon à Karl Malone et a réussi un tir de légende. Ce 'Dernier Tir' lui a assuré son 6ème championnat."
+    },
+    "year": 1998
+  },
+  {
+    "id": "spurs-first-championship",
+    "title": {
+      "en": "Spurs Win First Championship",
+      "es": "Los Spurs ganan su primer campeonato",
+      "de": "Spurs gewinnen erste Meisterschaft",
+      "tr": "Spurs'ün İlk Şampiyonluğu",
+      "fr": "Les Spurs remportent leur premier championnat"
+    },
+    "description": {
+      "en": "The San Antonio Spurs 'Twin Towers' of David Robinson and Tim Duncan defeated the Knicks. It marked the first championship in the history of the Spurs franchise.",
+      "es": "Las 'Torres Gemelas' de los Spurs, David Robinson y Tim Duncan, derrotaron a los Knicks. Marcó el primer campeonato en la historia de la franquicia de los Spurs.",
+      "de": "Die 'Twin Towers' der Spurs, David Robinson und Tim Duncan, besiegten die Knicks. Es war die erste Meisterschaft in der Geschichte der Spurs-Franchise.",
+      "tr": "David Robinson ve Tim Duncan'dan oluşan San Antonio Spurs 'İkiz Kuleleri' Knicks'i mağlup etti. Bu, Spurs kulüp tarihindeki ilk şampiyonluk oldu.",
+      "fr": "Les 'Tours Jumelles' des Spurs, David Robinson et Tim Duncan, ont battu les Knicks. Cela a marqué le premier championnat de l'histoire de la franchise des Spurs."
+    },
+    "year": 1999
+  },
+  {
+    "id": "vince-carter-dunk-contest",
+    "title": {
+      "en": "Vince Carter's 2000 Dunk Contest",
+      "es": "El Concurso de Mates de Vince Carter en 2000",
+      "de": "Vince Carters Dunk Contest 2000",
+      "tr": "Vince Carter'ın 2000 Smaç Yarışması",
+      "fr": "Le concours de dunks de Vince Carter en 2000"
+    },
+    "description": {
+      "en": "Vince Carter delivered the most electrifying Slam Dunk Contest performance in modern history. His iconic 'It's over!' declaration is still legendary.",
+      "es": "Vince Carter ofreció la actuación más electrizante en el Concurso de Mates de la historia moderna. Su icónica declaración '¡Se acabó!' sigue siendo legendaria.",
+      "de": "Vince Carter lieferte die elektrisierendste Slam-Dunk-Contest-Leistung der modernen Geschichte ab. Seine ikonische Erklärung 'It's over!' ist bis heute legendär.",
+      "tr": "Vince Carter, modern tarihin en heyecan verici Smaç Yarışması performansını sergiledi. İkonik 'Bitti!' (It's over!) söylemi hâlâ dilden dile dolaşıyor.",
+      "fr": "Vince Carter a livré la performance la plus électrisante de l'histoire moderne du concours de dunks. Sa célèbre déclaration 'C'est fini !' reste légendaire."
+    },
+    "year": 2000
+  },
+  {
+    "id": "iverson-steps-over-lue",
+    "title": {
+      "en": "Iverson Steps Over Tyronn Lue",
+      "es": "Iverson pasa por encima de Tyronn Lue",
+      "de": "Iverson steigt über Tyronn Lue",
+      "tr": "Iverson'ın Tyronn Lue'nun Üzerinden Geçmesi",
+      "fr": "Iverson enjambe Tyronn Lue"
+    },
+    "description": {
+      "en": "After hitting a crucial crossover step-back in Game 1 of the Finals, Allen Iverson famously stepped directly over Tyronn Lue who had fallen down. It became an instant classic highlight.",
+      "es": "Tras anotar un tiro crucial en el primer partido de las Finales, Allen Iverson pasó por encima de Tyronn Lue, que se había caído. Se convirtió en un momento clásico.",
+      "de": "Nachdem er in Spiel 1 der Finals einen entscheidenden Wurf traf, stieg Allen Iverson berühmt direkt über den am Boden liegenden Tyronn Lue. Ein absolutes Highlight.",
+      "tr": "Finallerin 1. maçında kritik bir crossover şutu soktuktan sonra Allen Iverson, yere düşen Tyronn Lue'nun bilerek üzerinden adım attı. Bu an anında klasikleşti.",
+      "fr": "Après avoir réussi un tir crucial lors du match 1 des Finales, Allen Iverson a délibérément enjambé Tyronn Lue qui était tombé. C'est devenu une image classique instantanée."
+    },
+    "year": 2001
+  },
+  {
+    "id": "lebron-james-drafted",
+    "title": {
+      "en": "LeBron James Drafted #1 Overall",
+      "es": "LeBron James reclutado en el número 1",
+      "de": "LeBron James als Nummer 1 gedraftet",
+      "tr": "LeBron James'in 1. Sıradan Draft Edilmesi",
+      "fr": "LeBron James drafté numéro 1"
+    },
+    "description": {
+      "en": "Heralded as 'The Chosen One', 18-year-old high school phenom LeBron James was drafted first overall by his hometown Cleveland Cavaliers. He exceeded all impossible expectations.",
+      "es": "Proclamado como 'El Elegido', el fenómeno de instituto LeBron James fue reclutado en el número 1 por su equipo local. Superó todas las expectativas.",
+      "de": "Das 18-jährige Highschool-Phänomen LeBron James ('The Chosen One') wurde von seinem Heimatteam an erster Stelle gedraftet. Er übertraf alle Erwartungen.",
+      "tr": "'Seçilmiş Kişi' olarak anılan 18 yaşındaki lise fenomeni LeBron James, memleketi Cleveland Cavaliers tarafından ilk sıradan Draft edildi. Omuzlarındaki tüm imkansız beklentileri aştı.",
+      "fr": "Annoncé comme 'L'Élu', le phénomène lycéen de 18 ans LeBron James a été sélectionné en première position par l'équipe de sa ville. Il a dépassé toutes les attentes impossibles."
+    },
+    "year": 2003
+  },
+  {
+    "id": "wade-2006-finals",
+    "title": {
+      "en": "Dwyane Wade's 2006 Finals Heroics",
+      "es": "La heroicidad de Dwyane Wade en las Finales de 2006",
+      "de": "Dwyane Wades Heldentaten in den Finals 2006",
+      "tr": "Dwyane Wade'in 2006 Finalleri Kahramanlığı",
+      "fr": "Les exploits de Dwyane Wade aux Finales 2006"
+    },
+    "description": {
+      "en": "Down 0-2 in the series, Dwyane Wade put on a historic Finals MVP performance. He led the Miami Heat to four straight wins and their first franchise title.",
+      "es": "Con un 0-2 en contra, Dwyane Wade ofreció una actuación histórica como MVP. Lideró a los Miami Heat a cuatro victorias consecutivas y a su primer título.",
+      "de": "Bei einem 0:2-Rückstand zeigte Dwyane Wade eine historische Finals MVP-Leistung. Er führte die Miami Heat zu vier Siegen in Folge und ihrem ersten Titel.",
+      "tr": "Seride 0-2 gerideyken Dwyane Wade tarihi bir Finals MVP performansı sergiledi. Miami Heat'i üst üste dört galibiyete ve kulüp tarihindeki ilk şampiyonluğa taşıdı.",
+      "fr": "Mené 0-2 dans la série, Dwyane Wade a réalisé une performance historique de MVP des Finales. Il a mené le Heat de Miami à quatre victoires consécutives et à leur premier titre."
+    },
+    "year": 2006
+  },
+  {
+    "id": "redeem-team-gold",
+    "title": {
+      "en": "The 'Redeem Team' Wins Gold",
+      "es": "El 'Redeem Team' gana el oro",
+      "de": "Das 'Redeem Team' gewinnt Gold",
+      "tr": "'Redeem Team' Altın Madalya Kazandı",
+      "fr": "La 'Redeem Team' remporte l'or"
+    },
+    "description": {
+      "en": "After an embarrassing bronze in 2004, Kobe and LeBron led the USA 'Redeem Team' to Olympic gold in Beijing. They defeated Spain in an instant classic final.",
+      "es": "Tras un vergonzoso bronce en 2004, Kobe y LeBron lideraron al 'Redeem Team' de EE. UU. hacia el oro olímpico en Pekín. Derrotaron a España en una final épica.",
+      "de": "Nach einer peinlichen Bronzemedaille 2004 führten Kobe und LeBron das US 'Redeem Team' zu olympischem Gold in Peking. Sie besiegten Spanien im Finale.",
+      "tr": "2004'teki utanç verici bronzun ardından Kobe ve LeBron, ABD 'Redeem Team'i (Telafi Takımı) Pekin'de olimpiyat altınına taşıdı. Epik bir finalde İspanya'yı yendiler.",
+      "fr": "Après une médaille de bronze embarrassante en 2004, Kobe et LeBron ont mené la 'Redeem Team' américaine vers l'or olympique à Pékin. Ils ont battu l'Espagne dans une finale classique."
+    },
+    "year": 2008
+  },
+  {
+    "id": "derrick-rose-youngest-mvp",
+    "title": {
+      "en": "Derrick Rose Becomes Youngest MVP",
+      "es": "Derrick Rose, el MVP más joven",
+      "de": "Derrick Rose wird jüngster MVP",
+      "tr": "Derrick Rose'un En Genç MVP Olması",
+      "fr": "Derrick Rose devient le plus jeune MVP"
+    },
+    "description": {
+      "en": "At just 22 years old, Derrick Rose electrified the league and was named MVP. He remains the youngest player in NBA history to win the prestigious award.",
+      "es": "Con solo 22 años, Derrick Rose deslumbró a la liga y fue nombrado MVP. Sigue siendo el jugador más joven de la historia de la NBA en ganar este prestigioso premio.",
+      "de": "Mit nur 22 Jahren elektrisierte Derrick Rose die Liga und wurde zum MVP ernannt. Er bleibt der jüngste Spieler der NBA-Geschichte, der diese Auszeichnung gewann.",
+      "tr": "Henüz 22 yaşında olan Derrick Rose lige damgasını vurdu ve MVP seçildi. Bu prestijli ödülü kazanan NBA tarihindeki en genç oyuncu olmaya devam ediyor.",
+      "fr": "À seulement 22 ans, Derrick Rose a enflammé la ligue et a été nommé MVP. Il reste le plus jeune joueur de l'histoire de la NBA à remporter ce prix prestigieux."
+    },
+    "year": 2011
+  },
+  {
+    "id": "spurs-beautiful-game",
+    "title": {
+      "en": "Spurs 'Beautiful Game' Championship",
+      "es": "El campeonato del 'Juego Hermoso' de los Spurs",
+      "de": "Spurs 'Beautiful Game' Meisterschaft",
+      "tr": "Spurs'ün 'Güzel Oyun' Şampiyonluğu",
+      "fr": "Le championnat du 'Beau Jeu' des Spurs"
+    },
+    "description": {
+      "en": "Seeking revenge on Miami, the San Antonio Spurs played utterly flawless team basketball. Their unselfish ball movement was famously dubbed 'The Beautiful Game'.",
+      "es": "Buscando venganza contra Miami, los Spurs jugaron un baloncesto de equipo totalmente impecable. Su juego sin egoísmos fue apodado 'El Juego Hermoso'.",
+      "de": "Die San Antonio Spurs suchten Rache an Miami und spielten völlig fehlerlosen Team-Basketball. Ihr uneigennütziges Passspiel wurde als 'The Beautiful Game' bekannt.",
+      "tr": "Miami'den intikam almak isteyen San Antonio Spurs tamamen kusursuz bir takım basketbolu oynadı. Bencil olmayan top paylaşımı 'Güzel Oyun' (The Beautiful Game) olarak anıldı.",
+      "fr": "Cherchant à se venger de Miami, les Spurs ont pratiqué un jeu d'équipe totalement parfait. Leurs passes altruistes ont été surnommées 'Le Beau Jeu'."
+    },
+    "year": 2014
+  },
+  {
+    "id": "jr-smith-finals-blunder",
+    "title": {
+      "en": "J.R. Smith's Finals Blunder",
+      "es": "El error de J.R. Smith en las Finales",
+      "de": "J.R. Smiths Fehler in den Finals",
+      "tr": "J.R. Smith'in Finallerdeki İnanılmaz Hatası",
+      "fr": "La bourde de J.R. Smith en Finales"
+    },
+    "description": {
+      "en": "In Game 1 of the Finals, J.R. Smith seemingly forgot the score, dribbling out the clock instead of shooting. This blunder wasted LeBron's epic 51-point performance.",
+      "es": "En el primer partido de las Finales, J.R. Smith aparentemente olvidó el marcador. Este error desperdició la épica actuación de 51 puntos de LeBron.",
+      "de": "In Spiel 1 der Finals vergaß J.R. Smith scheinbar den Spielstand und dribbelte die Zeit herunter. Dieser Fehler verschwendete LeBrons epische 51-Punkte-Leistung.",
+      "tr": "Finallerin 1. maçında J.R. Smith skoru unuttu ve şut atmak yerine topu elinde tutup süreyi eritti. Bu hata LeBron'un 51 sayılık epik performansını çöpe attı.",
+      "fr": "Lors du match 1 des Finales, J.R. Smith a apparemment oublié le score, dribblant jusqu'à la fin du temps. Cette bourde a gâché la performance épique de 51 points de LeBron."
+    },
+    "year": 2018
+  },
+  {
+    "id": "raptors-first-championship",
+    "title": {
+      "en": "Raptors Win First NBA Championship",
+      "es": "Los Raptors ganan su primer campeonato de la NBA",
+      "de": "Raptors gewinnen erste NBA-Meisterschaft",
+      "tr": "Raptors'ın İlk NBA Şampiyonluğu",
+      "fr": "Les Raptors remportent leur premier championnat NBA"
+    },
+    "description": {
+      "en": "Led by Kawhi Leonard, the Toronto Raptors dethroned the Golden State Warriors. They made history by becoming the first non-US team to win an NBA title.",
+      "es": "Liderados por Kawhi Leonard, los Toronto Raptors destronaron a los Warriors. Hicieron historia al convertirse en el primer equipo no estadounidense en ganar el título.",
+      "de": "Angeführt von Kawhi Leonard entthronten die Toronto Raptors die Warriors. Sie schrieben Geschichte als erstes nicht-amerikanisches Team, das den Titel gewann.",
+      "tr": "Kawhi Leonard liderliğindeki Toronto Raptors, Golden State Warriors'ı tahtından indirdi. Bir NBA şampiyonluğu kazanan ilk ABD dışı takım olarak tarihe geçtiler.",
+      "fr": "Menés par Kawhi Leonard, les Raptors de Toronto ont détrôné les Warriors. Ils ont écrit l'histoire en devenant la première équipe non américaine à remporter le titre NBA."
+    },
+    "year": 2019
+  },
+  {
+    "id": "jokic-lowest-drafted-mvp",
+    "title": {
+      "en": "Jokic Lowest Drafted MVP Ever",
+      "es": "Jokic, el MVP reclutado más bajo de la historia",
+      "de": "Jokic ist der am niedrigsten gedraftete MVP aller Zeiten",
+      "tr": "Jokic'in Draft'ta En Düşük Sıradan Seçilmiş MVP Olması",
+      "fr": "Jokic, le MVP drafté le plus bas de l'histoire"
+    },
+    "description": {
+      "en": "Nikola Jokic, selected 41st overall in the second round, won his first MVP award. This officially made him the lowest-drafted player ever to secure the honor.",
+      "es": "Nikola Jokic, seleccionado en el puesto 41 en segunda ronda, ganó su primer MVP. Esto lo convirtió en el jugador con la selección más baja en lograrlo.",
+      "de": "Nikola Jokic, an 41. Stelle in der 2. Runde gedraftet, gewann seinen ersten MVP-Award. Er wurde damit zum am niedrigsten gedrafteten Spieler, der diese Ehre erhielt.",
+      "tr": "İkinci tur 41. sıradan seçilen Nikola Jokic, ilk MVP ödülünü kazandı. Bu olay onu tarihte bu onuru elde eden en düşük sıradan Draft edilmiş oyuncu yaptı.",
+      "fr": "Nikola Jokic, sélectionné en 41ème position au second tour, a remporté son premier prix de MVP. Cela a fait de lui le joueur drafté le plus bas à obtenir cet honneur."
+    },
+    "year": 2021
+  },
+  {
+    "id": "curry-first-finals-mvp",
+    "title": {
+      "en": "Curry Wins First Finals MVP",
+      "es": "Curry gana su primer MVP de las Finales",
+      "de": "Curry gewinnt ersten Finals MVP",
+      "tr": "Curry'nin İlk Finals MVP Ödülü",
+      "fr": "Curry remporte son premier MVP des Finales"
+    },
+    "description": {
+      "en": "After silencing critics and leading the Warriors to their fourth championship in eight years, Stephen Curry finally captured his long-awaited first Finals MVP award.",
+      "es": "Tras silenciar a los críticos y liderar a los Warriors a su cuarto campeonato, Stephen Curry capturó por fin su esperado primer MVP de las Finales.",
+      "de": "Nachdem er die Kritiker zum Schweigen gebracht und die Warriors zu ihrer vierten Meisterschaft geführt hatte, gewann Stephen Curry seinen langersehnten ersten Finals MVP.",
+      "tr": "Eleştirmenleri susturan ve Warriors'ı sekiz yıldaki dördüncü şampiyonluğuna taşıyan Stephen Curry, nihayet uzun zamandır beklediği ilk Finals MVP ödülünü kazandı.",
+      "fr": "Après avoir fait taire les critiques et mené les Warriors à leur quatrième championnat, Stephen Curry a enfin remporté son premier prix de MVP des Finales tant attendu."
+    },
+    "year": 2022
+  },
+  {
+    "id": "first-baa-game",
+    "title": {
+      "en": "First BAA (NBA) Game",
+      "es": "Primer partido de la BAA (NBA)",
+      "de": "Erstes BAA (NBA) Spiel",
+      "tr": "İlk BAA (NBA) Maçı",
+      "fr": "Premier match de la BAA (NBA)"
+    },
+    "description": {
+      "en": "The New York Knicks played the Toronto Huskies in the very first BAA (now NBA) game. Any fan taller than the Huskies' center got in for free.",
+      "es": "Los New York Knicks jugaron contra los Toronto Huskies en el primer partido de la BAA (ahora NBA). Cualquier fan más alto que el pívot de los Huskies entraba gratis.",
+      "de": "Die New York Knicks spielten gegen die Toronto Huskies im allerersten BAA (heute NBA) Spiel. Jeder Fan, der größer als der Center der Huskies war, erhielt freien Eintritt.",
+      "tr": "Tarihteki ilk BAA (şu anki NBA) maçında New York Knicks, Toronto Huskies ile karşılaştı. Huskies'in pivotundan uzun olan taraftarlar maça ücretsiz girdi.",
+      "fr": "Les Knicks de New York ont joué contre les Huskies de Toronto lors du tout premier match de la BAA (aujourd'hui NBA). Tout fan plus grand que le pivot des Huskies entrait gratuitement."
+    },
+    "year": 1946
+  },
+  {
+    "id": "fiba-first-world-cup",
+    "title": {
+      "en": "First FIBA World Championship",
+      "es": "Primer Campeonato Mundial de la FIBA",
+      "de": "Erste FIBA-Weltmeisterschaft",
+      "tr": "İlk FIBA Dünya Şampiyonası",
+      "fr": "Premier Championnat du Monde FIBA"
+    },
+    "description": {
+      "en": "Argentina hosted and won the inaugural FIBA World Championship by defeating the USA in the final.",
+      "es": "Argentina organizó y ganó el primer Campeonato Mundial de la FIBA al derrotar a EE. UU. en la final.",
+      "de": "Argentinien war Gastgeber und gewann die erste FIBA-Weltmeisterschaft durch einen Sieg gegen die USA im Finale.",
+      "tr": "Arjantin ilk FIBA Dünya Şampiyonası'na ev sahipliği yaptı ve finalde ABD'yi yenerek şampiyon oldu.",
+      "fr": "L'Argentine a accueilli et remporté le premier Championnat du Monde FIBA en battant les États-Unis en finale."
+    },
+    "year": 1950
+  },
+  {
+    "id": "wilt-50-point-season",
+    "title": {
+      "en": "Wilt Chamberlain's 50.4 PPG Season",
+      "es": "La temporada de 50.4 puntos de Wilt",
+      "de": "Wilt Chamberlains 50,4 Punkte Saison",
+      "tr": "Wilt Chamberlain'in 50.4 Sayı Ortalamalı Sezonu",
+      "fr": "La saison à 50,4 points de moyenne de Wilt"
+    },
+    "description": {
+      "en": "Wilt Chamberlain finished the season averaging an untouchable 50.4 points per game. This is an offensive record that most experts believe will never be broken.",
+      "es": "Wilt Chamberlain terminó la temporada promediando unos inalcanzables 50.4 puntos por partido. Es un récord ofensivo que probablemente nunca se romperá.",
+      "de": "Wilt Chamberlain beendete die Saison mit einem unantastbaren Durchschnitt von 50,4 Punkten pro Spiel. Ein offensiver Rekord, der wohl nie gebrochen wird.",
+      "tr": "Wilt Chamberlain sezonu ulaşılamaz bir ortalama olan maç başına 50.4 sayıyla tamamladı. Uzmanlara göre bu hücum rekoru muhtemelen asla kırılamayacak.",
+      "fr": "Wilt Chamberlain a terminé la saison avec une moyenne intouchable de 50,4 points par match. C'est un record offensif qui ne sera probablement jamais battu."
+    },
+    "year": 1962
+  },
+  {
+    "id": "moses-malone-high-school",
+    "title": {
+      "en": "Moses Malone Drafted from High School",
+      "es": "Moses Malone reclutado desde el instituto",
+      "de": "Moses Malone direkt von der High School gedraftet",
+      "tr": "Moses Malone'un Liseden Draft Edilmesi",
+      "fr": "Moses Malone drafté directement du lycée"
+    },
+    "description": {
+      "en": "Moses Malone became the first basketball player in the modern era to skip college and turn professional straight out of high school.",
+      "es": "Moses Malone se convirtió en el primer jugador de la era moderna en saltarse la universidad y hacerse profesional directamente desde el instituto.",
+      "de": "Moses Malone wurde der erste Basketballspieler der modernen Ära, der das College übersprang und direkt von der High School Profi wurde.",
+      "tr": "Moses Malone, modern dönemde koleji atlayıp liseden doğrudan profesyonel basketbola geçiş yapan (Draft edilen) ilk oyuncu oldu.",
+      "fr": "Moses Malone est devenu le premier joueur de basket de l'ère moderne à sauter l'université et à passer professionnel directement après le lycée."
+    },
+    "year": 1974
+  },
+  {
+    "id": "magic-johnson-rookie-center",
+    "title": {
+      "en": "Rookie Magic Johnson Plays Center",
+      "es": "El novato Magic Johnson juega de pívot",
+      "de": "Rookie Magic Johnson spielt als Center",
+      "tr": "Çaylak Magic Johnson'ın Pivot Oynaması",
+      "fr": "Le rookie Magic Johnson joue pivot"
+    },
+    "description": {
+      "en": "With Kareem Abdul-Jabbar injured, rookie point guard Magic Johnson started at center in Game 6 of the Finals. He scored 42 points to secure the title for the Lakers.",
+      "es": "Con Kareem lesionado, el base novato Magic Johnson fue pívot titular en el 6º partido de las Finales. Anotó 42 puntos para asegurar el título.",
+      "de": "Als Kareem verletzt war, startete Rookie-Point Guard Magic Johnson in Spiel 6 der Finals als Center. Er erzielte 42 Punkte und sicherte den Titel.",
+      "tr": "Kareem'in sakatlığında çaylak oyun kurucu Magic Johnson, Finallerin 6. maçına pivot olarak başladı. Lakers'a şampiyonluğu getirmek için 42 sayı attı.",
+      "fr": "Avec Kareem blessé, le meneur rookie Magic Johnson a débuté au poste de pivot lors du match 6 des Finales. Il a marqué 42 points pour assurer le titre aux Lakers."
+    },
+    "year": 1980
+  },
+  {
+    "id": "fo-fo-fo-sixers",
+    "title": {
+      "en": "76ers' 'Fo, Fo, Fo' Championship",
+      "es": "El campeonato 'Fo, Fo, Fo' de los 76ers",
+      "de": "Die 'Fo, Fo, Fo' Meisterschaft der 76ers",
+      "tr": "76ers'ın 'Fo, Fo, Fo' Şampiyonluğu",
+      "fr": "Le championnat 'Fo, Fo, Fo' des 76ers"
+    },
+    "description": {
+      "en": "Moses Malone famously predicted 'Fo, Fo, Fo' (sweeps) for the Playoffs. The Philadelphia 76ers nearly achieved it, going 12-1 to win the championship.",
+      "es": "Moses Malone predijo 'Fo, Fo, Fo' para los Playoffs. Los 76ers casi lo logran, terminando 12-1 para ganar el campeonato.",
+      "de": "Moses Malone sagte berühmt 'Fo, Fo, Fo' für die Playoffs voraus. Die 76ers erreichten es fast und gewannen die Meisterschaft mit 12:1.",
+      "tr": "Moses Malone Playoff serileri için ünlü 'Fo, Fo, Fo' (4-4-4, tüm serileri süpürme) tahminini yaptı. 76ers bu tahmine çok yaklaşarak 12-1'lik dereceyle şampiyon oldu.",
+      "fr": "Moses Malone a prédit 'Fo, Fo, Fo' (balayages) pour les Playoffs. Les 76ers y sont presque parvenus, terminant à 12-1 pour remporter le championnat."
+    },
+    "year": 1983
+  },
+  {
+    "id": "scott-skiles-30-assists",
+    "title": {
+      "en": "Scott Skiles' 30-Assist Game",
+      "es": "El partido de 30 asistencias de Scott Skiles",
+      "de": "Scott Skiles' 30-Assists-Spiel",
+      "tr": "Scott Skiles'ın 30 Asistlik Maçı",
+      "fr": "Le match à 30 passes décisives de Scott Skiles"
+    },
+    "description": {
+      "en": "Orlando Magic point guard Scott Skiles dished out an astonishing 30 assists in a single game. This stands as an unbreakable NBA regular season record.",
+      "es": "El base de los Magic, Scott Skiles, repartió 30 asistencias en un solo partido. Se mantiene como un récord inquebrantable de la NBA.",
+      "de": "Der Point Guard der Magic, Scott Skiles, verteilte 30 Assists in einem einzigen Spiel. Dies ist ein ungebrochener Rekord in der regulären Saison.",
+      "tr": "Orlando Magic oyun kurucusu Scott Skiles, tek bir maçta tam 30 asist yaptı. Bu, normal sezonda kırılamaz bir NBA rekoru olarak durmaktadır.",
+      "fr": "Le meneur du Magic, Scott Skiles, a distribué un nombre étonnant de 30 passes décisives en un seul match. C'est un record NBA imbattable en saison régulière."
+    },
+    "year": 1990
+  },
+  {
+    "id": "christian-laettner-the-shot",
+    "title": {
+      "en": "Christian Laettner's 'The Shot'",
+      "es": "'El Tiro' de Christian Laettner",
+      "de": "Christian Laettners 'The Shot'",
+      "tr": "Christian Laettner'ın Şutu",
+      "fr": "Le tir de Christian Laettner"
+    },
+    "description": {
+      "en": "In what is considered the greatest college game ever, Laettner hit a turnaround buzzer-beater to send Duke to the Final Four over Kentucky.",
+      "es": "En el mejor partido universitario de la historia, Laettner anotó sobre la bocina para enviar a Duke a la Final Four venciendo a Kentucky.",
+      "de": "Im besten College-Spiel aller Zeiten traf Laettner mit der Sirene und schickte Duke gegen Kentucky ins Final Four.",
+      "tr": "Kolej basketbolu tarihinin en iyi maçında Laettner, son saniyede dönerek attığı efsanevi şutla Duke'u Kentucky'ye karşı Final Four'a taşıdı.",
+      "fr": "Dans ce qui est considéré comme le plus grand match universitaire, Laettner a réussi un tir au buzzer pour envoyer Duke au Final Four aux dépens de Kentucky."
+    },
+    "year": 1992
+  },
+  {
+    "id": "lakers-15-1-playoffs",
+    "title": {
+      "en": "Lakers' 15-1 Playoff Run",
+      "es": "La racha de 15-1 en Playoffs de los Lakers",
+      "de": "Lakers' 15-1 Playoff-Lauf",
+      "tr": "Lakers'ın 15-1'lik Playoff Serüveni",
+      "fr": "Le parcours de 15-1 en Playoffs des Lakers"
+    },
+    "description": {
+      "en": "Kobe Bryant and Shaquille O'Neal led the Lakers to a 15-1 postseason record. They utterly dominated the league en route to back-to-back titles.",
+      "es": "Kobe y Shaq lideraron a los Lakers a un récord de 15-1 en la postemporada. Dominaron la liga en su camino hacia su segundo título consecutivo.",
+      "de": "Kobe und Shaq führten die Lakers zu einer 15-1 Bilanz in den Playoffs. Sie dominierten die Liga auf dem Weg zu aufeinanderfolgenden Titeln.",
+      "tr": "Kobe Bryant ve Shaquille O'Neal, Lakers'ı 15-1'lik bir Playoff derecesine taşıdı. Üst üste ikinci şampiyonluk yolunda ligi resmen ezip geçtiler.",
+      "fr": "Kobe Bryant et Shaquille O'Neal ont mené les Lakers à un bilan de 15-1 en Playoffs. Ils ont totalement dominé la ligue pour remporter deux titres consécutifs."
+    },
+    "year": 2001
+  },
+  {
+    "id": "argentina-olympic-gold",
+    "title": {
+      "en": "Argentina Shocks USA for Gold",
+      "es": "Argentina sorprende a EE. UU. por el oro",
+      "de": "Argentinien schockt USA für Gold",
+      "tr": "Arjantin'in Olimpiyat Altın Madalyası",
+      "fr": "L'Argentine choque les États-Unis pour l'or"
+    },
+    "description": {
+      "en": "Led by Manu Ginobili, Argentina defeated the heavily favored USA team and captured the Olympic gold medal in Athens. It marked a huge shift in global basketball.",
+      "es": "Liderada por Manu Ginóbili, Argentina derrotó a EE. UU. y capturó el oro olímpico en Atenas. Marcó un gran cambio en el baloncesto mundial.",
+      "de": "Angeführt von Manu Ginobili besiegte Argentinien die favorisierten USA und holte olympisches Gold in Athen. Ein riesiger Wendepunkt im globalen Basketball.",
+      "tr": "Manu Ginobili önderliğindeki Arjantin, büyük favori ABD'yi eledi ve Atina'da Olimpiyat altın madalyasını kazandı. Küresel basketbolda büyük bir değişimi simgeledi.",
+      "fr": "Menée par Manu Ginobili, l'Argentine a battu l'équipe favorite des États-Unis et a remporté l'or olympique à Athènes. Cela a marqué un grand changement dans le basket mondial."
+    },
+    "year": 2004
+  },
+  {
+    "id": "kobe-outscores-mavs",
+    "title": {
+      "en": "Kobe Outscores Mavericks in 3 Quarters",
+      "es": "Kobe supera a los Mavericks en 3 cuartos",
+      "de": "Kobe erzielt mehr Punkte als die Mavericks",
+      "tr": "Kobe'nin Mavericks'i Tek Başına Geçmesi",
+      "fr": "Kobe marque plus de points que les Mavericks en 3 quarts-temps"
+    },
+    "description": {
+      "en": "Kobe Bryant single-handedly outscored the entire Dallas Mavericks team 62 to 61 through three quarters. He famously sat out the entire fourth quarter.",
+      "es": "Kobe Bryant superó él solo a todos los Dallas Mavericks por 62 a 61 en tres cuartos. No jugó en todo el cuarto cuarto.",
+      "de": "Kobe Bryant erzielte im Alleingang in drei Vierteln mehr Punkte als die gesamten Mavericks (62:61). Er setzte das gesamte vierte Viertel aus.",
+      "tr": "Kobe Bryant, ilk üç çeyrekte 62 sayı atarak tüm Dallas Mavericks takımından (61 sayı) daha fazla skor üretti. Meşhur bir şekilde dördüncü çeyrekte hiç oynamadı.",
+      "fr": "Kobe Bryant a marqué à lui seul plus de points que toute l'équipe des Mavericks (62 à 61) en trois quarts-temps. Il n'a pas joué du tout le quatrième quart-temps."
+    },
+    "year": 2005
+  },
+  {
+    "id": "steve-nash-first-mvp",
+    "title": {
+      "en": "Steve Nash Wins First MVP",
+      "es": "Steve Nash gana su primer MVP",
+      "de": "Steve Nash gewinnt ersten MVP",
+      "tr": "Steve Nash'in İlk MVP Ödülü",
+      "fr": "Steve Nash remporte son premier MVP"
+    },
+    "description": {
+      "en": "Steve Nash orchestrated the thrilling 'Seven Seconds or Less' offense in Phoenix, earning his first MVP award and changing the modern game's pace.",
+      "es": "Steve Nash orquestó la emocionante ofensiva 'Siete segundos o menos' en Phoenix, ganando su primer MVP y cambiando el ritmo del juego.",
+      "de": "Steve Nash leitete die aufregende 'Seven Seconds or Less' Offensive in Phoenix, gewann seinen ersten MVP und veränderte das Tempo des modernen Spiels.",
+      "tr": "Steve Nash, Phoenix'te izlemesi heyecan verici 'Yedi Saniye veya Daha Az' hücumunu yöneterek ilk MVP ödülünü kazandı ve modern oyunun temposunu baştan yazdı.",
+      "fr": "Steve Nash a orchestré la palpitante attaque 'Sept secondes ou moins' à Phoenix, remportant son premier MVP et changeant le rythme du jeu moderne."
+    },
+    "year": 2005
+  },
+  {
+    "id": "ray-allen-3pt-record",
+    "title": {
+      "en": "Ray Allen Breaks 3-Point Record",
+      "es": "Ray Allen rompe el récord de triples",
+      "de": "Ray Allen bricht den 3-Punkte-Rekord",
+      "tr": "Ray Allen'ın Üçlük Rekorunu Kırması",
+      "fr": "Ray Allen bat le record de 3 points"
+    },
+    "description": {
+      "en": "Ray Allen surpassed Reggie Miller to become the NBA's all-time leader in made three-pointers. He held this prestigious record until Stephen Curry broke it.",
+      "es": "Ray Allen superó a Reggie Miller para convertirse en el líder histórico de triples de la NBA. Mantuvo este récord hasta que Curry lo rompió.",
+      "de": "Ray Allen überholte Reggie Miller und wurde der All-Time-Leader für verwandelte Dreier in der NBA. Er hielt diesen Rekord, bis Curry ihn brach.",
+      "tr": "Ray Allen, Reggie Miller'ı geride bırakarak NBA tarihinin en çok üçlük atan oyuncusu oldu. Bu prestijli rekoru daha sonra Stephen Curry kırana dek elinde tuttu.",
+      "fr": "Ray Allen a dépassé Reggie Miller pour devenir le leader de tous les temps de la NBA pour les trois points réussis. Il a détenu ce record jusqu'à ce que Curry le batte."
+    },
+    "year": 2011
+  },
+  {
+    "id": "curry-unanimous-mvp",
+    "title": {
+      "en": "Curry's Unanimous MVP",
+      "es": "El MVP unánime de Curry",
+      "de": "Currys einstimmiger MVP",
+      "tr": "Curry'nin Oybirliğiyle MVP Seçilmesi",
+      "fr": "Le MVP unanime de Curry"
+    },
+    "description": {
+      "en": "After leading the Warriors to a historic 73 wins, Stephen Curry became the first and only player in NBA history to win the MVP vote unanimously.",
+      "es": "Tras liderar a los Warriors a 73 victorias, Stephen Curry fue el primer y único jugador en la historia en ganar el MVP por unanimidad.",
+      "de": "Nachdem er die Warriors zu 73 Siegen geführt hatte, wurde Stephen Curry der erste und einzige Spieler, der die MVP-Wahl einstimmig gewann.",
+      "tr": "Warriors'ı 73 galibiyete taşıdıktan sonra Stephen Curry, NBA tarihinde MVP oylarının tamamını alarak oybirliğiyle seçilen ilk ve tek oyuncu oldu.",
+      "fr": "Après avoir mené les Warriors à 73 victoires, Stephen Curry est devenu le premier et le seul joueur de l'histoire à remporter le titre de MVP à l'unanimité."
+    },
+    "year": 2016
+  },
+  {
+    "id": "dirk-nowitzki-30k",
+    "title": {
+      "en": "Dirk Reaches 30,000 Points",
+      "es": "Dirk alcanza los 30.000 puntos",
+      "de": "Dirk erreicht 30.000 Punkte",
+      "tr": "Dirk Nowitzki'nin 30.000 Sayı Barajı",
+      "fr": "Dirk atteint les 30 000 points"
+    },
+    "description": {
+      "en": "Dirk Nowitzki became the first international player and only the sixth in NBA history to surpass the 30,000 career points milestone.",
+      "es": "Dirk Nowitzki se convirtió en el primer jugador internacional y el sexto en la historia de la NBA en superar los 30.000 puntos en su carrera.",
+      "de": "Dirk Nowitzki war der erste internationale Spieler und der sechste in der NBA-Geschichte, der die Marke von 30.000 Karrierepunkten überschritt.",
+      "tr": "Dirk Nowitzki, 30.000 kariyer sayısı barajını aşan ilk uluslararası oyuncu ve NBA tarihindeki altıncı oyuncu olma unvanına erişti.",
+      "fr": "Dirk Nowitzki est devenu le premier joueur international et seulement le sixième de l'histoire de la NBA à dépasser la barre des 30 000 points en carrière."
+    },
+    "year": 2017
+  },
+  {
+    "id": "klay-14-threes",
+    "title": {
+      "en": "Klay Thompson Hits 14 Threes",
+      "es": "Klay Thompson anota 14 triples",
+      "de": "Klay Thompson trifft 14 Dreier",
+      "tr": "Klay Thompson'ın 14 Üçlüğü",
+      "fr": "Klay Thompson marque 14 trois points"
+    },
+    "description": {
+      "en": "Klay Thompson broke his teammate Stephen Curry's record by draining 14 three-pointers in a single game against the Chicago Bulls.",
+      "es": "Klay Thompson batió el récord de su compañero Curry anotando 14 triples en un solo partido contra los Chicago Bulls.",
+      "de": "Klay Thompson brach den Rekord seines Teamkollegen Curry, indem er 14 Dreier in einem einzigen Spiel gegen die Bulls traf.",
+      "tr": "Klay Thompson, Bulls'a karşı tek bir maçta 14 üçlük atarak takım arkadaşı Stephen Curry'ye ait olan NBA rekorunu elinden aldı.",
+      "fr": "Klay Thompson a battu le record de son coéquipier Stephen Curry en rentrant 14 paniers à trois points lors d'un seul match contre les Bulls."
+    },
+    "year": 2018
+  },
+  {
+    "id": "vince-carter-4-decades",
+    "title": {
+      "en": "Vince Carter Plays in 4 Decades",
+      "es": "Vince Carter juega en 4 décadas",
+      "de": "Vince Carter spielt in 4 Jahrzehnten",
+      "tr": "Vince Carter'ın 4 Farklı On Yılda Oynaması",
+      "fr": "Vince Carter joue sur 4 décennies"
+    },
+    "description": {
+      "en": "Vince Carter officially retired, making history as the first and only NBA player to have played in four different decades (1990s, 2000s, 2010s, 2020s).",
+      "es": "Vince Carter se retiró oficialmente, haciendo historia como el único jugador en haber jugado en cuatro décadas diferentes (90s, 00s, 10s, 20s).",
+      "de": "Vince Carter trat offiziell zurück und schrieb als erster und einziger Spieler Geschichte, der in vier verschiedenen Jahrzehnten spielte (90er, 00er, 10er, 20er).",
+      "tr": "Vince Carter resmen emekli oldu. NBA tarihinde dört farklı on yılda (1990'lar, 2000'ler, 2010'lar ve 2020'ler) forma giyen tek oyuncu olarak tarihe geçti.",
+      "fr": "Vince Carter a pris sa retraite, devenant le seul joueur de la NBA à avoir joué au cours de quatre décennies différentes (années 90, 2000, 2010, 2020)."
+    },
+    "year": 2020
+  },
+  {
+    "id": "luka-doncic-60-21-10",
+    "title": {
+      "en": "Luka Doncic's 60-21-10 Game",
+      "es": "El partido de 60-21-10 de Luka Doncic",
+      "de": "Luka Doncics 60-21-10 Spiel",
+      "tr": "Luka Doncic'in 60-21-10'luk Maçı",
+      "fr": "Le match à 60-21-10 de Luka Doncic"
+    },
+    "description": {
+      "en": "Luka Doncic produced a stat line never seen before in NBA history: 60 points, 21 rebounds, and 10 assists to pull off a miraculous comeback win.",
+      "es": "Luka Doncic logró una estadística nunca antes vista: 60 puntos, 21 rebotes y 10 asistencias en una milagrosa victoria con remontada.",
+      "de": "Luka Doncic lieferte eine noch nie dagewesene Statistik: 60 Punkte, 21 Rebounds und 10 Assists bei einem wundersamen Comeback-Sieg.",
+      "tr": "Luka Doncic mucizevi bir geri dönüş galibiyetinde NBA tarihinde daha önce hiç görülmemiş bir istatistik üretti: 60 sayı, 21 ribaund ve 10 asist.",
+      "fr": "Luka Doncic a produit une ligne de statistiques inédite dans l'histoire de la NBA : 60 points, 21 rebonds et 10 passes décisives lors d'une victoire miraculeuse."
+    },
+    "year": 2022
+  },
+  {
+    "id": "heat-8th-seed-finals",
+    "title": {
+      "en": "Heat Reaches Finals as 8th Seed",
+      "es": "Los Heat llegan a las Finales como octavos",
+      "de": "Heat erreichen Finals als 8. Seed",
+      "tr": "Heat'in 8. Sıradan Finallere Yükselmesi",
+      "fr": "Le Heat en Finales en tant que 8ème"
+    },
+    "description": {
+      "en": "Led by Jimmy Butler, the Miami Heat eliminated the #1 seed Bucks and eventually became only the second 8th seed in history to reach the NBA Finals.",
+      "es": "Liderados por Jimmy Butler, los Miami Heat eliminaron a los Bucks y se convirtieron en el segundo octavo clasificado en llegar a las Finales.",
+      "de": "Angeführt von Jimmy Butler eliminierten die Heat die Bucks und wurden erst der zweite Achtplatzierte der Geschichte, der die Finals erreichte.",
+      "tr": "Jimmy Butler önderliğindeki Miami Heat, 1. sıradaki Bucks'ı eledi ve Playoff tarihi boyunca NBA Finallerine ulaşmayı başaran ikinci 8. sıra takımı oldu.",
+      "fr": "Mené par Jimmy Butler, le Heat de Miami a éliminé les Bucks (1ers) et est devenu la deuxième équipe classée 8ème à atteindre les Finales NBA."
+    },
+    "year": 2023
+  },
+  {
+    "id": "lebron-40k-points",
+    "title": {
+      "en": "LeBron James Scores 40,000 Points",
+      "es": "LeBron James anota 40.000 puntos",
+      "de": "LeBron James erzielt 40.000 Punkte",
+      "tr": "LeBron James'in 40.000 Sayısı",
+      "fr": "LeBron James marque 40 000 points"
+    },
+    "description": {
+      "en": "Continuing his unparalleled longevity, LeBron James became the first player in NBA history to score 40,000 career regular-season points.",
+      "es": "Continuando con su inigualable longevidad, LeBron James se convirtió en el primer jugador en la historia en anotar 40.000 puntos en temporada regular.",
+      "de": "LeBron James setzte seine beispiellose Langlebigkeit fort und erzielte als erster Spieler der NBA-Geschichte 40.000 Punkte in der regulären Saison.",
+      "tr": "Eşsiz uzun ömürlülüğünü sürdüren LeBron James, NBA tarihinde normal sezonda 40.000 kariyer sayısına ulaşan ilk ve tek oyuncu oldu.",
+      "fr": "Poursuivant sa longévité inégalée, LeBron James est devenu le premier joueur de l'histoire de la NBA à marquer 40 000 points en saison régulière."
+    },
+    "year": 2024
+  }
+]

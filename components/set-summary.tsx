@@ -397,15 +397,30 @@ export function ShareButton({
 export function SetProgress({
   played,
   total,
+  size = "sm",
   t,
 }: {
   /** Questions already answered and advanced past, so the live one is `played + 1`. */
   played: number;
   total: number;
+  /**
+   * How large the pill is set.
+   *
+   * A prop rather than a `className` the caller appends, because the two sizes
+   * differ in utilities that set the same properties — which of them won would
+   * come down to Tailwind's output order. `sm` is the one-column games', where
+   * this stands over a photograph in a tight header; `md` is for a screen with
+   * the room to read it as a label rather than as a footnote.
+   */
+  size?: "sm" | "md";
   t: Dict;
 }) {
   return (
-    <span className="rounded-full border border-white/20 bg-black/55 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-white/80 backdrop-blur-md">
+    <span
+      className={`rounded-full border border-white/20 bg-black/55 font-semibold tabular-nums text-white/80 backdrop-blur-md ${
+        size === "md" ? "px-3 py-1.5 text-[13px]" : "px-2.5 py-1 text-[11px]"
+      }`}
+    >
       {format(t.setProgress, { n: Math.min(played + 1, total), total })}
     </span>
   );

@@ -4,7 +4,12 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
-import { normalizeUsername, setUsername, USERNAME_TAKEN } from "@/lib/db/accounts";
+import {
+  setUsername,
+  USERNAME_TAKEN,
+  validateUsername,
+  type UsernameProblem,
+} from "@/lib/db/accounts";
 import { createServerDbClient } from "@/lib/db/server";
 import { getCurrentUser, hasPasswordIdentity } from "@/lib/auth/server";
 import { ACCOUNT_PATH, safeNextPath, SIGN_IN_PATH } from "@/lib/auth/paths";
@@ -36,6 +41,12 @@ export type AuthErrorCode =
   | "password-weak"
   | "password-mismatch"
   | "username-invalid"
+  /** The name carried something the column cannot hold — a space, an accent,
+   *  a Turkish ş or ı. Its own code rather than `username-invalid`, because
+   *  "three to twenty characters" is not an answer to a name that is already
+   *  the right length: the field gives no sign which characters it means, so
+   *  the sentence has to. */
+  | "username-chars"
   | "username-taken"
   | "rate-limited"
   | "provider-failed"
@@ -96,6 +107,23 @@ function mapAuthError(message: string, status?: number): AuthErrorCode {
   return "generic";
 }
 
+/**
+ * A refused username, as a code the form can say out loud.
+ *
+ * The two length problems share one sentence — the hint under the field
+ * already states the range — and the character set gets its own, because that
+ * is the refusal a player cannot work out by looking at what they typed.
+ *
+ * **Nothing here edits the name.** It used to: the action ran the typed text
+ * through `normalizeUsername`, which *strips* anything the column cannot hold,
+ * so "ali_şahin" was saved as "ali_ahin" and the form reported a successful
+ * save of a name nobody had asked for. Silently keeping part of a name is
+ * worse than refusing the whole of it. See `validateUsername`.
+ */
+function usernameError(problem: UsernameProblem): AuthErrorCode {
+  return problem === "bad-characters" ? "username-chars" : "username-invalid";
+}
+
 /** Where to land after a successful sign-in. */
 function destination(form: FormData): string {
   return safeNextPath(field(form, "next")) ?? ACCOUNT_PATH;
@@ -130,8 +158,12 @@ export async function signUpWithEmail(
   const password = String(form.get("password") ?? "");
   const rawUsername = field(form, "username");
 
-  const username = normalizeUsername(rawUsername);
-  if (!username) return { status: "error", code: "username-invalid" };
+  const checked = validateUsername(rawUsername);
+  if (!checked.ok) {
+    return { status: "error", code: usernameError(checked.problem) };
+  }
+  const username = checked.username;
+
   if (!EMAIL_RE.test(email)) return { status: "error", code: "email-invalid" };
   if (password.length < MIN_PASSWORD) {
     return { status: "error", code: "password-weak" };
@@ -240,11 +272,13 @@ export async function updateUsername(
   const user = await getCurrentUser();
   if (!user) redirect(SIGN_IN_PATH);
 
-  const username = normalizeUsername(field(form, "username"));
-  if (!username) return { status: "error", code: "username-invalid" };
+  const checked = validateUsername(field(form, "username"));
+  if (!checked.ok) {
+    return { status: "error", code: usernameError(checked.problem) };
+  }
 
   try {
-    await setUsername(await createServerDbClient(), user.id, username);
+    await setUsername(await createServerDbClient(), user.id, checked.username);
   } catch (error) {
     if (error instanceof Error && error.message === USERNAME_TAKEN) {
       return { status: "error", code: "username-taken" };

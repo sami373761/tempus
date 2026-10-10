@@ -13,6 +13,15 @@
  * Per-object validation is `attachImage()`, the same code path as a single
  * `image:attach`, so a bulk run is exactly as strict.
  *
+ * `--allow-any-key` passes straight through to `attachImage()`, which is what
+ * makes a prefix outside the era folders attachable at all. The era folders
+ * exist so an object's location cannot contradict the event's era category,
+ * and that is worth keeping for the historical events — but a subject pool
+ * uploaded under its own prefix (`film-dizi/`, the film & television posters)
+ * has no era to agree with: every entry is common-era by construction, so the
+ * folder would carry no information and copying 45 posters into `ce/` would
+ * only duplicate the bytes. Without the flag such a run reports 45 skips.
+ *
  * Provenance applies to the whole batch, which is only honest when the batch
  * really does share a source and licence. Mixed sources need separate runs.
  */
@@ -31,6 +40,7 @@ interface Options {
   attribution: string | null;
   primary: boolean;
   dryRun: boolean;
+  allowAnyKey: boolean;
 }
 
 function parseArgs(): Options {
@@ -74,6 +84,7 @@ function parseArgs(): Options {
     attribution: get("attribution"),
     primary: argv.includes("--primary"),
     dryRun: argv.includes("--dry-run"),
+    allowAnyKey: argv.includes("--allow-any-key"),
   };
 }
 
@@ -109,6 +120,7 @@ async function main(): Promise<void> {
   console.log(`prefix   : ${options.prefix}  (${keys.length} objects)`);
   console.log(`license  : ${options.license}`);
   console.log(`source   : ${options.sourceUrl}`);
+  if (options.allowAnyKey) console.log("keys     : any (era folder check skipped)");
   console.log(`mode     : ${options.dryRun ? "dry run" : describeTarget()}\n`);
 
   const client = await connect();
@@ -133,7 +145,7 @@ async function main(): Promise<void> {
           attribution: options.attribution,
           primary: options.primary,
           dryRun: options.dryRun,
-          allowAnyKey: false,
+          allowAnyKey: options.allowAnyKey,
         });
         attached.push(key);
         console.log(

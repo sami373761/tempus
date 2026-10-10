@@ -1,16 +1,24 @@
 "use server";
 
-import { randomEvents } from "@/lib/db/queries";
+import { eventCategorySlugs, randomEvents } from "@/lib/db/queries";
 import { createServerDbClient } from "@/lib/db/server";
 import type { LocalizedEvent } from "@/lib/db/types";
 import {
   buildComparisonRound,
   COMPARISON_MIN_YEAR,
   EVENTS_PER_COMPARISON_ROUND,
+  EXCLUDED_EVENT_LIMIT,
   ROUND_QUEUE_DEPTH,
   type ComparisonRound,
 } from "@/lib/game/rounds";
-import { FOOTBALL_TOPIC } from "@/lib/game/topics";
+import { screenFormatOf, type ScreenEvent } from "@/lib/game/screen";
+import {
+  BASKETBALL_TOPIC,
+  FOOTBALL_TOPIC,
+  SCREEN_TOPIC,
+  WHEN_BORN_TOPIC,
+} from "@/lib/game/topics";
+import { personFieldOf, type WhenBornEvent } from "@/lib/game/when-born";
 import { readLocale } from "@/lib/i18n/server";
 
 /**
@@ -34,15 +42,27 @@ const MAX_DRAW = 4;
  *
  * No year floor: the deep panes reach 10 billion BCE, so every event in the
  * dataset — down to the formation of the Earth — is guessable here.
+ *
+ * `exclude` is what keeps a set of ten made of ten *different* events. The
+ * queue is topped up a round or two at a time, so without it each draw knows
+ * only what the game is holding and nothing about what it has already played:
+ * on the 66-event football pool that put a repeat in roughly half of all sets.
+ * It is caller-supplied, which is safe because it can only ever narrow a draw
+ * the player was already entitled to — see `sanitizeExclude`.
  */
 export async function dealTimelineEvents(
   count: number = ROUND_QUEUE_DEPTH,
+  exclude: readonly string[] = [],
 ): Promise<LocalizedEvent[]> {
   const take = Math.min(Math.max(1, Math.trunc(count) || 1), MAX_DRAW);
 
   const locale = await readLocale();
   const supabase = await createServerDbClient();
-  const events = await randomEvents(supabase, { count: take, locale });
+  const events = await randomEvents(supabase, {
+    count: take,
+    locale,
+    exclude: sanitizeExclude(exclude),
+  });
 
   return shuffle(events);
 }
@@ -63,6 +83,7 @@ export async function dealTimelineEvents(
  */
 export async function dealFootballEvents(
   count: number = ROUND_QUEUE_DEPTH,
+  exclude: readonly string[] = [],
 ): Promise<LocalizedEvent[]> {
   const take = Math.min(Math.max(1, Math.trunc(count) || 1), MAX_DRAW);
 
@@ -72,9 +93,138 @@ export async function dealFootballEvents(
     count: take,
     locale,
     topicSlug: FOOTBALL_TOPIC,
+    exclude: sanitizeExclude(exclude),
   });
 
   return shuffle(events);
+}
+
+/**
+ * Deals events for the basketball game.
+ *
+ * `dealFootballEvents` with one word changed, which is the whole of what a
+ * subject pool needs when its dataset carries nothing beyond a name, a year
+ * and a photograph: the events come back as plain `LocalizedEvent`s, the way
+ * football's do, because there is no second fact for the screen to print (film
+ * has its format, "Born When?" its field).
+ *
+ * A separate action per pool, for the reason spelled out above: the pool must
+ * not be a caller-supplied argument.
+ */
+export async function dealBasketballEvents(
+  count: number = ROUND_QUEUE_DEPTH,
+  exclude: readonly string[] = [],
+): Promise<LocalizedEvent[]> {
+  const take = Math.min(Math.max(1, Math.trunc(count) || 1), MAX_DRAW);
+
+  const locale = await readLocale();
+  const supabase = await createServerDbClient();
+  const events = await randomEvents(supabase, {
+    count: take,
+    locale,
+    topicSlug: BASKETBALL_TOPIC,
+    exclude: sanitizeExclude(exclude),
+  });
+
+  return shuffle(events);
+}
+
+/**
+ * Deals rounds for the film & television game.
+ *
+ * `dealFootballEvents` plus the one fact this subject has that no other pool
+ * does: whether each entry is a film or a series. The stored year is a release
+ * for the first and a premiere for the second, so the game prints which — see
+ * lib/game/screen.ts for why that is a rule and not a label.
+ *
+ * The format is a second, small query rather than a wider view (see
+ * `eventCategorySlugs`), and it is resolved **here** rather than on the client
+ * for the same reason the pool is: `kind = 'other'` categories are not a pool
+ * and could not be used to reach another game's events, but a client that had
+ * to ask for them would be a client that could ask for anything else in
+ * `event_category` too.
+ *
+ * A separate action per pool, like football's, so the pool is never a
+ * caller-supplied argument.
+ */
+export async function dealScreenEvents(
+  count: number = ROUND_QUEUE_DEPTH,
+  exclude: readonly string[] = [],
+): Promise<ScreenEvent[]> {
+  const take = Math.min(Math.max(1, Math.trunc(count) || 1), MAX_DRAW);
+
+  const locale = await readLocale();
+  const supabase = await createServerDbClient();
+  const events = await randomEvents(supabase, {
+    count: take,
+    locale,
+    topicSlug: SCREEN_TOPIC,
+    exclude: sanitizeExclude(exclude),
+  });
+
+  const formats = await eventCategorySlugs(
+    supabase,
+    events.map((event) => event.id),
+    { kind: "other" },
+  );
+
+  return shuffle(
+    events.map((event) => ({
+      ...event,
+      format: screenFormatOf(formats.get(event.id)),
+    })),
+  );
+}
+
+/**
+ * Deals rounds for the "Born When?" game.
+ *
+ * `dealScreenEvents` with a different pool and a different second fact: the
+ * field of the person in the picture rather than a film's format. Both are
+ * `kind = 'other'` category links, so both come back through the same
+ * `eventCategorySlugs` call, and the two readers (`screenFormatOf`,
+ * `personFieldOf`) each ignore slugs they do not recognise — which is why one
+ * query shape serves both games without either being able to read the other's
+ * label.
+ *
+ * It is resolved **here** rather than on the client for the reason the pool is:
+ * `kind = 'other'` categories are not a pool and could not be used to reach
+ * another game's events, but a client that had to ask for them would be a
+ * client that could ask for anything else in `event_category` too.
+ *
+ * A separate action per pool, like football's and film's, so the pool is never
+ * a caller-supplied argument. That matters more for this pool than for the
+ * others: these events are dated by *birth year*, so an endpoint that could be
+ * talked into mixing them into the general draw would be grading "when did
+ * this happen" against the year somebody was born.
+ */
+export async function dealWhenBornEvents(
+  count: number = ROUND_QUEUE_DEPTH,
+  exclude: readonly string[] = [],
+): Promise<WhenBornEvent[]> {
+  const take = Math.min(Math.max(1, Math.trunc(count) || 1), MAX_DRAW);
+
+  const locale = await readLocale();
+  const supabase = await createServerDbClient();
+  const events = await randomEvents(supabase, {
+    count: take,
+    locale,
+    topicSlug: WHEN_BORN_TOPIC,
+    exclude: sanitizeExclude(exclude),
+  });
+
+  const fields = await eventCategorySlugs(
+    supabase,
+    events.map((event) => event.id),
+    { kind: "other" },
+  );
+
+  return shuffle(
+    events.map((event) => ({
+      ...event,
+      field: personFieldOf(fields.get(event.id)),
+    })),
+  );
 }
 
 /**
@@ -90,9 +240,14 @@ export async function dealFootballEvents(
  * stronger than needed, and deliberately so: it is what guarantees no round can
  * come out with two anchors on the same year, which would make "closer to
  * which?" unanswerable.
+ *
+ * `exclude` carries every event of every round the caller has already played,
+ * anchors included — a round whose anchors the player has just been shown
+ * reads as a repeat even when the event being guessed is new.
  */
 export async function dealComparisonRounds(
   count: number = ROUND_QUEUE_DEPTH,
+  exclude: readonly string[] = [],
 ): Promise<ComparisonRound[]> {
   const take = Math.min(Math.max(1, Math.trunc(count) || 1), MAX_DRAW);
 
@@ -103,6 +258,7 @@ export async function dealComparisonRounds(
     locale,
     fromYear: COMPARISON_MIN_YEAR,
     distinctYears: true,
+    exclude: sanitizeExclude(exclude),
   });
 
   const pool = shuffle(events);
@@ -120,6 +276,29 @@ export async function dealComparisonRounds(
   }
 
   return rounds;
+}
+
+/**
+ * Narrows a client's "already dealt" list to something this endpoint is
+ * willing to hand the draw.
+ *
+ * It is the one caller-supplied argument here besides the count, and the only
+ * thing it can do is make a draw *smaller*: an id that names nothing is simply
+ * never matched, and an id that names a real event removes it from a pool the
+ * player could already have been dealt it from. So there is nothing to
+ * authorize — only a size to bound, since the list arrives in a request body.
+ * `EXCLUDED_EVENT_LIMIT` is that bound, and trimming to it can only ever cost
+ * a repeat: the draw treats the list as a preference, never as a filter (see
+ * `exclude` in lib/db/queries.ts).
+ */
+function sanitizeExclude(ids: readonly string[]): string[] {
+  const clean = ids.filter(
+    (id): id is string => typeof id === "string" && id.length > 0,
+  );
+
+  // The tail, not the head: clients append as they play, so the most recently
+  // dealt events are the ones worth keeping when the list is over the cap.
+  return clean.slice(-EXCLUDED_EVENT_LIMIT);
 }
 
 /**

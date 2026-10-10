@@ -59,6 +59,24 @@ export const ROUND_QUEUE_DEPTH = 2;
 export const ROUND_QUEUE_TARGET = ROUND_QUEUE_DEPTH + 1;
 
 /**
+ * How many already-dealt events a game remembers, and the most a draw will be
+ * asked to avoid.
+ *
+ * A set of ten never reaches it — the date-guessing games play ten events and
+ * the comparison game thirty (three per round) — so for them this is slack.
+ * It exists for a run with no end to it: survival would otherwise grow its
+ * "already played" list, and the request carrying it, without bound. The
+ * **tail** is what is kept, so what a long run avoids is the events it dealt
+ * most recently.
+ *
+ * Shared by the deal actions and the two game components for the usual reason
+ * (a `"use server"` module may export nothing but async functions), and the
+ * limit has to be one number: a client that remembered less than the server
+ * accepted would be asking for repeats it could have avoided.
+ */
+export const EXCLUDED_EVENT_LIMIT = 64;
+
+/**
  * How long a round's photograph takes to dissolve into the next one's. Must
  * match the `.round-photo-in` rule in app/globals.css: the components use it to
  * decide when the outgoing layer can be unmounted, and unmounting it early
@@ -96,6 +114,19 @@ export function buildComparisonRound(
   if (!left || !target || !right) return null;
 
   return { left, right, target };
+}
+
+/**
+ * The round's three events, target last.
+ *
+ * What a game hands to `exclude` when it tops its queue up: all three and not
+ * just the target, because a round built from anchors the player has just been
+ * shown reads as a repeat even when the event being guessed is new. Target
+ * last so the ids a trimmed list keeps are the ones that were actually
+ * questions.
+ */
+export function roundEventIds(round: ComparisonRound): string[] {
+  return [round.left.id, round.right.id, round.target.id];
 }
 
 /** Which anchor the target is nearer to. Plain subtraction — see lib/historical-date.ts. */

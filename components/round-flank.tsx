@@ -15,7 +15,7 @@ import {
   verdictSweep,
 } from "@/lib/game/verdict-style";
 import { formatYear, formatYearCount } from "@/lib/historical-date";
-import { format, type Dict } from "@/lib/i18n/dictionary";
+import { dateLabels, format, type Dict } from "@/lib/i18n/dictionary";
 
 /**
  * The two panels that flank the event card once a guess is locked in: the
@@ -108,23 +108,69 @@ export function VerdictFlank({
   locale: SupportedLocale;
   t: Dict;
 }) {
+  return (
+    <VerdictDeck
+      accuracy={accuracy}
+      guess={guess}
+      locale={locale}
+      t={t}
+      className={`round-flank-left right-full mr-4 ${FLANK}`}
+    />
+  );
+}
+
+/**
+ * The result card itself, with no opinion about where it stands.
+ *
+ * Split out of `VerdictFlank` when the film & TV game arrived: that layout
+ * puts the poster down the left and the rail down the right, so its result has
+ * no flank to hang off and lands in a row under the rail instead — but it is
+ * the *same card*, and a second implementation of it would be a second place
+ * the tier's colour, the notches and the two facts have to be kept in step.
+ *
+ * So the box is the caller's (`className` carries the position, the size and
+ * the entrance animation) and everything inside it is here. The two facts are
+ * fixed rather than a prop, because every game that shows this card is a
+ * date-guessing game and reports the same two things: how far off, and what
+ * was guessed. The comparison game measures something else entirely and has
+ * its own card (`VerdictDeckRow` below) for exactly that reason.
+ *
+ * `headShare` is the one dimension the caller can move, and it has to be: the
+ * head is a share of the card's height rather than a fixed number of pixels,
+ * and the two callers' cards are different shapes — a 15rem-wide flank as tall
+ * as a photograph, and a wider, shorter card in a reserved row.
+ */
+export function VerdictDeck({
+  accuracy,
+  guess,
+  locale,
+  className = "",
+  headShare = "46%",
+  t,
+}: {
+  accuracy: GuessAccuracy;
+  guess: number;
+  locale: SupportedLocale;
+  /** The box: position, size, and whatever entrance it arrives with. */
+  className?: string;
+  /** How much of the card's height the coloured head takes. */
+  headShare?: string;
+  t: Dict;
+}) {
   const { verdict } = accuracy;
 
   return (
     <aside
       role="status"
-      className={`round-flank-left right-full mr-4 ${FLANK}`}
+      className={className}
       style={{
         borderColor: verdictEdge(verdict),
         background: verdictDeckFoot(),
       }}
     >
-      {/* The head is a share of the card's height rather than a fixed number of
-          pixels: the card is pinned to the photograph's box, which is itself
-          whatever the column's height budget left over. */}
       <div
-        className="verdict-deck-head flex h-[46%] shrink-0 flex-col items-center justify-center gap-2.5 px-4"
-        style={{ backgroundImage: verdictDeckHead(verdict) }}
+        className="verdict-deck-head flex shrink-0 flex-col items-center justify-center gap-2.5 px-4"
+        style={{ height: headShare, backgroundImage: verdictDeckHead(verdict) }}
       >
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-black/55">
           {t.resultTitle}
@@ -134,13 +180,13 @@ export function VerdictFlank({
         </p>
       </div>
 
-      <div className="flex flex-1 flex-col justify-center gap-3.5 px-5 py-4">
+      <div className="flex min-h-0 flex-1 flex-col justify-center gap-3.5 px-5 py-4">
         <DeckRow label={t.distanceTitle} ruled>
           <span className="text-ink">
             {accuracy.distance === 0
               ? t.correct
               : format(t.yearsOff, {
-                  n: formatYearCount(accuracy.distance, locale),
+                  n: formatYearCount(accuracy.distance, locale, dateLabels(t)),
                 })}
           </span>
         </DeckRow>
@@ -149,7 +195,7 @@ export function VerdictFlank({
             thing below the head that takes the tier's colour. */}
         <DeckRow label={t.yourGuess}>
           <span style={{ color: VERDICT_COLORS[verdict] }}>
-            {formatYear(guess)}
+            {formatYear(guess, dateLabels(t))}
           </span>
         </DeckRow>
       </div>
@@ -311,8 +357,52 @@ export function NoteFlank({
   t: Dict;
 }) {
   return (
-    <aside
+    <NoteDeck
+      note={note}
+      eventId={eventId}
+      t={t}
       // The same near-black the result card's foot is mixed from, at 80% —
+      className={`round-flank-right left-full ml-4 ${FLANK}`}
+    />
+  );
+}
+
+/**
+ * The event panel itself, with no opinion about where it stands — the
+ * companion to `VerdictDeck`, split out in the same pass and for the same
+ * reason.
+ *
+ * The description is its own scroll container rather than letting the panel
+ * grow, in every layout: a panel pinned to a photograph's height and a panel
+ * in a reserved row both have a height decided for them, and a long
+ * description must not be the thing that decides it — nor the thing that
+ * pushes the challenge below the lower edge.
+ */
+export function NoteDeck({
+  note,
+  eventId,
+  className = "",
+  t,
+}: {
+  note: string | null;
+  eventId: string;
+  /**
+   * The box: position, size, and **the display mode**.
+   *
+   * Deliberately not defaulted to `flex flex-col` here, even though both
+   * callers want exactly that. The flank's own box is `hidden` until 1120px
+   * and turns into a flex column there, and a `flex` written into this
+   * component would be a second `display` declaration at the same specificity
+   * — so which of the two won would come down to Tailwind's output order, and
+   * the panel would be one stylesheet reshuffle away from appearing on a
+   * phone.
+   */
+  className?: string;
+  t: Dict;
+}) {
+  return (
+    <aside
+      // The near-black the result card's foot is mixed from, at 80% —
       // `bg-black/60` until 2026-10-07. Two changes in one: the fill is a
       // notch denser, and it is now the *pair's* colour rather than pure
       // black, so the two panels flanking the photograph read as one set of
@@ -323,7 +413,7 @@ export function NoteFlank({
       // has to read as part of it, and it stays below the result card's 90%
       // for the reason it always has: the verdict is the thing read at a
       // glance, so it is the less transparent of the two.
-      className={`round-flank-right left-full ml-4 items-center justify-center gap-3.5 border-white/14 bg-[#070707]/80 p-5 ${FLANK}`}
+      className={`items-center justify-center gap-3.5 border-white/14 bg-[#070707]/80 p-5 ${className}`}
     >
       <p className="on-photo text-[11px] font-semibold uppercase tracking-[0.12em] text-white/50">
         {t.eventNoteTitle}
@@ -549,10 +639,10 @@ export function RoundVerdict({
         {accuracy.distance === 0
           ? t.correct
           : format(t.yearsOff, {
-              n: formatYearCount(accuracy.distance, locale),
+              n: formatYearCount(accuracy.distance, locale, dateLabels(t)),
             })}
         <span className="px-1.5 text-white/40">·</span>
-        {t.yourGuess}: {formatYear(guess)}
+        {t.yourGuess}: {formatYear(guess, dateLabels(t))}
       </p>
 
       <div className="mt-1 flex justify-center">

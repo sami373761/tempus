@@ -90,7 +90,7 @@ export function AuthForm({
           to read a sentence to find out the other door exists. */}
       <div
         role="group"
-        className="mt-6 grid grid-cols-2 gap-1 rounded-full border border-hairline bg-card-raised/60 p-1"
+        className="auth-step mt-6 grid grid-cols-2 gap-1 rounded-full border border-hairline bg-card-raised/60 p-1"
       >
         {(
           [
@@ -117,7 +117,7 @@ export function AuthForm({
       {/* Google first, because an account that has one is one field instead of
           three. Its own form, so its failure (the provider not being enabled)
           does not read as a rejected password. */}
-      <form action={google} className="mt-6">
+      <form action={google} className="auth-step mt-6">
         <input type="hidden" name="next" value={next ?? ""} />
         <GoogleButton label={t.authGoogle} working={t.authWorking} />
       </form>
@@ -126,7 +126,7 @@ export function AuthForm({
         <ErrorNote t={t} code={googleState.code} />
       ) : null}
 
-      <div className="my-6 flex items-center gap-3">
+      <div className="auth-rule my-6 flex items-center gap-3">
         <span className="h-px flex-1 bg-hairline" />
         <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-dim">
           {t.authOr}
@@ -140,7 +140,7 @@ export function AuthForm({
       <form
         key={mode}
         action={mode === "signin" ? signIn : signUp}
-        className="flex flex-col gap-4"
+        className="auth-fields flex flex-col gap-4"
       >
         <input type="hidden" name="next" value={next ?? ""} />
 
@@ -154,6 +154,10 @@ export function AuthForm({
             required
             minLength={3}
             maxLength={20}
+            /* See the note on the account page's field: the server decides,
+               this answers sooner. */
+            pattern="[A-Za-z0-9_]+"
+            title={t.authUsernameHint}
           />
         ) : null}
 
@@ -190,7 +194,7 @@ export function AuthForm({
 
 function Panel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="w-full max-w-[27rem] rounded-card border border-hairline bg-card p-7 sm:p-9">
+    <div className="auth-card w-full max-w-[27rem] rounded-card border border-hairline bg-card p-7 sm:p-9">
       {children}
     </div>
   );
@@ -288,6 +292,7 @@ function ErrorNote({ t, code }: { t: Dict; code: AuthErrorCode }) {
     "password-weak": t.authErrPasswordWeak,
     "password-mismatch": t.authErrPasswordMismatch,
     "username-invalid": t.authErrUsernameInvalid,
+    "username-chars": t.authErrUsernameChars,
     "username-taken": t.authErrUsernameTaken,
     "rate-limited": t.authErrRateLimited,
     "provider-failed": t.authErrProviderFailed,

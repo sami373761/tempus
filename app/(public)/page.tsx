@@ -248,7 +248,7 @@ export default async function HomePage() {
             </h2>
             <p className="mt-2 text-ink-dim">{t.moreBlurb}</p>
           </div>
-          <AppleBento />
+          <AppleBento t={t} />
         </ScrollReveal>
       </div>
 

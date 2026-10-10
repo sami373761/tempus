@@ -8,6 +8,7 @@
  */
 
 import type { SupportedLocale } from "../db/types.ts";
+import type { DateLabels } from "../historical-date.ts";
 
 const en = {
   tagline: "Guess when history happened.",
@@ -20,6 +21,51 @@ const en = {
   timelineTitle: "Date Guessing",
   timelineBlurb: "Drag along the timeline to place a single event in history.",
   timelineHint: "Drag the marker, then lock in your guess.",
+
+  // The film & TV game. It reuses `screenTitle` from the home board for its
+  // name — a mode is named once on this site — so what is new here is only
+  // what the other games have no equivalent of.
+  //
+  // `screenYearAsked` is a rule, not a flourish: the stored year is a release
+  // for a film and a premiere for a series, and a player shown the poster of
+  // a show that ran eight years has to be told which of the two is being
+  // asked. See lib/game/screen.ts.
+  screenHint: "Drag the marker to the year, then lock in your guess.",
+  screenYearAsked:
+    "A film is dated by its release, a series by the year it first aired.",
+  formatFilm: "Film",
+  formatSeries: "Series",
+
+  // The "Born When?" game. Like the film one it reuses its name from the home
+  // board (`whenBornTitle`) — a mode is named once on this site.
+  //
+  // `whenBornYearAsked` is the counterpart of `screenYearAsked` and is a rule
+  // rather than a flourish, for the opposite reason: the film game has to say
+  // which of two dates it means, and this one has to say that the date is a
+  // birth year at all. The same photograph of Churchill could reasonably be
+  // asked about his birth, his premiership or his death.
+  whenBornHint: "Drag the marker to the year, then lock in your guess.",
+  whenBornYearAsked:
+    "Every round asks for the year the person was born — not when they were famous.",
+  // The fourteen fields, printed as a pill over the photograph. Singular and
+  // naming the one person on screen, never a group. Mapped from the category
+  // slug by `PERSON_FIELD_LABEL_KEYS` in lib/game/when-born.ts, and kept in
+  // step with the five category translations in
+  // supabase/migrations/20261010140000_when_born_topic_category.sql.
+  fieldLeader: "Leader",
+  fieldReligiousFigure: "Religious Figure",
+  fieldPhilosopher: "Philosopher",
+  fieldExplorer: "Explorer",
+  fieldScientist: "Scientist",
+  fieldInventor: "Inventor",
+  fieldWriter: "Writer",
+  fieldArtist: "Artist",
+  fieldMusician: "Musician",
+  fieldActor: "Actor",
+  fieldDirector: "Director",
+  fieldAthlete: "Athlete",
+  fieldEntrepreneur: "Entrepreneur",
+  fieldActivist: "Activist",
   submitGuess: "Lock in guess",
   // The direct date entry: the alternative to dragging the rail, reached from
   // the round's own controls. The era labels themselves are the existing
@@ -45,6 +91,33 @@ const en = {
   future: "Future",
   commonEra: "CE",
   commonEraTitle: "Common Era",
+
+  // How a *rendered* date is put together, for `formatYear` and
+  // `formatHistoricalDate` (lib/historical-date.ts). The era abbreviations
+  // above are the pieces; these four say where they go and what the periods
+  // between a year and an era are called.
+  //
+  // `yearWithEra` is an order, not a word: English, German, French and Spanish
+  // write "1200 BCE" and Turkish writes "MÖ 1200". Localising the label
+  // without localising the order would only move the mistake.
+  //
+  // The three period templates take `{n}`, and `{th}` is the English ordinal
+  // suffix — the languages that do not inflect that way simply leave it out.
+  yearWithEra: "{year} {era}",
+  decadeLabel: "{n}s",
+  centuryLabel: "{n}{th} century",
+  millenniumLabel: "{n}{th} millennium",
+
+  // The two words `formatYear` reaches for when a year is too big to print in
+  // full: "4.54 billion BCE" rather than "4540000000 BCE". They are part of a
+  // *date*, so they are chrome like the era beside them — and they are
+  // uppercased on the head-to-head reveal, which is the reason they cannot be
+  // left in English: `text-transform: uppercase` under `lang="tr"` turns
+  // "million" into "MİLLİON", a word in no language. English's own values are
+  // also what SQL's `historical_year_label()` prints, and the two must agree
+  // (CLAUDE.md, paired rules) — so `EN_DATE_LABELS` holds exactly these.
+  millionLabel: "million",
+  billionLabel: "billion",
 
   yourGuess: "Your guess",
   actualDate: "Actual date",
@@ -82,6 +155,25 @@ const en = {
 
   moreTitle: "More to come",
   moreBlurb: "Areas being built next.",
+
+  // The four bento cards under `moreTitle` (components/apple-bento.tsx).
+  // They were English in the markup until 2026-10-10, which is why they are
+  // here: the headline is the whole of each card.
+  //
+  // Two of them carry a highlighted phrase — the gradient sweep on the card —
+  // so the sentence is a template with one `{}` slot rather than three
+  // fragments to concatenate. Word order differs per language and a sentence
+  // assembled from pieces cannot survive that; a slot can sit anywhere in the
+  // string. There are deliberately no line breaks in any of them: the English
+  // copy broke its lines by hand and every other language breaks in a
+  // different place, so the cards wrap to their own width instead.
+  bentoBrowseTitle: "Browse the whole timeline, event by event.",
+  bentoLibraryTitle: "A growing library of historical imagery.",
+  bentoDailyTitle: "Built for {highlight}",
+  bentoDailyHighlight: "daily challenges.",
+  bentoEventsTitle: "Up to {events} on the way.",
+  bentoEventsCount: "500 more events",
+  bentoEventsNote: "(More every week.)",
 
   // The block between the board and the bento. It was a card of prose until
   // 2026-10-06 (`aboutBlurb` / `aboutHow`, both now gone); it is six pills
@@ -187,6 +279,17 @@ const en = {
   versusTitle: "Head to head",
   versusBlurb: "Race a friend through ten dates.",
   versusPlayFriend: "Play a friend",
+  // The way in is two cards: the one that works, and the one being built
+  // (components/versus-start.tsx). `versusChooseMode` is the step between
+  // them — a match is ten questions from *one* pool (`match.mode`), so the
+  // game is picked before the code is minted rather than after. The modes
+  // name themselves from the board's own titles; only the general library
+  // needs a line of its own here.
+  versusChooseMode: "Which game?",
+  versusModeHistoryBlurb: "Ten dates from the whole of history.",
+  versusOnlineTitle: "Online 1v1",
+  versusOnlineBlurb:
+    "Matched against a stranger, with a ranking to climb. Being built — for now it is a friend and a link.",
   versusInviteTitle: "Invite a friend",
   versusInviteBlurb: "Send the link or let them scan the code. The match starts when you are both ready.",
   versusCopyLink: "Copy link",
@@ -356,7 +459,7 @@ const en = {
   authTabSignIn: "Sign in",
   authTabSignUp: "Sign up",
   authUsername: "Username",
-  authUsernameHint: "3-20 characters: letters, numbers and underscores.",
+  authUsernameHint: "3-20 characters: a-z, 0-9 and underscores.",
   authEmail: "Email",
   authPassword: "Password",
   authPasswordHint: "At least 8 characters.",
@@ -375,7 +478,11 @@ const en = {
   authErrEmailTaken: "There is already an account with that email.",
   authErrPasswordWeak: "Use at least 8 characters.",
   authErrPasswordMismatch: "Those two passwords do not match.",
-  authErrUsernameInvalid: "3-20 characters, using letters, numbers and underscores.",
+  authErrUsernameInvalid: "3-20 characters, using a-z, 0-9 and underscores.",
+  // Said of a name that is the right *length*: nothing is stripped out of a
+  // username any more, so the sentence has to name what was refused.
+  authErrUsernameChars:
+    "Only a-z, 0-9 and underscores. Accented and non-Latin letters, spaces and punctuation cannot be used.",
   authErrUsernameTaken: "That username is taken.",
   authErrRateLimited: "Too many attempts. Wait a moment and try again.",
   authErrProviderFailed: "Google sign-in is unavailable right now.",
@@ -473,6 +580,17 @@ const en = {
   dailySubmitFailed: "That could not be sent. Try again.",
 
   noEvents: "No events available. Check the database connection.",
+
+  // The 404 page (app/not-found.tsx). It is a page of the site like any other —
+  // same wordmark, same language — rather than the framework's default, which
+  // is an unstyled English sentence on a white ground and reads as the site
+  // having fallen over rather than as a URL that is not here.
+  notFoundCode: "404",
+  notFoundTitle: "That page is not here.",
+  notFoundBlurb:
+    "The link may be old, or the address mistyped. Everything the site can play is on the home board.",
+  notFoundHome: "Back to the board",
+  notFoundPlay: "Play a round instead",
 } as const;
 
 /** Same keys as English, but every value is a free string. */
@@ -489,6 +607,29 @@ const tr: Dict = {
   timelineTitle: "Tarih tahmini",
   timelineBlurb: "Tek bir olayı tarihe yerleştirmek için zaman çizelgesini sürükle.",
   timelineHint: "İşaretçiyi sürükle, sonra tahminini onayla.",
+
+  screenHint: "İşaretçiyi yıla sürükle, sonra tahminini onayla.",
+  whenBornHint: "İşaretçiyi yıla sürükle, sonra tahminini onayla.",
+  whenBornYearAsked:
+    "Her turda kişinin doğum yılı soruluyor — ünlü olduğu yıl değil.",
+  fieldLeader: "Lider",
+  fieldReligiousFigure: "Dini Önder",
+  fieldPhilosopher: "Filozof",
+  fieldExplorer: "Kaşif",
+  fieldScientist: "Bilim İnsanı",
+  fieldInventor: "Mucit",
+  fieldWriter: "Yazar",
+  fieldArtist: "Sanatçı",
+  fieldMusician: "Müzisyen",
+  fieldActor: "Oyuncu",
+  fieldDirector: "Yönetmen",
+  fieldAthlete: "Sporcu",
+  fieldEntrepreneur: "Girişimci",
+  fieldActivist: "Aktivist",
+  screenYearAsked:
+    "Filmler vizyona girdiği, diziler ilk yayınlandığı yıla göre tarihlenir.",
+  formatFilm: "Film",
+  formatSeries: "Dizi",
   submitGuess: "Tahmini onayla",
   enterDate: "Tarih gir",
   useTimeline: "Zaman çizelgesini kullan",
@@ -505,6 +646,13 @@ const tr: Dict = {
   future: "Gelecek",
   commonEra: "MS",
   commonEraTitle: "Milattan Sonra",
+  yearWithEra: "{era} {year}",
+  decadeLabel: "{n}'ler",
+  centuryLabel: "{n}. yüzyıl",
+  millenniumLabel: "{n}. binyıl",
+
+  millionLabel: "milyon",
+  billionLabel: "milyar",
 
   yourGuess: "Tahminin",
   actualDate: "Gerçek tarih",
@@ -527,6 +675,13 @@ const tr: Dict = {
 
   moreTitle: "Yakında",
   moreBlurb: "Sırada geliştirilen bölümler.",
+  bentoBrowseTitle: "Tüm zaman çizelgesini olay olay gez.",
+  bentoLibraryTitle: "Büyüyen bir tarihsel görsel arşivi.",
+  bentoDailyTitle: "{highlight} için tasarlandı.",
+  bentoDailyHighlight: "Günlük görevler",
+  bentoEventsTitle: "{events} daha yolda.",
+  bentoEventsCount: "500 yeni olay",
+  bentoEventsNote: "(Her hafta yenileri.)",
 
   explorerHeading: "En iyi tarih oyunu",
   explorerLead: "Oynamanın her yolu ve her turun çekildiği kütüphane.",
@@ -609,6 +764,11 @@ const tr: Dict = {
   versusTitle: "Karşı karşıya",
   versusBlurb: "Bir arkadaşınla on tarih yarışı.",
   versusPlayFriend: "Arkadaşınla oyna",
+  versusChooseMode: "Hangi oyun?",
+  versusModeHistoryBlurb: "Tarihin tamamından on tarih.",
+  versusOnlineTitle: "Çevrim içi 1v1",
+  versusOnlineBlurb:
+    "Rastgele bir rakip ve tırmanılacak bir sıralama. Henüz geliştiriliyor — şimdilik bir arkadaş ve bir bağlantı.",
   versusInviteTitle: "Arkadaşını davet et",
   versusInviteBlurb: "Bağlantıyı gönder ya da kodu okutsun. İkiniz de hazır olunca maç başlar.",
   versusCopyLink: "Bağlantıyı kopyala",
@@ -751,7 +911,7 @@ const tr: Dict = {
   authTabSignIn: "Giriş yap",
   authTabSignUp: "Kayıt ol",
   authUsername: "Kullanıcı adı",
-  authUsernameHint: "3-20 karakter: harf, rakam ve alt çizgi.",
+  authUsernameHint: "3-20 karakter: a-z, 0-9 ve alt çizgi. Türkçe harf kullanılamaz.",
   authEmail: "E-posta",
   authPassword: "Şifre",
   authPasswordHint: "En az 8 karakter.",
@@ -770,7 +930,9 @@ const tr: Dict = {
   authErrEmailTaken: "Bu e-posta ile açılmış bir hesap zaten var.",
   authErrPasswordWeak: "En az 8 karakter kullan.",
   authErrPasswordMismatch: "İki şifre aynı değil.",
-  authErrUsernameInvalid: "3-20 karakter; harf, rakam ve alt çizgi kullan.",
+  authErrUsernameInvalid: "3-20 karakter; a-z, 0-9 ve alt çizgi kullan.",
+  authErrUsernameChars:
+    "Yalnızca a-z, 0-9 ve alt çizgi. Türkçe harfler (ç, ğ, ı, İ, ö, ş, ü), boşluk ve noktalama kullanılamaz.",
   authErrUsernameTaken: "Bu kullanıcı adı alınmış.",
   authErrRateLimited: "Çok fazla deneme. Biraz bekleyip tekrar dene.",
   authErrProviderFailed: "Google ile giriş şu anda kullanılamıyor.",
@@ -812,8 +974,16 @@ const tr: Dict = {
     "Bunlar örnek sıralamalar. Henüz puan tutulmuyor, yani gerçek bir serinin bu tabloda yeri yok.",
   leaderboardRank: "Sıra",
   leaderboardPlayer: "Oyuncu",
+  // "En iyi seri" and "Seri" until 2026-10-10, which in a row of two numbers
+  // under uppercased headings read as "EN İYİ SERİ" and "SERİ" — the same word
+  // twice, so neither column said which number it held. The second is now the
+  // count it actually is.
   leaderboardBest: "En iyi seri",
-  leaderboardSets: "Seri",
+  // One word, not "Oynanan seri": the column is 5rem and the longer phrase
+  // wrapped onto a second line, which left this header a line taller than the
+  // three beside it. "Oynanan" next to "En iyi seri" is read as the sets
+  // played, which is what the number under it is.
+  leaderboardSets: "Oynanan",
 
   badgesTitle: "Rozetler",
   badgesIntro:
@@ -850,6 +1020,13 @@ const tr: Dict = {
   dailySubmitFailed: "Gönderilemedi. Tekrar dene.",
 
   noEvents: "Olay bulunamadı. Veritabanı bağlantısını kontrol et.",
+
+  notFoundCode: "404",
+  notFoundTitle: "Bu sayfa burada değil.",
+  notFoundBlurb:
+    "Bağlantı eski olabilir ya da adres yanlış yazılmış olabilir. Oynanabilecek her şey ana sayfadaki tabloda.",
+  notFoundHome: "Tabloya dön",
+  notFoundPlay: "Bunun yerine bir tur oyna",
 };
 
 const de: Dict = {
@@ -863,6 +1040,30 @@ const de: Dict = {
   timelineTitle: "Datum erraten",
   timelineBlurb: "Zieh über die Zeitachse, um ein einzelnes Ereignis einzuordnen.",
   timelineHint: "Zieh die Markierung und bestätige deine Schätzung.",
+
+  screenHint: "Zieh die Markierung auf das Jahr und bestätige deine Schätzung.",
+  whenBornHint:
+    "Zieh die Markierung auf das Jahr und bestätige deine Schätzung.",
+  whenBornYearAsked:
+    "Gefragt ist immer das Geburtsjahr der Person — nicht das Jahr ihres Ruhms.",
+  fieldLeader: "Herrscher",
+  fieldReligiousFigure: "Religiöse Figur",
+  fieldPhilosopher: "Philosoph",
+  fieldExplorer: "Entdecker",
+  fieldScientist: "Wissenschaftler",
+  fieldInventor: "Erfinder",
+  fieldWriter: "Schriftsteller",
+  fieldArtist: "Künstler",
+  fieldMusician: "Musiker",
+  fieldActor: "Schauspieler",
+  fieldDirector: "Regisseur",
+  fieldAthlete: "Sportler",
+  fieldEntrepreneur: "Unternehmer",
+  fieldActivist: "Aktivist",
+  screenYearAsked:
+    "Ein Film zählt ab dem Kinostart, eine Serie ab der Erstausstrahlung.",
+  formatFilm: "Film",
+  formatSeries: "Serie",
   submitGuess: "Schätzung bestätigen",
   enterDate: "Datum eingeben",
   useTimeline: "Zeitachse verwenden",
@@ -879,6 +1080,13 @@ const de: Dict = {
   future: "Zukunft",
   commonEra: "n. Chr.",
   commonEraTitle: "Nach Christus",
+  yearWithEra: "{year} {era}",
+  decadeLabel: "{n}er-Jahre",
+  centuryLabel: "{n}. Jahrhundert",
+  millenniumLabel: "{n}. Jahrtausend",
+
+  millionLabel: "Millionen",
+  billionLabel: "Milliarden",
 
   yourGuess: "Deine Schätzung",
   actualDate: "Tatsächliches Datum",
@@ -901,6 +1109,13 @@ const de: Dict = {
 
   moreTitle: "Mehr folgt",
   moreBlurb: "Bereiche, die als Nächstes entstehen.",
+  bentoBrowseTitle: "Die ganze Zeitleiste durchstöbern, Ereignis für Ereignis.",
+  bentoLibraryTitle: "Eine wachsende Sammlung historischer Bilder.",
+  bentoDailyTitle: "Gemacht für {highlight}",
+  bentoDailyHighlight: "tägliche Herausforderungen.",
+  bentoEventsTitle: "Bis zu {events} sind unterwegs.",
+  bentoEventsCount: "500 weitere Ereignisse",
+  bentoEventsNote: "(Jede Woche mehr.)",
 
   explorerHeading: "Das beste Geschichtsspiel",
   explorerLead:
@@ -984,6 +1199,11 @@ const de: Dict = {
   versusTitle: "Duell",
   versusBlurb: "Zehn Daten im Wettlauf gegen eine Freundin oder einen Freund.",
   versusPlayFriend: "Gegen Freunde spielen",
+  versusChooseMode: "Welches Spiel?",
+  versusModeHistoryBlurb: "Zehn Daten aus der ganzen Geschichte.",
+  versusOnlineTitle: "Online 1v1",
+  versusOnlineBlurb:
+    "Gegen zufällige Gegner, mit einer Rangliste. Noch in Arbeit — bis dahin ein Freund und ein Link.",
   versusInviteTitle: "Lade jemanden ein",
   versusInviteBlurb: "Schick den Link oder lass den Code scannen. Das Duell startet, sobald ihr beide bereit seid.",
   versusCopyLink: "Link kopieren",
@@ -1128,7 +1348,7 @@ const de: Dict = {
   authTabSignIn: "Anmelden",
   authTabSignUp: "Registrieren",
   authUsername: "Benutzername",
-  authUsernameHint: "3-20 Zeichen: Buchstaben, Zahlen und Unterstriche.",
+  authUsernameHint: "3-20 Zeichen: a-z, 0-9 und Unterstriche. Keine Umlaute.",
   authEmail: "E-Mail",
   authPassword: "Passwort",
   authPasswordHint: "Mindestens 8 Zeichen.",
@@ -1147,7 +1367,9 @@ const de: Dict = {
   authErrEmailTaken: "Mit dieser E-Mail gibt es bereits ein Konto.",
   authErrPasswordWeak: "Nimm mindestens 8 Zeichen.",
   authErrPasswordMismatch: "Die beiden Passwörter stimmen nicht überein.",
-  authErrUsernameInvalid: "3-20 Zeichen aus Buchstaben, Zahlen und Unterstrichen.",
+  authErrUsernameInvalid: "3-20 Zeichen aus a-z, 0-9 und Unterstrichen.",
+  authErrUsernameChars:
+    "Nur a-z, 0-9 und Unterstriche. Umlaute, ß, Leerzeichen und Satzzeichen sind nicht möglich.",
   authErrUsernameTaken: "Dieser Benutzername ist vergeben.",
   authErrRateLimited: "Zu viele Versuche. Warte kurz und versuche es erneut.",
   authErrProviderFailed: "Die Anmeldung mit Google ist gerade nicht möglich.",
@@ -1229,6 +1451,13 @@ const de: Dict = {
   dailySubmitFailed: "Das konnte nicht gesendet werden. Versuch es erneut.",
 
   noEvents: "Keine Ereignisse verfügbar. Prüfe die Datenbankverbindung.",
+
+  notFoundCode: "404",
+  notFoundTitle: "Diese Seite gibt es hier nicht.",
+  notFoundBlurb:
+    "Der Link ist vielleicht alt oder die Adresse vertippt. Alles Spielbare steht auf der Startseite.",
+  notFoundHome: "Zurück zur Übersicht",
+  notFoundPlay: "Stattdessen eine Runde spielen",
 };
 
 const fr: Dict = {
@@ -1242,6 +1471,29 @@ const fr: Dict = {
   timelineTitle: "Devine la date",
   timelineBlurb: "Fais glisser le long de la frise pour situer un événement.",
   timelineHint: "Fais glisser le repère, puis valide ta réponse.",
+
+  screenHint: "Fais glisser le repère sur l’année, puis valide ta réponse.",
+  whenBornHint: "Fais glisser le repère sur l’année, puis valide ta réponse.",
+  whenBornYearAsked:
+    "On demande toujours l’année de naissance — pas celle de la célébrité.",
+  fieldLeader: "Dirigeant",
+  fieldReligiousFigure: "Figure religieuse",
+  fieldPhilosopher: "Philosophe",
+  fieldExplorer: "Explorateur",
+  fieldScientist: "Scientifique",
+  fieldInventor: "Inventeur",
+  fieldWriter: "Écrivain",
+  fieldArtist: "Artiste",
+  fieldMusician: "Musicien",
+  fieldActor: "Acteur",
+  fieldDirector: "Réalisateur",
+  fieldAthlete: "Athlète",
+  fieldEntrepreneur: "Entrepreneur",
+  fieldActivist: "Militant",
+  screenYearAsked:
+    "Un film est daté par sa sortie, une série par sa première diffusion.",
+  formatFilm: "Film",
+  formatSeries: "Série",
   submitGuess: "Valider la réponse",
   enterDate: "Saisir une date",
   useTimeline: "Utiliser la frise",
@@ -1258,6 +1510,13 @@ const fr: Dict = {
   future: "Futur",
   commonEra: "ap. J.-C.",
   commonEraTitle: "Après Jésus-Christ",
+  yearWithEra: "{year} {era}",
+  decadeLabel: "années {n}",
+  centuryLabel: "{n}e siècle",
+  millenniumLabel: "{n}e millénaire",
+
+  millionLabel: "millions",
+  billionLabel: "milliards",
 
   yourGuess: "Ta réponse",
   actualDate: "Date réelle",
@@ -1280,6 +1539,13 @@ const fr: Dict = {
 
   moreTitle: "À venir",
   moreBlurb: "Les espaces en cours de création.",
+  bentoBrowseTitle: "Parcourez toute la chronologie, événement par événement.",
+  bentoLibraryTitle: "Une bibliothèque d'images historiques qui s'agrandit.",
+  bentoDailyTitle: "Conçu pour {highlight}",
+  bentoDailyHighlight: "les défis quotidiens.",
+  bentoEventsTitle: "Jusqu'à {events} arrivent bientôt.",
+  bentoEventsCount: "500 nouveaux événements",
+  bentoEventsNote: "(De nouveaux chaque semaine.)",
 
   explorerHeading: "Le meilleur jeu d’histoire",
   explorerLead:
@@ -1363,6 +1629,11 @@ const fr: Dict = {
   versusTitle: "Duel",
   versusBlurb: "Dix dates, en course contre un ami.",
   versusPlayFriend: "Jouer contre un ami",
+  versusChooseMode: "Quel jeu ?",
+  versusModeHistoryBlurb: "Dix dates tirées de toute l'histoire.",
+  versusOnlineTitle: "1v1 en ligne",
+  versusOnlineBlurb:
+    "Contre un adversaire inconnu, avec un classement à gravir. En cours de création — pour l'instant, un ami et un lien.",
   versusInviteTitle: "Invite un ami",
   versusInviteBlurb: "Envoie le lien ou fais scanner le code. Le duel commence quand vous êtes prêts tous les deux.",
   versusCopyLink: "Copier le lien",
@@ -1506,7 +1777,7 @@ const fr: Dict = {
   authTabSignIn: "Se connecter",
   authTabSignUp: "S'inscrire",
   authUsername: "Nom d'utilisateur",
-  authUsernameHint: "3 à 20 caractères : lettres, chiffres et tirets bas.",
+  authUsernameHint: "3 à 20 caractères : a-z, 0-9 et tirets bas. Pas d’accents.",
   authEmail: "E-mail",
   authPassword: "Mot de passe",
   authPasswordHint: "Au moins 8 caractères.",
@@ -1525,7 +1796,9 @@ const fr: Dict = {
   authErrEmailTaken: "Un compte existe déjà avec cet e-mail.",
   authErrPasswordWeak: "Utilisez au moins 8 caractères.",
   authErrPasswordMismatch: "Les deux mots de passe ne correspondent pas.",
-  authErrUsernameInvalid: "3 à 20 caractères : lettres, chiffres et tirets bas.",
+  authErrUsernameInvalid: "3 à 20 caractères : a-z, 0-9 et tirets bas.",
+  authErrUsernameChars:
+    "Uniquement a-z, 0-9 et tirets bas. Les lettres accentuées, les espaces et la ponctuation sont refusés.",
   authErrUsernameTaken: "Ce nom est déjà pris.",
   authErrRateLimited: "Trop de tentatives. Attendez un moment et réessayez.",
   authErrProviderFailed: "La connexion Google est indisponible pour le moment.",
@@ -1606,6 +1879,13 @@ const fr: Dict = {
   dailySubmitFailed: "L'envoi a échoué. Réessaie.",
 
   noEvents: "Aucun événement disponible. Vérifie la connexion à la base de données.",
+
+  notFoundCode: "404",
+  notFoundTitle: "Cette page n’est pas ici.",
+  notFoundBlurb:
+    "Le lien est peut-être ancien, ou l’adresse mal saisie. Tout ce qui se joue est sur la page d’accueil.",
+  notFoundHome: "Retour au tableau",
+  notFoundPlay: "Jouer une manche à la place",
 };
 
 const es: Dict = {
@@ -1619,6 +1899,29 @@ const es: Dict = {
   timelineTitle: "Adivina la fecha",
   timelineBlurb: "Arrastra por la línea de tiempo para situar un solo evento.",
   timelineHint: "Arrastra el marcador y confirma tu respuesta.",
+
+  screenHint: "Arrastra el marcador hasta el año y confirma tu respuesta.",
+  whenBornHint: "Arrastra el marcador hasta el año y confirma tu respuesta.",
+  whenBornYearAsked:
+    "Siempre se pide el año de nacimiento, no el año en que fue famoso.",
+  fieldLeader: "Líder",
+  fieldReligiousFigure: "Figura religiosa",
+  fieldPhilosopher: "Filósofo",
+  fieldExplorer: "Explorador",
+  fieldScientist: "Científico",
+  fieldInventor: "Inventor",
+  fieldWriter: "Escritor",
+  fieldArtist: "Artista",
+  fieldMusician: "Músico",
+  fieldActor: "Actor",
+  fieldDirector: "Director",
+  fieldAthlete: "Atleta",
+  fieldEntrepreneur: "Empresario",
+  fieldActivist: "Activista",
+  screenYearAsked:
+    "Una película se fecha por su estreno; una serie, por su primera emisión.",
+  formatFilm: "Película",
+  formatSeries: "Serie",
   submitGuess: "Confirmar respuesta",
   enterDate: "Introducir una fecha",
   useTimeline: "Usar la línea de tiempo",
@@ -1635,6 +1938,13 @@ const es: Dict = {
   future: "Futuro",
   commonEra: "d. C.",
   commonEraTitle: "Después de Cristo",
+  yearWithEra: "{year} {era}",
+  decadeLabel: "años {n}",
+  centuryLabel: "siglo {n}",
+  millenniumLabel: "{n}.º milenio",
+
+  millionLabel: "millones",
+  billionLabel: "mil millones",
 
   yourGuess: "Tu respuesta",
   actualDate: "Fecha real",
@@ -1657,6 +1967,13 @@ const es: Dict = {
 
   moreTitle: "Próximamente",
   moreBlurb: "Las secciones que vienen después.",
+  bentoBrowseTitle: "Recorre toda la línea del tiempo, evento por evento.",
+  bentoLibraryTitle: "Una biblioteca creciente de imágenes históricas.",
+  bentoDailyTitle: "Hecho para {highlight}",
+  bentoDailyHighlight: "los retos diarios.",
+  bentoEventsTitle: "Hasta {events} están en camino.",
+  bentoEventsCount: "500 eventos más",
+  bentoEventsNote: "(Más cada semana.)",
 
   explorerHeading: "El mejor juego de historia",
   explorerLead:
@@ -1740,6 +2057,11 @@ const es: Dict = {
   versusTitle: "Duelo",
   versusBlurb: "Diez fechas a contrarreloj con un amigo.",
   versusPlayFriend: "Jugar con un amigo",
+  versusChooseMode: "¿Qué juego?",
+  versusModeHistoryBlurb: "Diez fechas de toda la historia.",
+  versusOnlineTitle: "1v1 en línea",
+  versusOnlineBlurb:
+    "Contra un rival desconocido, con una clasificación que escalar. En construcción — por ahora, un amigo y un enlace.",
   versusInviteTitle: "Invita a alguien",
   versusInviteBlurb: "Envía el enlace o deja que escaneen el código. El duelo empieza cuando los dos estéis listos.",
   versusCopyLink: "Copiar enlace",
@@ -1884,7 +2206,7 @@ const es: Dict = {
   authTabSignIn: "Iniciar sesión",
   authTabSignUp: "Registrarse",
   authUsername: "Nombre de usuario",
-  authUsernameHint: "De 3 a 20 caracteres: letras, números y guiones bajos.",
+  authUsernameHint: "De 3 a 20 caracteres: a-z, 0-9 y guiones bajos. Sin acentos ni ñ.",
   authEmail: "Correo",
   authPassword: "Contraseña",
   authPasswordHint: "Al menos 8 caracteres.",
@@ -1903,7 +2225,9 @@ const es: Dict = {
   authErrEmailTaken: "Ya existe una cuenta con ese correo.",
   authErrPasswordWeak: "Usa al menos 8 caracteres.",
   authErrPasswordMismatch: "Las dos contraseñas no coinciden.",
-  authErrUsernameInvalid: "De 3 a 20 caracteres: letras, números y guiones bajos.",
+  authErrUsernameInvalid: "De 3 a 20 caracteres: a-z, 0-9 y guiones bajos.",
+  authErrUsernameChars:
+    "Solo a-z, 0-9 y guiones bajos. No se admiten acentos, ñ, espacios ni signos de puntuación.",
   authErrUsernameTaken: "Ese nombre ya está ocupado.",
   authErrRateLimited: "Demasiados intentos. Espera un momento y vuelve a probar.",
   authErrProviderFailed: "El inicio de sesión con Google no está disponible ahora.",
@@ -1985,12 +2309,43 @@ const es: Dict = {
   dailySubmitFailed: "No se pudo enviar. Inténtalo de nuevo.",
 
   noEvents: "No hay eventos disponibles. Revisa la conexión a la base de datos.",
+
+  notFoundCode: "404",
+  notFoundTitle: "Esta página no está aquí.",
+  notFoundBlurb:
+    "Puede que el enlace sea antiguo o que la dirección tenga una errata. Todo lo jugable está en la página de inicio.",
+  notFoundHome: "Volver al tablero",
+  notFoundPlay: "Jugar una ronda",
 };
 
 export const DICTIONARIES: Record<SupportedLocale, Dict> = { en, tr, de, fr, es };
 
 export function dictionary(locale: SupportedLocale): Dict {
   return DICTIONARIES[locale];
+}
+
+/**
+ * The locale half of a rendered date, for lib/historical-date.ts.
+ *
+ * That module prints dates and is also run by `scripts/` under plain node, so
+ * it takes its labels rather than importing a dictionary. This is the one
+ * place the two meet: pass the result to `formatYear` or
+ * `formatHistoricalDate` and the era reads "MÖ" in Turkish instead of "BCE".
+ *
+ * `bce`/`commonEra` rather than new keys, because an era is named once on this
+ * site — the date entry's own chip reads the same two strings.
+ */
+export function dateLabels(t: Dict): DateLabels {
+  return {
+    bce: t.bce,
+    ce: t.commonEra,
+    pattern: t.yearWithEra,
+    decade: t.decadeLabel,
+    century: t.centuryLabel,
+    millennium: t.millenniumLabel,
+    million: t.millionLabel,
+    billion: t.billionLabel,
+  };
 }
 
 /** Fills `{n}`-style placeholders. Keeps the dictionaries plain data. */

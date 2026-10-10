@@ -28,6 +28,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "./database.types.ts";
 import {
   DEFAULT_LOCALE,
+  type CategoryKind,
   type LocalizedEvent,
   type LocalizedEventRow,
 } from "./types.ts";
@@ -183,6 +184,18 @@ export interface RandomEventsOptions extends PoolOptions {
   distinctYears?: boolean;
   /** Default `true`: only events that have a primary image. */
   requireImage?: boolean;
+  /**
+   * Events the caller has already been dealt and would rather not see again:
+   * the set of ten in progress, plus whatever is still sitting in its round
+   * queue.
+   *
+   * A **preference, not a filter**. The draw takes everything it can from the
+   * events not named here and only then tops up from the ones that are, so a
+   * pool smaller than the caller's set stays playable: it degrades to
+   * repeating an event rather than returning a short draw, which upstream is
+   * a round queue that stops growing (see `ROUND_QUEUE_TARGET`).
+   */
+  exclude?: readonly string[];
 }
 
 /**
@@ -211,6 +224,7 @@ export async function randomEvents(
     requireImage = true,
     topicSlug,
     allPools,
+    exclude,
   } = options;
 
   let idQuery = client.from("event").select("id, year").eq("status", "published");
@@ -232,7 +246,15 @@ export async function randomEvents(
     await poolRestriction(client, { topicSlug, allPools }),
   );
 
-  const picked = pickRandom(pool, count, distinctYears);
+  // Two tiers, best first: what the caller has not been dealt yet, then what
+  // it has. `pickRandom` exhausts one before touching the next, so an
+  // exclusion is honoured whenever the pool can afford it and ignored when it
+  // cannot — never at the cost of a short draw.
+  const picked = pickRandom(
+    tierByExclusion(pool, exclude),
+    count,
+    distinctYears,
+  );
   if (picked.length === 0) return [];
 
   const { data, error } = await client
@@ -283,6 +305,50 @@ export async function eventsByIds(
   return ids
     .map((id) => byId.get(id))
     .filter((event): event is LocalizedEvent => event !== undefined);
+}
+
+/**
+ * Which categories of one `kind` each of the given events carries.
+ *
+ * A second trip rather than an embed on `event_localized`, for the same reason
+ * `onlyWithPrimaryImage` and `poolRestriction` are: the view carries event
+ * text and one image and nothing about categories, and widening it would mean
+ * a migration plus a hand-edit of the generated types for a fact only one game
+ * reads.
+ *
+ * The caller passes the ids it has already drawn, so this is a lookup over a
+ * handful of rows rather than a scan: `dealScreenEvents` calls it with the two
+ * or three events of one refill. Events with no category of that kind are
+ * simply absent from the map, which is the honest answer for the 597 events
+ * that have no format.
+ *
+ * `kind` is required and deliberately not defaulted. `'topic'` decides which
+ * game may deal an event and is read through `poolRestriction` alone; asking
+ * for it here would be a second, unenforced way to reason about pools.
+ */
+export async function eventCategorySlugs(
+  client: DbClient,
+  ids: readonly string[],
+  options: { kind: CategoryKind },
+): Promise<Map<string, string[]>> {
+  const byEvent = new Map<string, string[]>();
+  if (ids.length === 0) return byEvent;
+
+  const { data, error } = await client
+    .from("event_category")
+    .select("event_id, category!inner(slug, kind)")
+    .in("event_id", ids)
+    .eq("category.kind", options.kind);
+
+  if (error) throw error;
+
+  for (const link of data ?? []) {
+    const slugs = byEvent.get(link.event_id);
+    if (slugs) slugs.push(link.category.slug);
+    else byEvent.set(link.event_id, [link.category.slug]);
+  }
+
+  return byEvent;
 }
 
 export async function getEventBySlug(
@@ -454,27 +520,58 @@ function pickPreferredLocale(
 }
 
 /**
+ * Splits a pool into the rows the caller has *not* been dealt and the rows it
+ * has, in that order. Neither half is shuffled here; `pickRandom` does that to
+ * each tier it touches.
+ */
+function tierByExclusion<T extends { id: string }>(
+  pool: readonly T[],
+  exclude: readonly string[] | undefined,
+): readonly (readonly T[])[] {
+  if (!exclude || exclude.length === 0) return [pool];
+
+  const dealt = new Set(exclude);
+  const unseen: T[] = [];
+  const repeats: T[] = [];
+
+  for (const row of pool) (dealt.has(row.id) ? repeats : unseen).push(row);
+
+  return [unseen, repeats];
+}
+
+/**
  * Fisher-Yates over a copy, stopping once `count` rows are taken. With
  * `distinctYears`, a candidate whose year is already taken is skipped rather
  * than retried, which is unbiased because the shuffle is already uniform.
+ *
+ * **Tiers are preferences in order**: each is drawn from uniformly and
+ * exhausted before the next is touched. That is what lets `exclude` ask for
+ * unseen events without ever shortening a draw — the caller gets them if the
+ * pool has enough, and the rest from the tier it was trying to avoid if it
+ * does not. `distinctYears` is tracked across tiers, since the whole draw is
+ * one caller's round either way.
  */
 function pickRandom<T extends { year: number }>(
-  rows: readonly T[],
+  tiers: readonly (readonly T[])[],
   count: number,
   distinctYears: boolean,
 ): T[] {
-  const pool = [...rows];
   const taken: T[] = [];
   const years = new Set<number>();
 
-  for (let i = pool.length - 1; i >= 0 && taken.length < count; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const row = pool[j]!;
-    pool[j] = pool[i]!;
+  for (const tier of tiers) {
+    if (taken.length >= count) break;
+    const pool = [...tier];
 
-    if (distinctYears && years.has(row.year)) continue;
-    years.add(row.year);
-    taken.push(row);
+    for (let i = pool.length - 1; i >= 0 && taken.length < count; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const row = pool[j]!;
+      pool[j] = pool[i]!;
+
+      if (distinctYears && years.has(row.year)) continue;
+      years.add(row.year);
+      taken.push(row);
+    }
   }
 
   return taken;

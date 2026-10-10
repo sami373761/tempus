@@ -24,11 +24,33 @@ import type { Dict } from "@/lib/i18n/dictionary";
 export function EventVisual({
   event,
   className = "",
+  fit = "cover",
   sizes,
   t,
 }: {
   event: { image: LocalizedEvent["image"]; isSensitive?: boolean };
   className?: string;
+  /**
+   * How the picture fills its box.
+   *
+   * `cover` for a photograph, which is every game that deals one: the box is
+   * whatever a height budget left over, the picture is a 3:2 or 4:3 frame of a
+   * place, and cropping its edges costs nothing.
+   *
+   * `contain` for a **poster**, where it costs everything. A film poster is
+   * composed to its own edges — the title is set at the foot, the credit block
+   * under that, the artwork framed between them — so a cover crop of a 2:3
+   * poster into any other shape cuts off the one part the game is asking the
+   * player to read — which is why every game that deals a photograph crops and
+   * the two that deal artwork do not. The film & TV game is the exception that
+   * proves it: its card is 2:3, the shape its pictures already are, so it
+   * covers instead (see `PosterPane`) and loses a few percent at two edges
+   * rather than the whole of a composition.
+   *
+   * A prop rather than something passed through `className`: both are
+   * `object-fit`, so which won would come down to Tailwind's output order.
+   */
+  fit?: "cover" | "contain";
   sizes?: string;
   /**
    * Needed only to label the gate. Optional so a surface that can never deal a
@@ -69,9 +91,11 @@ export function EventVisual({
       // beyond the element's edges, which would otherwise show as a pale
       // border inside the card's own rounded frame. The transition is only
       // worth having on a picture that can actually change state.
-      className={`h-full w-full object-cover ${
-        gated ? "transition-[filter,transform] duration-500" : ""
-      } ${hidden ? "scale-110 blur-2xl" : ""} ${className}`}
+      className={`h-full w-full ${
+        fit === "contain" ? "object-contain" : "object-cover"
+      } ${gated ? "transition-[filter,transform] duration-500" : ""} ${
+        hidden ? "scale-110 blur-2xl" : ""
+      } ${className}`}
     />
   );
 

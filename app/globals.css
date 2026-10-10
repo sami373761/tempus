@@ -501,6 +501,65 @@ html {
   animation-delay: calc(130ms + var(--card-i, 0) * 38ms);
 }
 
+/* The loading ring: a bright arc that circles a card for as long as the route
+   it links to is still being fetched (`CardTrace` in
+   components/game-board.tsx).
+
+   It is a conic gradient rotated by a custom property and masked down to a
+   ring, which is what makes it one element instead of four edges. The mask is
+   the standard gradient-border trick — paint the whole box, then subtract the
+   content box, leaving only the `padding` band — and `--board-card-sweep` has
+   to be registered with `@property` or it is not a type CSS can interpolate
+   and the gradient would simply sit still.
+
+   **The thickness is the card's border width**, and `inset: 0` puts the ring
+   immediately inside that border rather than on top of it: an absolutely
+   positioned child resolves its offsets against the padding box, and the
+   card's `overflow-hidden` would clip a negative inset away. So the hairline
+   stays visible underneath and the arc rides the inner edge of it — which is
+   the reason the arc is near-white: at the border's own grey it read as a
+   smudge rather than as motion.
+
+   Most of the circle is transparent. One head with a short tail says "working"
+   at a glance; a full ring spinning is a progress bar, and this cannot report
+   progress. Blue is not an option here — on this site it means the focus ring
+   and a perfect guess, and a card that lit up blue on press would claim both. */
+@property --board-card-sweep {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes board-card-trace {
+  to {
+    --board-card-sweep: 360deg;
+  }
+}
+
+.board-card-trace {
+  position: absolute;
+  inset: 0;
+  /* Follows whatever radius the card is wearing — the covers change theirs at
+     `md`, so a number here would be two numbers. */
+  border-radius: inherit;
+  padding: 1.5px;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--board-card-sweep),
+    transparent 0deg,
+    transparent 232deg,
+    rgba(235, 235, 235, 0.18) 292deg,
+    var(--color-ink) 352deg,
+    transparent 360deg
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  animation: board-card-trace 1150ms linear infinite;
+}
+
 /* The stand-in for a cover photograph that does not exist yet: the bento hero's
    mesh, so an unbuilt game reads as a card that is not ready rather than as one
    whose picture failed to load.
@@ -544,6 +603,14 @@ html {
   [data-swapped] .board-card {
     animation-duration: 1ms;
     animation-delay: 0ms;
+  }
+  /* Infinite motion stops outright here, so the trace loses its sweep and
+     becomes what it was always standing for: the card's edge brightening for
+     as long as the press is unanswered. Still only present while pending, so
+     it is still a loading state and not a new resting style. */
+  .board-card-trace {
+    animation: none;
+    background: var(--color-ink-dim);
   }
   /* The description that unrolls under a card's title on hover (`CardBlurb` in
      components/game-board.tsx). Same cut, and it has to reach the paragraph
@@ -724,6 +791,103 @@ details[open] .faq-answer {
    than a text-shadow stack, and it tracks the glyphs rather than their box. */
 .on-photo {
   filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.95));
+}
+
+/* The round button's loading trace: a short comet running once around the
+   button's own edge while the round it was pressed for is still being fetched
+   ("Next round" in the solo, comparison and screen games).
+
+   It is the home board's statement made on a pill — a press is answered by a
+   database read the page cannot shorten, and until this there was nothing on
+   screen that moved while it happened. The board's mark could not simply be
+   reused: `.board-card-trace` is a conic gradient swept from the element's
+   *centre*, and a conic sweep only reads as constant speed on a box that is
+   roughly as tall as it is wide. On a 160x46 pill the same arc crawls across
+   the long edges and snaps around the caps — it reads as one edge glowing,
+   not as something travelling.
+
+   `offset-path: border-box` is what fixes that: the bars ride the containing
+   block's own border box, radii included, and `offset-distance` is a
+   percentage of the real perimeter — so the speed is uniform, the corners are
+   exact, and nothing here has to know the button's size. `border-radius:
+   inherit` is what hands the pill shape over; a button that changed its radius
+   would need no change here.
+
+   Three bars rather than one, each shorter and fainter than the one ahead of
+   it, with a negative delay standing in for a distance behind: a single bar at
+   this size reads as a defect on the border rather than as motion. They are
+   `currentColor` because these buttons come in both polarities — glass over a
+   backdrop in the solo and screen games, solid `bg-ink` in the comparison
+   game, where a near-white mark would be invisible. The button's own text
+   colour is the one colour already guaranteed to read against it.
+
+   Everything that draws is inside `@supports`: where `offset-path` is not
+   understood the bars would be three stray dashes parked in a corner, and the
+   button falls back to what it carried before this — `aria-busy`, the progress
+   cursor and the dim. */
+.round-trace {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.round-trace > i {
+  display: none;
+}
+
+@supports (offset-path: border-box) {
+  .round-trace > i {
+    display: block;
+    position: absolute;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+    offset-path: border-box;
+    /* Centred on the path, so the bar straddles the edge rather than hanging
+       inside it — the same place the board's arc sits on a card. */
+    offset-anchor: center;
+    /* One lap, at the board's rate. Both marks say the same thing about the
+       same kind of wait, so they say it at the same speed. */
+    animation: round-trace-run 1150ms linear infinite;
+    width: 16px;
+  }
+
+  /* The tail. The delay is negative so the bar starts already behind the head
+     rather than a lap late. */
+  .round-trace > i:nth-child(2) {
+    width: 10px;
+    opacity: 0.45;
+    animation-delay: -60ms;
+  }
+
+  .round-trace > i:nth-child(3) {
+    width: 8px;
+    opacity: 0.2;
+    animation-delay: -110ms;
+  }
+}
+
+@keyframes round-trace-run {
+  to {
+    offset-distance: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The board's cut, exactly: infinite motion stops outright and the mark
+     becomes what it was standing for — the button's edge brightened for as
+     long as the press is unanswered. The comet goes rather than freezing,
+     because three bars stopped at one corner is a defect and not a state. */
+  @supports (offset-path: border-box) {
+    .round-trace > i {
+      display: none;
+    }
+  }
+  .round-trace {
+    box-shadow: inset 0 0 0 1.5px currentColor;
+    opacity: 0.35;
+  }
 }
 
 /* The answer marker on the rail: a pointer with the true date in the block
@@ -1035,6 +1199,39 @@ details[open] .faq-answer {
    sitting on top of it, so it comes in a touch slower and with more travel
    than the per-round transitions above — this is the beat the set ends on, not
    another handover between two questions. */
+/* The head-to-head mode picker's four subject cards, which appear together
+   when "play a friend" is pressed (components/versus-start.tsx).
+
+   The board's own arrival, shortened: a menu that opens on a press has to be
+   readable immediately, so the stagger is 55ms a card rather than the board's
+   38ms on a 130ms runway — four cards in a quarter of a second instead of a
+   row of six unfolding. `--mode-i` is set inline, like the board's `--card-i`.
+
+   Reduced motion cuts it rather than slowing it, like every other arrival on
+   this site: the cards still have to appear. */
+@keyframes versus-mode-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.versus-mode-in {
+  animation: versus-mode-in 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--mode-i, 0) * 55ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .versus-mode-in {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+  }
+}
+
 @keyframes set-summary-in {
   from {
     opacity: 0;
@@ -1581,5 +1778,82 @@ details[open] .faq-answer {
   }
   .pending-ring[data-busy="true"] {
     opacity: 0.4;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   The sign-in screen on a short window.
+
+   `/signin` is a column: a heading, the two-mode switch, the Google button, a
+   rule, and then one field per thing the server needs. In sign-up mode that is
+   three fields and two hints — 719px of card — and the page centres it under
+   the site bar with 56px of air above and below. On a 1680x844 laptop, where
+   the browser's own chrome leaves about 784px of viewport, the sum came to
+   905px and the one control the page exists for, the button that creates the
+   account, sat 65px *below* the fold with nothing on screen to say so.
+
+   Nothing is removed here and no breakpoint is involved: the rule is keyed on
+   the viewport's **height**, which is the thing that is actually scarce, and
+   it steps the vertical rhythm down — page padding, card padding, the gaps
+   between the three blocks, and the gap between fields. That is 132px, which
+   brings the whole page inside 784px while leaving the layout, the type and
+   the hit targets exactly as they are. A window shorter still (a 768px screen,
+   say) scrolls, and scrolls by much less than it did.
+
+   The classes are hooks rather than Tailwind arbitrary variants so the whole
+   rule is one block that can be read and re-measured in one place; the
+   un-prefixed values stay in the markup, where they belong. */
+@media (max-height: 880px) {
+  .auth-screen {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .auth-card {
+    padding: 1.5rem;
+  }
+
+  /* The switch and the Google button: `mt-6` in the markup. */
+  .auth-card .auth-step {
+    margin-top: 1rem;
+  }
+
+  /* The "or" rule between the provider and the fields: `my-6`. */
+  .auth-card .auth-rule {
+    margin-block: 1rem;
+  }
+
+  /* The field column: `gap-4`. */
+  .auth-card .auth-fields {
+    gap: 0.75rem;
+  }
+}
+
+/* A second step, for the 1280x800-class window whose viewport lands near 700px.
+   One step gets the sign-up button to the bottom edge there rather than past
+   it; this takes the rhythm down a further notch and finishes the job. There is
+   no third step: below about 660px the card is taller than the window whatever
+   the spacing, and the honest answer at that point is a short scroll rather
+   than type and hit targets shrunk until the form is unpleasant to fill in. */
+@media (max-height: 760px) {
+  .auth-screen {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  .auth-card {
+    padding: 1.25rem;
+  }
+
+  .auth-card .auth-step {
+    margin-top: 0.875rem;
+  }
+
+  .auth-card .auth-rule {
+    margin-block: 0.875rem;
+  }
+
+  .auth-card .auth-fields {
+    gap: 0.625rem;
   }
 }

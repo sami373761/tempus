@@ -37,6 +37,9 @@ const ALLOWED_PREFIXES = [
   "homepage/",
   "date-guessing-game/",
   "comparison-game/",
+  "film-dizi/",
+  "when-born/",
+  "basketball/",
   "videos/",
   "3d-models/",
 ];

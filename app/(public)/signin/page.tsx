@@ -46,7 +46,7 @@ export default async function SignInPage({
      than as branding. Dropping it also lifts the whole form a line, which is
      what lets the three-field sign-up finish inside one screen. */
   return (
-    <div className="flex min-h-[calc(100dvh-var(--site-bar-h))] flex-col items-center justify-center px-6 py-14">
+    <div className="auth-screen flex min-h-[calc(100dvh-var(--site-bar-h))] flex-col items-center justify-center px-6 py-14">
       <AuthForm t={t} next={next} initialError={error} />
     </div>
   );

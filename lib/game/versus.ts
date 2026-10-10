@@ -23,8 +23,21 @@
 
 import type { Database } from "../db/database.types.ts";
 import type { LocalizedEvent } from "../db/types.ts";
-import { isVerdict, type Verdict } from "./scoring.ts";
+import type { Dict } from "../i18n/dictionary.ts";
+import type { ScreenFormat } from "./screen.ts";
+import { FOOTBALL_BANDS, isVerdict, SCREEN_BANDS, type BandSet, type Verdict } from "./scoring.ts";
 import { QUESTIONS_PER_SET } from "./set.ts";
+import {
+  DEFAULT_PANE,
+  FOOTBALL_DEFAULT_PANE,
+  FOOTBALL_PANES,
+  SCREEN_DEFAULT_PANE,
+  SCREEN_PANES,
+  TIMELINE_PANES,
+  type PaneSet,
+  type TimelinePane,
+} from "./timeline.ts";
+import { FOOTBALL_TOPIC, SCREEN_TOPIC } from "./topics.ts";
 
 /** A match is the same ten questions a solo set is. Deliberately the same constant. */
 export const ROUNDS_PER_MATCH = QUESTIONS_PER_SET;
@@ -46,6 +59,142 @@ export const ROUND_SECONDS = 20;
  * is ready first is not kept waiting by one who wandered off.
  */
 export const REVEAL_SECONDS = 6;
+
+/* -------------------------------------------------------------------------
+   Modes
+   ------------------------------------------------------------------------- */
+
+/**
+ * Which date-guessing game a match is a match *of*.
+ *
+ * One match is ten questions drawn from one pool, and the pool is stamped on
+ * the match row when it is created (`match.mode`, see
+ * supabase/migrations/20261010120000_versus_modes.sql) rather than chosen per
+ * round. So a mode here is exactly the same kind of thing the solo subject
+ * games are: a pool, a rail, a tolerance ladder and a layout — nothing about
+ * timing, seats or who won.
+ *
+ * `history` is the general library, i.e. the game `/guess` plays. It is named
+ * rather than left null so that every match says what it is, including the
+ * ones created before modes existed — which is also why it is the column's
+ * default.
+ *
+ * Adding a fourth is a category row, a slug in lib/game/topics.ts, a dealer in
+ * app/actions/rounds.ts and an entry below. It is deliberately **not** a
+ * migration: see the one that added the column.
+ */
+export const VERSUS_MODES = ["history", "football", "screen"] as const;
+
+export type VersusMode = (typeof VERSUS_MODES)[number];
+
+export const DEFAULT_VERSUS_MODE: VersusMode = "history";
+
+export function isVersusMode(value: string): value is VersusMode {
+  return (VERSUS_MODES as readonly string[]).includes(value);
+}
+
+/**
+ * Read a mode off a database row or a client request.
+ *
+ * Tolerant on purpose, and in both directions. A client naming a mode this
+ * deploy does not have gets the general game rather than an error, and a row
+ * written by a newer deploy than the one reading it renders as a general match
+ * rather than as a blank screen. The strict check above is what the *creating*
+ * path uses, where a silent fallback would be a mode the player did not pick.
+ */
+export function asVersusMode(value: unknown): VersusMode {
+  return typeof value === "string" && isVersusMode(value)
+    ? value
+    : DEFAULT_VERSUS_MODE;
+}
+
+/**
+ * How a round is drawn on screen.
+ *
+ * `stage` is the one-column screen every other date-guessing game uses: a
+ * landscape photograph over a rail. `poster` is the film & television split —
+ * a 2:3 poster beside the rail, because a poster in that column is either
+ * cropped to a letterbox or leaves no room for a ruler. See `ScreenGame` for
+ * the full argument; the head-to-head mode reuses the same two shapes rather
+ * than inventing a third.
+ */
+export type VersusLayout = "stage" | "poster";
+
+export interface VersusModeSpec {
+  /**
+   * The pool, as its `kind = 'topic'` category slug — null for the general
+   * library, which is the pool every topic is excluded *from*. Server-side
+   * only: it is what `randomEvents` is given when the rounds are dealt.
+   */
+  topicSlug: string | null;
+  /** The rail, or rails, the round is played over. */
+  panes: PaneSet;
+  /** Where a round opens, and where the camera returns between rounds. */
+  homePane: TimelinePane;
+  /**
+   * The tolerance ladder. Undefined means the general one (`gradeGuess`'s own
+   * default), which grades against the event's age; a pool whose events are
+   * all roughly contemporary brings its own.
+   */
+  bands?: BandSet;
+  layout: VersusLayout;
+  /** Dict key naming the mode, so a mode is named once on this site. */
+  titleKey: keyof Dict;
+  /** Dict key for the one line under that name on the mode picker. */
+  blurbKey: keyof Dict;
+  /**
+   * Whether the typed-date control draws its era half.
+   *
+   * A pool that begins after year 1 can only ever refuse a BCE date, so the
+   * chip is not drawn at all — the same rule the solo games apply, and the
+   * reason `DateEntry` has an `eraHidden` prop.
+   */
+  eraInEntry: boolean;
+}
+
+/**
+ * Every mode, and the four or five facts that make it one.
+ *
+ * Deliberately the same values the solo pages pass by hand
+ * (app/(public)/football/page.tsx, components/screen-game.tsx): a head-to-head
+ * football match has to be the football game with someone else in it, and
+ * sharing the constants is what makes that true rather than nearly true.
+ */
+export const VERSUS_MODE_SPEC: Record<VersusMode, VersusModeSpec> = {
+  history: {
+    topicSlug: null,
+    panes: TIMELINE_PANES,
+    homePane: DEFAULT_PANE,
+    layout: "stage",
+    titleKey: "timelineTitle",
+    blurbKey: "versusModeHistoryBlurb",
+    eraInEntry: true,
+  },
+  football: {
+    topicSlug: FOOTBALL_TOPIC,
+    panes: FOOTBALL_PANES,
+    homePane: FOOTBALL_DEFAULT_PANE,
+    bands: FOOTBALL_BANDS,
+    layout: "stage",
+    titleKey: "footballTitle",
+    blurbKey: "cardFootballBlurb",
+    eraInEntry: false,
+  },
+  screen: {
+    topicSlug: SCREEN_TOPIC,
+    panes: SCREEN_PANES,
+    homePane: SCREEN_DEFAULT_PANE,
+    bands: SCREEN_BANDS,
+    layout: "poster",
+    titleKey: "screenTitle",
+    blurbKey: "cardScreenBlurb",
+    eraInEntry: false,
+  },
+};
+
+export function versusModeSpec(mode: VersusMode): VersusModeSpec {
+  return VERSUS_MODE_SPEC[mode];
+}
 
 /** The two seats. Seat 1 created the match; seat 2 accepted the invitation. */
 export type Seat = 1 | 2;
@@ -120,15 +269,29 @@ export function isInviteCode(value: string): boolean {
 export type MaskedEvent = Omit<
   LocalizedEvent,
   "year" | "month" | "day" | "sortKey" | "precision"
->;
+> & {
+  /**
+   * Film or series, in the `screen` mode only — null or absent everywhere
+   * else.
+   *
+   * Not a leak and not decoration: the stored year is a release for a film and
+   * a *premiere* for a series, so a player shown a poster with no label can be
+   * marked wrong for a reasonable answer. See lib/game/screen.ts, where the
+   * same field is part of the solo game's round for the same reason.
+   */
+  format?: ScreenFormat | null;
+};
 
-export function maskEvent(event: LocalizedEvent): MaskedEvent {
+export function maskEvent(
+  event: LocalizedEvent,
+  format: ScreenFormat | null = null,
+): MaskedEvent {
   // Destructured rather than spread-and-delete, so the discarded fields are
   // named here and a new date-bearing column on LocalizedEvent has to be
   // thought about rather than inherited into the payload.
   const { year: _y, month: _m, day: _d, sortKey: _s, precision: _p, ...rest } =
     event;
-  return rest;
+  return { ...rest, format };
 }
 
 /** One seat's answer to one finished round. */
@@ -168,6 +331,12 @@ export interface SeatState {
 export interface MatchView {
   matchId: string;
   code: string;
+  /**
+   * Which date-guessing pool this match is played over. Stamped when the
+   * match was created and never changed, rematches included — the invitation
+   * was to a game, not to a draw.
+   */
+  mode: VersusMode;
   /** Which seat is asking. The only field whose value depends on who called. */
   seat: Seat;
   phase: MatchPhase;
@@ -382,6 +551,11 @@ export function applyMatchRow(
 
   return {
     ...view,
+    // Stamped at creation and immutable, so this only ever re-reads what the
+    // view already had. Read off the row anyway rather than carried over:
+    // every other column here comes from the row, and a field that silently
+    // did not would be the one to go stale if the rule ever changed.
+    mode: asVersusMode(row.mode),
     phase: row.phase,
     generation: row.generation,
     totalRounds: row.total_rounds,

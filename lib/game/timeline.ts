@@ -50,7 +50,12 @@ export type TimelinePane =
   | "civilization"
   | "ce"
   | "future"
-  | "football";
+  | "football"
+  | "basketball"
+  | "screen"
+  | "born-antiquity"
+  | "born-premodern"
+  | "born-modern";
 
 /**
  * A pane set: the panes one game pans between, oldest first.
@@ -112,6 +117,124 @@ export const FOOTBALL_PANES: PaneSet = ["football"];
 /** The only pane football has, so it is also where every round opens. */
 export const FOOTBALL_DEFAULT_PANE: TimelinePane = "football";
 
+/**
+ * The basketball game's pane set: one rail, 1875 to the present.
+ *
+ * The additions the football note said the next subject pool would be — this
+ * array and a `PANE_SPEC` entry, and nothing in the general timeline changes.
+ *
+ * 151 years, between football's 176 and film's 126, and the pool inside it
+ * runs 1891–2024. It is shaped more like film's than football's: 54 of the 105
+ * events are from 2000 onwards, which is 17% of the rail, so the game is
+ * decided inside that cluster and `BASKETBALL_BANDS` (lib/game/scoring.ts) is
+ * tuned for it.
+ *
+ * One pane means there is nowhere to pan to: `paneEntrances` returns no doors,
+ * `entryFraction` is never reached and `panDuration` is always zero.
+ */
+export const BASKETBALL_PANES: PaneSet = ["basketball"];
+
+/** The only pane this game has, so it is also where every round opens. */
+export const BASKETBALL_DEFAULT_PANE: TimelinePane = "basketball";
+
+/**
+ * The film & television game's pane set: one rail, 1900 to the present.
+ *
+ * The second subject rail, and the one that shows the pattern football
+ * established was worth generalising — a subject pool is a slice of history,
+ * and the rail *is* the game, so each subject brings its own. This one is
+ * shorter still: 126 years against football's 176, and the dataset inside it
+ * runs 1931–2024.
+ *
+ * It is also the densest. More than half of the 200 entries premiered between
+ * 2000 and 2019, which on this rail is 16% of its width — so the right-hand
+ * third is where the game is actually decided, and `SCREEN_BANDS`
+ * (lib/game/scoring.ts) is tuned in plain years for exactly that reason.
+ *
+ * One pane means there is nowhere to pan to: `paneEntrances` returns no doors,
+ * `entryFraction` is never reached and `panDuration` is always zero.
+ */
+export const SCREEN_PANES: PaneSet = ["screen"];
+
+/** The only pane this game has, so it is also where every round opens. */
+export const SCREEN_DEFAULT_PANE: TimelinePane = "screen";
+
+/**
+ * The "Born When?" game's pane set: three rails, 1500 BCE to the present.
+ *
+ * The first subject pool that could not have a rail of its own, and the reason
+ * is in the data rather than in the design. Football spans 176 years and film
+ * 126, so each is one pane; these 150 people were born between 1341 BCE
+ * (Tutankhamun) and 1997 (Malala Yousafzai), which is 3,338 years — and they
+ * are not spread over it. Ninety-four of them were born between 1800 and 1997.
+ *
+ * On a single rail that cluster is 6% of the line, so two thirds of the pool
+ * would be decided inside a strip about forty pixels wide, with the other
+ * 94% of the rail holding fifty-six people. That is the trap `SCREEN_BANDS`
+ * was tuned around (lib/game/scoring.ts) made an order of magnitude worse, and
+ * no choice of bands fixes it: a tolerance narrow enough to mean something in
+ * the cluster is unreachable by drag, and one wide enough to drag to covers
+ * most of recorded history.
+ *
+ * So the span is cut into three rails instead, and the cuts are where the
+ * pool's own density changes:
+ *
+ *   [ 1500 BCE – 1 BCE ]  15 people, 1,500 years
+ *   [ AD 1 – AD 1500   ]  20 people, 1,500 years
+ *   [ AD 1500 – present ] 115 people,  526 years   <- rounds open here
+ *
+ * Two things that follow are worth writing down. The first seam is the
+ * astronomical hinge the general timeline already cuts at, which is what keeps
+ * both rulers on round numbers — a single pane straddling it cannot, because
+ * 1 BCE is year 0 and a uniform tick step then lands on 501 BCE and AD 501
+ * (see `bceDisplayToYear`). The second is that the three rails are within a
+ * factor of three of each other in width, which is what lets one band set
+ * grade all three honestly; see `WHEN_BORN_BANDS`.
+ *
+ * Unlike football's and film's, this set has more than one pane, so the door
+ * machinery is live: `paneEntrances` returns a door at each seam,
+ * `entryFraction` lands the marker on the far edge in the direction of travel,
+ * and `panDuration` is non-zero. It is the general game's camera over a
+ * subject pool.
+ */
+export const WHEN_BORN_PANES: PaneSet = [
+  "born-antiquity",
+  "born-premodern",
+  "born-modern",
+];
+
+/**
+ * Where a round opens, and where the camera returns between rounds.
+ *
+ * The modern rail rather than the oldest, because that is where 115 of the 150
+ * answers are: opening on antiquity would make the commonest round in the game
+ * start two pans away from its own answer.
+ */
+export const WHEN_BORN_DEFAULT_PANE: TimelinePane = "born-modern";
+
+/**
+ * The left edge of the antiquity rail, in **display BCE years** — the units
+ * that pane's scale reads in, not astronomical ones.
+ *
+ * 1500 rather than the 1400 football's rule would give (the round number just
+ * before the oldest entry, Tutankhamun at 1341 BCE): 1500 is the number that
+ * divides evenly by the 250-year tick, so the ruler reads 1500 / 1250 / 1000 /
+ * 750 / 500 / 250 BCE instead of 1400 / 1150 / 900. The slack at the left costs
+ * 4% of a rail that holds fifteen people.
+ */
+export const WHEN_BORN_MIN_BCE = 1500;
+
+/**
+ * The seam between the premodern and modern rails.
+ *
+ * Measured rather than picked, and the measurement is the pool's own step
+ * change: 1500 is where the dataset goes from twenty people across fifteen
+ * centuries to a hundred and fifteen across five. Putting the seam at the step
+ * is what gives the modern rail 0.8 years per pixel — tighter than football's
+ * 0.26 and film's 0.18 are wide, and the whole reason three rails beat one.
+ */
+export const WHEN_BORN_MODERN_YEAR = 1500;
+
 /** Astronomical 0 is 1 BCE: the hinge the civilisation and common-era panes share. */
 export const CE_MIN_YEAR = 0;
 export const CE_MAX_YEAR = PRESENT_YEAR;
@@ -124,6 +247,30 @@ export const FUTURE_MAX_YEAR = 3000;
  * before it — see the `football` entry in `PANE_SPEC`.
  */
 export const FOOTBALL_MIN_YEAR = 1850;
+
+/**
+ * The left edge of the basketball rail. The sport was invented in 1891 — which
+ * is the dataset's own oldest event — so football's rule gives the round number
+ * just before it, and 1875 is the one that also divides evenly by the 25-year
+ * tick: the ruler reads 1875 / 1900 / 1925 / 1950 / 1975 / 2000.
+ *
+ * Unlike every other rail, this one has a hard edge rather than a chosen one:
+ * there is no basketball before 1891, so the 16 years of slack at the left is
+ * the whole of the sport's prehistory and nothing can ever be filed into it.
+ */
+export const BASKETBALL_MIN_YEAR = 1875;
+
+/**
+ * The left edge of the film & television rail, asked for as part of the
+ * game's brief: "the dates only go back as far as 1900".
+ *
+ * The oldest entry in the dataset is *City Lights* in 1931, so football's rule
+ * — the round number just before the oldest event — would have put this at
+ * 1920. 1900 is the better rail anyway: it is the number a player already
+ * thinks of cinema as starting from, and the three decades of slack at the
+ * left read as "nothing this old is in here" rather than as a wasted third.
+ */
+export const SCREEN_MIN_YEAR = 1900;
 
 /**
  * How a pane turns a position into a year.
@@ -194,6 +341,73 @@ const PANE_SPEC: Record<TimelinePane, PaneSpec> = {
     minYear: FOOTBALL_MIN_YEAR,
     maxYear: CE_MAX_YEAR,
     tickStep: 25,
+  },
+  // The basketball game's whole timeline, on one rail. 1875 rather than 1891
+  // (the oldest event, the invention of the sport) for the reason football's
+  // left edge is 1850: the first events must not be pinned against the rail's
+  // own end, where a drag has nowhere to be wrong in one direction and the
+  // answer marker would sit under it. The same 25-year tick as football and
+  // film, which over 151 years gives six labels.
+  basketball: {
+    scale: "year",
+    minYear: BASKETBALL_MIN_YEAR,
+    maxYear: CE_MAX_YEAR,
+    tickStep: 25,
+  },
+  // The film & television game's whole timeline. The same 25-year tick as
+  // football, which over 126 years gives 1900 / 1925 / 1950 / 1975 / 2000 /
+  // 2026 — six labels, which is what a rail that may be only half the screen
+  // wide can print without the numerals touching. A 10-year tick reads better
+  // on a wide window and collides on a narrow one, and the rail has one set
+  // of ticks for both.
+  screen: {
+    scale: "year",
+    minYear: SCREEN_MIN_YEAR,
+    maxYear: CE_MAX_YEAR,
+    tickStep: 25,
+  },
+  // The "Born When?" game's three rails. See `WHEN_BORN_PANES` for why it has
+  // three and where the seams are.
+  //
+  // Antiquity is `bce-linear` rather than a `year` pane with a negative
+  // minimum, for the reason the civilisation pane is: a BCE rail has to read in
+  // display BCE years or its ticks come out as -1499 and -1249. One year per
+  // step, like that pane, so a date like 356 BCE (Alexander) has a position on
+  // the rail and not merely a nearby one.
+  "born-antiquity": {
+    scale: "bce-linear",
+    minDisplay: 0,
+    maxDisplay: WHEN_BORN_MIN_BCE,
+    stepYears: 1,
+    tickStep: 250,
+  },
+  // AD 1 to AD 1500, on the same 250-year tick as antiquity above it — the two
+  // rails are the same width, so the same step makes them the same ruler and
+  // the seam between them reads as one continuous line.
+  //
+  // `CE_MIN_YEAR` is astronomical 0, which is 1 BCE, so this rail's left tick
+  // prints "1 BCE" exactly as the general timeline's common-era pane does. That
+  // is the hinge both panes share rather than an off-by-one.
+  "born-premodern": {
+    scale: "year",
+    minYear: CE_MIN_YEAR,
+    maxYear: WHEN_BORN_MODERN_YEAR,
+    tickStep: 250,
+  },
+  // AD 1500 to the present: the rail the game is actually played on, and the
+  // only one of the three with a step of its own.
+  //
+  // 100 years rather than 250 because this rail is a third as wide, and rather
+  // than 50 because the ruler has to print on a column that may be half the
+  // window: a 100-year tick gives 1500 / 1600 / 1700 / 1800 / 1900 / 2026 —
+  // six labels, which is what fits. The 2000 tick is dropped by `paneTicks` as
+  // too close to the rail's end, which is the same trade the common-era pane
+  // makes at 2001.
+  "born-modern": {
+    scale: "year",
+    minYear: WHEN_BORN_MODERN_YEAR,
+    maxYear: CE_MAX_YEAR,
+    tickStep: 100,
   },
 };
 
