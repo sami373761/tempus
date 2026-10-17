@@ -9,6 +9,7 @@ import {
   GRADE_LABEL_KEYS,
   Pips,
   ShareButton,
+  SUMMARY_BUTTON,
 } from "@/components/set-summary";
 import { signInHref } from "@/lib/auth/paths";
 import {
@@ -93,7 +94,7 @@ export function DailySummary({
   const minutes = now === null ? null : minutesUntilReset(puzzleDate, now);
 
   return (
-    <div className="flex min-h-0 w-full flex-1 items-center justify-center py-2">
+    <div className="flex w-full flex-1 justify-center py-2">
       <div
         ref={panel}
         tabIndex={-1}
@@ -101,9 +102,12 @@ export function DailySummary({
         aria-label={`${t.dailyDone} — ${t.dailyTitle}`}
         /* A notch tighter than the set's panel below `sm`, and the same as it
            above. This screen carries two things a set's does not — the guest
-           notice and the countdown — so on a short phone it is the one summary
-           that would otherwise have to be scrolled to reach its own buttons. */
-        className="set-summary-in flex max-h-full w-full max-w-md flex-col gap-4 overflow-y-auto rounded-3xl border border-white/12 bg-black/45 px-6 py-6 text-center shadow-2xl shadow-black/70 backdrop-blur-2xl focus:outline-none sm:gap-5 sm:px-7 sm:py-7"
+           notice and the countdown — so it is the tallest of the summaries and
+           the one the tighter padding was written for.
+           It grows rather than scrolling inside itself, and `my-auto` centres
+           it; see the note on `SetSummary` for why that trade went the way it
+           did. */
+        className="set-summary-in my-auto flex w-full max-w-md flex-col gap-4 rounded-3xl border border-white/12 bg-black/45 px-6 py-6 text-center shadow-2xl shadow-black/70 backdrop-blur-2xl focus:outline-none sm:gap-5 sm:px-7 sm:py-7"
       >
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
@@ -201,6 +205,18 @@ export function DailySummary({
           }
           t={t}
         />
+
+        {/* The way home, under the one button this screen has. A daily has no
+            replay, so the stack is share-then-leave rather than the set
+            summary's three — but the leaving half is the same control in the
+            same place, because a phone has no other way off a page that does
+            not scroll. */}
+        <Link
+          href="/"
+          className={`${SUMMARY_BUTTON} inline-flex items-center justify-center border-white/25 bg-transparent text-white/80 hover:border-white/45 hover:text-ink`}
+        >
+          {t.backHome}
+        </Link>
 
         <Link
           href="/guess"

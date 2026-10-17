@@ -6,10 +6,14 @@
  * between. Older is always to the left:
  *
  *   [ cosmos 10bn–10m BCE ][ evolution 10m–10k BCE ][ civilisation 10k BCE–1 BCE ]
- *   [ common era 1 BCE–2026 ][ future 2026–3000 ]
+ *   [ common era 1 BCE–2026 ]
  *
- * A round opens on the common era. Reaching a pane's edge reveals the door to
- * whichever pane it borders.
+ * A round opens on the common era, which is also the newest pane: there was a
+ * `future` rail (2026–3000) to the right of it until it was removed, because
+ * nothing in the dataset happens after the present year and a rail with no
+ * answers on it is a door onto an empty room.
+ *
+ * Reaching a pane's edge reveals the door to whichever pane it borders.
  *
  * The two deep panes cover three orders of magnitude each, so they are scaled
  * LOGARITHMICALLY — a linear 10m–10bn rail would bury the whole of the
@@ -49,7 +53,6 @@ export type TimelinePane =
   | "evolution"
   | "civilization"
   | "ce"
-  | "future"
   | "football"
   | "basketball"
   | "screen"
@@ -73,12 +76,14 @@ export type PaneSet = readonly TimelinePane[];
 
 /**
  * Oldest to newest — the order the general timeline's panes sit in, left to
- * right. This is the *general* pane set: the five panes the date-guessing
- * game, the daily, survival and head-to-head all pan between.
+ * right. This is the *general* pane set: the four panes the date-guessing
+ * game, the daily, survival and head-to-head all pan between. It had a fifth,
+ * `future`, which was removed because no event in the dataset is dated after
+ * the present year — see the note at the top of this file.
  *
  * Annotated `PaneSet` rather than left as a `const` tuple so that
  * `TIMELINE_PANES.indexOf(pane)` accepts any pane. Without it the array's
- * element type is the narrow five and every `indexOf` of a value that *might*
+ * element type is the narrow four and every `indexOf` of a value that *might*
  * be football's is a type error, in code where -1 is already the answer.
  */
 export const TIMELINE_PANES: PaneSet = [
@@ -86,7 +91,6 @@ export const TIMELINE_PANES: PaneSet = [
   "evolution",
   "civilization",
   "ce",
-  "future",
 ];
 
 /** Where a round opens on the general timeline, and the way into the deep eras. */
@@ -238,8 +242,6 @@ export const WHEN_BORN_MODERN_YEAR = 1500;
 /** Astronomical 0 is 1 BCE: the hinge the civilisation and common-era panes share. */
 export const CE_MIN_YEAR = 0;
 export const CE_MAX_YEAR = PRESENT_YEAR;
-/** `event.year`'s own upper bound — the timeline stops where the data can. */
-export const FUTURE_MAX_YEAR = 3000;
 
 /**
  * The left edge of the football rail. Organised football starts in the 1860s
@@ -324,12 +326,6 @@ const PANE_SPEC: Record<TimelinePane, PaneSpec> = {
     scale: "year",
     minYear: CE_MIN_YEAR,
     maxYear: CE_MAX_YEAR,
-    tickStep: 250,
-  },
-  future: {
-    scale: "year",
-    minYear: PRESENT_YEAR,
-    maxYear: FUTURE_MAX_YEAR,
     tickStep: 250,
   },
   // The football game's whole timeline, on one rail. 1850 rather than 1872

@@ -42,6 +42,7 @@ const ALLOWED_PREFIXES = [
   "basketball/",
   "videos/",
   "3d-models/",
+  "user_profile_pictures/",
 ];
 
 const ALLOWED_EXTENSIONS = /\.(jpe?g|png|webp|avif|mp4|glb)$/;

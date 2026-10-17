@@ -2,10 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { dealComparisonRounds } from "@/app/actions/rounds";
+import { dealComparisonRounds, dealSurvivalRounds } from "@/app/actions/rounds";
+import { revealComparisonRound } from "@/app/actions/scoring";
 import { EventVisual } from "@/components/event-visual";
 import { VerdictDeckRow } from "@/components/round-flank";
+import { RoundHead } from "@/components/round-head";
 import { SetSummary } from "@/components/set-summary";
+import { useSoloSet } from "@/components/solo-points";
 import { SurvivalSummary } from "@/components/survival-summary";
 import type { LocalizedEvent, SupportedLocale } from "@/lib/db/types";
 import {
@@ -19,7 +22,6 @@ import {
   ROUND_PHOTO_FADE_MS,
   ROUND_QUEUE_DEPTH,
   ROUND_QUEUE_TARGET,
-  roundEventIds,
   sectionSide,
   type ComparisonRound,
   type ComparisonSide,
@@ -29,6 +31,10 @@ import {
   QUESTIONS_PER_SET,
   type SetResult,
 } from "@/lib/game/set";
+import {
+  completeComparisonRound,
+  type DealtComparisonRound,
+} from "@/lib/game/solo";
 import { survivalResult } from "@/lib/game/survival";
 import { VERDICT_COLORS } from "@/lib/game/verdict-style";
 import { formatHistoricalDate } from "@/lib/historical-date";
@@ -116,6 +122,8 @@ export type ComparisonMode = "set" | "survival";
 
 /** Travelled per arrow-key press. ~50 steps end to end. */
 const KEY_STEP = 0.02;
+// How long "move the card first" stays on the button when nobody moves it.
+const NUDGE_MS = 1800;
 
 /**
  * What a bubble's caption reads before the guess is locked in — all three of
@@ -143,7 +151,8 @@ export function ComparisonGame({
   locale,
   mode = "set",
 }: {
-  rounds: ComparisonRound[];
+  /** All three events masked; the dates arrive with the reply to a pick. */
+  rounds: DealtComparisonRound[];
   t: Dict;
   locale: SupportedLocale;
   mode?: ComparisonMode;
@@ -162,7 +171,15 @@ export function ComparisonGame({
   const [picked, setPicked] = useState<number | null>(null);
   // The round being played is the head of the queue; the one behind it is the
   // next round, held only so its pictures can be preloaded and swapped in.
-  const [queue, setQueue] = useState<ComparisonRound[]>(rounds);
+  const [queue, setQueue] = useState<DealtComparisonRound[]>(rounds);
+  // The round on screen with its three dates filled in, once the server has
+  // graded the pick. Every part of the reveal reads this, never the dealt
+  // round, which has no dates in it (lib/game/solo.ts).
+  const [full, setFull] = useState<ComparisonRound | null>(null);
+  const [roundTp, setRoundTp] = useState<number | null>(null);
+  const [sending, setSending] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const solo = useSoloSet();
   const [refillAttempt, setRefillAttempt] = useState(0);
   // The set so far: one entry per question already answered *and* advanced
   // past, so its length is both the score and the position in the set.
@@ -177,6 +194,24 @@ export function ComparisonGame({
   // to give them — see the note on `ROUND_QUEUE_TARGET`. The button must never
   // be dead, only late.
   const [pendingNext, setPendingNext] = useState(false);
+  // Set when "Lock in" is pressed with the card still dead centre. The centre
+  // is section 3, which `sectionSide` reads as "right" — so locking in there
+  // used to bank an answer the player never gave. Now the press asks them to
+  // move the card instead; the button keeps working (it only relabels), it is
+  // never disabled.
+  const [nudged, setNudged] = useState(false);
+
+  // The relabel is a prompt, not a state: it goes as soon as the card moves,
+  // or on its own after a moment so the button reads normally again.
+  useEffect(() => {
+    if (!nudged) return;
+    if (fraction !== 0.5) {
+      setNudged(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setNudged(false), NUDGE_MS);
+    return () => window.clearTimeout(timer);
+  }, [nudged, fraction]);
 
   const rail = useRef<HTMLDivElement>(null);
   // Distance between the pointer and the bubble's centre when the drag began.
@@ -185,7 +220,12 @@ export function ComparisonGame({
 
   const round = queue[0] ?? null;
   const upcoming = queue[1] ?? null;
-  const answered = picked !== null;
+  const queueHead = useRef<DealtComparisonRound | null>(round);
+  queueHead.current = round;
+  // The pick made (input stops) and the pick graded (the reveal starts) are a
+  // round trip apart; see components/timeline-game.tsx.
+  const lockedIn = picked !== null;
+  const answered = full !== null;
   const choice: ComparisonSide | null =
     picked === null ? null : sectionSide(picked);
 
@@ -212,9 +252,12 @@ export function ComparisonGame({
     // Everything this set has in play: the rounds left behind, plus the three
     // events of every round still queued. Most recent last, since that is the
     // end `EXCLUDED_EVENT_LIMIT` keeps.
-    const dealt = [...played, ...queue.flatMap(roundEventIds)];
+    const dealt = [...played, ...queue.flatMap(dealtEventIds)];
 
-    dealComparisonRounds(ROUND_QUEUE_DEPTH, dealt.slice(-EXCLUDED_EVENT_LIMIT))
+    // The deal is the mode's: a survival round is signed for survival, so it
+    // cannot be banked as a comparison set or the other way round.
+    const deal = survival ? dealSurvivalRounds : dealComparisonRounds;
+    deal(ROUND_QUEUE_DEPTH, dealt.slice(-EXCLUDED_EVENT_LIMIT))
       .then((fresh) => {
         if (cancelled) return;
         setQueue((current) => {
@@ -272,7 +315,7 @@ export function ComparisonGame({
   }
 
   function startDrag(event: React.PointerEvent<HTMLElement>, offset: number) {
-    if (answered) return;
+    if (lockedIn) return;
     event.currentTarget.setPointerCapture(event.pointerId);
     grab.current = { pointerId: event.pointerId, offset };
     setDragging(true);
@@ -284,7 +327,7 @@ export function ComparisonGame({
 
   // Tapping the rail itself jumps the bubble there — no offset to preserve.
   function onRailPointerDown(event: React.PointerEvent<HTMLDivElement>) {
-    if (answered) return;
+    if (lockedIn) return;
     startDrag(event, 0);
     setFraction(fractionFromClientX(event.clientX));
   }
@@ -304,7 +347,7 @@ export function ComparisonGame({
 
   // Keyboard equivalent, so the round is playable without a pointer.
   function onKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    if (answered) return;
+    if (lockedIn) return;
 
     const direction =
       event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0;
@@ -319,15 +362,42 @@ export function ComparisonGame({
     }
   }
 
-  function submit() {
-    if (answered || !round) return;
+  async function submit() {
+    if (lockedIn || sending || !round) return;
+    // Dead centre commits to neither side — the same reading `leaning` gives
+    // the live highlight below.
+    if (fraction === 0.5) {
+      setNudged(true);
+      return;
+    }
 
-    setPicked(comparisonSection(fraction));
-    // Settle onto the truth, so the reveal reads as "here is where it actually
-    // sat" rather than a verdict printed next to a stale marker. The section
-    // just banked is what keeps the guess on screen after the bubble has left
-    // it — see the band drawn on the rail below.
-    setFraction(comparisonFractionAtYear(round, round.target.year));
+    const section = comparisonSection(fraction);
+    setPicked(section);
+    setSending(true);
+    setFailed(false);
+
+    const asked = round;
+    try {
+      const result = await revealComparisonRound(asked.token, section, solo.setId);
+      if (!result.ok || !result.comparison) throw new Error("reveal");
+      if (queueHead.current?.token !== asked.token) return;
+
+      const known = completeComparisonRound(asked, result.comparison);
+      setFull(known);
+      setRoundTp(result.tp);
+      solo.record(result);
+      // Settle onto the truth, so the reveal reads as "here is where it
+      // actually sat" rather than a verdict printed next to a stale marker.
+      // The section just picked is what keeps the guess on screen after the
+      // bubble has left it — see the band drawn on the rail below.
+      setFraction(comparisonFractionAtYear(known, known.target.year));
+    } catch {
+      // Handed back, never kept: an ungraded answer is not an answer.
+      setPicked(null);
+      setFailed(true);
+    } finally {
+      setSending(false);
+    }
   }
 
   /**
@@ -341,7 +411,7 @@ export function ComparisonGame({
   function advance() {
     // `choice` is what makes this an answered round; without one there is no
     // result to bank and nothing to advance past.
-    if (!upcoming || round === null || picked === null) return;
+    if (!upcoming || round === null || full === null || picked === null) return;
 
     // Banked here rather than at `submit`, so `results.length` is always the
     // number of questions *left behind* — which makes it the index of the one
@@ -354,11 +424,11 @@ export function ComparisonGame({
     // player — because a run is the one screen with enough answers on it for
     // the distribution of those tiers to say something, and its results screen
     // is built out of them.
-    const correct = isComparisonCorrect(round, sectionSide(picked));
+    const correct = isComparisonCorrect(full, sectionSide(picked));
     setResults((current) => [
       ...current,
       survival
-        ? survivalResult(correct, comparisonVerdict(round, picked))
+        ? survivalResult(correct, comparisonVerdict(full, picked))
         : comparisonResult(correct),
     ]);
 
@@ -366,10 +436,13 @@ export function ComparisonGame({
     // set has not already shown. Trimmed to the same limit the draw applies,
     // which only ever bites on a run with no end to it.
     setPlayed((current) =>
-      [...current, ...roundEventIds(round)].slice(-EXCLUDED_EVENT_LIMIT),
+      [...current, ...dealtEventIds(round)].slice(-EXCLUDED_EVENT_LIMIT),
     );
 
     setPicked(null);
+    setFull(null);
+    setRoundTp(null);
+    setFailed(false);
     setFraction(0.5);
     setQueue((current) => current.slice(1));
   }
@@ -383,6 +456,7 @@ export function ComparisonGame({
   function playAgain() {
     setResults([]);
     setPlayed([]);
+    solo.reset();
   }
 
   /**
@@ -413,13 +487,13 @@ export function ComparisonGame({
   // half decides whether it is a win and the margin in sections decides which
   // rung. lib/game/rounds.ts owns that rule; this screen only draws it.
   const verdict =
-    answered && round !== null ? comparisonVerdict(round, picked) : null;
+    full !== null && picked !== null ? comparisonVerdict(full, picked) : null;
   // Whether this round was right, which in survival is also whether there is
   // another one. Read off the pick rather than off `verdict`, so the two can
   // never disagree — both are derived from the same section and the same half.
   const roundCorrect =
-    answered && round !== null
-      ? isComparisonCorrect(round, sectionSide(picked))
+    full !== null && picked !== null
+      ? isComparisonCorrect(full, sectionSide(picked))
       : null;
   // The second place the mode reaches: what ends the game.
   //
@@ -455,7 +529,12 @@ export function ComparisonGame({
     // is a count with no ceiling, so almost nothing one of them says is true
     // of the other (see lib/game/survival.ts).
     return survival ? (
-      <SurvivalSummary results={results} onPlayAgain={playAgain} t={t} />
+      <SurvivalSummary
+        results={results}
+        onPlayAgain={playAgain}
+        points={solo.points}
+        t={t}
+      />
     ) : (
       <SetSummary
         results={results}
@@ -463,6 +542,7 @@ export function ComparisonGame({
         otherHref="/guess"
         otherLabel={t.tryTimeline}
         onPlayAgain={playAgain}
+        points={solo.points}
         t={t}
       />
     );
@@ -470,10 +550,41 @@ export function ComparisonGame({
 
   return (
     <>
-      <RoundHead played={results.length} survival={survival} t={t} />
+      {/* The masthead, in the top bar's own row. It is `components/round-head.tsx`
+          since this pass rather than a private component here: the film,
+          "Born When?", football and basketball screens were all asked for the
+          same pill, and the one thing worse than four copies of it is four
+          copies that have drifted. What stays here is the only part that is
+          this game's — which of its two modes is being played, and whether the
+          counter is counting towards ten or up from nothing. */}
+      <RoundHead
+        title={survival ? t.survivalTitle : t.comparisonTitle}
+        // A set counts towards its end and a run counts up from nothing, so
+        // the same slot holds "3 of 10" in one mode and "12 correct" in the
+        // other. A run's counter is the score it is playing for, which is why
+        // it is the number banked rather than the question number: the answer
+        // on screen has not been earned yet.
+        counter={
+          survival
+            ? format(t.survivalCleared, { n: results.length })
+            : format(t.setProgress, {
+                n: Math.min(results.length + 1, QUESTIONS_PER_SET),
+                total: QUESTIONS_PER_SET,
+              })
+        }
+        blurb={survival ? t.survivalBlurb : t.comparisonBlurb}
+      />
 
       <div
-        className="mx-auto flex w-full flex-1 flex-col items-center justify-center gap-5"
+        // `--bubble-cap` is the width term of the sum below, and it is a class
+        // rather than part of the inline style because it changes at `md` and
+        // an inline style is the one place a media query cannot reach. Below
+        // that breakpoint the two anchors have the lane to themselves and may
+        // grow until they nearly meet; from `md` the round's action button
+        // floats in the gap between them (see the lower lane), so the gap has
+        // to stay wider than that button and the cards go back to the share
+        // of the lane they always had.
+        className="mx-auto flex w-full flex-1 flex-col items-center justify-center gap-5 [--bubble-cap:calc(50vw-30px)] md:[--bubble-cap:38vw]"
         style={
           {
             // One knob for the whole scale: every bubble is this wide, and the
@@ -487,12 +598,25 @@ export function ComparisonGame({
             // everything that is not a photograph (`--compare-chrome`, broken
             // down in app/globals.css), splits what is left between the two
             // lanes, and converts that back to a width — which is what keeps
-            // this screen inside one viewport while still filling it. 38vw caps
-            // it on a narrow phone, where two of these sit side by side below
-            // the rail, and 360px stops a tall desktop window turning the cards
-            // into billboards.
+            // this screen inside one viewport while still filling it. The
+            // first term of the `min()` caps it on a narrow phone, where two
+            // of these sit side by side below the rail, and 360px stops a
+            // tall desktop window turning the cards into billboards.
+            //
+            // **`--bubble-cap` is `50vw - 30px` on a phone**: the widest the
+            // two anchors can be without meeting, and a subtraction rather
+            // than a `vw` fraction because the thing it has to clear is
+            // measured in pixels. The
+            // lower lane spans the page's own content box — `100vw` less the
+            // 24px of page padding on each side — and holds the two anchors
+            // at its ends with `justify-between`, so they touch at exactly
+            // half of it: `(100vw - 48px) / 2`. Taking a further 12px off each
+            // leaves that 24px gap between them, which is the whole of the
+            // margin: at 390px the cards go from 148px to 165px and the
+            // photographs grow with them. It was `38vw`, which left 69px of
+            // dead air down the middle of a phone that had none to spare.
             "--bubble":
-              "clamp(132px, min(38vw, calc((100dvh - var(--site-bar-h) - var(--compare-chrome)) / 2 * 16 / 9)), 360px)",
+              "clamp(132px, min(var(--bubble-cap), calc((100dvh - var(--site-bar-h) - var(--compare-chrome)) / 2 * 16 / 9)), 360px)",
             // How tall a lane is: the picture, plus the caption block's reserved
             // two lines. See the lanes below for why it is fixed rather than
             // grown into.
@@ -520,7 +644,7 @@ export function ComparisonGame({
           <div className="relative flex h-[var(--lane)] items-end">
             <div
               role="slider"
-              tabIndex={answered ? -1 : 0}
+              tabIndex={lockedIn ? -1 : 0}
               aria-label={t.comparisonHint}
               aria-valuemin={0}
               aria-valuemax={100}
@@ -538,7 +662,9 @@ export function ComparisonGame({
               // near the right end margin + width overflows the row and flex
               // would otherwise squeeze the bubble narrower as it travels.
               className={`no-drag-select w-[var(--bubble)] shrink-0 rounded-[28px] focus-visible:outline-2 focus-visible:outline-offset-[6px] focus-visible:outline-ink ${
-                answered
+                nudged ? "compare-nudge " : ""
+              }${
+                lockedIn
                   ? "cursor-default"
                   : dragging
                     ? "cursor-grabbing"
@@ -549,8 +675,8 @@ export function ComparisonGame({
                 event={round.target}
                 tail="down"
                 caption={
-                  answered
-                    ? formatHistoricalDate(round.target, locale, labels)
+                  full
+                    ? formatHistoricalDate(full.target, locale, labels)
                     : HIDDEN_DATE
                 }
                 captionClassName={answered ? "text-good" : "text-white/75"}
@@ -566,7 +692,7 @@ export function ComparisonGame({
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
             className={`no-drag-select relative ${
-              answered ? "cursor-default" : "cursor-pointer"
+              lockedIn ? "cursor-default" : "cursor-pointer"
             }`}
             // Padding is the tail's own height, read from the constant the tail
             // is drawn from, so both tails land exactly on the rail however the
@@ -584,7 +710,7 @@ export function ComparisonGame({
                   It grows out of its own centre (`.answer-gap` with no origin
                   set, unlike the date-guessing rail's, where the bar has a
                   guess end to start from). */}
-              {answered && verdict !== null && (
+              {picked !== null && verdict !== null && (
                 <div
                   className="answer-gap pointer-events-none absolute -inset-y-px rounded-full"
                   style={{
@@ -638,6 +764,7 @@ export function ComparisonGame({
                 answered={answered}
                 pending={pendingNext}
                 final={finalRound}
+                nudged={nudged}
                 onSubmit={submit}
                 onNext={requestNextRound}
                 t={t}
@@ -651,8 +778,8 @@ export function ComparisonGame({
                 t={t}
                 tail="up"
                 caption={
-                  answered
-                    ? formatHistoricalDate(round.left, locale, labels)
+                  full
+                    ? formatHistoricalDate(full.left, locale, labels)
                     : HIDDEN_DATE
                 }
                 // Dim once it is a fact; the same white as the floating
@@ -669,8 +796,8 @@ export function ComparisonGame({
                 t={t}
                 tail="up"
                 caption={
-                  answered
-                    ? formatHistoricalDate(round.right, locale, labels)
+                  full
+                    ? formatHistoricalDate(full.right, locale, labels)
                     : HIDDEN_DATE
                 }
                 // Dim once it is a fact; the same white as the floating
@@ -703,25 +830,30 @@ export function ComparisonGame({
             is now empty until the verdict fills it, and it still has to be
             reserved for exactly the same reason. */}
           <div className="flex min-h-16 w-full max-w-[24rem] flex-col items-center justify-center">
-            {answered && verdict !== null && (
+            {full !== null && picked !== null && verdict !== null ? (
               <VerdictDeckRow
                 verdict={verdict}
+                tp={roundTp}
                 facts={[
                   {
                     label: t.distanceTitle,
                     value: sectionDistanceLabel(
-                      comparisonSectionDistance(round, picked),
+                      comparisonSectionDistance(full, picked),
                       t,
                     ),
                   },
                   {
                     label: t.actualDate,
-                    value: formatHistoricalDate(round.target, locale, labels),
+                    value: formatHistoricalDate(full.target, locale, labels),
                   },
                 ]}
                 t={t}
               />
-            )}
+            ) : failed ? (
+              <p role="status" className="text-center text-xs font-semibold text-white/85">
+                {t.revealFailed}
+              </p>
+            ) : null}
           </div>
 
           {/* The narrow-screen home for the action — see the md-only copy
@@ -731,6 +863,7 @@ export function ComparisonGame({
               answered={answered}
               pending={pendingNext}
               final={finalRound}
+              nudged={nudged}
               onSubmit={submit}
               onNext={requestNextRound}
               t={t}
@@ -742,147 +875,9 @@ export function ComparisonGame({
   );
 }
 
-/**
- * The round's masthead: the game's name and where you are in the set, in one
- * pill, in the top bar's own row.
- *
- * It is rendered by the game rather than by the page because it has to go when
- * the set does — the summary replaces the round outright, and a masthead asking
- * "which of the two dates…" over a finished set is the page asking a question
- * that is no longer on screen. Only the game knows the set is over.
- *
- * **It is `fixed`, in the bar's row, and that is what makes it free.** It was
- * an 84px block of flow at the top of the column until 2026-10-08 — a title,
- * its blurb and a margin — and this screen's height is a hand-maintained sum
- * (`--compare-chrome` in app/globals.css), so those 84px were 84px the two
- * photographs did not get. In the bar's row it costs the budget nothing, and
- * the cards went to their 360px cap as a result. Its `top` is solved the way
- * the menu button's is, from the bar's height and its own, so the three things
- * on that row share a centre line rather than three independent numbers —
- * measured at 1680x844: wordmark, pill and menu button all centred at 37.0px.
- *
- * **It is in that row on a phone too, as of this pass.** It stood at the top
- * of the column below `sm` until then, on the grounds that three things do not
- * fit across a phone's bar — which was true at the sizes that row used to
- * carry. It was asked for between the wordmark and the menu button, so the two
- * bookends came down a notch instead (`--menu-btn` 34px, the wordmark
- * `text-base`, the bar itself 58px; all three in app/globals.css), and the
- * ~215px that leaves at 375px is enough for the pill at `text-[13px]`. The
- * flow row it gave up is the "shift everything up" half of the same request:
- * 46px of pill and its 16px margin left the column, and the lanes below centre
- * into what that freed.
- *
- * It is therefore `fixed` at every width, and the two bookends' own sizes are
- * what the horizontal padding is written against — `pl` clears the wordmark,
- * `pr` the button, and the pill fills what is between them rather than being
- * centred on a viewport whose middle is not the middle of that gap.
- *
- * **One type size for both halves**, and it is the `Tempus` wordmark's: the
- * pill reads as the one masthead the row already has, not as a heading with a
- * counter stuck to it. Both come down together below `sm`, so that still
- * holds.
- *
- * **The instruction unrolls on hover** rather than standing under the title.
- * It is a live instruction and it is read once, so it is available rather than
- * permanent. The mechanism is the home board's card descriptions' —
- * `grid-template-rows: 0fr -> 1fr` with the child owning the overflow, which
- * is the only way to animate a height out of nothing without measuring one in
- * JavaScript — and it comes with the same two properties: it never opens on a
- * touch screen, because Tailwind compiles `group-hover:` inside
- * `@media (hover: hover)`, and the text is always in the document, so a screen
- * reader gets the instruction whether or not anything was hovered.
- *
- * Two things hold the shape up.
- *
- * **The radius is half the closed height, written as exactly that.** A pill
- * that opens is the explorer's problem, not the button's: `rounded-full`
- * resolves against the box, so the corners would tighten and slacken through
- * the whole 420ms and the thing would read as a rubber sheet rather than as a
- * panel. One constant gives the stadium closed and holds it open.
- *
- * **Only the pill is a pointer target.** The wrapper and the unrolled row are
- * `pointer-events-none`, so the open panel — which hangs over the top of the
- * floating bubble — cannot swallow the drag that starts the round. Hover still
- * reaches the card, because an element is `:hover` whenever the hit target is
- * one of its descendants.
- */
-function RoundHead({
-  played,
-  survival,
-  t,
-}: {
-  /**
-   * Questions banked. In a set that is the position in it; in a run it is the
-   * score, since every banked answer in a live run is a correct one.
-   */
-  played: number;
-  survival: boolean;
-  t: Dict;
-}) {
-  return (
-    <div
-      // In the bar's own row at every width. Below `sm` it is held off the two
-      // things already in that row rather than centred in it: 24px of page
-      // padding plus the `text-base` wordmark's ~62px plus 8px of air on the
-      // left, and 24px plus the 34px button plus 8px on the right — which
-      // leaves the pill 215px at 375px and lands it in the gap instead of
-      // across the wordmark. From `sm` the row is wide enough to centre in.
-      className="pointer-events-none fixed inset-x-0 z-40 flex justify-center pl-[5.875rem] pr-[4.125rem] sm:px-6"
-      style={
-        {
-          // `--compare-head` is the closed pill's height and lives in
-          // app/globals.css, because it changes with the breakpoint and an
-          // inline style is the one place a media query cannot reach. The
-          // row's centre line and the corner radius are both read off it, so
-          // neither can drift from the box.
-          top: "calc((var(--site-bar-h) - var(--compare-head)) / 2)",
-        } as React.CSSProperties
-      }
-    >
-      <div className="group w-full max-w-[21rem] overflow-hidden rounded-[calc(var(--compare-head)/2)] border border-white/15 bg-black/45 shadow-xl shadow-black/60 backdrop-blur-xl sm:w-[21rem]">
-        <div className="pointer-events-auto flex items-center justify-center px-3 py-1.5 sm:px-5 sm:py-2">
-          {/* `min-w-0` is what lets the title give way rather than push the
-              counter out of the pill: Turkish's "10 sorudan 1." is the longest
-              pair and the gap on a 320px screen is narrower than it. */}
-          <span className="min-w-0 truncate font-display text-[13px]/[1.25rem] font-semibold tracking-[-0.01em] text-ink sm:text-lg">
-            {survival ? t.survivalTitle : t.comparisonTitle}
-          </span>
-          {/* The dot carries the row's type size too, or its own 16px line box
-              sets the pill's height and `--compare-head` no longer describes
-              the box the centre line is solved from. */}
-          <span className="px-1.5 text-[13px]/[1.25rem] text-white/30 sm:px-2 sm:text-lg">
-            ·
-          </span>
-          {/* A set counts towards its end and a run counts up from nothing, so
-              the same slot holds "3 of 10" in one mode and "12 correct" in the
-              other. A run's counter is the score it is playing for, which is
-              why it is the number banked rather than the question number: the
-              answer on screen has not been earned yet. */}
-          <span className="shrink-0 font-display text-[13px]/[1.25rem] font-semibold tracking-[-0.01em] tabular-nums text-white/70 sm:text-lg">
-            {survival
-              ? format(t.survivalCleared, { n: played })
-              : format(t.setProgress, {
-                  n: Math.min(played + 1, QUESTIONS_PER_SET),
-                  total: QUESTIONS_PER_SET,
-                })}
-          </span>
-        </div>
-
-        <div className="compare-head-blurb pointer-events-none grid grid-rows-[0fr] transition-[grid-template-rows] duration-[420ms] ease-out group-hover:grid-rows-[1fr]">
-          <div className="overflow-hidden">
-            <p className="px-5 pb-3 text-center text-xs leading-snug text-white/70 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100">
-              {survival ? t.survivalBlurb : t.comparisonBlurb}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /** What a bubble shows: the event, and the round's own label for it. */
 interface BubbleContent {
-  event: LocalizedEvent;
+  event: BubbleEvent;
   caption: string;
   captionClassName: string;
 }
@@ -929,7 +924,7 @@ function EventBubble({
   raised = false,
   t,
 }: {
-  event: LocalizedEvent;
+  event: BubbleEvent;
   tail: "up" | "down";
   caption: string;
   captionClassName?: string;
@@ -1095,6 +1090,7 @@ function ActionButton({
   answered,
   pending,
   final,
+  nudged,
   onSubmit,
   onNext,
   t,
@@ -1109,6 +1105,8 @@ function ActionButton({
    * button is about to do, so both modes can set it from their own rule.
    */
   final: boolean;
+  /** "Lock in" was pressed with the card unmoved; the label asks for a move. */
+  nudged: boolean;
   onSubmit: () => void;
   onNext: () => void;
   t: Dict;
@@ -1154,8 +1152,10 @@ function ActionButton({
       )}
     </button>
   ) : (
-    <button type="button" onClick={onSubmit} className={base}>
-      {t.submitGuess}
+    // `aria-live` so the relabel is announced: for a keyboard or screen-reader
+    // player the label is the whole prompt.
+    <button type="button" onClick={onSubmit} className={base} aria-live="polite">
+      {nudged ? t.comparisonMoveFirst : t.submitGuess}
     </button>
   );
 }
@@ -1175,4 +1175,19 @@ function sectionDistanceLabel(distance: number, t: Dict): string {
   if (distance === 0) return t.sectionExact;
   if (distance === 1) return t.sectionOff;
   return format(t.sectionsOff, { n: distance });
+}
+
+/**
+ * The parts of an event a bubble draws. Narrower than `LocalizedEvent` so a
+ * dealt event — which has no date — can be drawn before the reveal.
+ */
+type BubbleEvent = Pick<LocalizedEvent, "id" | "name" | "image" | "isSensitive">;
+
+/**
+ * A dealt round's three events, target last — what the draw is told to avoid.
+ * The dealt twin of `roundEventIds` in lib/game/rounds.ts, which needs a
+ * round with its dates in it.
+ */
+function dealtEventIds(round: DealtComparisonRound): string[] {
+  return [round.left.id, round.right.id, round.target.id];
 }

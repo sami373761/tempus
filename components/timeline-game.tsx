@@ -3,13 +3,22 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { dealTimelineEvents } from "@/app/actions/rounds";
-import { DateEntry, InputModeToggle } from "@/components/date-entry";
+import { revealDateRound } from "@/app/actions/scoring";
 import {
+  DateEntry,
+  InputModeToggle,
+  useKeyboardEntry,
+} from "@/components/date-entry";
+import {
+  DateChallenge,
   NoteFlank,
   RoundVerdict,
+  VerdictDeckRow,
   VerdictFlank,
 } from "@/components/round-flank";
+import { RoundHead } from "@/components/round-head";
 import { SetProgress, SetSummary } from "@/components/set-summary";
+import { useSoloSet } from "@/components/solo-points";
 import { TimelineBackdrop } from "@/components/timeline-backdrop";
 import {
   CARD_BOX,
@@ -24,7 +33,7 @@ import {
   ROUND_BUTTON,
   TimelinePaneView,
 } from "@/components/timeline-stage";
-import type { LocalizedEvent, SupportedLocale } from "@/lib/db/types";
+import type { SupportedLocale } from "@/lib/db/types";
 import {
   directYear,
   EMPTY_DATE_ENTRY,
@@ -41,6 +50,7 @@ import {
   timelineResult,
   type SetResult,
 } from "@/lib/game/set";
+import type { DealtEvent, RevealedDate } from "@/lib/game/solo";
 import {
   DEFAULT_PANE,
   entryFraction,
@@ -53,7 +63,8 @@ import {
   yearAtFraction,
 } from "@/lib/game/timeline";
 import { VERDICT_COLORS } from "@/lib/game/verdict-style";
-import type { Dict } from "@/lib/i18n/dictionary";
+import { formatYear, formatYearCount } from "@/lib/historical-date";
+import { dateLabels, format, type Dict } from "@/lib/i18n/dictionary";
 
 /** How long to wait before trying again when topping the queue up fails. */
 const REFILL_RETRY_MS = 1500;
@@ -61,8 +72,8 @@ const REFILL_RETRY_MS = 1500;
 /**
  * Date-guessing game.
  *
- * One stage, five panes side by side in timeline order (cosmos, evolution, BC,
- * common era, future). The stage is translated by whole pane widths, so
+ * One stage, four panes side by side in timeline order (cosmos, evolution,
+ * BC, common era). The stage is translated by whole pane widths, so
  * "opening the BC timeline" is the camera panning left along one continuous
  * line rather than a route change — which is why the entrances can appear at
  * the rail's own ends.
@@ -123,13 +134,16 @@ export function TimelineGame({
   title,
   otherHref = "/compare",
   otherLabel,
+  railHeading = true,
+  headBlurb = null,
 }: {
-  events: LocalizedEvent[];
+  /** Masked and signed: the year arrives with the reply to a guess. */
+  events: DealtEvent[];
   t: Dict;
   locale: SupportedLocale;
   /**
    * The rail, or rails, this game is played over. Defaults to the general
-   * timeline's five panes; the football game passes its own single pane.
+   * timeline's four panes; the football game passes its own single pane.
    *
    * Everything that reads the *order* of the panes — which rail an answer is
    * marked on, which doors a rail offers, how long the camera takes — is given
@@ -157,12 +171,31 @@ export function TimelineGame({
   deal?: (
     count: number,
     exclude: readonly string[],
-  ) => Promise<LocalizedEvent[]>;
+  ) => Promise<DealtEvent[]>;
   /** The set summary's heading. Defaults to the date-guessing game's. */
   title?: string;
   /** Where the summary's "try the other game" link goes. */
   otherHref?: string;
   otherLabel?: string;
+  /**
+   * Whether the rail prints the name of the pane it is showing.
+   *
+   * True on the general timeline, where it is how a player knows which era
+   * they have panned into. False on a **subject** game, where the pane is the
+   * whole rail and the heading was naming the game rather than an era — which
+   * is also how the basketball screen came to be headed "Common Era": that
+   * pane has no label of its own and `paneLabel` falls through. A subject game
+   * names itself in the bar's own row instead (`headBlurb`), and the row the
+   * heading gave up carries the round's result.
+   */
+  railHeading?: boolean;
+  /**
+   * What this game is, in one sentence, for the masthead pill in the top bar's
+   * row. Null is no pill at all, which is the general timeline: the picture
+   * and the five-era rail say what that game is, and the pill would be a
+   * second heading over a screen that already deleted its first.
+   */
+  headBlurb?: string | null;
 }) {
   const [pane, setPane] = useState<TimelinePane>(homePane);
   // One position per pane: panning away and back should not lose the marker.
@@ -178,7 +211,17 @@ export function TimelineGame({
   const [panMs, setPanMs] = useState(PAN_MS);
   // The round being played is the head of the queue; the one behind it is the
   // next round, held only so it can be preloaded and swapped in instantly.
-  const [queue, setQueue] = useState<LocalizedEvent[]>(events);
+  const [queue, setQueue] = useState<DealtEvent[]>(events);
+  // The round's answer and what it paid, once the server has graded the
+  // guess. Null while the guess is still to be made *and* while it is on its
+  // way: the year is not on the client until this is set (lib/game/solo.ts).
+  const [reveal, setReveal] = useState<{
+    date: RevealedDate;
+    tp: number;
+  } | null>(null);
+  const [sending, setSending] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const solo = useSoloSet();
   const [refillAttempt, setRefillAttempt] = useState(0);
   // Latched when the player presses "Next round" before the queue has a round
   // to give them. With the queue kept a round ahead (`ROUND_QUEUE_TARGET`)
@@ -195,7 +238,13 @@ export function TimelineGame({
   // Typing the date rather than dragging for it. A preference, not a round's
   // state: it survives the reveal and the next round, because a player who
   // wanted to type one date almost certainly wants to type the next.
-  const [direct, setDirect] = useState(false);
+  // Typing the date rather than dragging for it — a *wish*, which only comes
+  // true on a window wide enough to hold the control (`useKeyboardEntry`).
+  // Kept as the wish rather than as the fact so that narrowing a window puts
+  // the rail back and widening it again returns the player to the entry they
+  // chose, instead of either silently discarding the preference or leaving a
+  // phone with a folded-away field as its only way to answer.
+  const [directWanted, setDirectWanted] = useState(false);
   const [entry, setEntry] = useState<DateEntryValue>(EMPTY_DATE_ENTRY);
   // Set by a refused lock-in and cleared by the next edit, so the warning
   // answers the press rather than nagging at a half-typed year.
@@ -206,6 +255,8 @@ export function TimelineGame({
   // has to quote the year the player typed rather than the one the rail reads
   // back at that position, which is snapped to the pane's grid.
   const [guessTyped, setGuessTyped] = useState(false);
+  const keyboardEntry = useKeyboardEntry();
+  const direct = directWanted && keyboardEntry;
   const travelTimer = useRef<number | null>(null);
   const resetTimer = useRef<number | null>(null);
 
@@ -220,6 +271,39 @@ export function TimelineGame({
 
   const event = queue[0] ?? null;
   const upcoming = queue[1] ?? null;
+  // The round on screen, for a reply that arrives after the player has moved
+  // on to check itself against.
+  const queueHead = useRef<DealtEvent | null>(event);
+  queueHead.current = event;
+
+  // Fly to the answer's era once the server has said which one that is — the
+  // daily's arrangement (components/daily-game.tsx), now that this game too
+  // learns the year a round trip after the guess. The hold is measured from
+  // the answer's arrival, after the fold if a typed date had to unfold it.
+  useEffect(() => {
+    if (!reveal || guessPane === null) return;
+    const target = paneForYear(reveal.date.year, panes);
+    if (target === guessPane) return;
+
+    const from = guessPane;
+    travelTimer.current = window.setTimeout(
+      () => {
+        setPanMs(panDuration(from, target, panes));
+        setPane(target);
+      },
+      (guessTyped ? RAIL_FOLD_MS : 0) + REVEAL_HOLD_MS,
+    );
+
+    return () => {
+      if (travelTimer.current !== null) {
+        window.clearTimeout(travelTimer.current);
+        travelTimer.current = null;
+      }
+    };
+    // `guessTyped` is set in the same batch as `guessPane`, and `panes` is a
+    // module constant at every call site.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reveal, guessPane]);
 
   // Top the queue back up in the background. Keyed on the queue's length rather
   // than on its contents, so playing a round triggers exactly one refill;
@@ -295,7 +379,12 @@ export function TimelineGame({
 
   const fraction = fractions[pane];
   const year = yearAtFraction(pane, fraction);
-  const answered = guess !== null;
+  // Two states where there used to be one, because the answer now arrives a
+  // round trip after the guess. `locked` is the guess having been made — the
+  // rail and the entry stop taking input — and `answered` is the server
+  // having graded it, which is what every part of the reveal waits on.
+  const locked = guess !== null;
+  const answered = reveal !== null;
 
   // What a typed date may name: the two ends of the rails this game actually
   // shows. On the general timeline that is the whole ruler, which is what the
@@ -340,8 +429,8 @@ export function TimelineGame({
    * the player can picture — so the camera travels there, through every era in
    * between, and the answer is marked on the rail it belongs to.
    */
-  function submit() {
-    if (answered || !event) return;
+  async function submit() {
+    if (locked || sending || !event) return;
 
     // Where the guess came from. Dragging has already put the camera and the
     // marker where they belong; a typed date has to be *placed* — and it is
@@ -351,7 +440,6 @@ export function TimelineGame({
     // guess, which is why the fold is also what the reveal below waits on.
     let from = pane;
     let guessed = year;
-    let offset = 0;
 
     if (direct) {
       const typed = directYear(entry, entryRange);
@@ -362,7 +450,6 @@ export function TimelineGame({
 
       guessed = typed;
       from = paneForYear(typed, panes);
-      offset = RAIL_FOLD_MS;
 
       setPanMs(0);
       setPane(from);
@@ -372,14 +459,29 @@ export function TimelineGame({
     setGuess(guessed);
     setGuessPane(from);
     setGuessTyped(direct);
+    setSending(true);
+    setFailed(false);
 
-    const target = paneForYear(event.year, panes);
-    if (target === from) return;
-
-    travelTimer.current = window.setTimeout(() => {
-      setPanMs(panDuration(from, target, panes));
-      setPane(target);
-    }, offset + REVEAL_HOLD_MS);
+    const round = event;
+    try {
+      const result = await revealDateRound(round.token, guessed, solo.setId);
+      if (!result.ok) throw new Error(result.reason);
+      // Only if the round on screen is still the one that was asked about: a
+      // reply cannot land on a question the player has moved past.
+      if (queueHead.current?.token !== round.token) return;
+      setReveal({ date: result.date, tp: result.tp });
+      solo.record(result);
+    } catch {
+      // The guess is handed back rather than kept — an answer that was not
+      // graded is not an answer, and the player must never be locked out of
+      // a round nothing was recorded for. The same rule as the daily's.
+      setGuess(null);
+      setGuessPane(null);
+      setGuessTyped(false);
+      setFailed(true);
+    } finally {
+      setSending(false);
+    }
   }
 
   /**
@@ -421,6 +523,8 @@ export function TimelineGame({
     setGuess(null);
     setGuessPane(null);
     setGuessTyped(false);
+    setReveal(null);
+    setFailed(false);
     // **Both halves are cleared, era included.** The era used to be carried
     // over on the grounds that it was an opinion about the round rather than
     // an answer to it. It is not: a player who typed a BCE year last round
@@ -463,7 +567,7 @@ export function TimelineGame({
   // for why 900 years out on 1900 is a worse answer than 10,000 out on
   // 110,000 BCE.
   const accuracy =
-    guess !== null && event ? gradeGuess(guess, event.year, bands) : null;
+    guess !== null && reveal ? gradeGuess(guess, reveal.date.year, bands) : null;
   // The set is full once ten questions have been banked; until then the last
   // of them turns "Next round" into "See results", because the button is about
   // to do something other than deal another question.
@@ -480,7 +584,7 @@ export function TimelineGame({
     advance();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingNext, upcoming, accuracy]);
-  const answerPane = event ? paneForYear(event.year, panes) : null;
+  const answerPane = reveal ? paneForYear(reveal.date.year, panes) : null;
   // The answer appears when the camera gets there: the hold plus the journey,
   // after the rail has finished unfolding if it had to. A guess made in the
   // answer's own era needs no journey, so the offset is all that holds it.
@@ -492,7 +596,12 @@ export function TimelineGame({
       : REVEAL_HOLD_MS + panDuration(guessPane, answerPane, panes));
   // The rail folds away while a date is being typed, and comes back for the
   // reveal — so it is the *unanswered* half of direct mode that has no rail.
-  const folded = direct && !answered;
+  const folded = direct && !locked;
+  // A subject game: one rail, no era to name above it, and a masthead of its
+  // own in the bar. The two facts travel together — a game that names itself
+  // in the bar is exactly the game whose rail has no era heading — so this is
+  // the one name the markup below branches on.
+  const subject = !railHeading;
 
   if (!event) return null;
 
@@ -519,11 +628,33 @@ export function TimelineGame({
           onPlayAgain={() => {
             setResults([]);
             setPlayed([]);
+            solo.reset();
           }}
+          points={solo.points}
           t={t}
         />
       ) : (
         <>
+          {/* The subject games' masthead, in the top bar's own row and out of
+              this screen's height budget — the comparison game's pill, which
+              is why it is `components/round-head.tsx` rather than a second
+              copy of it. It stands in for two things this screen used to
+              print in the flow: the rail's pane heading, which on a one-pane
+              game was naming the game rather than an era, and the blurb,
+              which no date-guessing screen has ever had room for. Only
+              rendered where a game asked for one; `/guess` has none, because
+              the five-era rail says what that game is. */}
+          {headBlurb && (
+            <RoundHead
+              title={title ?? t.timelineTitle}
+              counter={format(t.setProgress, {
+                n: Math.min(results.length + 1, QUESTIONS_PER_SET),
+                total: QUESTIONS_PER_SET,
+              })}
+              blurb={headBlurb}
+            />
+          )}
+
           {/* The card and its two side panels.
 
               The wrapper exists so the panels have a box to hang off: they are
@@ -548,6 +679,7 @@ export function TimelineGame({
                   accuracy={accuracy}
                   guess={guess}
                   locale={locale}
+                  tp={reveal?.tp ?? null}
                   t={t}
                 />
                 {/* The challenge rides with the description now, not with the
@@ -566,26 +698,106 @@ export function TimelineGame({
               // On the photograph for the same reason the verdict was: this
               // screen is a height budget with nothing spare, and a counter in
               // the flow would be another row between the rail and the button.
+              //
+              // Null where the masthead above already carries it: two copies
+              // of "3 of 10" an inch apart read as two different counts.
               counter={
-                <SetProgress
-                  played={results.length}
-                  total={QUESTIONS_PER_SET}
-                  t={t}
-                />
+                headBlurb ? null : (
+                  <SetProgress
+                    played={results.length}
+                    total={QUESTIONS_PER_SET}
+                    t={t}
+                  />
+                )
+              }
+              // The challenge, for the subject games only, and only on the
+              // widths where the result is not painted over the picture. It
+              // rides with `RoundVerdict` everywhere else; those games do not
+              // show one (see `badge`), and disputing an event's date must
+              // not be something only a desktop can do.
+              aside={
+                subject && answered ? (
+                  <div className="min-[1120px]:hidden">
+                    <DateChallenge eventId={event.id} t={t} />
+                  </div>
+                ) : null
               }
               badge={
-                accuracy && guess !== null ? (
+                accuracy && guess !== null && !subject ? (
                   <RoundVerdict
                     accuracy={accuracy}
                     guess={guess}
                     eventId={event.id}
                     locale={locale}
+                    tp={reveal?.tp ?? null}
                     t={t}
                   />
+                ) : failed ? (
+                  // The slot the verdict will occupy, which is empty until
+                  // there is one — so saying so costs the height budget
+                  // nothing. The daily's arrangement.
+                  <p
+                    role="status"
+                    className="round-verdict-in absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-4 pb-3 pt-10 text-center text-xs font-semibold text-white/85"
+                  >
+                    {t.revealFailed}
+                  </p>
                 ) : null
               }
             />
           </div>
+
+          {/* The row the pane heading gave up, on a subject game.
+
+              It holds the round's result as the lying-down card the
+              comparison game ends its rounds on — the same `VerdictDeckRow`,
+              so the two screens report a result in the same object rather
+              than in two things that merely rhyme. The tier's own colour as a
+              block, the word on it in near-black, and two labelled facts: how
+              far off, and what was guessed. **No description**: the event's
+              note is the other panel's job and there is no room for prose
+              between a picture and a rail.
+
+              **Reserved, not conditional.** The box is `h-16` whether or not
+              there is a verdict in it, because this screen is a height budget
+              and a card that appeared on answering would push the rail it is
+              a verdict on down the page. That is the comparison game's rule
+              for the same box.
+
+              Hidden from 1120px, where `VerdictFlank` hangs the tall version
+              of the same card beside the photograph — the two are never on
+              screen together, exactly as `RoundVerdict` and the flanks never
+              are. */}
+          {subject && (
+            <div className="flex h-16 w-full shrink-0 items-center justify-center min-[1120px]:hidden">
+              {accuracy && guess !== null && (
+                <VerdictDeckRow
+                  verdict={accuracy.verdict}
+                  tp={reveal?.tp ?? null}
+                  facts={[
+                    {
+                      label: t.distanceTitle,
+                      value:
+                        accuracy.distance === 0
+                          ? t.correct
+                          : format(t.yearsOff, {
+                              n: formatYearCount(
+                                accuracy.distance,
+                                locale,
+                                dateLabels(t),
+                              ),
+                            }),
+                    },
+                    {
+                      label: t.yourGuess,
+                      value: formatYear(guess, dateLabels(t)),
+                    },
+                  ]}
+                  t={t}
+                />
+              )}
+            </div>
+          )}
 
           {/* The rail, and the fold that takes it away when the player would
               rather type the date.
@@ -607,8 +819,23 @@ export function TimelineGame({
             data-folded={folded}
             inert={folded}
           >
-            <div>
-              <div className="rail-fold-inner w-full overflow-hidden">
+            {/* `-mx-6 px-6` on both boxes: the *clip* reaches 24px further out
+                on each side while the content keeps exactly the width it had.
+
+                The two things pinned to the ends of the rail hang past them —
+                the end tick label is centred on its own mark and the marker's
+                year bubble on the marker — and the pane's own `px-8` was all
+                the room they had. 32px covers "10 million" at 13px and not
+                "10 millones", so the Spanish cosmos rail lost the first digit
+                of its left label to this edge. The page's own `px-6` is the
+                24px that fixes it: these two boxes now end on the page
+                container's padding box rather than on its content box, which
+                is the outermost edge a child can reach without overflowing
+                anything. The bubble has a clamp of its own as well
+                (`bubbleEdgeShift`), because no amount of margin holds a
+                21-character label centred on the end of a 278px rail. */}
+            <div className="-mx-6 px-6">
+              <div className="rail-fold-inner -mx-6 overflow-hidden px-6">
                 <div
                   className="flex transition-transform ease-[cubic-bezier(0.65,0,0.35,1)]"
                   style={{
@@ -622,12 +849,19 @@ export function TimelineGame({
                       pane={candidate}
                       panes={panes}
                       active={candidate === pane}
+                      // A subject game names itself in the bar's row, so the
+                      // rail prints no heading — and with one pane it has no
+                      // doors either, so the 96px band that exists to stack a
+                      // door pill over the marker's bubble is holding open a
+                      // space nothing can occupy.
+                      heading={railHeading}
+                      compact={subject}
                       fraction={fractions[candidate]}
                       onFractionChange={(next) => move(candidate, next)}
-                      answered={answered}
+                      answered={locked}
                       // The marker belongs to the pane it was placed in. Showing one on
                       // the answer's pane too would read as a second guess.
-                      showGuess={!answered || guessPane === candidate}
+                      showGuess={!locked || guessPane === candidate}
                       // A typed date is exact, and the year this rail reads back
                       // at that position is snapped to the pane's grid — so the
                       // bubble is told the player's own number rather than
@@ -635,7 +869,9 @@ export function TimelineGame({
                       guessYear={
                         guessTyped && guessPane === candidate ? guess : null
                       }
-                      answerYear={answerPane === candidate ? event.year : null}
+                      answerYear={
+                        answerPane === candidate && reveal ? reveal.date.year : null
+                      }
                       answerDelayMs={answerDelayMs}
                       // This pane's share of the distance between the guess and
                       // the truth. A guess in the wrong era spans several rails,
@@ -647,7 +883,7 @@ export function TimelineGame({
                         guessFraction:
                           guessPane === null ? 0 : fractions[guessPane],
                         answerPane,
-                        answerYear: event.year,
+                        answerYear: reveal?.date.year ?? null,
                         answerDelayMs,
                         // The end nearest the guess normally draws itself at
                         // once; a typed one waits for the rail it is drawn on.
@@ -684,14 +920,15 @@ export function TimelineGame({
               them came or went, and that button is the one position on this
               screen which must not move.
 
-              Below `md` the three do not fit across a phone, so the entry
-              takes a row of its own above them. It keeps its place in the
-              document either way — `.entry-shell` gives its space back in
-              both axes for exactly that reason — and the button and the
-              switch stay side by side, which is what the inner flex and its
-              `md:contents` are for: above the breakpoint that wrapper stops
-              being a box and its two children become the grid's own middle
-              and right cells.
+              **Below `md` there is nothing in the row but the button.** The
+              entry and its switch are a desktop control now
+              (`useKeyboardEntry`): the entry took a row of its own on a
+              phone, out of a screen that is one viewport and must not
+              scroll, to hold a field whose keypad covers the game the moment
+              it is focused. With both gone the grid collapses to one centred
+              cell and the advance button is the column's own centre — which
+              is what `md:grid-cols-…` is for, and why the sides are declared
+              at that breakpoint rather than at every width.
 
               `relative` is for the warning, which hangs underneath the row
               rather than taking a row of its own: a sentence that appears
@@ -703,7 +940,7 @@ export function TimelineGame({
                 folded field out of reach — a clipped input is still a
                 focusable one. */}
             <div
-              className="entry-shell md:justify-self-end"
+              className="entry-shell hidden md:block md:justify-self-end"
               data-shown={direct}
               inert={!direct}
             >
@@ -718,7 +955,7 @@ export function TimelineGame({
                     onSubmit={submit}
                     // Locked in: it stays on screen reporting the year that
                     // was guessed, but it is no longer a control.
-                    disabled={answered}
+                    disabled={locked}
                     invalid={invalid}
                     shown={direct}
                     focusDelayMs={RAIL_FOLD_MS}
@@ -747,7 +984,7 @@ export function TimelineGame({
                 `inert` on whichever is hidden keeps it off the tab order and
                 out of the accessibility tree while it is only holding the slot
                 open. */}
-            <div className="flex items-center gap-3 md:contents">
+            <div className="flex items-center justify-center gap-3 md:contents">
               <div className="grid place-items-center">
                 <div
                   className={`col-start-1 row-start-1 transition-opacity duration-300 ${
@@ -758,7 +995,12 @@ export function TimelineGame({
                   <button
                     type="button"
                     onClick={submit}
-                    className={`${ROUND_BUTTON} bg-ink text-page hover:opacity-85`}
+                    // Never disabled, like the advance button: a press while a
+                    // guess is in flight is simply ignored by `submit`.
+                    aria-busy={sending}
+                    className={`${ROUND_BUTTON} bg-ink text-page hover:opacity-85 ${
+                      sending ? "cursor-progress opacity-70" : ""
+                    }`}
                   >
                     {t.submitGuess}
                   </button>
@@ -805,15 +1047,15 @@ export function TimelineGame({
                   it stays centred. There is nothing to switch to mid-reveal
                   anyway: the rail is back on screen carrying the answer. */}
               <div
-                className={`transition-opacity duration-300 md:ml-3 md:justify-self-start ${
-                  answered ? "opacity-0" : "opacity-100"
+                className={`hidden transition-opacity duration-300 md:block md:ml-3 md:justify-self-start ${
+                  locked ? "opacity-0" : "opacity-100"
                 }`}
-                inert={answered}
+                inert={locked || !keyboardEntry}
               >
                 <InputModeToggle
                   direct={direct}
                   onToggle={() => {
-                    setDirect((current) => !current);
+                    setDirectWanted((current) => !current);
                     setInvalid(false);
                   }}
                   t={t}

@@ -1,11 +1,37 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 
+import { wearBadge } from "@/app/actions/scoring";
 import { BadgeFrame } from "@/components/badge-frame";
-import { BADGES, RING_BOX, type Badge } from "@/lib/badges";
-import type { BadgeProgress } from "@/lib/db/types";
+import { BADGES, RING_BOX, type Badge, type BadgeSlug } from "@/lib/badges";
 import { format, type Dict } from "@/lib/i18n/dictionary";
+
+/**
+ * One badge as the page draws it: the TP threshold, the quests beside it, and
+ * whether it is earned. Built on the server from `refreshBadges`
+ * (lib/db/scoring.ts), so the card explains a badge with the same evaluation
+ * that awards it.
+ */
+export interface BadgeView {
+  slug: BadgeSlug;
+  tp: number;
+  tpTarget: number;
+  quests: {
+    key: string;
+    labelKey: keyof Dict;
+    progress: number;
+    target: number;
+    done: boolean;
+  }[];
+  unlocked: boolean;
+}
+
+/** Thousands grouped, the way the daily's score is printed. */
+function count(n: number): string {
+  return n.toLocaleString("en-US");
+}
 
 /**
  * The whole of the badges page: six cards on a rail you shift to the right.
@@ -32,10 +58,12 @@ import { format, type Dict } from "@/lib/i18n/dictionary";
  * blacked out to hide their stones while the other four showed theirs, and now
  * nothing is hiding anything, because nothing is giving anything away.
  *
- * The button below the text is what hands the colour back, and it is the one
- * control on the card: press it and the silhouette dissolves into the real
- * artwork. **It is dead until the badge is earned**, which is the whole of what
- * `disabled` means here — there is no colour of yours to show yet.
+ * The button below the text is the one control on the card, and it **puts the
+ * badge on**: the silhouette dissolves into the real artwork, and that is the
+ * badge shown beside your name on the leaderboard and the account page. Press
+ * it again to take it off. Only one is worn at a time, so putting one on takes
+ * the other off. **It is dead until the badge is earned**, which is the whole
+ * of what `disabled` means here — there is nothing of yours to wear yet.
  *
  * **One card per screen on a phone.** The rail is a scroll-snapping scroller,
  * so a swipe lands squarely on the next badge rather than part-way between two,
@@ -94,14 +122,39 @@ const PAGE_SETTLE_MS = 700;
 
 export function BadgeShowcase({
   t,
-  progress,
+  badges,
+  totalTp,
+  shown,
 }: {
   t: Dict;
-  /** One entry per badge, in the badges' own order. Zeros when nothing has
-   *  been written yet, which is every account today — see the migration. */
-  progress: readonly BadgeProgress[];
+  /** One entry per badge, in the badges' own order. */
+  badges: readonly BadgeView[];
+  /** Career TP, for the line under the heading. */
+  totalTp: number;
+  /** The badge beside the player's name: their choice, or their highest. */
+  shown: BadgeSlug | null;
 }) {
-  const bySlug = new Map(progress.map((row) => [row.slug, row]));
+  const bySlug = new Map(badges.map((row) => [row.slug, row]));
+  const router = useRouter();
+  // Held here rather than per card, because wearing one badge takes another
+  // off: the cards cannot each own a piece of a choice there is one of.
+  // Optimistic — the card answers the press at once — and put back if the
+  // server refuses.
+  const [worn, setWorn] = useState<BadgeSlug | null>(shown);
+  const [, startTransition] = useTransition();
+
+  useEffect(() => setWorn(shown), [shown]);
+
+  function toggleWear(slug: BadgeSlug) {
+    const before = worn;
+    const next = worn === slug ? null : slug;
+    setWorn(next);
+    startTransition(async () => {
+      const { ok } = await wearBadge(next);
+      if (!ok) setWorn(before);
+      router.refresh();
+    });
+  }
 
   return (
     <section>
@@ -113,19 +166,23 @@ export function BadgeShowcase({
         <h1 className="font-display text-4xl font-semibold tracking-[-0.03em] sm:text-5xl">
           {t.badgesTitle}
         </h1>
+        <p className="mt-3 text-[15px] font-semibold tabular-nums text-ink-dim">
+          {format(t.badgesTotalTp, { n: count(totalTp) })}
+        </p>
       </div>
 
       <Rail t={t} label={t.badgesTitle}>
         {BADGES.map((badge) => {
           const row = bySlug.get(badge.slug);
+          if (!row) return null;
           return (
             <BadgeCard
               key={badge.slug}
               t={t}
               badge={badge}
-              progress={row?.progress ?? 0}
-              target={row?.target ?? 1}
-              unlocked={(row?.unlockedAt ?? null) !== null}
+              view={row}
+              worn={worn === badge.slug}
+              onToggleWear={() => toggleWear(badge.slug)}
             />
           );
         })}
@@ -392,27 +449,43 @@ function RailArrow({
 function BadgeCard({
   t,
   badge,
-  progress,
-  target,
-  unlocked,
+  view,
+  worn,
+  onToggleWear,
 }: {
   t: Dict;
   badge: Badge;
-  progress: number;
-  target: number;
-  unlocked: boolean;
+  view: BadgeView;
+  /** Whether this is the badge shown beside the player's name. */
+  worn: boolean;
+  onToggleWear: () => void;
 }) {
-  const [revealed, setRevealed] = useState(false);
+  const { unlocked } = view;
 
-  const pct =
-    target > 0
-      ? Math.max(0, Math.min(100, Math.round((progress / target) * 100)))
-      : 0;
+  // Every requirement weighs the same: the TP threshold is one of them and
+  // each quest is another, so a player with the points and none of the quests
+  // reads as part of the way there rather than as nearly done.
+  const parts = [
+    view.tp / view.tpTarget,
+    ...view.quests.map((quest) => quest.progress / quest.target),
+  ];
+  const pct = unlocked
+    ? 100
+    : Math.max(
+        0,
+        Math.min(
+          99,
+          Math.floor(
+            (parts.reduce((sum, part) => sum + Math.min(1, part), 0) /
+              parts.length) *
+              100,
+          ),
+        ),
+      );
 
-  /* A badge that is locked again — which cannot happen today, but will the
-     first time these rows are written by something — must not be left showing
-     its colour because the card was open when it changed. */
-  const showArt = revealed && unlocked;
+  /* The colour is the badge being worn. A badge that is locked again — which
+     cannot happen today — must not be left showing it. */
+  const showArt = worn && unlocked;
 
   return (
     <article
@@ -470,6 +543,25 @@ function BadgeCard({
         <p className="mt-4 text-[15px] leading-relaxed text-ink-dim">
           {t[badge.howKey]}
         </p>
+
+        {/* The requirements, each with its own count: the TP threshold first,
+            then the quests. A tick, not a colour, says which are done — the
+            palette's chroma belongs to the verdict ladder. */}
+        <ul className="mt-5 flex flex-col gap-2 text-[13px]">
+          <Requirement
+            done={view.tp >= view.tpTarget}
+            label={format(t.badgeTpRequirement, { n: count(view.tpTarget) })}
+            progress={`${count(view.tp)} / ${count(view.tpTarget)}`}
+          />
+          {view.quests.map((quest) => (
+            <Requirement
+              key={quest.key}
+              done={quest.done}
+              label={format(t[quest.labelKey], { n: quest.target })}
+              progress={`${quest.progress} / ${quest.target}`}
+            />
+          ))}
+        </ul>
       </div>
 
       {/* The foot: how far along at the left, the reveal at the right.
@@ -483,50 +575,72 @@ function BadgeCard({
           role="progressbar"
           aria-label={format(t.badgesProgressTo, { badge: t[badge.nameKey] })}
           aria-valuemin={0}
-          aria-valuemax={target}
-          aria-valuenow={progress}
+          aria-valuemax={100}
+          aria-valuenow={pct}
           aria-valuetext={`${pct}%`}
           className="text-xl font-semibold tabular-nums leading-none text-ink"
         >
           {pct}%
         </p>
 
-        <RevealButton
+        <WearButton
           t={t}
           unlocked={unlocked}
-          revealed={showArt}
+          worn={showArt}
           name={t[badge.nameKey]}
-          onToggle={() => setRevealed((open) => !open)}
+          onToggle={onToggleWear}
         />
       </div>
     </article>
   );
 }
 
+/** One line of a card's checklist. */
+function Requirement({
+  done,
+  label,
+  progress,
+}: {
+  done: boolean;
+  label: string;
+  progress: string;
+}) {
+  return (
+    <li className="flex items-baseline justify-between gap-3">
+      <span className={`flex min-w-0 items-baseline gap-2 ${done ? "text-ink" : "text-ink-dim"}`}>
+        <span aria-hidden="true" className="w-3 shrink-0 text-center">
+          {done ? "✓" : "·"}
+        </span>
+        <span>{label}</span>
+      </span>
+      <span className="shrink-0 tabular-nums text-ink-dim">{progress}</span>
+    </li>
+  );
+}
+
 /**
  * The reference's round button, and the only control on a card.
  *
- * It shows the badge in its own colours, and it is `disabled` until the badge
- * is earned — which is the state the user asked for and is also the honest one:
- * there is nothing of yours to look at yet. A `disabled` button rather than a
- * dimmed `div`, so the reason reaches a screen reader and the control stays out
- * of the tab order while it cannot be used.
+ * It puts the badge on (and shows it in its own colours) or takes it off, and
+ * it is `disabled` until the badge is earned — there is nothing of yours to
+ * wear yet. A `disabled` button rather than a dimmed `div`, so the reason
+ * reaches a screen reader and the control stays out of the tab order while it
+ * cannot be used. It was a separate "Wearing" pill beside a reveal-only plus
+ * until 2026-10-17; one control that does both was asked for.
  *
- * The glyph is the reference's plus, turning a sixth of a circle onto its own
- * minus when the card is open — the same two-bar mark the FAQ's rows use, for
- * the same reason a chevron would be wrong: this opens something rather than
- * pointing further down the page.
+ * The glyph is the reference's plus, turning onto its own minus while the
+ * badge is worn — the same two-bar mark the FAQ's rows use.
  */
-function RevealButton({
+function WearButton({
   t,
   unlocked,
-  revealed,
+  worn,
   name,
   onToggle,
 }: {
   t: Dict;
   unlocked: boolean;
-  revealed: boolean;
+  worn: boolean;
   name: string;
   onToggle: () => void;
 }) {
@@ -535,8 +649,8 @@ function RevealButton({
       type="button"
       onClick={onToggle}
       disabled={!unlocked}
-      aria-pressed={unlocked ? revealed : undefined}
-      aria-label={format(revealed ? t.badgesHideArt : t.badgesShowArt, {
+      aria-pressed={unlocked ? worn : undefined}
+      aria-label={format(worn ? t.badgesTakeOff : t.badgesWear, {
         badge: name,
       })}
       className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink text-page transition-opacity duration-300 hover:opacity-85 disabled:pointer-events-none disabled:bg-ink/20 disabled:text-ink/35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
@@ -554,7 +668,7 @@ function RevealButton({
         <path
           d="M12 5v14"
           className="badge-mark origin-center"
-          style={{ transform: revealed ? "rotate(90deg)" : "none" }}
+          style={{ transform: worn ? "rotate(90deg)" : "none" }}
         />
       </svg>
     </button>

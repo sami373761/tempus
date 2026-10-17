@@ -174,7 +174,6 @@ const TIMELINE_BACKDROP_PLATES: Record<TimelinePane, BackdropPlate> = {
   evolution: { folder: "date-guessing-game", base: "game-backgrounds-003" },
   civilization: { folder: "date-guessing-game", base: "game-backgrounds-002" },
   ce: { folder: "date-guessing-game", base: "game-backgrounds-001" },
-  future: { folder: "date-guessing-game", base: "future" },
   // The football rail covers 1850–2026, which sits wholly inside the common
   // era, so until a plate of its own is uploaded it wears the common era's —
   // art the site already has, which is the rule the explorer's stage follows

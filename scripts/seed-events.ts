@@ -1,5 +1,5 @@
 /**
- * Parses data/events.txt and upserts it into the database.
+ * Parses data/tarihsel_olaylar_500_5_dil.txt and upserts it into the database.
  *
  *   npm run db:seed:events                       insert as published
  *   npm run db:seed:events -- --status draft     insert hidden from the public
@@ -31,7 +31,7 @@ function parseArgs() {
 
   const path =
     args.find((a, i) => !a.startsWith("--") && args[i - 1] !== "--status") ??
-    "data/events.txt";
+    "data/tarihsel_olaylar_500_5_dil.txt";
 
   return { status, path, dryRun: args.includes("--dry-run") };
 }

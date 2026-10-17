@@ -67,6 +67,7 @@ const en = {
   fieldEntrepreneur: "Entrepreneur",
   fieldActivist: "Activist",
   submitGuess: "Lock in guess",
+  comparisonMoveFirst: "Drag the card first",
   // The direct date entry: the alternative to dragging the rail, reached from
   // the round's own controls. The era labels themselves are the existing
   // `commonEra` and `bc` strings — an era is named once on this site, not
@@ -208,6 +209,11 @@ const en = {
   explorerLibraryTitle: "Event library",
   explorerLibraryBody:
     "Every round is drawn from a hand-checked set of events spanning 4.54 billion years, each with a public-domain photograph and a name in five languages.",
+  // Written down rather than counted. The panel used to print the live count
+  // of published, illustrated rows; it is a round claim about the library now,
+  // which is what was asked for — and it is why the home page makes no
+  // database read at all any more.
+  explorerStatEventsValue: "1000+",
   explorerStatEvents: "events, each with a photograph",
   explorerStatLanguages: "languages, event names included",
   explorerStatSpan: "years of history covered",
@@ -218,24 +224,33 @@ const en = {
   // The FAQ at the foot of the home page, which the menu's FAQ row links to.
   faqTitle: "Frequently asked questions",
   faqBlurb: "What is worth knowing before the first round.",
-  faqQ1: "Do I need an account?",
+  faqQ1: "Are the dates of historical events completely accurate?",
   faqA1:
-    "Only for badges. The two games and head-to-head are playable signed out, and a set of ten lives in the tab you are playing it in — but a badge belongs to somebody, so the badges page asks you to sign in.",
-  faqQ2: "How are guesses scored?",
+    "Not necessarily. Dates of historical events can be disputed, but we have made every effort to use the dates most widely accepted by historians and the general public. Some dates may still be inaccurate. We encourage users to challenge questionable dates and send feedback through the relevant questions. Your feedback helps us find errors and improve the accuracy of our content.",
+  faqQ2: "Can I challenge a date?",
   faqA2:
-    "By how far off you are relative to the event's own age, not by the raw number of years. Every round lands on one of five verdicts — perfect, great, good, bad or way off — and only the last one is a miss.",
-  faqQ3: "How far back does the timeline go?",
+    "Yes! At the end of each question, below the explanation, you’ll find a “Dispute” button. By clicking it, you can indicate whether you think the correct date should be earlier or later than the one shown. We review these submissions and update our questions when necessary. Your feedback is extremely important to us and plays a vital role in improving our content.",
+  faqQ3: "What types of games are available?",
   faqA3:
-    "To the formation of the Earth, about 4.54 billion years ago. The scale changes as you travel: single years through recorded history, far coarser steps out in deep time.",
-  faqQ4: "Can I play against someone else?",
+    "Our website features two main types of games. Each has several variations, including different game modes adapted to various categories, offering multiple ways to play and explore historical events.",
+  // Kept verbatim from the first six questions, which is the whole of what
+  // survived them: it is the one answer the request pinned as unchanged, so
+  // only its key moved.
+  faqQ4: "How are guesses scored?",
   faqA4:
-    "Yes. 1v1 opens a match and gives you a link to send; you both answer the same rounds against the same clock, and neither of you needs an account.",
-  faqQ5: "Where do the pictures come from?",
+    "By how far off you are relative to the event's own age, not by the raw number of years. Every round lands on one of five verdicts — perfect, great, good, bad or way off — and only the last one is a miss.",
+  faqQ5: "How can I earn achievements?",
   faqA5:
-    "Public-domain photographs and artwork from Wikimedia Commons. An event with no picture simply never comes up.",
-  faqQ6: "Which languages does it speak?",
+    "You can earn achievements by playing the different games on our website and reaching specific performance milestones. Each game may offer its own set of achievements that reward your progress.",
+  faqQ6: "Can an event’s photo be wrong?",
   faqA6:
-    "English, Turkish, German, French and Spanish — event names included, not just the buttons. Pick one in the menu at the top of the page.",
+    "Yes, there may be small mistakes among event photos. Tempus is a large library containing over 1,000 events, and some of them may contain errors.",
+  faqQ7: "Can I play with a friend?",
+  faqA7:
+    "Yes! In 1v1 mode, you can send your friend the game link and play together. An online version is currently in development, and online matches will be available in the future.",
+  faqQ8: "Do I need to create an account?",
+  faqA8:
+    "No, you can play the games without an account. However, you need to sign up to earn points, unlock badges, and appear on the leaderboard.",
 
 
   // The set: ten questions, then the summary screen. See lib/game/set.ts.
@@ -246,6 +261,7 @@ const en = {
   setBestStreak: "Best streak",
   setBreakdown: "How the guesses landed",
   playAgain: "Play again",
+  backHome: "Back to home",
   shareResult: "Share result",
   shareCopied: "Copied",
   shareFailed: "Could not copy",
@@ -412,40 +428,38 @@ const en = {
   challengeFailed: "That could not be sent. Try again.",
   challengeDismiss: "Close",
 
-  // The achievements page. Four ranks on one ladder — the best set of ten you
-  // have finished — and two standalone feats beside it. Nothing is awarded
-  // yet (there are no accounts and no saved scores), so these strings are the
-  // rules a badge *will* be given by, and retuning one is an edit here rather
-  // than in a component.
+  // The achievements page. Six rungs on one ladder, climbed with TP; from Gold
+  // up each adds quests. The numbers here are copy — the rules that award a
+  // badge are lib/game/badge-rules.ts, and retuning one means editing both.
   achievementsTitle: "Achievements",
   achievementsNotLive:
     "Nothing is being counted yet. The rules each badge is given out by are settled, but no finished set is measured against them — so every bar here reads zero.",
   achievementsHowTo: "How to earn it",
 
   badgeBronze: "Bronze",
-  badgeBronzeRule: "Finish one set",
+  badgeBronzeRule: "10 TP",
   badgeBronzeHow:
-    "Play a set of ten questions through to the summary. The score does not matter — this is the badge for having played.",
+    "Your first points. Play a few rounds of any game while signed in.",
   badgeSilver: "Silver",
-  badgeSilverRule: "6 of 10",
+  badgeSilverRule: "100 TP",
   badgeSilverHow:
-    "Land six hits in a single set. A hit is anything the game calls Good or better, so a near miss still counts towards it.",
+    "A few sets in. Every game pays: a round by how close you were, a set for finishing it.",
   badgeGold: "Gold",
-  badgeGoldRule: "8 of 10",
+  badgeGoldRule: "1,000 TP + 1 quest",
   badgeGoldHow:
-    "Land eight hits in a single set. At that rate you are reading the photograph for its period rather than guessing a century.",
+    "Points alone stop being enough here. Gold asks for the exact year — more than once.",
   badgeDiamond: "Diamond",
-  badgeDiamondRule: "10 of 10",
+  badgeDiamondRule: "3,000 TP + 2 quests",
   badgeDiamondHow:
-    "Finish a set without a single miss. Ten questions, ten hits, in one sitting.",
+    "Range and nerve: exact years across different games, and a survival run that holds.",
   badgeRuby: "Ruby",
-  badgeRubyRule: "Win ten duels",
+  badgeRubyRule: "10,000 TP + 3 quests",
   badgeRubyHow:
-    "Win ten head-to-head matches. Only a match played to the end counts, so an opponent who closes their tab does not hand you one.",
+    "Three exact years in one set, a flawless comparison set and a week of dailies without a gap.",
   badgeAmethyst: "Amethyst",
-  badgeAmethystRule: "A perfect in every era",
+  badgeAmethystRule: "30,000 TP + 3 quests",
   badgeAmethystHow:
-    "Score a Perfect on an event from each era the timeline covers — Earth & Cosmos, Humans & Evolution, the Age of Civilization and the Common Era.",
+    "The top of the ladder. Exact years in every date game, a fifty-long survival run and a set with nothing below Great.",
 
 
   // --- accounts -------------------------------------------------------------
@@ -459,7 +473,11 @@ const en = {
   authTabSignIn: "Sign in",
   authTabSignUp: "Sign up",
   authUsername: "Username",
-  authUsernameHint: "3-20 characters: a-z, 0-9 and underscores.",
+  // Stated before the first keystroke, in the words the inline errors use: the
+  // field refuses a whole class of characters and a player cannot see which
+  // from an empty box. See `authErrUsername*` below for the refusals.
+  authUsernameHint:
+    "3 to 20 characters. Letters a-z, numbers 0-9 and the underscore (_) only — no spaces, accents or punctuation.",
   authEmail: "Email",
   authPassword: "Password",
   authPasswordHint: "At least 8 characters.",
@@ -478,15 +496,28 @@ const en = {
   authErrEmailTaken: "There is already an account with that email.",
   authErrPasswordWeak: "Use at least 8 characters.",
   authErrPasswordMismatch: "Those two passwords do not match.",
-  authErrUsernameInvalid: "3-20 characters, using a-z, 0-9 and underscores.",
-  // Said of a name that is the right *length*: nothing is stripped out of a
-  // username any more, so the sentence has to name what was refused.
+  // Four refusals rather than one, because "3-20 characters, a-z, 0-9 and
+  // underscores" is not an answer to any of them: a name of the right length
+  // needs to hear which character was refused, and a name of the right shape
+  // needs to hear the length. `{chars}` is filled with the characters the
+  // player actually typed — see `validateUsername` in lib/db/accounts.ts,
+  // which is what collects them. `authErrUsernameCharsAny` is the fallback for
+  // the one case the list cannot be built (a refusal raised with no detail).
+  authErrUsernameShort: "That username is too short — use at least 3 characters.",
+  authErrUsernameLong: "That username is too long — use 20 characters at most.",
+  authErrUsernameSpaces:
+    "Usernames can’t contain spaces. Use an underscore (_) instead.",
   authErrUsernameChars:
-    "Only a-z, 0-9 and underscores. Accented and non-Latin letters, spaces and punctuation cannot be used.",
+    "Usernames can’t contain: {chars} — only letters a-z, numbers 0-9 and the underscore (_) are allowed.",
+  authErrUsernameCharsAny:
+    "Usernames can only contain letters a-z, numbers 0-9 and the underscore (_) — no spaces, accented or non-Latin letters, and no punctuation.",
   authErrUsernameTaken: "That username is taken.",
   authErrRateLimited: "Too many attempts. Wait a moment and try again.",
   authErrProviderFailed: "Google sign-in is unavailable right now.",
   authErrCurrentPassword: "That is not your current password.",
+  authErrPhotoTooLarge: "That photo is over 1 MB. Pick a smaller one.",
+  authErrPhotoType: "Use a JPEG, PNG, WebP or HEIC photo.",
+  authErrPhotoUnreadable: "That photo could not be read. Try another one.",
   authErrGeneric: "Something went wrong. Try again.",
   authGateNotice: "Badges belong to an account, so this page needs one.",
 
@@ -515,31 +546,62 @@ const en = {
   accountBadgesTitle: "Badges",
   accountBadgesEarned: "{n} of {total} earned",
   accountSeeBadges: "See the badges",
+  accountPhotoTitle: "Profile photo",
+  accountPhotoBlurb: "Shown on your account and beside your name on the leaderboard.",
+  accountPhotoHint: "JPEG, PNG, WebP or HEIC, up to 1 MB.",
+  accountPhotoUpload: "Upload a photo",
+  accountPhotoChange: "Change photo",
+  accountPhotoRemove: "Remove",
+  accountPhotoSaved: "Photo updated.",
+  accountPhotoRemoved: "Photo removed.",
+  accountPhotoUploading: "Uploading…",
   accountSignOut: "Sign out",
   menuSignOut: "Sign out",
 
   leaderboardTitle: "Leaderboard",
-  leaderboardBlurb: "Where the best sets land.",
-  leaderboardPlaceholder:
-    "These are sample standings. Nothing is scored yet, so no real set has a place on this board.",
+  leaderboardBlurb: "Players ranked by Tempus Points (TP).",
+  leaderboardAllTime: "All time",
+  leaderboardWeek: "This week",
   leaderboardRank: "Rank",
   leaderboardPlayer: "Player",
-  leaderboardBest: "Best set",
-  leaderboardSets: "Sets",
+  leaderboardTp: "TP",
+  leaderboardPerfects: "Perfects",
+  leaderboardEmpty: "No points on this board yet. Sign in and play a set to be the first.",
+  leaderboardFailed: "The leaderboard could not be loaded. Try again in a moment.",
+  leaderboardYou: "You: #{rank} · {tp} TP",
 
   // --- the badges page ------------------------------------------------------
   badgesTitle: "Badges",
   badgesIntro:
-    "Six rings that go around your profile picture. Four are a rank you climb on your best set of ten; the other two are earned once and stay unrevealed until they are.",
+    "Six rings that go around your profile picture — one ladder, climbed with Tempus Points (TP). From Gold up, every rung adds quests, and each needs the one below it.",
   badgesProgressTo: "Progress to {badge}",
+
+  // TP, the quests beside each badge, and wearing one. The quest lines take
+  // the target as {n}; the rules themselves are lib/game/badge-rules.ts.
+  badgesTotalTp: "{n} TP",
+  badgeTpRequirement: "Reach {n} TP",
+  questPerfects: "{n} Perfects in any date game",
+  questPerfectGames: "A Perfect in {n} different games",
+  questSurvival: "A survival run of {n}",
+  questHistorySetPerfects: "{n} Perfects in one Date Guessing set",
+  questCompareFlawless: "A Comparison set with all ten right",
+  questDailyStreak: "The daily, {n} days in a row",
+  questEveryGamePerfects: "5 Perfects in each of the five date games",
+  questTopTierSet: "A set where every answer is Great or Perfect",
+  accountRank: "#{n} on the leaderboard",
+  pointsEarned: "+{n} TP earned",
+  pointsWouldHave: "This was worth {n} TP",
+  pointsSignIn: "Sign in to keep your points",
+  newBadge: "New badge: {name}",
+  revealFailed: "That guess did not reach the server. Try again.",
   badgesLocked: "Locked",
   badgesEarned: "Earned",
   badgesUnrevealed: "Unrevealed",
   badgesCount: "{n} of {total} earned",
   /** The card's one control: it hands back the colour the silhouette is
    *  holding. Named per badge because six of these sit on one rail. */
-  badgesShowArt: "Show the {badge} badge",
-  badgesHideArt: "Hide the {badge} badge",
+  badgesWear: "Wear the {badge} badge",
+  badgesTakeOff: "Take off the {badge} badge",
 
   // --- the contact block, on the home page and on `/contact` ---------------
   // `{email}` is substituted with `CONTACT_EMAIL` and rendered as a `mailto:`
@@ -631,6 +693,7 @@ const tr: Dict = {
   formatFilm: "Film",
   formatSeries: "Dizi",
   submitGuess: "Tahmini onayla",
+  comparisonMoveFirst: "Önce kartı sürükle",
   enterDate: "Tarih gir",
   useTimeline: "Zaman çizelgesini kullan",
   yearLabel: "Yıl",
@@ -702,6 +765,7 @@ const tr: Dict = {
   explorerLibraryTitle: "Olay kütüphanesi",
   explorerLibraryBody:
     "Her tur, 4,54 milyar yılı kapsayan ve elden geçirilmiş bir olay kümesinden çekilir; her biri kamuya açık bir fotoğraf ve beş dilde bir adla birlikte.",
+  explorerStatEventsValue: "1000+",
   explorerStatEvents: "olay, her biri fotoğrafıyla",
   explorerStatLanguages: "dil, olay adları dahil",
   explorerStatSpan: "yıllık tarih",
@@ -709,24 +773,30 @@ const tr: Dict = {
 
   faqTitle: "Sıkça sorulan sorular",
   faqBlurb: "İlk turdan önce bilinmeye değer şeyler.",
-  faqQ1: "Hesap açmam gerekiyor mu?",
+  faqQ1: "Tarihsel olayların tarihleri tamamen doğru mu?",
   faqA1:
-    "Sadece rozetler için. İki oyun ve 1v1, giriş yapmadan oynanabilir; on soruluk bir seri de oynadığın sekmede yaşar. Ama bir rozet birine ait olduğu için rozetler sayfası giriş yapmanı ister.",
-  faqQ2: "Tahminler nasıl puanlanıyor?",
+    "Tam olarak değil. Tarihsel olayların tarihleri tartışmalı olabilir; ancak tarihçilerin ve genel olarak kamuoyunun en çok kabul ettiği tarihleri kullanmak için elimizden geleni yaptık. Yine de bazı tarihler hatalı olabilir. Şüpheli bulduğun tarihlere itiraz etmeni ve ilgili sorular üzerinden bize geri bildirim göndermeni öneriyoruz. Geri bildirimin, hataları bulmamıza ve içeriğimizin doğruluğunu artırmamıza yardımcı oluyor.",
+  faqQ2: "Bir tarihe itiraz edebilir miyim?",
   faqA2:
-    "Ham yıl farkına göre değil, olayın kendi yaşına oranla ne kadar şaştığına göre. Her tur beş sonuçtan birine iner — mükemmel, harika, iyi, kötü ya da çok uzak — ve yalnızca sonuncusu ıskadır.",
-  faqQ3: "Zaman çizelgesi ne kadar geriye gidiyor?",
+    "Evet! Her sorunun sonunda, açıklamanın altında bir “İtiraz et” düğmesi bulacaksın. Buna tıklayarak doğru tarihin, gösterilenden daha erken mi yoksa daha geç mi olduğunu düşündüğünü belirtebilirsin. Bu bildirimleri inceliyor ve gerektiğinde sorularımızı güncelliyoruz. Geri bildirimin bizim için son derece değerli ve içeriğimizi geliştirmede büyük rol oynuyor.",
+  faqQ3: "Hangi oyun türleri var?",
   faqA3:
-    "Dünya’nın oluşumuna, yaklaşık 4,54 milyar yıl öncesine. Ölçek yol boyunca değişir: yazılı tarihte tek tek yıllar, derin geçmişte çok daha kaba adımlar.",
-  faqQ4: "Başkasıyla oynayabilir miyim?",
+    "Sitemizde iki ana oyun türü var. Her birinin, farklı kategorilere uyarlanmış oyun modları dahil olmak üzere birkaç çeşidi bulunuyor; böylece tarihsel olayları oynamanın ve keşfetmenin birden çok yolu oluyor.",
+  faqQ4: "Tahminler nasıl puanlanıyor?",
   faqA4:
-    "Evet. 1v1 bir maç açar ve gönderebileceğin bir bağlantı verir; ikiniz aynı turları aynı saate karşı oynarsınız ve kimsenin hesaba ihtiyacı olmaz.",
-  faqQ5: "Fotoğraflar nereden geliyor?",
+    "Ham yıl farkına göre değil, olayın kendi yaşına oranla ne kadar şaştığına göre. Her tur beş sonuçtan birine iner — mükemmel, harika, iyi, kötü ya da çok uzak — ve yalnızca sonuncusu ıskadır.",
+  faqQ5: "Başarımları nasıl kazanırım?",
   faqA5:
-    "Wikimedia Commons’taki kamu malı fotoğraf ve görsellerden. Fotoğrafı olmayan bir olay oyunda hiç çıkmaz.",
-  faqQ6: "Hangi diller var?",
+    "Sitemizdeki farklı oyunları oynayarak ve belirli performans eşiklerine ulaşarak başarım kazanabilirsin. Her oyun, ilerlemeni ödüllendiren kendi başarım setini sunabilir.",
+  faqQ6: "Bir olayın fotoğrafı yanlış olabilir mi?",
   faqA6:
-    "İngilizce, Türkçe, Almanca, Fransızca ve İspanyolca — yalnızca düğmeler değil, olay adları da çevrili. Sayfanın üstündeki menüden seçebilirsin.",
+    "Evet, olay fotoğraflarında küçük hatalar olabilir. Tempus, 1000’den fazla olay içeren büyük bir kütüphane ve bunların bazılarında hata bulunabilir.",
+  faqQ7: "Bir arkadaşımla oynayabilir miyim?",
+  faqA7:
+    "Evet! 1v1 modunda arkadaşına oyun bağlantısını gönderip birlikte oynayabilirsin. Çevrim içi sürüm şu anda geliştiriliyor; çevrim içi maçlar ileride kullanıma açılacak.",
+  faqQ8: "Hesap açmam gerekiyor mu?",
+  faqA8:
+    "Hayır, oyunları hesap açmadan oynayabilirsin. Ancak puan kazanmak, rozetlerin kilidini açmak ve liderlik tablosunda görünmek için kayıt olman gerekiyor.",
 
 
   setProgress: "{total} sorudan {n}.",
@@ -736,6 +806,7 @@ const tr: Dict = {
   setBestStreak: "En uzun seri",
   setBreakdown: "Tahminler nasıl gitti",
   playAgain: "Yeniden oyna",
+  backHome: "Ana sayfaya dön",
   shareResult: "Sonucu paylaş",
   shareCopied: "Kopyalandı",
   shareFailed: "Kopyalanamadı",
@@ -879,29 +950,29 @@ const tr: Dict = {
   achievementsHowTo: "Nasıl kazanılır",
 
   badgeBronze: "Bronz",
-  badgeBronzeRule: "Bir seti bitir",
+  badgeBronzeRule: "10 TP",
   badgeBronzeHow:
-    "On soruluk bir seti özet ekranına kadar oyna. Skorun önemi yok — bu rozet oynamış olmanın rozeti.",
+    "İlk puanların. Giriş yapmışken herhangi bir oyundan birkaç tur oyna.",
   badgeSilver: "Gümüş",
-  badgeSilverRule: "10'da 6",
+  badgeSilverRule: "100 TP",
   badgeSilverHow:
-    "Tek bir sette altı isabet tuttur. Oyunun İyi ve üzeri saydığı her tahmin isabettir, yani kıl payı kaçanlar da sayılır.",
+    "Birkaç set sonra gelir. Her oyun puan verir: tur ne kadar yaklaştığına göre, set de bitirdiğin için.",
   badgeGold: "Altın",
-  badgeGoldRule: "10'da 8",
+  badgeGoldRule: "1.000 TP + 1 görev",
   badgeGoldHow:
-    "Tek bir sette sekiz isabet tuttur. Bu orana çıktığında artık yüzyıl tahmin etmiyor, fotoğrafın dönemini okuyorsundur.",
+    "Buradan sonra puan tek başına yetmez. Altın, yılı tam olarak bilmeni ister — hem de birden fazla kez.",
   badgeDiamond: "Elmas",
-  badgeDiamondRule: "10'da 10",
+  badgeDiamondRule: "3.000 TP + 2 görev",
   badgeDiamondHow:
-    "Bir seti tek bir ıskalama olmadan bitir. On soru, on isabet, tek oturuşta.",
+    "Genişlik ve soğukkanlılık: farklı oyunlarda tam yıl ve dayanan bir hayatta kalma serisi.",
   badgeRuby: "Yakut",
-  badgeRubyRule: "On düello kazan",
+  badgeRubyRule: "10.000 TP + 3 görev",
   badgeRubyHow:
-    "On birebir maç kazan. Yalnızca sonuna kadar oynanan maçlar sayılır; sekmesini kapatıp giden bir rakip sana maç kazandırmaz.",
+    "Tek sette üç tam yıl, kusursuz bir karşılaştırma seti ve arası boş kalmayan bir hafta günlük.",
   badgeAmethyst: "Ametist",
-  badgeAmethystRule: "Her çağda bir Mükemmel",
+  badgeAmethystRule: "30.000 TP + 3 görev",
   badgeAmethystHow:
-    "Zaman çizelgesinin kapsadığı her çağdan bir olayda Mükemmel al — Yerküre & Evren, İnsan & Evrim, Uygarlık Çağı ve Milattan Sonra.",
+    "Merdivenin zirvesi. Her tarih oyununda tam yıllar, ellilik bir hayatta kalma serisi ve Harika'nın altına düşmeyen bir set.",
 
 
   authSignInTitle: "Tekrar hoş geldin",
@@ -911,7 +982,8 @@ const tr: Dict = {
   authTabSignIn: "Giriş yap",
   authTabSignUp: "Kayıt ol",
   authUsername: "Kullanıcı adı",
-  authUsernameHint: "3-20 karakter: a-z, 0-9 ve alt çizgi. Türkçe harf kullanılamaz.",
+  authUsernameHint:
+    "3-20 karakter. Yalnızca a-z harfleri, 0-9 sayıları ve alt çizgi (_) — boşluk, Türkçe harf ve noktalama kullanılamaz.",
   authEmail: "E-posta",
   authPassword: "Şifre",
   authPasswordHint: "En az 8 karakter.",
@@ -930,13 +1002,21 @@ const tr: Dict = {
   authErrEmailTaken: "Bu e-posta ile açılmış bir hesap zaten var.",
   authErrPasswordWeak: "En az 8 karakter kullan.",
   authErrPasswordMismatch: "İki şifre aynı değil.",
-  authErrUsernameInvalid: "3-20 karakter; a-z, 0-9 ve alt çizgi kullan.",
+  authErrUsernameShort: "Bu kullanıcı adı çok kısa — en az 3 karakter kullan.",
+  authErrUsernameLong: "Bu kullanıcı adı çok uzun — en fazla 20 karakter kullan.",
+  authErrUsernameSpaces:
+    "Kullanıcı adında boşluk olamaz. Yerine alt çizgi (_) kullan.",
   authErrUsernameChars:
-    "Yalnızca a-z, 0-9 ve alt çizgi. Türkçe harfler (ç, ğ, ı, İ, ö, ş, ü), boşluk ve noktalama kullanılamaz.",
+    "Kullanıcı adında şunlar olamaz: {chars} — yalnızca a-z harfleri, 0-9 sayıları ve alt çizgi (_) kullanılabilir.",
+  authErrUsernameCharsAny:
+    "Kullanıcı adında yalnızca a-z harfleri, 0-9 sayıları ve alt çizgi (_) olabilir; Türkçe harfler (ç, ğ, ı, İ, ö, ş, ü), boşluk ve noktalama kullanılamaz.",
   authErrUsernameTaken: "Bu kullanıcı adı alınmış.",
   authErrRateLimited: "Çok fazla deneme. Biraz bekleyip tekrar dene.",
   authErrProviderFailed: "Google ile giriş şu anda kullanılamıyor.",
   authErrCurrentPassword: "Bu, mevcut şifren değil.",
+  authErrPhotoTooLarge: "Bu fotoğraf 1 MB'tan büyük. Daha küçük bir tane seç.",
+  authErrPhotoType: "JPEG, PNG, WebP veya HEIC bir fotoğraf kullan.",
+  authErrPhotoUnreadable: "Bu fotoğraf okunamadı. Başka bir tane dene.",
   authErrGeneric: "Bir şeyler ters gitti. Tekrar dene.",
   authGateNotice: "Rozetler bir hesaba ait olduğu için bu sayfa hesap istiyor.",
 
@@ -965,36 +1045,56 @@ const tr: Dict = {
   accountBadgesTitle: "Rozetler",
   accountBadgesEarned: "{total} rozetten {n} tanesi kazanıldı",
   accountSeeBadges: "Rozetleri gör",
+  accountPhotoTitle: "Profil fotoğrafı",
+  accountPhotoBlurb: "Hesabında ve liderlik tablosunda adının yanında görünür.",
+  accountPhotoHint: "JPEG, PNG, WebP veya HEIC, en fazla 1 MB.",
+  accountPhotoUpload: "Fotoğraf yükle",
+  accountPhotoChange: "Fotoğrafı değiştir",
+  accountPhotoRemove: "Kaldır",
+  accountPhotoSaved: "Fotoğraf güncellendi.",
+  accountPhotoRemoved: "Fotoğraf kaldırıldı.",
+  accountPhotoUploading: "Yükleniyor…",
   accountSignOut: "Çıkış yap",
   menuSignOut: "Çıkış yap",
 
   leaderboardTitle: "Liderlik tablosu",
-  leaderboardBlurb: "En iyi serilerin yeri.",
-  leaderboardPlaceholder:
-    "Bunlar örnek sıralamalar. Henüz puan tutulmuyor, yani gerçek bir serinin bu tabloda yeri yok.",
+  leaderboardBlurb: "Oyuncular Tempus Puanına (TP) göre sıralanır.",
+  leaderboardAllTime: "Tüm zamanlar",
+  leaderboardWeek: "Bu hafta",
   leaderboardRank: "Sıra",
   leaderboardPlayer: "Oyuncu",
-  // "En iyi seri" and "Seri" until 2026-10-10, which in a row of two numbers
-  // under uppercased headings read as "EN İYİ SERİ" and "SERİ" — the same word
-  // twice, so neither column said which number it held. The second is now the
-  // count it actually is.
-  leaderboardBest: "En iyi seri",
-  // One word, not "Oynanan seri": the column is 5rem and the longer phrase
-  // wrapped onto a second line, which left this header a line taller than the
-  // three beside it. "Oynanan" next to "En iyi seri" is read as the sets
-  // played, which is what the number under it is.
-  leaderboardSets: "Oynanan",
+  leaderboardTp: "TP",
+  leaderboardPerfects: "Mükemmel",
+  leaderboardEmpty: "Bu tabloda henüz puan yok. Giriş yap ve ilk olmak için bir set oyna.",
+  leaderboardFailed: "Liderlik tablosu yüklenemedi. Birazdan tekrar dene.",
+  leaderboardYou: "Sen: #{rank} · {tp} TP",
 
   badgesTitle: "Rozetler",
   badgesIntro:
-    "Profil fotoğrafının çevresine geçen altı halka. Dördü, bitirdiğin en iyi on soruluk seriyle tırmandığın bir rütbe; diğer ikisi bir kez kazanılır ve kazanılana kadar gizli kalır.",
+    "Profil fotoğrafının çevresine geçen altı halka — Tempus Puanı (TP) ile tırmanılan tek bir merdiven. Altın'dan itibaren her basamak görev ekler ve her biri bir alttakini gerektirir.",
   badgesProgressTo: "{badge} ilerlemesi",
+  badgesTotalTp: "{n} TP",
+  badgeTpRequirement: "{n} TP'ye ulaş",
+  questPerfects: "Herhangi bir tarih oyununda {n} Mükemmel",
+  questPerfectGames: "{n} farklı oyunda birer Mükemmel",
+  questSurvival: "Hayatta kalmada {n}'lik seri",
+  questHistorySetPerfects: "Tek bir Tarih tahmini setinde {n} Mükemmel",
+  questCompareFlawless: "Onu da doğru bir Karşılaştırma seti",
+  questDailyStreak: "Günlüğü {n} gün üst üste bitir",
+  questEveryGamePerfects: "Beş tarih oyununun her birinde 5 Mükemmel",
+  questTopTierSet: "Her cevabı Harika veya Mükemmel olan bir set",
+  accountRank: "Liderlik tablosunda #{n}",
+  pointsEarned: "+{n} TP kazandın",
+  pointsWouldHave: "Bu {n} TP ederdi",
+  pointsSignIn: "Puanlarını saklamak için giriş yap",
+  newBadge: "Yeni rozet: {name}",
+  revealFailed: "Tahmin sunucuya ulaşmadı. Tekrar dene.",
   badgesLocked: "Kilitli",
   badgesEarned: "Kazanıldı",
   badgesUnrevealed: "Gizli",
   badgesCount: "{total} rozetten {n} tanesi",
-  badgesShowArt: "{badge} rozetini göster",
-  badgesHideArt: "{badge} rozetini gizle",
+  badgesWear: "{badge} rozetini tak",
+  badgesTakeOff: "{badge} rozetini çıkar",
 
   contactTitle: "Bize ulaş",
   contactLead:
@@ -1065,6 +1165,7 @@ const de: Dict = {
   formatFilm: "Film",
   formatSeries: "Serie",
   submitGuess: "Schätzung bestätigen",
+  comparisonMoveFirst: "Zuerst die Karte ziehen",
   enterDate: "Datum eingeben",
   useTimeline: "Zeitachse verwenden",
   yearLabel: "Jahr",
@@ -1137,6 +1238,7 @@ const de: Dict = {
   explorerLibraryTitle: "Ereignisbibliothek",
   explorerLibraryBody:
     "Jede Runde stammt aus einem geprüften Bestand, der 4,54 Milliarden Jahre umspannt — jedes Ereignis mit gemeinfreiem Foto und einem Namen in fünf Sprachen.",
+  explorerStatEventsValue: "1000+",
   explorerStatEvents: "Ereignisse, jedes mit Foto",
   explorerStatLanguages: "Sprachen, Ereignisnamen inklusive",
   explorerStatSpan: "Jahre Geschichte",
@@ -1144,24 +1246,30 @@ const de: Dict = {
 
   faqTitle: "Häufige Fragen",
   faqBlurb: "Was vor der ersten Runde wissenswert ist.",
-  faqQ1: "Brauche ich ein Konto?",
+  faqQ1: "Sind die Daten historischer Ereignisse völlig korrekt?",
   faqA1:
-    "Nur für die Abzeichen. Die beiden Spiele und das Duell lassen sich ohne Anmeldung spielen, und eine Serie aus zehn lebt in dem Tab, in dem du sie spielst. Ein Abzeichen gehört aber jemandem, also verlangt die Abzeichenseite eine Anmeldung.",
-  faqQ2: "Wie werden Tipps bewertet?",
+    "Nicht zwangsläufig. Die Daten historischer Ereignisse können umstritten sein, aber wir haben uns große Mühe gegeben, die von Historikern und von der Allgemeinheit am breitesten anerkannten Daten zu verwenden. Einzelne Angaben können dennoch falsch sein. Wir laden dich ausdrücklich ein, zweifelhafte Daten anzufechten und uns über die betreffende Frage eine Rückmeldung zu schicken. Deine Rückmeldung hilft uns, Fehler zu finden und unsere Inhalte genauer zu machen.",
+  faqQ2: "Kann ich ein Datum anfechten?",
   faqA2:
-    "Nicht nach dem reinen Jahresabstand, sondern danach, wie weit du im Verhältnis zum Alter des Ereignisses danebenliegst. Jede Runde endet in einem von fünf Urteilen — perfekt, stark, gut, schwach oder weit daneben — und nur das letzte gilt als Fehlschlag.",
-  faqQ3: "Wie weit reicht der Zeitstrahl zurück?",
+    "Ja! Am Ende jeder Frage findest du unter der Erläuterung die Schaltfläche „Anfechten“. Mit einem Klick darauf sagst du uns, ob das richtige Datum nach deiner Einschätzung früher oder später liegt als das angezeigte. Wir prüfen diese Meldungen und aktualisieren unsere Fragen, wenn es nötig ist. Deine Rückmeldung ist uns sehr wichtig und trägt wesentlich dazu bei, unsere Inhalte zu verbessern.",
+  faqQ3: "Welche Arten von Spielen gibt es?",
   faqA3:
-    "Bis zur Entstehung der Erde vor etwa 4,54 Milliarden Jahren. Der Maßstab ändert sich unterwegs: einzelne Jahre in der überlieferten Geschichte, sehr viel gröbere Schritte in der Tiefenzeit.",
-  faqQ4: "Kann ich gegen jemanden spielen?",
+    "Auf unserer Seite gibt es zwei Hauptarten von Spielen. Zu jeder gehören mehrere Varianten, darunter Spielmodi für verschiedene Themenbereiche — also viele Wege, zu spielen und historische Ereignisse zu entdecken.",
+  faqQ4: "Wie werden Tipps bewertet?",
   faqA4:
-    "Ja. 1v1 öffnet ein Match und gibt dir einen Link zum Verschicken; ihr beantwortet dieselben Runden gegen dieselbe Uhr, und niemand braucht ein Konto.",
-  faqQ5: "Woher stammen die Bilder?",
+    "Nicht nach dem reinen Jahresabstand, sondern danach, wie weit du im Verhältnis zum Alter des Ereignisses danebenliegst. Jede Runde endet in einem von fünf Urteilen — perfekt, stark, gut, schwach oder weit daneben — und nur das letzte gilt als Fehlschlag.",
+  faqQ5: "Wie bekomme ich Erfolge?",
   faqA5:
-    "Aus gemeinfreien Fotos und Abbildungen von Wikimedia Commons. Ein Ereignis ohne Bild kommt schlicht nicht vor.",
-  faqQ6: "Welche Sprachen gibt es?",
+    "Erfolge bekommst du, indem du die verschiedenen Spiele auf unserer Seite spielst und bestimmte Leistungsmarken erreichst. Jedes Spiel kann eigene Erfolge haben, die deinen Fortschritt belohnen.",
+  faqQ6: "Kann das Foto eines Ereignisses falsch sein?",
   faqA6:
-    "Englisch, Türkisch, Deutsch, Französisch und Spanisch — auch die Ereignisnamen, nicht nur die Beschriftungen. Wähle sie im Menü oben auf der Seite.",
+    "Ja, bei den Ereignisfotos können kleine Fehler vorkommen. Tempus ist eine große Bibliothek mit über 1.000 Ereignissen, und einzelne davon können fehlerhaft sein.",
+  faqQ7: "Kann ich mit einem Freund spielen?",
+  faqA7:
+    "Ja! Im 1v1-Modus schickst du den Link zur Partie weiter und ihr spielt gemeinsam. Eine Online-Version ist in Arbeit; Online-Partien kommen später dazu.",
+  faqQ8: "Muss ich ein Konto anlegen?",
+  faqA8:
+    "Nein, die Spiele lassen sich ohne Konto spielen. Für Punkte, Abzeichen und einen Platz in der Rangliste ist eine Registrierung aber nötig.",
 
 
   setProgress: "{n} von {total}",
@@ -1171,6 +1279,7 @@ const de: Dict = {
   setBestStreak: "Längste Serie",
   setBreakdown: "Wie die Schätzungen lagen",
   playAgain: "Noch einmal",
+  backHome: "Zurück zur Startseite",
   shareResult: "Ergebnis teilen",
   shareCopied: "Kopiert",
   shareFailed: "Kopieren fehlgeschlagen",
@@ -1316,29 +1425,29 @@ const de: Dict = {
   achievementsHowTo: "So verdienst du es",
 
   badgeBronze: "Bronze",
-  badgeBronzeRule: "Einen Satz beenden",
+  badgeBronzeRule: "10 TP",
   badgeBronzeHow:
-    "Spiele einen Satz aus zehn Fragen bis zur Auswertung durch. Das Ergebnis zählt nicht — dieses Abzeichen gibt es fürs Spielen.",
+    "Deine ersten Punkte. Spiel angemeldet ein paar Runden eines beliebigen Spiels.",
   badgeSilver: "Silber",
-  badgeSilverRule: "6 von 10",
+  badgeSilverRule: "100 TP",
   badgeSilverHow:
-    "Lande sechs Treffer in einem einzigen Satz. Als Treffer gilt alles ab Gut, knappe Fehlschätzungen zählen also mit.",
+    "Nach ein paar Serien. Jedes Spiel zahlt: eine Runde nach Nähe, eine Serie fürs Beenden.",
   badgeGold: "Gold",
-  badgeGoldRule: "8 von 10",
+  badgeGoldRule: "1.000 TP + 1 Aufgabe",
   badgeGoldHow:
-    "Lande acht Treffer in einem einzigen Satz. Bei dieser Quote liest du dem Foto seine Epoche ab, statt ein Jahrhundert zu raten.",
+    "Ab hier reichen Punkte allein nicht mehr. Gold verlangt das genaue Jahr — mehr als einmal.",
   badgeDiamond: "Diamant",
-  badgeDiamondRule: "10 von 10",
+  badgeDiamondRule: "3.000 TP + 2 Aufgaben",
   badgeDiamondHow:
-    "Beende einen Satz ohne einen einzigen Fehlschuss. Zehn Fragen, zehn Treffer, in einem Durchgang.",
+    "Breite und Nerven: genaue Jahre in verschiedenen Spielen und ein Überlebenslauf, der hält.",
   badgeRuby: "Rubin",
-  badgeRubyRule: "Zehn Duelle gewinnen",
+  badgeRubyRule: "10.000 TP + 3 Aufgaben",
   badgeRubyHow:
-    "Gewinne zehn Partien im Direktduell. Nur eine zu Ende gespielte Partie zählt — ein Gegner, der seinen Tab schließt, schenkt dir keine.",
+    "Drei genaue Jahre in einer Serie, eine fehlerfreie Vergleichsserie und eine Woche Tägliche ohne Lücke.",
   badgeAmethyst: "Amethyst",
-  badgeAmethystRule: "Ein Perfekt je Epoche",
+  badgeAmethystRule: "30.000 TP + 3 Aufgaben",
   badgeAmethystHow:
-    "Hol dir ein Perfekt auf je ein Ereignis aus jeder Epoche der Zeitleiste — Erde & Kosmos, Mensch & Evolution, Zeitalter der Zivilisation und Nach Christus.",
+    "Die Spitze der Leiter. Genaue Jahre in jedem Datumsspiel, ein Überlebenslauf von fünfzig und eine Serie ohne Antwort unter Stark.",
 
 
   authSignInTitle: "Willkommen zurück",
@@ -1348,7 +1457,8 @@ const de: Dict = {
   authTabSignIn: "Anmelden",
   authTabSignUp: "Registrieren",
   authUsername: "Benutzername",
-  authUsernameHint: "3-20 Zeichen: a-z, 0-9 und Unterstriche. Keine Umlaute.",
+  authUsernameHint:
+    "3 bis 20 Zeichen. Nur Buchstaben a-z, Zahlen 0-9 und der Unterstrich (_) — keine Leerzeichen, Umlaute oder Satzzeichen.",
   authEmail: "E-Mail",
   authPassword: "Passwort",
   authPasswordHint: "Mindestens 8 Zeichen.",
@@ -1367,13 +1477,21 @@ const de: Dict = {
   authErrEmailTaken: "Mit dieser E-Mail gibt es bereits ein Konto.",
   authErrPasswordWeak: "Nimm mindestens 8 Zeichen.",
   authErrPasswordMismatch: "Die beiden Passwörter stimmen nicht überein.",
-  authErrUsernameInvalid: "3-20 Zeichen aus a-z, 0-9 und Unterstrichen.",
+  authErrUsernameShort: "Dieser Benutzername ist zu kurz — nimm mindestens 3 Zeichen.",
+  authErrUsernameLong: "Dieser Benutzername ist zu lang — höchstens 20 Zeichen.",
+  authErrUsernameSpaces:
+    "Benutzernamen dürfen keine Leerzeichen enthalten. Nimm stattdessen einen Unterstrich (_).",
   authErrUsernameChars:
-    "Nur a-z, 0-9 und Unterstriche. Umlaute, ß, Leerzeichen und Satzzeichen sind nicht möglich.",
+    "Das kann ein Benutzername nicht enthalten: {chars} — erlaubt sind nur Buchstaben a-z, Zahlen 0-9 und der Unterstrich (_).",
+  authErrUsernameCharsAny:
+    "Benutzernamen dürfen nur Buchstaben a-z, Zahlen 0-9 und den Unterstrich (_) enthalten — keine Umlaute, kein ß, keine Leerzeichen und keine Satzzeichen.",
   authErrUsernameTaken: "Dieser Benutzername ist vergeben.",
   authErrRateLimited: "Zu viele Versuche. Warte kurz und versuche es erneut.",
   authErrProviderFailed: "Die Anmeldung mit Google ist gerade nicht möglich.",
   authErrCurrentPassword: "Das ist nicht dein aktuelles Passwort.",
+  authErrPhotoTooLarge: "Das Foto ist größer als 1 MB. Wähle ein kleineres.",
+  authErrPhotoType: "Verwende ein JPEG-, PNG-, WebP- oder HEIC-Foto.",
+  authErrPhotoUnreadable: "Das Foto konnte nicht gelesen werden. Versuche ein anderes.",
   authErrGeneric: "Da ist etwas schiefgegangen. Versuche es erneut.",
   authGateNotice: "Abzeichen gehören zu einem Konto, also braucht diese Seite eines.",
 
@@ -1403,28 +1521,56 @@ const de: Dict = {
   accountBadgesTitle: "Abzeichen",
   accountBadgesEarned: "{n} von {total} verdient",
   accountSeeBadges: "Abzeichen ansehen",
+  accountPhotoTitle: "Profilfoto",
+  accountPhotoBlurb: "Erscheint in deinem Konto und neben deinem Namen in der Bestenliste.",
+  accountPhotoHint: "JPEG, PNG, WebP oder HEIC, höchstens 1 MB.",
+  accountPhotoUpload: "Foto hochladen",
+  accountPhotoChange: "Foto ändern",
+  accountPhotoRemove: "Entfernen",
+  accountPhotoSaved: "Foto aktualisiert.",
+  accountPhotoRemoved: "Foto entfernt.",
+  accountPhotoUploading: "Wird hochgeladen…",
   accountSignOut: "Abmelden",
   menuSignOut: "Abmelden",
 
   leaderboardTitle: "Rangliste",
-  leaderboardBlurb: "Wo die besten Serien landen.",
-  leaderboardPlaceholder:
-    "Das ist eine Beispielrangliste. Es wird noch nichts gezählt, also hat keine echte Serie hier einen Platz.",
+  leaderboardBlurb: "Spieler nach Tempus-Punkten (TP).",
+  leaderboardAllTime: "Gesamt",
+  leaderboardWeek: "Diese Woche",
   leaderboardRank: "Platz",
   leaderboardPlayer: "Spieler",
-  leaderboardBest: "Beste Serie",
-  leaderboardSets: "Serien",
+  leaderboardTp: "TP",
+  leaderboardPerfects: "Perfekt",
+  leaderboardEmpty: "Noch keine Punkte auf dieser Liste. Melde dich an und spiel eine Serie, um der Erste zu sein.",
+  leaderboardFailed: "Die Rangliste konnte nicht geladen werden. Versuch es gleich noch einmal.",
+  leaderboardYou: "Du: #{rank} · {tp} TP",
 
   badgesTitle: "Abzeichen",
   badgesIntro:
-    "Sechs Ringe, die um dein Profilbild laufen. Vier sind ein Rang, den du mit deiner besten Serie aus zehn erklimmst; die anderen zwei verdient man einmal und bleiben bis dahin verborgen.",
+    "Sechs Ringe um dein Profilbild — eine Leiter, erklommen mit Tempus-Punkten (TP). Ab Gold bringt jede Stufe Aufgaben mit, und jede setzt die darunter voraus.",
   badgesProgressTo: "Fortschritt zu {badge}",
+  badgesTotalTp: "{n} TP",
+  badgeTpRequirement: "{n} TP erreichen",
+  questPerfects: "{n}× Perfekt in einem Datumsspiel",
+  questPerfectGames: "Ein Perfekt in {n} verschiedenen Spielen",
+  questSurvival: "Ein Überlebenslauf von {n}",
+  questHistorySetPerfects: "{n}× Perfekt in einer Serie „Datum erraten“",
+  questCompareFlawless: "Eine Vergleichsserie mit allen zehn richtig",
+  questDailyStreak: "Die Tägliche, {n} Tage in Folge",
+  questEveryGamePerfects: "5× Perfekt in jedem der fünf Datumsspiele",
+  questTopTierSet: "Eine Serie, in der jede Antwort Stark oder Perfekt ist",
+  accountRank: "#{n} in der Rangliste",
+  pointsEarned: "+{n} TP verdient",
+  pointsWouldHave: "Das wären {n} TP gewesen",
+  pointsSignIn: "Melde dich an, um deine Punkte zu behalten",
+  newBadge: "Neues Abzeichen: {name}",
+  revealFailed: "Der Tipp hat den Server nicht erreicht. Versuch es noch einmal.",
   badgesLocked: "Gesperrt",
   badgesEarned: "Verdient",
   badgesUnrevealed: "Verborgen",
   badgesCount: "{n} von {total}",
-  badgesShowArt: "Abzeichen {badge} anzeigen",
-  badgesHideArt: "Abzeichen {badge} ausblenden",
+  badgesWear: "Abzeichen {badge} tragen",
+  badgesTakeOff: "Abzeichen {badge} ablegen",
 
   contactTitle: "Kontakt",
   contactLead:
@@ -1495,6 +1641,7 @@ const fr: Dict = {
   formatFilm: "Film",
   formatSeries: "Série",
   submitGuess: "Valider la réponse",
+  comparisonMoveFirst: "Faites d’abord glisser la carte",
   enterDate: "Saisir une date",
   useTimeline: "Utiliser la frise",
   yearLabel: "Année",
@@ -1567,6 +1714,7 @@ const fr: Dict = {
   explorerLibraryTitle: "Bibliothèque d’événements",
   explorerLibraryBody:
     "Chaque manche est tirée d’un fonds vérifié couvrant 4,54 milliards d’années, chaque événement avec une photographie du domaine public et un nom en cinq langues.",
+  explorerStatEventsValue: "1000+",
   explorerStatEvents: "événements, tous illustrés",
   explorerStatLanguages: "langues, noms des événements compris",
   explorerStatSpan: "ans d’histoire couverts",
@@ -1574,24 +1722,30 @@ const fr: Dict = {
 
   faqTitle: "Questions fréquentes",
   faqBlurb: "L’essentiel avant la première manche.",
-  faqQ1: "Faut-il un compte ?",
+  faqQ1: "Les dates des événements historiques sont-elles parfaitement exactes ?",
   faqA1:
-    "Seulement pour les badges. Les deux jeux et le duel se jouent sans compte, et une série de dix vit dans l'onglet où vous la jouez. Mais un badge appartient à quelqu'un : la page des badges demande donc de se connecter.",
-  faqQ2: "Comment les réponses sont-elles notées ?",
+    "Pas nécessairement. Les dates des événements historiques peuvent être débattues, mais nous avons tout fait pour retenir celles qui font le plus largement consensus chez les historiens et dans le grand public. Certaines peuvent malgré tout être inexactes. Nous invitons les joueurs à contester les dates qui leur semblent douteuses et à nous envoyer un retour depuis la question concernée. Vos retours nous aident à repérer les erreurs et à améliorer la justesse de nos contenus.",
+  faqQ2: "Puis-je contester une date ?",
   faqA2:
-    "Par l’écart rapporté à l’âge de l’événement, et non par le nombre d’années brut. Chaque manche aboutit à l’un des cinq verdicts — parfait, excellent, bien, faible ou loin du compte — et seul le dernier compte comme raté.",
-  faqQ3: "Jusqu’où remonte la frise ?",
+    "Oui ! À la fin de chaque question, sous l’explication, vous trouverez un bouton « Contester ». En cliquant dessus, vous nous indiquez si la bonne date devrait selon vous être antérieure ou postérieure à celle affichée. Nous examinons ces signalements et mettons nos questions à jour lorsque c’est nécessaire. Vos retours nous sont extrêmement précieux et jouent un rôle essentiel dans l’amélioration de nos contenus.",
+  faqQ3: "Quels types de jeux propose le site ?",
   faqA3:
-    "Jusqu’à la formation de la Terre, il y a environ 4,54 milliards d’années. L’échelle change en chemin : l’année près de nous, des pas bien plus larges dans les temps profonds.",
-  faqQ4: "Peut-on jouer à deux ?",
+    "Le site propose deux grands types de jeux. Chacun compte plusieurs variantes, avec des modes adaptés à différentes catégories : autant de façons de jouer et d’explorer l’histoire.",
+  faqQ4: "Comment les réponses sont-elles notées ?",
   faqA4:
-    "Oui. Le mode 1v1 ouvre une partie et vous donne un lien à envoyer ; vous répondez aux mêmes manches sur la même horloge, sans compte.",
-  faqQ5: "D’où viennent les images ?",
+    "Par l’écart rapporté à l’âge de l’événement, et non par le nombre d’années brut. Chaque manche aboutit à l’un des cinq verdicts — parfait, excellent, bien, faible ou loin du compte — et seul le dernier compte comme raté.",
+  faqQ5: "Comment obtenir des succès ?",
   faqA5:
-    "De photographies et d’illustrations du domaine public, sur Wikimedia Commons. Un événement sans image n’apparaît tout simplement pas.",
-  faqQ6: "Quelles langues sont disponibles ?",
+    "Les succès s’obtiennent en jouant aux différents jeux du site et en atteignant certains paliers de performance. Chaque jeu peut avoir ses propres succès, qui récompensent votre progression.",
+  faqQ6: "La photo d’un événement peut-elle être erronée ?",
   faqA6:
-    "Anglais, turc, allemand, français et espagnol — noms des événements compris, pas seulement l’interface. Choisissez dans le menu en haut de la page.",
+    "Oui, de petites erreurs sont possibles parmi les photos. Tempus est une grande bibliothèque de plus de 1 000 événements, et certaines fiches peuvent comporter des erreurs.",
+  faqQ7: "Puis-je jouer avec un ami ?",
+  faqA7:
+    "Oui ! En mode 1v1, il suffit d’envoyer le lien de la partie à votre ami pour jouer ensemble. Une version en ligne est en cours de développement et les parties en ligne arriveront plus tard.",
+  faqQ8: "Faut-il créer un compte ?",
+  faqA8:
+    "Non, les jeux se jouent sans compte. En revanche, l’inscription est nécessaire pour gagner des points, débloquer des badges et apparaître au classement.",
 
 
   setProgress: "{n} sur {total}",
@@ -1601,6 +1755,7 @@ const fr: Dict = {
   setBestStreak: "Meilleure série",
   setBreakdown: "Précision des estimations",
   playAgain: "Rejouer",
+  backHome: "Retour à l'accueil",
   shareResult: "Partager le résultat",
   shareCopied: "Copié",
   shareFailed: "Copie impossible",
@@ -1745,29 +1900,29 @@ const fr: Dict = {
   achievementsHowTo: "Comment l'obtenir",
 
   badgeBronze: "Bronze",
-  badgeBronzeRule: "Terminer une série",
+  badgeBronzeRule: "10 TP",
   badgeBronzeHow:
-    "Jouez une série de dix questions jusqu'au récapitulatif. Le score n'entre pas en compte — c'est le badge de celui qui a joué.",
+    "Tes premiers points. Joue quelques manches de n'importe quel jeu en étant connecté.",
   badgeSilver: "Argent",
-  badgeSilverRule: "6 sur 10",
+  badgeSilverRule: "100 TP",
   badgeSilverHow:
-    "Placez six bonnes réponses dans une même série. Tout ce que le jeu juge Bien ou mieux compte, donc une estimation de peu compte aussi.",
+    "Après quelques séries. Chaque jeu rapporte : une manche selon ta précision, une série pour l'avoir finie.",
   badgeGold: "Or",
-  badgeGoldRule: "8 sur 10",
+  badgeGoldRule: "1 000 TP + 1 défi",
   badgeGoldHow:
-    "Placez huit bonnes réponses dans une même série. À ce rythme, vous lisez l'époque sur la photo au lieu de deviner un siècle.",
+    "À partir d'ici, les points ne suffisent plus. L'or demande l'année exacte — plus d'une fois.",
   badgeDiamond: "Diamant",
-  badgeDiamondRule: "10 sur 10",
+  badgeDiamondRule: "3 000 TP + 2 défis",
   badgeDiamondHow:
-    "Terminez une série sans un seul échec. Dix questions, dix réussites, d'une traite.",
+    "Polyvalence et sang-froid : des années exactes dans plusieurs jeux, et une partie de survie qui tient.",
   badgeRuby: "Rubis",
-  badgeRubyRule: "Gagner dix duels",
+  badgeRubyRule: "10 000 TP + 3 défis",
   badgeRubyHow:
-    "Gagnez dix duels en face-à-face. Seule une partie jouée jusqu'au bout compte : un adversaire qui ferme son onglet ne vous en offre pas une.",
+    "Trois années exactes dans une série, une série de comparaison sans faute et une semaine de quotidiens sans trou.",
   badgeAmethyst: "Améthyste",
-  badgeAmethystRule: "Un Parfait par époque",
+  badgeAmethystRule: "30 000 TP + 3 défis",
   badgeAmethystHow:
-    "Obtenez un Parfait sur un événement de chaque époque couverte par la frise — Terre & cosmos, Humains & évolution, Âge des civilisations et Après Jésus-Christ.",
+    "Le sommet de l'échelle. Des années exactes dans chaque jeu de dates, une survie de cinquante et une série sans rien sous Excellent.",
 
 
   authSignInTitle: "Content de vous revoir",
@@ -1777,7 +1932,8 @@ const fr: Dict = {
   authTabSignIn: "Se connecter",
   authTabSignUp: "S'inscrire",
   authUsername: "Nom d'utilisateur",
-  authUsernameHint: "3 à 20 caractères : a-z, 0-9 et tirets bas. Pas d’accents.",
+  authUsernameHint:
+    "3 à 20 caractères. Uniquement les lettres a-z, les chiffres 0-9 et le tiret bas (_) — ni espaces, ni accents, ni ponctuation.",
   authEmail: "E-mail",
   authPassword: "Mot de passe",
   authPasswordHint: "Au moins 8 caractères.",
@@ -1796,13 +1952,21 @@ const fr: Dict = {
   authErrEmailTaken: "Un compte existe déjà avec cet e-mail.",
   authErrPasswordWeak: "Utilisez au moins 8 caractères.",
   authErrPasswordMismatch: "Les deux mots de passe ne correspondent pas.",
-  authErrUsernameInvalid: "3 à 20 caractères : a-z, 0-9 et tirets bas.",
+  authErrUsernameShort: "Ce nom est trop court — utilisez au moins 3 caractères.",
+  authErrUsernameLong: "Ce nom est trop long — 20 caractères au maximum.",
+  authErrUsernameSpaces:
+    "Un nom d’utilisateur ne peut pas contenir d’espace. Utilisez un tiret bas (_) à la place.",
   authErrUsernameChars:
-    "Uniquement a-z, 0-9 et tirets bas. Les lettres accentuées, les espaces et la ponctuation sont refusés.",
+    "Un nom d’utilisateur ne peut pas contenir : {chars} — seules les lettres a-z, les chiffres 0-9 et le tiret bas (_) sont acceptés.",
+  authErrUsernameCharsAny:
+    "Un nom d’utilisateur ne peut contenir que les lettres a-z, les chiffres 0-9 et le tiret bas (_) — ni lettres accentuées, ni espaces, ni ponctuation.",
   authErrUsernameTaken: "Ce nom est déjà pris.",
   authErrRateLimited: "Trop de tentatives. Attendez un moment et réessayez.",
   authErrProviderFailed: "La connexion Google est indisponible pour le moment.",
   authErrCurrentPassword: "Ce n'est pas votre mot de passe actuel.",
+  authErrPhotoTooLarge: "Cette photo dépasse 1 Mo. Choisissez-en une plus petite.",
+  authErrPhotoType: "Utilisez une photo JPEG, PNG, WebP ou HEIC.",
+  authErrPhotoUnreadable: "Cette photo n'a pas pu être lue. Essayez-en une autre.",
   authErrGeneric: "Quelque chose n'a pas fonctionné. Réessayez.",
   authGateNotice: "Les badges appartiennent à un compte : cette page en demande un.",
 
@@ -1832,28 +1996,56 @@ const fr: Dict = {
   accountBadgesTitle: "Badges",
   accountBadgesEarned: "{n} sur {total} obtenus",
   accountSeeBadges: "Voir les badges",
+  accountPhotoTitle: "Photo de profil",
+  accountPhotoBlurb: "Affichée sur votre compte et à côté de votre nom dans le classement.",
+  accountPhotoHint: "JPEG, PNG, WebP ou HEIC, 1 Mo maximum.",
+  accountPhotoUpload: "Ajouter une photo",
+  accountPhotoChange: "Changer de photo",
+  accountPhotoRemove: "Supprimer",
+  accountPhotoSaved: "Photo mise à jour.",
+  accountPhotoRemoved: "Photo supprimée.",
+  accountPhotoUploading: "Envoi…",
   accountSignOut: "Se déconnecter",
   menuSignOut: "Se déconnecter",
 
   leaderboardTitle: "Classement",
-  leaderboardBlurb: "Là où atterrissent les meilleures séries.",
-  leaderboardPlaceholder:
-    "Ce classement est un exemple. Rien n'est encore compté, donc aucune vraie série n'y a sa place.",
+  leaderboardBlurb: "Les joueurs classés par points Tempus (TP).",
+  leaderboardAllTime: "Depuis toujours",
+  leaderboardWeek: "Cette semaine",
   leaderboardRank: "Rang",
   leaderboardPlayer: "Joueur",
-  leaderboardBest: "Meilleure série",
-  leaderboardSets: "Séries",
+  leaderboardTp: "TP",
+  leaderboardPerfects: "Parfaits",
+  leaderboardEmpty: "Aucun point sur ce classement pour l'instant. Connecte-toi et joue une série pour être le premier.",
+  leaderboardFailed: "Le classement n'a pas pu être chargé. Réessaie dans un instant.",
+  leaderboardYou: "Toi : #{rank} · {tp} TP",
 
   badgesTitle: "Badges",
   badgesIntro:
-    "Six anneaux qui entourent votre photo de profil. Quatre forment un rang que l'on gravit avec sa meilleure série de dix ; les deux autres se gagnent une fois et restent cachés jusque-là.",
+    "Six anneaux autour de ta photo de profil — une seule échelle, gravie avec les points Tempus (TP). À partir de l'or, chaque échelon ajoute des défis, et chacun exige celui d'en dessous.",
   badgesProgressTo: "Progression vers {badge}",
+  badgesTotalTp: "{n} TP",
+  badgeTpRequirement: "Atteindre {n} TP",
+  questPerfects: "{n} Parfaits dans un jeu de dates",
+  questPerfectGames: "Un Parfait dans {n} jeux différents",
+  questSurvival: "Une survie de {n}",
+  questHistorySetPerfects: "{n} Parfaits dans une série « Devine la date »",
+  questCompareFlawless: "Une série de comparaison avec les dix bonnes",
+  questDailyStreak: "Le quotidien, {n} jours d'affilée",
+  questEveryGamePerfects: "5 Parfaits dans chacun des cinq jeux de dates",
+  questTopTierSet: "Une série où chaque réponse est Excellent ou Parfait",
+  accountRank: "#{n} au classement",
+  pointsEarned: "+{n} TP gagnés",
+  pointsWouldHave: "Cela valait {n} TP",
+  pointsSignIn: "Connecte-toi pour garder tes points",
+  newBadge: "Nouveau badge : {name}",
+  revealFailed: "Ta réponse n'a pas atteint le serveur. Réessaie.",
   badgesLocked: "Verrouillé",
   badgesEarned: "Obtenu",
   badgesUnrevealed: "Caché",
   badgesCount: "{n} sur {total}",
-  badgesShowArt: "Afficher le badge {badge}",
-  badgesHideArt: "Masquer le badge {badge}",
+  badgesWear: "Porter le badge {badge}",
+  badgesTakeOff: "Retirer le badge {badge}",
 
   contactTitle: "Nous contacter",
   contactLead:
@@ -1923,6 +2115,7 @@ const es: Dict = {
   formatFilm: "Película",
   formatSeries: "Serie",
   submitGuess: "Confirmar respuesta",
+  comparisonMoveFirst: "Primero arrastra la tarjeta",
   enterDate: "Introducir una fecha",
   useTimeline: "Usar la línea de tiempo",
   yearLabel: "Año",
@@ -1995,6 +2188,7 @@ const es: Dict = {
   explorerLibraryTitle: "Biblioteca de acontecimientos",
   explorerLibraryBody:
     "Cada ronda sale de un fondo revisado que abarca 4540 millones de años, con una fotografía de dominio público y un nombre en cinco idiomas para cada acontecimiento.",
+  explorerStatEventsValue: "1000+",
   explorerStatEvents: "acontecimientos, todos con foto",
   explorerStatLanguages: "idiomas, nombres incluidos",
   explorerStatSpan: "años de historia",
@@ -2002,24 +2196,30 @@ const es: Dict = {
 
   faqTitle: "Preguntas frecuentes",
   faqBlurb: "Lo que conviene saber antes de la primera ronda.",
-  faqQ1: "¿Hace falta una cuenta?",
+  faqQ1: "¿Las fechas de los acontecimientos históricos son totalmente exactas?",
   faqA1:
-    "Solo para las insignias. Los dos juegos y el duelo se pueden jugar sin cuenta, y una serie de diez vive en la pestaña en la que la juegas. Pero una insignia pertenece a alguien, así que la página de insignias pide iniciar sesión.",
-  faqQ2: "¿Cómo se puntúan las respuestas?",
+    "No necesariamente. Las fechas de los acontecimientos históricos pueden ser discutidas, pero hemos hecho todo lo posible por usar las más aceptadas por los historiadores y por el público en general. Aun así, alguna puede ser inexacta. Animamos a los jugadores a impugnar las fechas que les parezcan dudosas y a enviarnos sus comentarios desde la pregunta correspondiente. Tus comentarios nos ayudan a detectar errores y a mejorar la precisión de nuestros contenidos.",
+  faqQ2: "¿Puedo impugnar una fecha?",
   faqA2:
-    "Por lo que te desvías en relación con la edad del acontecimiento, no por los años en bruto. Cada ronda termina en uno de cinco veredictos —perfecto, excelente, bien, flojo o muy lejos— y solo el último cuenta como fallo.",
-  faqQ3: "¿Hasta dónde llega la línea de tiempo?",
+    "¡Sí! Al final de cada pregunta, debajo de la explicación, encontrarás el botón «Impugnar». Al pulsarlo puedes indicarnos si crees que la fecha correcta debería ser anterior o posterior a la mostrada. Revisamos estos avisos y actualizamos nuestras preguntas cuando es necesario. Tus comentarios son muy importantes para nosotros y resultan decisivos para mejorar los contenidos.",
+  faqQ3: "¿Qué tipos de juegos hay?",
   faqA3:
-    "Hasta la formación de la Tierra, hace unos 4540 millones de años. La escala cambia por el camino: años sueltos en la historia escrita y pasos mucho más amplios en el tiempo profundo.",
-  faqQ4: "¿Se puede jugar con otra persona?",
+    "La web tiene dos tipos principales de juego. Cada uno cuenta con varias variantes, incluidos modos adaptados a distintas categorías, así que hay muchas formas de jugar y de explorar la historia.",
+  faqQ4: "¿Cómo se puntúan las respuestas?",
   faqA4:
-    "Sí. El modo 1v1 abre una partida y te da un enlace para enviar; ambos respondéis las mismas rondas contra el mismo reloj, sin cuentas.",
-  faqQ5: "¿De dónde salen las imágenes?",
+    "Por lo que te desvías en relación con la edad del acontecimiento, no por los años en bruto. Cada ronda termina en uno de cinco veredictos —perfecto, excelente, bien, flojo o muy lejos— y solo el último cuenta como fallo.",
+  faqQ5: "¿Cómo consigo logros?",
   faqA5:
-    "De fotografías e ilustraciones de dominio público de Wikimedia Commons. Un acontecimiento sin imagen simplemente no aparece.",
-  faqQ6: "¿En qué idiomas está?",
+    "Los logros se consiguen jugando a los distintos juegos de la web y alcanzando ciertas marcas de rendimiento. Cada juego puede tener sus propios logros, que premian tu progreso.",
+  faqQ6: "¿Puede estar mal la foto de un acontecimiento?",
   faqA6:
-    "Inglés, turco, alemán, francés y español, incluidos los nombres de los acontecimientos y no solo los botones. Elígelo en el menú de la parte superior de la página.",
+    "Sí, puede haber pequeños errores entre las fotos. Tempus es una biblioteca grande, con más de 1000 acontecimientos, y en algunos puede haber fallos.",
+  faqQ7: "¿Puedo jugar con un amigo?",
+  faqA7:
+    "¡Sí! En el modo 1v1 puedes enviarle el enlace de la partida a tu amigo y jugar juntos. La versión en línea está en desarrollo y las partidas en línea llegarán más adelante.",
+  faqQ8: "¿Hace falta crear una cuenta?",
+  faqA8:
+    "No, puedes jugar sin cuenta. Pero necesitas registrarte para ganar puntos, desbloquear insignias y aparecer en la clasificación.",
 
 
   setProgress: "{n} de {total}",
@@ -2029,6 +2229,7 @@ const es: Dict = {
   setBestStreak: "Mejor racha",
   setBreakdown: "Cómo fueron las estimaciones",
   playAgain: "Jugar otra vez",
+  backHome: "Volver al inicio",
   shareResult: "Compartir resultado",
   shareCopied: "Copiado",
   shareFailed: "No se pudo copiar",
@@ -2174,29 +2375,29 @@ const es: Dict = {
   achievementsHowTo: "Cómo conseguirla",
 
   badgeBronze: "Bronce",
-  badgeBronzeRule: "Terminar una serie",
+  badgeBronzeRule: "10 TP",
   badgeBronzeHow:
-    "Juega una serie de diez preguntas hasta el resumen. La puntuación da igual: esta es la insignia de haber jugado.",
+    "Tus primeros puntos. Juega unas rondas de cualquier juego con la sesión iniciada.",
   badgeSilver: "Plata",
-  badgeSilverRule: "6 de 10",
+  badgeSilverRule: "100 TP",
   badgeSilverHow:
-    "Acierta seis veces en una misma serie. Cuenta como acierto todo lo que el juego llama Bien o mejor, así que fallar por poco también suma.",
+    "Tras unas cuantas series. Cada juego paga: una ronda según lo cerca que estuviste, una serie por terminarla.",
   badgeGold: "Oro",
-  badgeGoldRule: "8 de 10",
+  badgeGoldRule: "1.000 TP + 1 reto",
   badgeGoldHow:
-    "Acierta ocho veces en una misma serie. A ese ritmo ya le lees la época a la fotografía en vez de adivinar un siglo.",
+    "A partir de aquí los puntos ya no bastan. El oro pide el año exacto, más de una vez.",
   badgeDiamond: "Diamante",
-  badgeDiamondRule: "10 de 10",
+  badgeDiamondRule: "3.000 TP + 2 retos",
   badgeDiamondHow:
-    "Termina una serie sin un solo fallo. Diez preguntas, diez aciertos, de una sentada.",
+    "Amplitud y temple: años exactos en juegos distintos y una partida de supervivencia que aguante.",
   badgeRuby: "Rubí",
-  badgeRubyRule: "Ganar diez duelos",
+  badgeRubyRule: "10.000 TP + 3 retos",
   badgeRubyHow:
-    "Gana diez partidas cara a cara. Solo cuenta una partida jugada hasta el final: un rival que cierra su pestaña no te regala ninguna.",
+    "Tres años exactos en una serie, una serie de comparación perfecta y una semana de diarios sin huecos.",
   badgeAmethyst: "Amatista",
-  badgeAmethystRule: "Un Perfecto en cada época",
+  badgeAmethystRule: "30.000 TP + 3 retos",
   badgeAmethystHow:
-    "Consigue un Perfecto en un evento de cada época que cubre la línea de tiempo: Tierra y cosmos, Humanos y evolución, Edad de la civilización y Después de Cristo.",
+    "La cima de la escalera. Años exactos en cada juego de fechas, una supervivencia de cincuenta y una serie sin nada por debajo de Excelente.",
 
 
   authSignInTitle: "Bienvenido de nuevo",
@@ -2206,7 +2407,8 @@ const es: Dict = {
   authTabSignIn: "Iniciar sesión",
   authTabSignUp: "Registrarse",
   authUsername: "Nombre de usuario",
-  authUsernameHint: "De 3 a 20 caracteres: a-z, 0-9 y guiones bajos. Sin acentos ni ñ.",
+  authUsernameHint:
+    "De 3 a 20 caracteres. Solo letras a-z, números 0-9 y el guion bajo (_): sin espacios, acentos ni signos de puntuación.",
   authEmail: "Correo",
   authPassword: "Contraseña",
   authPasswordHint: "Al menos 8 caracteres.",
@@ -2225,13 +2427,21 @@ const es: Dict = {
   authErrEmailTaken: "Ya existe una cuenta con ese correo.",
   authErrPasswordWeak: "Usa al menos 8 caracteres.",
   authErrPasswordMismatch: "Las dos contraseñas no coinciden.",
-  authErrUsernameInvalid: "De 3 a 20 caracteres: a-z, 0-9 y guiones bajos.",
+  authErrUsernameShort: "Ese nombre es demasiado corto: usa al menos 3 caracteres.",
+  authErrUsernameLong: "Ese nombre es demasiado largo: 20 caracteres como máximo.",
+  authErrUsernameSpaces:
+    "El nombre de usuario no puede llevar espacios. Usa un guion bajo (_) en su lugar.",
   authErrUsernameChars:
-    "Solo a-z, 0-9 y guiones bajos. No se admiten acentos, ñ, espacios ni signos de puntuación.",
+    "El nombre de usuario no puede contener: {chars}. Solo se admiten letras a-z, números 0-9 y el guion bajo (_).",
+  authErrUsernameCharsAny:
+    "El nombre de usuario solo puede contener letras a-z, números 0-9 y el guion bajo (_): sin acentos, ñ, espacios ni signos de puntuación.",
   authErrUsernameTaken: "Ese nombre ya está ocupado.",
   authErrRateLimited: "Demasiados intentos. Espera un momento y vuelve a probar.",
   authErrProviderFailed: "El inicio de sesión con Google no está disponible ahora.",
   authErrCurrentPassword: "Esa no es tu contraseña actual.",
+  authErrPhotoTooLarge: "Esa foto supera 1 MB. Elige una más pequeña.",
+  authErrPhotoType: "Usa una foto JPEG, PNG, WebP o HEIC.",
+  authErrPhotoUnreadable: "No se pudo leer esa foto. Prueba con otra.",
   authErrGeneric: "Algo ha ido mal. Inténtalo otra vez.",
   authGateNotice: "Las insignias pertenecen a una cuenta, así que esta página pide una.",
 
@@ -2261,28 +2471,56 @@ const es: Dict = {
   accountBadgesTitle: "Insignias",
   accountBadgesEarned: "{n} de {total} conseguidas",
   accountSeeBadges: "Ver las insignias",
+  accountPhotoTitle: "Foto de perfil",
+  accountPhotoBlurb: "Se muestra en tu cuenta y junto a tu nombre en la clasificación.",
+  accountPhotoHint: "JPEG, PNG, WebP o HEIC, hasta 1 MB.",
+  accountPhotoUpload: "Subir una foto",
+  accountPhotoChange: "Cambiar foto",
+  accountPhotoRemove: "Quitar",
+  accountPhotoSaved: "Foto actualizada.",
+  accountPhotoRemoved: "Foto eliminada.",
+  accountPhotoUploading: "Subiendo…",
   accountSignOut: "Cerrar sesión",
   menuSignOut: "Cerrar sesión",
 
   leaderboardTitle: "Clasificación",
-  leaderboardBlurb: "Donde aterrizan las mejores series.",
-  leaderboardPlaceholder:
-    "Esta clasificación es de muestra. Todavía no se puntúa nada, así que ninguna serie real tiene sitio aquí.",
+  leaderboardBlurb: "Jugadores ordenados por puntos Tempus (TP).",
+  leaderboardAllTime: "Histórico",
+  leaderboardWeek: "Esta semana",
   leaderboardRank: "Puesto",
   leaderboardPlayer: "Jugador",
-  leaderboardBest: "Mejor serie",
-  leaderboardSets: "Series",
+  leaderboardTp: "TP",
+  leaderboardPerfects: "Perfectos",
+  leaderboardEmpty: "Todavía no hay puntos en esta tabla. Inicia sesión y juega una serie para ser el primero.",
+  leaderboardFailed: "No se pudo cargar la clasificación. Inténtalo de nuevo en un momento.",
+  leaderboardYou: "Tú: #{rank} · {tp} TP",
 
   badgesTitle: "Insignias",
   badgesIntro:
-    "Seis anillos que rodean tu foto de perfil. Cuatro son un rango que se sube con tu mejor serie de diez; las otras dos se consiguen una vez y permanecen ocultas hasta entonces.",
+    "Seis anillos alrededor de tu foto de perfil: una sola escalera que se sube con puntos Tempus (TP). Desde el oro, cada peldaño añade retos, y cada uno exige el anterior.",
   badgesProgressTo: "Avance hacia {badge}",
+  badgesTotalTp: "{n} TP",
+  badgeTpRequirement: "Llegar a {n} TP",
+  questPerfects: "{n} Perfectos en un juego de fechas",
+  questPerfectGames: "Un Perfecto en {n} juegos distintos",
+  questSurvival: "Una supervivencia de {n}",
+  questHistorySetPerfects: "{n} Perfectos en una serie de «Adivina la fecha»",
+  questCompareFlawless: "Una serie de comparación con las diez bien",
+  questDailyStreak: "El diario, {n} días seguidos",
+  questEveryGamePerfects: "5 Perfectos en cada uno de los cinco juegos de fechas",
+  questTopTierSet: "Una serie en la que cada respuesta es Excelente o Perfecto",
+  accountRank: "#{n} en la clasificación",
+  pointsEarned: "+{n} TP ganados",
+  pointsWouldHave: "Esto valía {n} TP",
+  pointsSignIn: "Inicia sesión para guardar tus puntos",
+  newBadge: "Insignia nueva: {name}",
+  revealFailed: "Tu respuesta no llegó al servidor. Inténtalo de nuevo.",
   badgesLocked: "Bloqueada",
   badgesEarned: "Conseguida",
   badgesUnrevealed: "Oculta",
   badgesCount: "{n} de {total}",
-  badgesShowArt: "Mostrar la insignia {badge}",
-  badgesHideArt: "Ocultar la insignia {badge}",
+  badgesWear: "Ponerse la insignia {badge}",
+  badgesTakeOff: "Quitarse la insignia {badge}",
 
   contactTitle: "Contáctanos",
   contactLead:

@@ -101,11 +101,14 @@ export function VerdictFlank({
   accuracy,
   guess,
   locale,
+  tp = null,
   t,
 }: {
   accuracy: GuessAccuracy;
   guess: number;
   locale: SupportedLocale;
+  /** What the round was worth, or null where TP is not shown. */
+  tp?: number | null;
   t: Dict;
 }) {
   return (
@@ -113,6 +116,7 @@ export function VerdictFlank({
       accuracy={accuracy}
       guess={guess}
       locale={locale}
+      tp={tp}
       t={t}
       className={`round-flank-left right-full mr-4 ${FLANK}`}
     />
@@ -146,11 +150,14 @@ export function VerdictDeck({
   locale,
   className = "",
   headShare = "46%",
+  tp = null,
   t,
 }: {
   accuracy: GuessAccuracy;
   guess: number;
   locale: SupportedLocale;
+  /** What the round was worth, printed under the tier; null hides it. */
+  tp?: number | null;
   /** The box: position, size, and whatever entrance it arrives with. */
   className?: string;
   /** How much of the card's height the coloured head takes. */
@@ -178,6 +185,11 @@ export function VerdictDeck({
         <p className="font-display text-[34px] font-semibold leading-[0.95] tracking-tight text-[#0a0a0a]">
           {t[VERDICT_LABEL_KEYS[verdict]]}
         </p>
+        {tp !== null && (
+          <p className="text-[13px] font-semibold tabular-nums text-black/60">
+            {tpLabel(tp)}
+          </p>
+        )}
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col justify-center gap-3.5 px-5 py-4">
@@ -264,11 +276,18 @@ function DeckRow({
 export function VerdictDeckRow({
   verdict,
   facts,
+  tp = null,
   t,
 }: {
   verdict: Verdict;
   /** Labelled facts for the foot, left to right. Two fit; three is a squeeze. */
   facts: { label: string; value: string }[];
+  /**
+   * What the round was worth. Rides in the head's label line ("Result · +5
+   * TP") rather than as a third fact, which is the squeeze the note above
+   * warns about.
+   */
+  tp?: number | null;
   t: Dict;
 }) {
   return (
@@ -284,8 +303,9 @@ export function VerdictDeckRow({
         className="verdict-deck-head-row flex w-[7.5rem] shrink-0 flex-col justify-center gap-1 px-3.5 sm:w-[8.75rem]"
         style={{ backgroundImage: verdictDeckHead(verdict) }}
       >
-        <p className="text-[9px] font-semibold uppercase leading-none tracking-[0.14em] text-black/55">
+        <p className="whitespace-nowrap text-[9px] font-semibold uppercase leading-none tracking-[0.14em] text-black/55">
           {t.resultTitle}
+          {tp !== null && <> · {tpLabel(tp)}</>}
         </p>
         {/* Wraps to two lines rather than shrinking: the longest of the five
             languages ("Loin du compte") does not fit this width on one, and a
@@ -609,12 +629,14 @@ export function RoundVerdict({
   guess,
   eventId,
   locale,
+  tp = null,
   t,
 }: {
   accuracy: GuessAccuracy;
   guess: number;
   eventId: string;
   locale: SupportedLocale;
+  tp?: number | null;
   t: Dict;
 }) {
   return (
@@ -643,6 +665,12 @@ export function RoundVerdict({
             })}
         <span className="px-1.5 text-white/40">·</span>
         {t.yourGuess}: {formatYear(guess, dateLabels(t))}
+        {tp !== null && (
+          <>
+            <span className="px-1.5 text-white/40">·</span>
+            {tpLabel(tp)}
+          </>
+        )}
       </p>
 
       <div className="mt-1 flex justify-center">
@@ -650,4 +678,9 @@ export function RoundVerdict({
       </div>
     </div>
   );
+}
+
+/** A round's TP as it is printed: always signed, so zero reads as a payout. */
+export function tpLabel(tp: number): string {
+  return `+${tp} TP`;
 }

@@ -1,4 +1,4 @@
-import { dealComparisonRounds } from "@/app/actions/rounds";
+import { dealSurvivalRounds } from "@/app/actions/rounds";
 import { ComparisonBackdrop } from "@/components/comparison-backdrop";
 import { ComparisonGame } from "@/components/comparison-game";
 import { ROUND_QUEUE_DEPTH } from "@/lib/game/rounds";
@@ -29,7 +29,7 @@ export default async function SurvivalPage() {
   // The opening queue: the round being played and the one after it. The game
   // plays through it and tops it back up itself, so this is the only deal that
   // ever blocks a render.
-  const rounds = await dealComparisonRounds(ROUND_QUEUE_DEPTH);
+  const rounds = await dealSurvivalRounds(ROUND_QUEUE_DEPTH);
 
   return (
     // One screen, exactly, on the comparison page's pattern: `100dvh` less the

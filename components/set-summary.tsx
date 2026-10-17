@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 
+import { PointsLine, type SetPoints } from "@/components/solo-points";
 import type { Verdict } from "@/lib/game/scoring";
 import {
   gradeSet,
@@ -32,10 +34,16 @@ import { format, type Dict } from "@/lib/i18n/dictionary";
  * comparison game grades no tiers, so on that page the only colours are its own
  * green and the dim of a miss.
  *
- * **It is sized to a viewport that must not scroll.** Both pages are exactly
- * `100dvh` less the bar, so this caps its own height and scrolls internally if
- * a short window ever leaves it no room — a scrollbar inside the panel is
- * recoverable, the Play again button below the fold is not.
+ * **It never scrolls inside itself.** It capped its own height and scrolled
+ * internally until this pass, on the grounds that the page must not scroll —
+ * which traded one problem for a worse one: a panel with its own scrollbar on
+ * a phone hides the fact that there is anything below the fold at all, and the
+ * tier breakdown plus three buttons overran a 390x780 screen often enough that
+ * the Play again button was the thing hidden. So the panel grows to whatever
+ * it needs and the *page* takes the overflow (every game page is a fixed-height
+ * `overflow-y-auto` box; see any of them). `my-auto` rather than a centring
+ * wrapper does the vertical centring, because auto margins collapse to zero
+ * when there is no room instead of pushing the panel's top out of reach.
  */
 export function SetSummary({
   results,
@@ -43,9 +51,12 @@ export function SetSummary({
   otherHref,
   otherLabel,
   onPlayAgain,
+  points = null,
   t,
 }: {
   results: readonly SetResult[];
+  /** The set's TP. Null on a screen that does not pay out. */
+  points?: SetPoints | null;
   /** The game's own name, for the heading and the first line of the share text. */
   title: string;
   /** The other game mode — the one natural thing to do next besides replaying. */
@@ -69,13 +80,13 @@ export function SetSummary({
   }, []);
 
   return (
-    <div className="flex min-h-0 w-full flex-1 items-center justify-center py-2">
+    <div className="flex w-full flex-1 justify-center py-2">
       <div
         ref={panel}
         tabIndex={-1}
         role="group"
         aria-label={`${t.setComplete} — ${title}`}
-        className="set-summary-in flex max-h-full w-full max-w-md flex-col gap-5 overflow-y-auto rounded-3xl border border-white/12 bg-black/45 px-7 py-7 text-center shadow-2xl shadow-black/70 backdrop-blur-2xl focus:outline-none"
+        className="set-summary-in my-auto flex w-full max-w-md flex-col gap-5 rounded-3xl border border-white/12 bg-black/45 px-7 py-7 text-center shadow-2xl shadow-black/70 backdrop-blur-2xl focus:outline-none"
       >
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
@@ -107,6 +118,8 @@ export function SetSummary({
         </div>
 
         <Pips results={results} />
+
+        {points && <PointsLine points={points} t={t} />}
 
         {/* Best streak earns its line only once it is worth something: at one,
             it says nothing the percentage has not already said. */}
@@ -141,6 +154,20 @@ export function SetSummary({
             }
             t={t}
           />
+
+          {/* The way off this screen that is not another round of the same
+              thing. It is the third button rather than a fourth quiet link
+              because it is the one every finished set wants and the only one
+              a phone cannot reach any other way — the top bar hides on a
+              downward scroll, and the game pages do not scroll at all.
+              Outlined rather than filled, so the stack still reads as one
+              primary action with two alternatives under it. */}
+          <Link
+            href="/"
+            className={`${SUMMARY_BUTTON} inline-flex items-center justify-center border-white/25 bg-transparent text-white/80 hover:border-white/45 hover:text-ink`}
+          >
+            {t.backHome}
+          </Link>
         </div>
 
         <a

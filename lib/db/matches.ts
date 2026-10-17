@@ -154,8 +154,10 @@ async function dealRounds(
     );
   }
 
+  // `randomEvents` returns timeline order. Inserted as-is, every question would
+  // be later than the one before it — a free hint that halves the game.
   const { error } = await client.from("match_round").insert(
-    events.map((event, idx) => ({
+    shuffle(events).map((event, idx) => ({
       match_id: matchId,
       generation,
       idx,
@@ -176,6 +178,8 @@ async function dealRounds(
 export async function createMatch(
   client: DbClient,
   mode: VersusMode,
+  /** The signed-in account taking the seat, if any — what TP is paid to. */
+  userId: string | null = null,
 ): Promise<SeatCredentials> {
   let lastError: unknown = null;
 
@@ -208,6 +212,7 @@ export async function createMatch(
       match_id: data.id,
       seat: 1,
       token_hash: hashToken(token),
+      user_id: userId,
     });
     if (seatError) throw seatError;
 
@@ -236,6 +241,8 @@ export type JoinResult =
 export async function joinMatch(
   client: DbClient,
   code: string,
+  /** The signed-in account taking the seat, if any — what TP is paid to. */
+  userId: string | null = null,
 ): Promise<JoinResult> {
   const { data: match, error } = await client
     .from("match")
@@ -259,6 +266,7 @@ export async function joinMatch(
     match_id: match.id,
     seat: 2,
     token_hash: hashToken(token),
+    user_id: userId,
   });
 
   if (seatError) {
@@ -451,15 +459,20 @@ export async function declineRematch(
 export async function acceptRematch(
   client: DbClient,
   matchId: string,
+  seat: Seat,
 ): Promise<void> {
   const { data: match, error } = await client
     .from("match")
-    .select("generation, total_rounds, phase, mode")
+    .select("generation, total_rounds, phase, mode, rematch_by")
     .eq("id", matchId)
     .single();
 
   if (error) throw error;
   if (match.phase !== "complete") return;
+  // Only an answer to the *other* seat's offer. Without this a seat could
+  // accept its own request — or one never made — and drag the opponent into a
+  // new game unasked. `versus_start_rematch` does not look at `rematch_by`.
+  if (match.rematch_by === null || match.rematch_by === seat) return;
 
   const next = match.generation + 1;
 
@@ -673,4 +686,22 @@ function toEpoch(value: string | null): number | null {
 
 function toSeat(value: number | null): Seat | null {
   return value === 1 || value === 2 ? value : null;
+}
+
+/**
+ * A uniform shuffle over a copy.
+ *
+ * The same Fisher-Yates `lib/db/daily.ts` writes out; `app/actions/rounds.ts`
+ * has a third, and it cannot be imported from there because that module is
+ * `"use server"`.
+ */
+function shuffle<T>(rows: readonly T[]): T[] {
+  const pool = [...rows];
+
+  for (let i = pool.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j]!, pool[i]!];
+  }
+
+  return pool;
 }

@@ -1,8 +1,11 @@
 "use server";
 
+import { getCurrentUser } from "@/lib/auth/server";
 import { eventCategorySlugs, randomEvents } from "@/lib/db/queries";
 import { createServerDbClient } from "@/lib/db/server";
 import type { LocalizedEvent } from "@/lib/db/types";
+import type { ComparisonGameId, SoloGame } from "@/lib/game/points";
+import { signRound } from "@/lib/game/round-token";
 import {
   buildComparisonRound,
   COMPARISON_MIN_YEAR,
@@ -12,6 +15,11 @@ import {
   type ComparisonRound,
 } from "@/lib/game/rounds";
 import { screenFormatOf, type ScreenEvent } from "@/lib/game/screen";
+import {
+  maskForDeal,
+  type DealtComparisonRound,
+  type DealtEvent,
+} from "@/lib/game/solo";
 import {
   BASKETBALL_TOPIC,
   FOOTBALL_TOPIC,
@@ -53,7 +61,7 @@ const MAX_DRAW = 4;
 export async function dealTimelineEvents(
   count: number = ROUND_QUEUE_DEPTH,
   exclude: readonly string[] = [],
-): Promise<LocalizedEvent[]> {
+): Promise<DealtEvent[]> {
   const take = Math.min(Math.max(1, Math.trunc(count) || 1), MAX_DRAW);
 
   const locale = await readLocale();
@@ -64,7 +72,7 @@ export async function dealTimelineEvents(
     exclude: sanitizeExclude(exclude),
   });
 
-  return shuffle(events);
+  return dealDated("history", shuffle(events));
 }
 
 /**
@@ -84,7 +92,7 @@ export async function dealTimelineEvents(
 export async function dealFootballEvents(
   count: number = ROUND_QUEUE_DEPTH,
   exclude: readonly string[] = [],
-): Promise<LocalizedEvent[]> {
+): Promise<DealtEvent[]> {
   const take = Math.min(Math.max(1, Math.trunc(count) || 1), MAX_DRAW);
 
   const locale = await readLocale();
@@ -96,7 +104,7 @@ export async function dealFootballEvents(
     exclude: sanitizeExclude(exclude),
   });
 
-  return shuffle(events);
+  return dealDated("football", shuffle(events));
 }
 
 /**
@@ -114,7 +122,7 @@ export async function dealFootballEvents(
 export async function dealBasketballEvents(
   count: number = ROUND_QUEUE_DEPTH,
   exclude: readonly string[] = [],
-): Promise<LocalizedEvent[]> {
+): Promise<DealtEvent[]> {
   const take = Math.min(Math.max(1, Math.trunc(count) || 1), MAX_DRAW);
 
   const locale = await readLocale();
@@ -126,7 +134,7 @@ export async function dealBasketballEvents(
     exclude: sanitizeExclude(exclude),
   });
 
-  return shuffle(events);
+  return dealDated("basketball", shuffle(events));
 }
 
 /**
@@ -150,7 +158,7 @@ export async function dealBasketballEvents(
 export async function dealScreenEvents(
   count: number = ROUND_QUEUE_DEPTH,
   exclude: readonly string[] = [],
-): Promise<ScreenEvent[]> {
+): Promise<DealtEvent<ScreenEvent>[]> {
   const take = Math.min(Math.max(1, Math.trunc(count) || 1), MAX_DRAW);
 
   const locale = await readLocale();
@@ -168,11 +176,14 @@ export async function dealScreenEvents(
     { kind: "other" },
   );
 
-  return shuffle(
-    events.map((event) => ({
-      ...event,
-      format: screenFormatOf(formats.get(event.id)),
-    })),
+  return dealDated(
+    "screen",
+    shuffle(
+      events.map((event) => ({
+        ...event,
+        format: screenFormatOf(formats.get(event.id)),
+      })),
+    ),
   );
 }
 
@@ -201,7 +212,7 @@ export async function dealScreenEvents(
 export async function dealWhenBornEvents(
   count: number = ROUND_QUEUE_DEPTH,
   exclude: readonly string[] = [],
-): Promise<WhenBornEvent[]> {
+): Promise<DealtEvent<WhenBornEvent>[]> {
   const take = Math.min(Math.max(1, Math.trunc(count) || 1), MAX_DRAW);
 
   const locale = await readLocale();
@@ -219,11 +230,14 @@ export async function dealWhenBornEvents(
     { kind: "other" },
   );
 
-  return shuffle(
-    events.map((event) => ({
-      ...event,
-      field: personFieldOf(fields.get(event.id)),
-    })),
+  return dealDated(
+    "when-born",
+    shuffle(
+      events.map((event) => ({
+        ...event,
+        field: personFieldOf(fields.get(event.id)),
+      })),
+    ),
   );
 }
 
@@ -248,7 +262,28 @@ export async function dealWhenBornEvents(
 export async function dealComparisonRounds(
   count: number = ROUND_QUEUE_DEPTH,
   exclude: readonly string[] = [],
-): Promise<ComparisonRound[]> {
+): Promise<DealtComparisonRound[]> {
+  return dealComparisonFor("compare", count, exclude);
+}
+
+/**
+ * Deals rounds for survival: the comparison game's rounds, signed for the
+ * survival game. A separate action for the pool rule's reason — the game a
+ * round is banked under must not be a caller-supplied argument, or a survival
+ * run could be paid as comparison sets and the other way round.
+ */
+export async function dealSurvivalRounds(
+  count: number = ROUND_QUEUE_DEPTH,
+  exclude: readonly string[] = [],
+): Promise<DealtComparisonRound[]> {
+  return dealComparisonFor("survival", count, exclude);
+}
+
+async function dealComparisonFor(
+  game: ComparisonGameId,
+  count: number,
+  exclude: readonly string[],
+): Promise<DealtComparisonRound[]> {
   const take = Math.min(Math.max(1, Math.trunc(count) || 1), MAX_DRAW);
 
   const locale = await readLocale();
@@ -275,7 +310,47 @@ export async function dealComparisonRounds(
     if (round) rounds.push(round);
   }
 
-  return rounds;
+  const userId = await dealtTo();
+  return rounds.map((round) => {
+    const token = signRound({
+      game,
+      userId,
+      eventIds: [round.left.id, round.target.id, round.right.id],
+    });
+    // The token rides on all three so each bubble can be keyed on its own
+    // event; only the round's own `token` is ever presented.
+    return {
+      left: maskForDeal(round.left, token),
+      right: maskForDeal(round.right, token),
+      target: maskForDeal(round.target, token),
+      token,
+    };
+  });
+}
+
+/**
+ * Who a deal is for: the signed-in account, or null for a guest. Read from the
+ * session on this request — never an argument — and written into every
+ * token, so a round dealt to a guest tab cannot be banked by an account and a
+ * round dealt to one account cannot be banked by another.
+ */
+async function dealtTo(): Promise<string | null> {
+  const user = await getCurrentUser();
+  return user?.id ?? null;
+}
+
+/**
+ * Masks and signs a batch of date rounds. **The year leaves the server only in
+ * the reply to a guess** (app/actions/scoring.ts), never in a deal.
+ */
+async function dealDated<E extends LocalizedEvent>(
+  game: SoloGame,
+  events: readonly E[],
+): Promise<DealtEvent<E>[]> {
+  const userId = await dealtTo();
+  return events.map((event) =>
+    maskForDeal(event, signRound({ game, userId, eventIds: [event.id] })),
+  );
 }
 
 /**

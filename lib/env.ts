@@ -91,3 +91,16 @@ export function serverEnv() {
     r2Bucket: required("R2_BUCKET_NAME", process.env.R2_BUCKET_NAME),
   } as const;
 }
+
+/**
+ * True under `next dev`. Server-only, like every unprefixed variable.
+ *
+ * Exists for exactly one switch: sign-up skips the confirmation email in
+ * development (`signUpWithEmail` in app/actions/auth.ts), so the site can be
+ * tried with made-up addresses before custom SMTP exists. A production build
+ * is always `production`, so the switch cannot follow a deploy.
+ */
+export function isDevelopment(): boolean {
+  assertServer("isDevelopment()");
+  return process.env.NODE_ENV === "development";
+}

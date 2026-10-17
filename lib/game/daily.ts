@@ -36,11 +36,10 @@
  */
 
 import { QUESTIONS_PER_SET, type SetResult } from "./set.ts";
+import { DAILY_TP_MULTIPLIER, TIER_TP, tierPoints } from "./points.ts";
 import {
   gradeGuess,
   isVerdict,
-  MAX_ROUND_POINTS,
-  roundPoints,
   type GuessAccuracy,
   type Verdict,
 } from "./scoring.ts";
@@ -112,23 +111,29 @@ export function minutesUntilReset(puzzleDate: string, now: number): number {
 /**
  * What a daily round is worth, against the same question asked anywhere else.
  *
- * Three, by product decision: the daily is one shot a day at a fixed set, so
- * it has to be worth coming back for, and a multiplier says that without
- * needing a scoring system of its own. It multiplies `roundPoints` rather than
- * replacing it, which is the whole point — difficulty is still tuned in one
- * place (`BANDS` in ./scoring.ts) and a daily score can never disagree with
- * the verdict on screen.
+ * Three times its TP, by product decision: the daily is one shot a day at a
+ * fixed set, so it has to be worth coming back for, and a multiplier says that
+ * without needing a scoring system of its own. It multiplies the tier's TP
+ * (lib/game/points.ts) rather than replacing it, so difficulty is still tuned
+ * in one place (`BANDS` in ./scoring.ts) and a daily score can never disagree
+ * with the verdict on screen.
+ *
+ * These are TP since the ledger arrived: the number banked on the attempt is
+ * the number the leaderboard adds up (`daily_bank_tp` in
+ * supabase/migrations/20261017120000_scoring.sql pays each answer's points as
+ * it is appended). Attempts finished before then hold the old 0–3,000 scale;
+ * they were never paid into the ledger.
  */
-export const DAILY_POINT_MULTIPLIER = 3;
+export const DAILY_POINT_MULTIPLIER = DAILY_TP_MULTIPLIER;
 
 /** One round's daily points. Members only — see rule 2 at the top of this file. */
 export function dailyRoundPoints(accuracy: GuessAccuracy): number {
-  return roundPoints(accuracy) * DAILY_POINT_MULTIPLIER;
+  return tierPoints(accuracy.verdict) * DAILY_POINT_MULTIPLIER;
 }
 
-/** The most a day can be worth, for the "1,840 of 3,000" on the result screen. */
+/** The most a day can be worth, for the "240 of 300" on the result screen. */
 export const MAX_DAILY_POINTS =
-  MAX_ROUND_POINTS * DAILY_POINT_MULTIPLIER * QUESTIONS_PER_DAILY;
+  TIER_TP.perfect * DAILY_POINT_MULTIPLIER * QUESTIONS_PER_DAILY;
 
 /* -------------------------------------------------------------------------
    An answer

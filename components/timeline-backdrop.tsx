@@ -57,7 +57,7 @@ const RESTING_SCALE = 1.22;
  * fetched — the public R2 domain has gone down before (see CLAUDE.md), and a
  * timeline whose eras still change colour degrades far better than five
  * identical black screens. Hues follow the pane: deep space, mossy prehistory,
- * sunbaked antiquity, steel-blue recorded history, cold cyan future.
+ * sunbaked antiquity, steel-blue recorded history.
  */
 const PANE_WASH: Record<TimelinePane, string> = {
   cosmos: "radial-gradient(120% 110% at 18% 0%, #33216b 0%, #150f33 46%, #04040c 100%)",
@@ -65,7 +65,6 @@ const PANE_WASH: Record<TimelinePane, string> = {
   civilization:
     "radial-gradient(120% 110% at 28% 10%, #7a4a1f 0%, #39200d 48%, #0d0704 100%)",
   ce: "radial-gradient(120% 110% at 70% 6%, #1f3f63 0%, #121f31 48%, #04070c 100%)",
-  future: "radial-gradient(120% 110% at 50% 0%, #0d5f66 0%, #0a2b33 46%, #02080a 100%)",
   // Football's own, and the one pane whose wash is not an era: floodlit turf.
   // It is the pane set's only member, so this is also the whole of what the
   // football game degrades to when R2 is unreachable — see the note on

@@ -8,9 +8,12 @@ import {
   setUsername,
   USERNAME_TAKEN,
   validateUsername,
+  type UsernameCheck,
   type UsernameProblem,
 } from "@/lib/db/accounts";
+import { createAdminDbClient } from "@/lib/db/admin";
 import { createServerDbClient } from "@/lib/db/server";
+import { isDevelopment } from "@/lib/env";
 import { getCurrentUser, hasPasswordIdentity } from "@/lib/auth/server";
 import { ACCOUNT_PATH, safeNextPath, SIGN_IN_PATH } from "@/lib/auth/paths";
 
@@ -40,12 +43,18 @@ export type AuthErrorCode =
   | "email-taken"
   | "password-weak"
   | "password-mismatch"
-  | "username-invalid"
-  /** The name carried something the column cannot hold — a space, an accent,
-   *  a Turkish ş or ı. Its own code rather than `username-invalid`, because
-   *  "three to twenty characters" is not an answer to a name that is already
-   *  the right length: the field gives no sign which characters it means, so
-   *  the sentence has to. */
+  /* Four refusals for one field, because the four need four sentences — see
+     `UsernameProblem` in lib/db/accounts.ts, which this mirrors one-for-one.
+     "3-20 characters, a-z, 0-9 and underscores" was the single sentence they
+     replaced, and it is an answer to none of them: it does not say which
+     character was refused to a name of the right length, and it is not even
+     about length to a name that has a space in it. */
+  | "username-short"
+  | "username-long"
+  | "username-spaces"
+  /** The name carried something the column cannot hold — an accent, a Turkish
+   *  ş or ı, a piece of punctuation. The offending characters travel with it in
+   *  `AuthState.detail`, because the field gives no sign which ones it means. */
   | "username-chars"
   | "username-taken"
   | "rate-limited"
@@ -55,6 +64,11 @@ export type AuthErrorCode =
    *  password are not an account", which is a different sentence to show
    *  somebody who is already signed in. */
   | "current-password-wrong"
+  /* The account page's picture upload (app/actions/avatar.ts). Here rather
+     than in a union of its own so the panel's one `Feedback` can print them. */
+  | "photo-too-large"
+  | "photo-type"
+  | "photo-unreadable"
   | "generic";
 
 /**
@@ -66,7 +80,11 @@ export type AuthErrorCode =
  */
 export type AuthState =
   | { status: "idle" }
-  | { status: "error"; code: AuthErrorCode }
+  /** `detail` is the one piece of a failure that cannot be a code: the
+   *  characters a username was refused for are the player's own text, so they
+   *  are filled into the sentence (`{chars}`) rather than looked up. Every
+   *  other failure leaves it unset. */
+  | { status: "error"; code: AuthErrorCode; detail?: string }
   | { status: "confirm"; email: string }
   /** The account page's two forms. A distinct state rather than a return to
    *  `idle`, so "nothing has been submitted" and "that worked" are tellable
@@ -108,11 +126,13 @@ function mapAuthError(message: string, status?: number): AuthErrorCode {
 }
 
 /**
- * A refused username, as a code the form can say out loud.
+ * A refused username, as a code the form can say out loud — plus the
+ * characters that were refused, when there are any.
  *
- * The two length problems share one sentence — the hint under the field
- * already states the range — and the character set gets its own, because that
- * is the refusal a player cannot work out by looking at what they typed.
+ * One sentence per problem rather than one for all of them: the field cannot
+ * show a player which characters it will not hold, so for `bad-characters` the
+ * sentence names them, and for the three others it names the rule that was
+ * broken instead of reciting all of them.
  *
  * **Nothing here edits the name.** It used to: the action ran the typed text
  * through `normalizeUsername`, which *strips* anything the column cannot hold,
@@ -120,8 +140,21 @@ function mapAuthError(message: string, status?: number): AuthErrorCode {
  * save of a name nobody had asked for. Silently keeping part of a name is
  * worse than refusing the whole of it. See `validateUsername`.
  */
-function usernameError(problem: UsernameProblem): AuthErrorCode {
-  return problem === "bad-characters" ? "username-chars" : "username-invalid";
+function usernameError(
+  check: Extract<UsernameCheck, { ok: false }>,
+): AuthState {
+  const CODES: Record<UsernameProblem, AuthErrorCode> = {
+    "too-short": "username-short",
+    "too-long": "username-long",
+    "has-space": "username-spaces",
+    "bad-characters": "username-chars",
+  };
+
+  return {
+    status: "error",
+    code: CODES[check.problem],
+    detail: check.rejected || undefined,
+  };
 }
 
 /** Where to land after a successful sign-in. */
@@ -159,9 +192,7 @@ export async function signUpWithEmail(
   const rawUsername = field(form, "username");
 
   const checked = validateUsername(rawUsername);
-  if (!checked.ok) {
-    return { status: "error", code: usernameError(checked.problem) };
-  }
+  if (!checked.ok) return usernameError(checked);
   const username = checked.username;
 
   if (!EMAIL_RE.test(email)) return { status: "error", code: "email-invalid" };
@@ -170,6 +201,40 @@ export async function signUpWithEmail(
   }
 
   const supabase = await createServerDbClient();
+
+  /* **Development only: no confirmation email.** The account is created
+     already confirmed through the Admin API and signed straight in, so the
+     site can be tried with addresses that receive no mail — and without the
+     built-in sender's hourly limit (CLAUDE.md, known gap 7). The metadata is
+     the same `username` the trigger reads on the public path. Production
+     never takes this branch; see `isDevelopment`. */
+  if (isDevelopment()) {
+    const { error: createError } = await createAdminDbClient().auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { username },
+    });
+    if (createError) {
+      const taken = /already (been )?registered|already exists/i.test(createError.message);
+      return {
+        status: "error",
+        code: taken ? "email-taken" : mapAuthError(createError.message, createError.status),
+      };
+    }
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (signInError) {
+      return { status: "error", code: mapAuthError(signInError.message, signInError.status) };
+    }
+
+    revalidatePath("/", "layout");
+    redirect(destination(form));
+  }
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -273,9 +338,7 @@ export async function updateUsername(
   if (!user) redirect(SIGN_IN_PATH);
 
   const checked = validateUsername(field(form, "username"));
-  if (!checked.ok) {
-    return { status: "error", code: usernameError(checked.problem) };
-  }
+  if (!checked.ok) return usernameError(checked);
 
   try {
     await setUsername(await createServerDbClient(), user.id, checked.username);

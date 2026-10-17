@@ -1,15 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { dealScreenEvents } from "@/app/actions/rounds";
-import { DateEntry, InputModeToggle } from "@/components/date-entry";
+import { revealDateRound } from "@/app/actions/scoring";
+import {
+  DateEntry,
+  InputModeToggle,
+  useKeyboardEntry,
+} from "@/components/date-entry";
 import {
   NoteDeck,
   RoundVerdict,
   VerdictDeck,
 } from "@/components/round-flank";
+import { RoundHead } from "@/components/round-head";
 import { SetProgress, SetSummary } from "@/components/set-summary";
+import { useSoloSet } from "@/components/solo-points";
 import { TimelineBackdrop } from "@/components/timeline-backdrop";
 import {
   PosterCard,
@@ -35,6 +42,7 @@ import {
   timelineResult,
   type SetResult,
 } from "@/lib/game/set";
+import type { DealtEvent, RevealedDate } from "@/lib/game/solo";
 import {
   fractionAtYear,
   paneBounds,
@@ -117,7 +125,8 @@ export function ScreenGame({
   t,
   locale,
 }: {
-  events: ScreenEvent[];
+  /** Masked and signed: the year arrives with the reply to a guess. */
+  events: DealtEvent<ScreenEvent>[];
   t: Dict;
   locale: SupportedLocale;
 }) {
@@ -128,7 +137,16 @@ export function ScreenGame({
   const [guess, setGuess] = useState<number | null>(null);
   // The round being played is the head of the queue; the one behind it is held
   // only so its poster can be pulled and swapped in instantly.
-  const [queue, setQueue] = useState<ScreenEvent[]>(events);
+  const [queue, setQueue] = useState<DealtEvent<ScreenEvent>[]>(events);
+  // The answer and its TP, once the server has graded the guess — see
+  // components/timeline-game.tsx, which this follows.
+  const [reveal, setReveal] = useState<{
+    date: RevealedDate;
+    tp: number;
+  } | null>(null);
+  const [sending, setSending] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const solo = useSoloSet();
   const [refillAttempt, setRefillAttempt] = useState(0);
   // Latched when the player presses "Next round" before the queue has a round
   // to give them. The button is never dead, only late.
@@ -142,13 +160,21 @@ export function ScreenGame({
   // Typing the year rather than dragging for it. A preference, not a round's
   // state: a player who wanted to type one year almost certainly wants to type
   // the next.
-  const [direct, setDirect] = useState(false);
+  // Typing the year rather than dragging for it — a *wish*, granted only on a
+  // window wide enough to hold the control. See `useKeyboardEntry`: a phone's
+  // keypad covers this screen whole, and the switch was costing the controls
+  // row a cell it could not spare at 360px.
+  const [directWanted, setDirectWanted] = useState(false);
+  const keyboardEntry = useKeyboardEntry();
+  const direct = directWanted && keyboardEntry;
   const [entry, setEntry] = useState<DateEntryValue>(EMPTY_DATE_ENTRY);
   // Set by a refused lock-in and cleared by the next edit, so the warning
   // answers the press rather than nagging at a half-typed year.
   const [invalid, setInvalid] = useState(false);
   const event = queue[0] ?? null;
   const upcoming = queue[1] ?? null;
+  const queueHead = useRef<DealtEvent<ScreenEvent> | null>(event);
+  queueHead.current = event;
 
   // Top the queue back up in the background, and tell the draw what this set
   // has already used. Keyed on the queue's length rather than on its contents,
@@ -218,13 +244,16 @@ export function ScreenGame({
   const bounds = paneBounds(SCREEN_DEFAULT_PANE);
   const typed = direct ? directYear(entry, bounds) : null;
 
-  const answered = guess !== null;
+  // The guess made (input stops) and the guess graded (the reveal starts)
+  // are a round trip apart now; see components/timeline-game.tsx.
+  const lockedIn = guess !== null;
+  const answered = reveal !== null;
   // While a year is being typed the marker follows it, which is what makes
   // keeping the rail on screen worth doing. It falls back to wherever the
   // marker was left as soon as the field is empty or holds a year off the
   // rail, rather than jumping to an edge.
   const railFraction =
-    direct && !answered && typed !== null
+    direct && !lockedIn && typed !== null
       ? fractionAtYear(SCREEN_DEFAULT_PANE, typed)
       : fraction;
   const railYear = yearAtFraction(SCREEN_DEFAULT_PANE, railFraction);
@@ -233,8 +262,8 @@ export function ScreenGame({
   // between 2 and 95 years old, so an age carries no information. See
   // `SCREEN_BANDS`.
   const accuracy =
-    guess !== null && event
-      ? gradeGuess(guess, event.year, SCREEN_BANDS)
+    guess !== null && reveal
+      ? gradeGuess(guess, reveal.date.year, SCREEN_BANDS)
       : null;
   const setComplete = results.length >= QUESTIONS_PER_SET;
   const lastQuestion = results.length === QUESTIONS_PER_SET - 1;
@@ -242,9 +271,10 @@ export function ScreenGame({
   const move = useCallback((next: number) => setFraction(next), []);
 
   /** Lock the guess in. The answer then lands on the rail beside it. */
-  function submit() {
-    if (answered || !event) return;
+  async function submit() {
+    if (lockedIn || sending || !event) return;
 
+    let guessed = railYear;
     if (direct) {
       if (typed === null) {
         setInvalid(true);
@@ -254,11 +284,27 @@ export function ScreenGame({
       // tracking the field — so this only makes that position the one the
       // round keeps.
       setFraction(fractionAtYear(SCREEN_DEFAULT_PANE, typed));
-      setGuess(typed);
-      return;
+      guessed = typed;
     }
 
-    setGuess(railYear);
+    setGuess(guessed);
+    setSending(true);
+    setFailed(false);
+
+    const round = event;
+    try {
+      const result = await revealDateRound(round.token, guessed, solo.setId);
+      if (!result.ok) throw new Error(result.reason);
+      if (queueHead.current?.token !== round.token) return;
+      setReveal({ date: result.date, tp: result.tp });
+      solo.record(result);
+    } catch {
+      // Handed back, never kept: an ungraded answer is not an answer.
+      setGuess(null);
+      setFailed(true);
+    } finally {
+      setSending(false);
+    }
   }
 
   /** Advance for real. Callers are responsible for there being a round to take. */
@@ -274,6 +320,8 @@ export function ScreenGame({
     setPlayed((current) => [...current, event.id].slice(-EXCLUDED_EVENT_LIMIT));
 
     setGuess(null);
+    setReveal(null);
+    setFailed(false);
     setFraction(0.5);
     // **Both halves are cleared, era included.** The era used to be carried
     // over on the grounds that it was an opinion about the round rather than
@@ -322,6 +370,23 @@ export function ScreenGame({
           nothing to crossfade — it holds for the whole game. */}
       <TimelineBackdrop pane={SCREEN_DEFAULT_PANE} panes={SCREEN_PANES} />
 
+      {/* The masthead, in the top bar's own row: the game's name, and the
+          one line that says which date is being asked for when it is pressed.
+          It is a pill rather than a row of this column for the reason every
+          addition to these screens is one — the page is exactly one viewport
+          and the picture is the only part of it that gives. The column above
+          the poster still prints both from 1120px, where there is a column to
+          print them in; below that this is where they live. See
+          `components/round-head.tsx`.
+
+          No counter in it: a portrait leaves a corner free and the count is
+          in the picture's own top-right (`PosterCard`).
+
+          It goes with the round, not with the page: a masthead asking which
+          year to guess would be a question with nothing on screen to answer
+          it once the set is over. */}
+      {!setComplete && <RoundHead title={t.screenTitle} blurb={t.screenYearAsked} />}
+
       {setComplete ? (
         // The round underneath is already reset to a fresh question, so the
         // summary floats over the game rather than replacing the screen.
@@ -335,7 +400,9 @@ export function ScreenGame({
           onPlayAgain={() => {
             setResults([]);
             setPlayed([]);
+            solo.reset();
           }}
+          points={solo.points}
           t={t}
         />
       ) : (
@@ -399,6 +466,19 @@ export function ScreenGame({
                   ? t.formatSeries
                   : t.formatFilm
             }
+            // The set counter, in the corner opposite the pill and only
+            // below the split: above 1120px the column beside the picture
+            // carries it, and two copies of "3 of 10" on one screen read as
+            // two different counts.
+            counter={
+              <span className="min-[1120px]:hidden">
+                <SetProgress
+                  played={results.length}
+                  total={QUESTIONS_PER_SET}
+                  t={t}
+                />
+              </span>
+            }
             // On the poster below 1120px for the reason every overlay on these
             // screens is: the stacked layout is a height budget with nothing
             // spare, and the result in the flow would be another row. Above
@@ -413,8 +493,16 @@ export function ScreenGame({
                   guess={guess}
                   eventId={event.id}
                   locale={locale}
+                  tp={reveal?.tp ?? null}
                   t={t}
                 />
+              ) : failed ? (
+                <p
+                  role="status"
+                  className="round-verdict-in absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-4 pb-3 pt-10 text-center text-xs font-semibold text-white/85"
+                >
+                  {t.revealFailed}
+                </p>
               ) : null
             }
             t={t}
@@ -433,7 +521,22 @@ export function ScreenGame({
               to centre on its mark), which is what makes the three of them
               line up on the same two edges. */}
           <div className="mx-auto flex w-full min-h-0 max-w-5xl flex-col">
-            <div className="flex shrink-0 items-start justify-between gap-4 px-8 pt-1 sm:px-12">
+            {/* **A desktop row.** Below 1120px this screen is one column
+                around a 2:3 poster, and a heading, a line of prose and a
+                counter standing above it were three rows of chrome taken out
+                of the one thing the round is: the picture. On a phone they
+                cost it about a fifth of its height and the poster came out
+                too small to read a title off.
+
+                So the whole block is `min-[1120px]:flex` — exactly the width
+                the layout splits at, which is also the width that has a
+                column to put it in. The two things it carried both survive
+                at the narrow width: the title and its line of prose move into
+                the masthead pill in the bar's own row (`RoundHead` above,
+                where the prose unrolls on a press), and the counter moves
+                into the poster's top-right corner (`PosterCard`'s
+                `counter`). Nothing is lost and the card takes the room. */}
+            <div className="hidden shrink-0 items-start justify-between gap-4 px-8 pt-1 sm:px-12 min-[1120px]:flex">
               <div className="min-w-0">
                 <h2 className="font-display text-xl font-semibold tracking-tight text-ink sm:text-2xl">
                   {t.screenTitle}
@@ -488,18 +591,18 @@ export function ScreenGame({
                 heading={false}
                 fraction={railFraction}
                 onFractionChange={move}
-                answered={answered}
+                answered={lockedIn}
                 // Shown but not draggable while a year is being typed: the
                 // marker is the readout of the field, so it must not also be
                 // something the pointer can move.
-                locked={direct && !answered}
+                locked={direct && !lockedIn}
                 showGuess
                 // A typed year is exact; the year this rail reads back at that
                 // position is snapped to its grid. The bubble is told the
                 // player's own number in both states — while they type it, and
                 // after it has been locked in.
                 guessYear={direct && typed !== null ? typed : null}
-                answerYear={event.year}
+                answerYear={reveal?.date.year ?? null}
                 answerDelayMs={REVEAL_DELAY_MS}
                 // One pane, so the distance between the guess and the truth is
                 // always the ordinary same-rail case: one bar between two
@@ -509,7 +612,7 @@ export function ScreenGame({
                   guessPane: answered ? SCREEN_DEFAULT_PANE : null,
                   guessFraction: fraction,
                   answerPane: answered ? SCREEN_DEFAULT_PANE : null,
-                  answerYear: event.year,
+                  answerYear: reveal?.date.year ?? null,
                   answerDelayMs: REVEAL_DELAY_MS,
                   panes: SCREEN_PANES,
                 })}
@@ -531,12 +634,19 @@ export function ScreenGame({
 
                 `relative` is for the warning, which hangs underneath the row
                 rather than taking a row of its own. */}
-            <div className="relative grid w-full shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center justify-items-center pt-2">
+            {/* **Below `md` the row holds nothing but the button**, and the
+                grid collapses to one centred cell: the entry and its switch
+                are a desktop control now (`useKeyboardEntry`), because a
+                phone's numeric keypad covers this whole screen the moment the
+                field takes focus. The three equal-sided columns are declared
+                from that breakpoint up, where the sides have something to
+                hold. */}
+            <div className="relative grid w-full shrink-0 items-center justify-items-center pt-2 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
               {/* Always mounted and collapsed by `data-shown`, like the solo
                   game's: it has to animate out as well as in, and `inert` is
                   what takes a clipped field out of reach. */}
               <div
-                className="entry-shell justify-self-end"
+                className="entry-shell hidden md:block md:justify-self-end"
                 data-shown={direct}
                 inert={!direct}
               >
@@ -551,7 +661,7 @@ export function ScreenGame({
                       onSubmit={submit}
                       // Locked in: it stays on screen reporting the year that
                       // was guessed, but it is no longer a control.
-                      disabled={answered}
+                      disabled={lockedIn}
                       invalid={invalid}
                       shown={direct}
                       // Nothing in this game happened before year 1, so the
@@ -581,7 +691,10 @@ export function ScreenGame({
                   <button
                     type="button"
                     onClick={submit}
-                    className={`${ROUND_BUTTON_LG} bg-ink text-page hover:opacity-85`}
+                    aria-busy={sending}
+                    className={`${ROUND_BUTTON_LG} bg-ink text-page hover:opacity-85 ${
+                      sending ? "cursor-progress opacity-70" : ""
+                    }`}
                   >
                     {t.submitGuess}
                   </button>
@@ -631,15 +744,15 @@ export function ScreenGame({
                   the default is shared with. Left alone below `sm`, where that
                   default comes down with the bar. */}
               <div
-                className={`ml-3 justify-self-start transition-opacity duration-300 sm:[--menu-btn:46px] ${
-                  answered ? "opacity-0" : "opacity-100"
+                className={`hidden transition-opacity duration-300 md:ml-3 md:block md:justify-self-start md:[--menu-btn:46px] ${
+                  lockedIn ? "opacity-0" : "opacity-100"
                 }`}
-                inert={answered}
+                inert={lockedIn || !keyboardEntry}
               >
                 <InputModeToggle
                   direct={direct}
                   onToggle={() => {
-                    setDirect((current) => !current);
+                    setDirectWanted((current) => !current);
                     setInvalid(false);
                   }}
                   t={t}
@@ -676,6 +789,7 @@ export function ScreenGame({
                     accuracy={accuracy}
                     guess={guess}
                     locale={locale}
+                    tp={reveal?.tp ?? null}
                     t={t}
                     // The same card as `/guess`'s left flank, in a shorter
                     // box — so a smaller head share, measured rather than

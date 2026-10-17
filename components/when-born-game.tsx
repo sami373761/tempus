@@ -3,9 +3,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { dealWhenBornEvents } from "@/app/actions/rounds";
-import { DateEntry, InputModeToggle } from "@/components/date-entry";
+import { revealDateRound } from "@/app/actions/scoring";
+import {
+  DateEntry,
+  InputModeToggle,
+  useKeyboardEntry,
+} from "@/components/date-entry";
 import { NoteDeck, RoundVerdict, VerdictDeck } from "@/components/round-flank";
+import { RoundHead } from "@/components/round-head";
 import { SetProgress, SetSummary } from "@/components/set-summary";
+import { useSoloSet } from "@/components/solo-points";
 import { TimelineBackdrop } from "@/components/timeline-backdrop";
 import {
   openingFractions,
@@ -29,6 +36,7 @@ import {
   ROUND_QUEUE_TARGET,
 } from "@/lib/game/rounds";
 import { gradeGuess, WHEN_BORN_BANDS } from "@/lib/game/scoring";
+import type { DealtEvent, RevealedDate } from "@/lib/game/solo";
 import {
   QUESTIONS_PER_SET,
   timelineResult,
@@ -118,7 +126,8 @@ export function WhenBornGame({
   t,
   locale,
 }: {
-  events: WhenBornEvent[];
+  /** Masked and signed: the year arrives with the reply to a guess. */
+  events: DealtEvent<WhenBornEvent>[];
   t: Dict;
   locale: SupportedLocale;
 }) {
@@ -141,7 +150,16 @@ export function WhenBornGame({
   const [panMs, setPanMs] = useState(PAN_MS);
   // The round being played is the head of the queue; the one behind it is held
   // only so its photograph can be pulled and swapped in instantly.
-  const [queue, setQueue] = useState<WhenBornEvent[]>(events);
+  const [queue, setQueue] = useState<DealtEvent<WhenBornEvent>[]>(events);
+  // The answer and its TP, once the server has graded the guess — see
+  // components/timeline-game.tsx, which this follows.
+  const [reveal, setReveal] = useState<{
+    date: RevealedDate;
+    tp: number;
+  } | null>(null);
+  const [sending, setSending] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const solo = useSoloSet();
   const [refillAttempt, setRefillAttempt] = useState(0);
   // Latched when the player presses "Next round" before the queue has a round
   // to give them. The button is never dead, only late.
@@ -155,7 +173,13 @@ export function WhenBornGame({
   // Typing the year rather than dragging for it. A preference, not a round's
   // state: a player who wanted to type one year almost certainly wants to type
   // the next.
-  const [direct, setDirect] = useState(false);
+  // Typing the year rather than dragging for it — a *wish*, granted only on a
+  // window wide enough to hold the control. See `useKeyboardEntry`: a phone's
+  // keypad covers this screen whole, and the switch was costing the controls
+  // row a cell it could not spare at 360px.
+  const [directWanted, setDirectWanted] = useState(false);
+  const keyboardEntry = useKeyboardEntry();
+  const direct = directWanted && keyboardEntry;
   const [entry, setEntry] = useState<DateEntryValue>(EMPTY_DATE_ENTRY);
   // Set by a refused lock-in and cleared by the next edit, so the warning
   // answers the press rather than nagging at a half-typed year.
@@ -241,7 +265,34 @@ export function WhenBornGame({
 
   const fraction = fractions[pane];
   const railYear = yearAtFraction(pane, fraction);
-  const answered = guess !== null;
+  // The guess made (input stops) and the guess graded (the reveal starts)
+  // are a round trip apart; see components/timeline-game.tsx.
+  const lockedIn = guess !== null;
+  const answered = reveal !== null;
+  const queueHead = useRef<DealtEvent<WhenBornEvent> | null>(null);
+  queueHead.current = queue[0] ?? null;
+
+  // The camera leaves for the answer's rail when the answer does: after a beat
+  // on the player's own marker, or they would watch it slide away as they read
+  // the result.
+  useEffect(() => {
+    if (!reveal || guessPane === null) return;
+    const target = paneForYear(reveal.date.year, WHEN_BORN_PANES);
+    if (target === guessPane) return;
+
+    const from = guessPane;
+    travelTimer.current = window.setTimeout(() => {
+      setPanMs(panDuration(from, target, WHEN_BORN_PANES));
+      setPane(target);
+    }, REVEAL_HOLD_MS);
+
+    return () => {
+      if (travelTimer.current !== null) {
+        window.clearTimeout(travelTimer.current);
+        travelTimer.current = null;
+      }
+    };
+  }, [reveal, guessPane]);
 
   // What a typed date may name: the two ends of the rails this game shows,
   // which here really is three rails and not one — 1500 BCE to the present. A
@@ -257,8 +308,8 @@ export function WhenBornGame({
   // old and knowing a birth year is not equally hard across that span. See
   // `WHEN_BORN_BANDS`.
   const accuracy =
-    guess !== null && event
-      ? gradeGuess(guess, event.year, WHEN_BORN_BANDS)
+    guess !== null && reveal
+      ? gradeGuess(guess, reveal.date.year, WHEN_BORN_BANDS)
       : null;
   const setComplete = results.length >= QUESTIONS_PER_SET;
   const lastQuestion = results.length === QUESTIONS_PER_SET - 1;
@@ -306,8 +357,8 @@ export function WhenBornGame({
   }
 
   /** Lock the guess in. The answer then lands on whichever rail it belongs to. */
-  function submit() {
-    if (answered || !event) return;
+  async function submit() {
+    if (lockedIn || sending || !event) return;
 
     // Where the guess came from. Both ways of answering have already put the
     // camera and the marker where they belong — dragging by dragging, typing
@@ -329,17 +380,27 @@ export function WhenBornGame({
     setGuess(guessed);
     setGuessPane(from);
     setGuessTyped(direct);
+    setSending(true);
+    setFailed(false);
 
-    // The answer is marked on the rail it belongs to, so the camera travels
-    // there — after a beat on the player's own marker, or they would watch it
-    // slide away as they read the result.
-    const target = paneForYear(event.year, WHEN_BORN_PANES);
-    if (target === from) return;
-
-    travelTimer.current = window.setTimeout(() => {
-      setPanMs(panDuration(from, target, WHEN_BORN_PANES));
-      setPane(target);
-    }, REVEAL_HOLD_MS);
+    // The camera's trip to the answer's rail waits for the answer (the effect
+    // above), since until the reply the client does not know which rail.
+    const round = event;
+    try {
+      const result = await revealDateRound(round.token, guessed, solo.setId);
+      if (!result.ok) throw new Error(result.reason);
+      if (queueHead.current?.token !== round.token) return;
+      setReveal({ date: result.date, tp: result.tp });
+      solo.record(result);
+    } catch {
+      // Handed back, never kept: an ungraded answer is not an answer.
+      setGuess(null);
+      setGuessPane(null);
+      setGuessTyped(false);
+      setFailed(true);
+    } finally {
+      setSending(false);
+    }
   }
 
   /**
@@ -379,6 +440,8 @@ export function WhenBornGame({
     setGuess(null);
     setGuessPane(null);
     setGuessTyped(false);
+    setReveal(null);
+    setFailed(false);
     // **Both halves are cleared, era included.** The era used to be carried
     // over on the grounds that it was an opinion about the round rather than
     // an answer to it. It is not: a player who typed a BCE year last round
@@ -433,12 +496,12 @@ export function WhenBornGame({
 
   if (!event) return null;
 
-  const answerPane = paneForYear(event.year, WHEN_BORN_PANES);
+  const answerPane = reveal ? paneForYear(reveal.date.year, WHEN_BORN_PANES) : null;
   // When the answer appears: a short beat if it is on the rail the guess was
   // made on, and the general game's hold plus the journey when the camera has
   // to fetch it from another age.
   const answerDelayMs =
-    guessPane === null || guessPane === answerPane
+    guessPane === null || answerPane === null || guessPane === answerPane
       ? REVEAL_DELAY_MS
       : REVEAL_HOLD_MS + panDuration(guessPane, answerPane, WHEN_BORN_PANES);
 
@@ -450,6 +513,23 @@ export function WhenBornGame({
           the photograph changes. */}
       <TimelineBackdrop pane={pane} panes={WHEN_BORN_PANES} />
 
+      {/* The masthead, in the top bar's own row: the game's name, and the
+          one line that says which date is being asked for when it is pressed.
+          It is a pill rather than a row of this column for the reason every
+          addition to these screens is one — the page is exactly one viewport
+          and the picture is the only part of it that gives. The column above
+          the poster still prints both from 1120px, where there is a column to
+          print them in; below that this is where they live. See
+          `components/round-head.tsx`.
+
+          No counter in it: a portrait leaves a corner free and the count is
+          in the picture's own top-right (`PosterCard`).
+
+          It goes with the round, not with the page: a masthead asking which
+          year to guess would be a question with nothing on screen to answer
+          it once the set is over. */}
+      {!setComplete && <RoundHead title={t.whenBornTitle} blurb={t.whenBornYearAsked} />}
+
       {setComplete ? (
         // The round underneath is already reset to a fresh question, so the
         // summary floats over the game rather than replacing the screen.
@@ -460,7 +540,9 @@ export function WhenBornGame({
           otherLabel={t.timelineTitle}
           // A new set starts over on which events count as repeats too, or a
           // long session would end up asking the draw to avoid the whole pool.
+          points={solo.points}
           onPlayAgain={() => {
+            solo.reset();
             setResults([]);
             setPlayed([]);
           }}
@@ -491,6 +573,19 @@ export function WhenBornGame({
             // Enlightenment at the earliest. See lib/game/when-born.ts for why
             // this is part of the round rather than decoration.
             pill={event.field ? t[PERSON_FIELD_LABEL_KEYS[event.field]] : null}
+            // The set counter, in the corner opposite the pill and only
+            // below the split: above 1120px the column beside the picture
+            // carries it, and two copies of "3 of 10" on one screen read as
+            // two different counts.
+            counter={
+              <span className="min-[1120px]:hidden">
+                <SetProgress
+                  played={results.length}
+                  total={QUESTIONS_PER_SET}
+                  t={t}
+                />
+              </span>
+            }
             // On the picture below 1120px for the reason every overlay on
             // these screens is: the stacked layout is a height budget with
             // nothing spare. Above that width it hides itself and the decks in
@@ -503,8 +598,16 @@ export function WhenBornGame({
                   guess={guess}
                   eventId={event.id}
                   locale={locale}
+                  tp={reveal?.tp ?? null}
                   t={t}
                 />
+              ) : failed ? (
+                <p
+                  role="status"
+                  className="round-verdict-in absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-4 pb-3 pt-10 text-center text-xs font-semibold text-white/85"
+                >
+                  {t.revealFailed}
+                </p>
               ) : null
             }
             t={t}
@@ -527,7 +630,15 @@ export function WhenBornGame({
                 it one. The subtitle also comes up from `white/60`, which was
                 the dimmest thing on the screen and sat over the brightest part
                 of the backdrop. */}
-            <div className="on-photo flex shrink-0 items-start justify-between gap-4 px-8 pt-1 sm:px-12">
+            {/* **A desktop row**, for the film game's reason and in its
+                spelling: below 1120px this screen is one column around a 2:3
+                portrait, and a heading, a line of prose and a counter above it
+                were three rows of chrome taken out of the picture the round is
+                about. The title and the prose move into the masthead pill in
+                the bar's own row (`RoundHead` above), the counter into the
+                portrait's top-right corner, and the card takes what they
+                leave. */}
+            <div className="on-photo hidden shrink-0 items-start justify-between gap-4 px-8 pt-1 sm:px-12 min-[1120px]:flex">
               <div className="min-w-0">
                 <h2 className="font-display text-xl font-semibold tracking-tight text-ink sm:text-2xl">
                   {t.whenBornTitle}
@@ -593,27 +704,29 @@ export function WhenBornGame({
                       heading={false}
                       fraction={fractions[candidate]}
                       onFractionChange={(next) => move(candidate, next)}
-                      answered={answered}
+                      answered={lockedIn}
                       // Shown but not draggable while a year is being typed:
                       // the marker is the readout of the field, so it must not
                       // also be something the pointer can move.
-                      locked={direct && !answered}
+                      locked={direct && !lockedIn}
                       // The marker belongs to the rail it was placed on.
                       // Showing one on the answer's rail too would read as a
                       // second guess.
-                      showGuess={!answered || guessPane === candidate}
+                      showGuess={!lockedIn || guessPane === candidate}
                       // A typed year is exact; the year a rail reads back at
                       // that position is snapped to its grid. The bubble is
                       // told the player's own number in both states — while
                       // they type it, and after it has been locked in.
                       guessYear={
-                        (guessTyped || (direct && !answered)) &&
+                        (guessTyped || (direct && !lockedIn)) &&
                         candidate === pane
                           ? (directYear(entry, entryRange) ?? guess)
                           : null
                       }
                       answerYear={
-                        candidate === answerPane ? event.year : null
+                        candidate === answerPane && reveal
+                          ? reveal.date.year
+                          : null
                       }
                       answerDelayMs={answerDelayMs}
                       // This rail's share of the distance between the guess and
@@ -627,7 +740,7 @@ export function WhenBornGame({
                         guessFraction:
                           guessPane === null ? 0 : fractions[guessPane],
                         answerPane: answered ? answerPane : null,
-                        answerYear: event.year,
+                        answerYear: reveal?.date.year ?? null,
                         answerDelayMs,
                         panes: WHEN_BORN_PANES,
                       })}
@@ -652,12 +765,19 @@ export function WhenBornGame({
 
                 `relative` is for the warning, which hangs underneath the row
                 rather than taking a row of its own. */}
-            <div className="relative grid w-full shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center justify-items-center pt-2">
+            {/* **Below `md` the row holds nothing but the button**, and the
+                grid collapses to one centred cell: the entry and its switch
+                are a desktop control now (`useKeyboardEntry`), because a
+                phone's numeric keypad covers this whole screen the moment the
+                field takes focus. The three equal-sided columns are declared
+                from that breakpoint up, where the sides have something to
+                hold. */}
+            <div className="relative grid w-full shrink-0 items-center justify-items-center pt-2 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
               {/* Always mounted and collapsed by `data-shown`: it has to
                   animate out as well as in, and `inert` is what takes a
                   clipped field out of reach. */}
               <div
-                className="entry-shell justify-self-end"
+                className="entry-shell hidden md:block md:justify-self-end"
                 data-shown={direct}
                 inert={!direct}
               >
@@ -669,7 +789,7 @@ export function WhenBornGame({
                       onSubmit={submit}
                       // Locked in: it stays on screen reporting the year that
                       // was guessed, but it is no longer a control.
-                      disabled={answered}
+                      disabled={lockedIn}
                       invalid={invalid}
                       shown={direct}
                       // **The era chip stays**, unlike the film and football
@@ -699,7 +819,10 @@ export function WhenBornGame({
                   <button
                     type="button"
                     onClick={submit}
-                    className={`${ROUND_BUTTON_LG} bg-ink text-page hover:opacity-85`}
+                    aria-busy={sending}
+                    className={`${ROUND_BUTTON_LG} bg-ink text-page hover:opacity-85 ${
+                      sending ? "cursor-progress opacity-70" : ""
+                    }`}
                   >
                     {t.submitGuess}
                   </button>
@@ -747,15 +870,15 @@ export function WhenBornGame({
                   cell resizes it without touching the site menu's button the
                   default is shared with. */}
               <div
-                className={`ml-3 justify-self-start transition-opacity duration-300 sm:[--menu-btn:46px] ${
-                  answered ? "opacity-0" : "opacity-100"
+                className={`hidden transition-opacity duration-300 md:ml-3 md:block md:justify-self-start md:[--menu-btn:46px] ${
+                  lockedIn ? "opacity-0" : "opacity-100"
                 }`}
-                inert={answered}
+                inert={lockedIn || !keyboardEntry}
               >
                 <InputModeToggle
                   direct={direct}
                   onToggle={() => {
-                    setDirect((current) => !current);
+                    setDirectWanted((current) => !current);
                     setInvalid(false);
                   }}
                   t={t}
@@ -792,6 +915,7 @@ export function WhenBornGame({
                     accuracy={accuracy}
                     guess={guess}
                     locale={locale}
+                    tp={reveal?.tp ?? null}
                     t={t}
                     // The film game's measured share — see the note there.
                     headShare="42%"

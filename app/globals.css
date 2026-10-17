@@ -158,16 +158,21 @@
 
      The round's masthead used to be the 84px row at the top of that list. It
      is `fixed` in the top bar's own row since 2026-10-08 (`RoundHead` in
-     components/comparison-game.tsx), so it costs this budget nothing and the
+     components/round-head.tsx), so it costs this budget nothing and the
      84px went to the photographs — which is what puts the cards on their
      360px cap at a 1680x844 window. */
   --compare-chrome: 20.75rem;
 
-  /* The comparison round's masthead pill: its own closed height, which both
-     the row's centre line and its corner radius are read off (`RoundHead` in
-     components/comparison-game.tsx). It lives here rather than inline on the
+  /* The round masthead pill: its own closed height, which both the row's
+     centre line and its corner radius are read off (`RoundHead` in
+     components/round-head.tsx). It lives here rather than inline on the
      element because it has to change with the breakpoint below, and an inline
-     style is the one place a media query cannot reach. */
+     style is the one place a media query cannot reach.
+
+     It is no longer only the comparison game's. The film, "Born When?",
+     football and basketball screens all stand the same pill in the same row,
+     which is why the component moved out of that game and why this token's
+     name is now a historical spelling rather than a scope. */
   --compare-head: 2.875rem;
 }
 
@@ -465,6 +470,23 @@ html {
   transform: scale(0.97);
 }
 
+/* Below `md` the board's cell is the active view's height (measured in
+   components/game-board.tsx), so the play view leaves no empty row under it
+   and opening the other games slides everything below the board down rather
+   than holding that room open all the time. The leaving view overhangs the
+   shorter cell while it fades, so it must not catch a tap meant for what is
+   now underneath it. Above `md` the views are the same height and the cell
+   keeps its own. */
+@media (width < 48rem) {
+  .board-cell[data-measured] {
+    height: var(--board-cell-h);
+    transition: height 560ms cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  .board-view[data-active="false"] {
+    pointer-events: none;
+  }
+}
+
 /* Each card arrives on its own, in reading order, after the outgoing board has
    had time to get out of the way. The delay is a custom property on the card
    rather than a stack of `nth-child` rules, so a card added to either view
@@ -598,6 +620,9 @@ html {
      and 1ms does that without a second code path for whether the board
      animates at all. */
   .board-view {
+    transition-duration: 1ms;
+  }
+  .board-cell[data-measured] {
     transition-duration: 1ms;
   }
   [data-swapped] .board-card {
@@ -991,7 +1016,7 @@ details[open] .faq-answer {
    card-description mechanism and the only way to animate a height from nothing
    without measuring one in JavaScript. The *inner* box carries the inward
    collapse as a `clip-path`, which clips without laying anything out, so the
-   five panes keep their geometry and the ruler is never re-measured
+   panes keep their geometry and the ruler is never re-measured
    mid-animation. And the photograph above grows into the room this gives up,
    which is `.card-caps` below.
 
@@ -1113,6 +1138,34 @@ details[open] .faq-answer {
   animation: entry-warning-in 240ms ease-out both;
 }
 
+/* The comparison card refusing a lock-in from dead centre: a short sideways
+   shake that says "move me". Translate only — the bubble's position is its
+   margin, so the two never fight. */
+@keyframes compare-nudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-8px);
+  }
+  40%,
+  80% {
+    transform: translateX(8px);
+  }
+}
+
+.compare-nudge {
+  animation: compare-nudge 420ms ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .compare-nudge {
+    animation: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rail-fold,
   .rail-fold-inner,
@@ -1129,8 +1182,8 @@ details[open] .faq-answer {
   }
 }
 
-/* The comparison round's masthead, which unrolls its instruction on hover
-   (`RoundHead` in components/comparison-game.tsx). The board's card
+/* The round masthead, which unrolls its instruction on hover or on a press
+   (`RoundHead` in components/round-head.tsx). The board's card
    descriptions' mechanism — `grid-template-rows: 0fr -> 1fr` with the child
    owning the overflow — so the same cut applies, and it has to reach the
    paragraph as well as the row: the row carries the height and the child

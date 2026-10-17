@@ -1,5 +1,5 @@
 /**
- * Parser for data/events.txt.
+ * Parser for data/tarihsel_olaylar_500_5_dil.txt.
  *
  * One event per line, six colon-separated fields:
  *

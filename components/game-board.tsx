@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link, { useLinkStatus } from "next/link";
 
 import type { Dict } from "@/lib/i18n/dictionary";
@@ -23,6 +23,14 @@ import type { BoardPhoto } from "@/lib/storage/images";
  * board's height instead would drag the masthead with it: the hero is
  * `min-h-dvh` and centred, so every pixel the board loses moves the title up
  * half a pixel. A board that changed size would be a page that jumped.
+ *
+ * **Below `md` the cell follows the active view instead.** There the views are
+ * not the same height (three rows against four), the hero is not centred in a
+ * full screen, and a cell held at the taller view left a row of black under
+ * the play view that pushed the next section down the page. So on a phone the
+ * cell is the active view's measured height, and opening the other games
+ * slides what is below the board down to make room (`.board-cell` in
+ * app/globals.css).
  *
  * The hidden view is `inert`, like the menu panel and for the same reason:
  * `opacity-0` alone leaves a grid of links and buttons sitting invisibly over
@@ -96,6 +104,27 @@ export function GameBoard({
   const [swaps, setSwaps] = useState(0);
   const board = useRef<HTMLDivElement>(null);
   const takeFocus = useRef(false);
+  const playView = useRef<HTMLDivElement>(null);
+  const gamesView = useRef<HTMLDivElement>(null);
+  // The active view's height, which the cell takes below `md` (see the note
+  // at the top). Null until measured: the first paint keeps the stacked
+  // cell's own height, so nothing animates on load.
+  const [cellHeight, setCellHeight] = useState<number | null>(null);
+
+  // A layout effect so the first measurement lands before the first paint,
+  // rather than as a visible jump from the stacked height. Observed rather
+  // than read once, because the cards' height is solved from the board's
+  // width and a rotated phone changes it. `offsetHeight` ignores the leaving
+  // view's `scale`, which is a transform.
+  useLayoutEffect(() => {
+    const active = (view === "play" ? playView : gamesView).current;
+    if (!active) return;
+    const measure = () => setCellHeight(active.offsetHeight);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(active);
+    return () => observer.disconnect();
+  }, [view]);
 
   /**
    * `detail` is 0 only when the button was activated from the keyboard — a
@@ -137,7 +166,16 @@ export function GameBoard({
     /* `@container` is what lets a cover card's *height* be solved from the
        board's own width — see `CoverCard`. The width cap is the shared token,
        because the masthead row above reads it too. */
-    <div ref={board} className="@container grid w-full max-w-[var(--board-w)]">
+    <div
+      ref={board}
+      data-measured={cellHeight !== null || undefined}
+      style={
+        cellHeight === null
+          ? undefined
+          : ({ "--board-cell-h": `${cellHeight}px` } as React.CSSProperties)
+      }
+      className="board-cell @container grid w-full max-w-[var(--board-w)]"
+    >
       {/* Six columns rather than four, because the row under the covers is
           three tiles wide now that survival has moved into the other view: a
           cover spans three of them and a tile two, so both rows still end flush
@@ -145,7 +183,12 @@ export function GameBoard({
           the board at the games cards' height — which is the only shape on the
           board that is not square, and is what lets the two views stay the same
           width as well as the same height. */}
-      <BoardView active={view === "play"} swaps={swaps} columns={6}>
+      <BoardView
+        active={view === "play"}
+        swaps={swaps}
+        columns={6}
+        viewRef={playView}
+      >
         <CoverCard
           href="/daily"
           title={t.dailyTitle}
@@ -199,7 +242,12 @@ export function GameBoard({
         />
       </BoardView>
 
-      <BoardView active={view === "games"} swaps={swaps} columns={4}>
+      <BoardView
+        active={view === "games"}
+        swaps={swaps}
+        columns={4}
+        viewRef={gamesView}
+      >
         {/* Survival leads this view, and it is now the one card in it that is
             built — it kept the slot it took from the three that were being
             held open, rather than moving to the play view, because this is
@@ -250,16 +298,13 @@ export function GameBoard({
         {/* The last two slots stood empty until 2026-10-06. They are named
             now, which leaves the view eight cards with nothing held open: the
             board's shape is settled and the two that mean something — what is
-            coming and the way back — are still in the corner the eye knows. */}
-        <BoardCard
-          title={t.inventionTitle}
-          blurb={t.cardInventionBlurb}
-          kicker={t.timelineTitle}
-          icon={<BulbIcon />}
-          photo={photos.invention}
-          soon={t.comingSoon}
-          index={4}
-        />
+            coming and the way back — are still in the corner the eye knows.
+
+            **Born When? leads this pair and Inventions follows it**, which is
+            the order the two modes are actually in: the first row of this view
+            is the four that can be played, and this slot is the fifth of them.
+            Inventions has moved down into the unbuilt half of the view, beside
+            the card that stands for everything else still being written. */}
         <BoardCard
           href="/when-born"
           title={t.whenBornTitle}
@@ -267,6 +312,21 @@ export function GameBoard({
           kicker={t.timelineTitle}
           icon={<PersonIcon />}
           photo={photos.whenBorn}
+          index={4}
+        />
+        {/* The one card on the board that says so across its whole face rather
+            than with a chip in the corner. See `veil` on `BoardCard`: the
+            chip was read as decoration beside three live cards wearing
+            photographs of the same weight, and this mode is far enough off
+            that "not yet" has to be the first thing about the card rather than
+            a detail of it. */}
+        <BoardCard
+          title={t.inventionTitle}
+          blurb={t.cardInventionBlurb}
+          kicker={t.timelineTitle}
+          icon={<BulbIcon />}
+          photo={photos.invention}
+          veil={t.comingSoonTitle}
           index={5}
         />
         <BoardCard
@@ -303,10 +363,13 @@ function BoardView({
   active,
   swaps,
   columns,
+  viewRef,
   children,
 }: {
   active: boolean;
   swaps: number;
+  /** Measured by the board, which sizes its cell to the active view below `md`. */
+  viewRef: React.Ref<HTMLDivElement>;
   /** Columns above `md`. The two views differ — six for the play view's
    *  three-up row, four for the games view's four-up — but both resolve to the
    *  same card height, so the views stay the same size. */
@@ -315,15 +378,15 @@ function BoardView({
 }) {
   return (
     <div
+      ref={viewRef}
       data-active={active}
       inert={!active || undefined}
       /* Centred in the shared cell, which is what stops a board that changed
          height between views from moving the masthead above it by half the
          difference. Below `md` the two views are no longer the same number of
          rows — the play view is three now that the covers sit side by side,
-         and the games view is still four — so there the shorter one is pinned
-         to the top of the cell and the slack falls below it, where it reads as
-         the run-up to the scroll rather than as a board floating in a hole. */
+         and the games view is still four — so there both are pinned to the top
+         of the cell, which is sized to the active one (`.board-cell`). */
       className="board-view col-start-1 row-start-1 self-start md:self-center"
     >
       {/* The grid lives on the inner element, not on the view, because this is
@@ -682,6 +745,7 @@ function BoardCard({
   icon,
   photo,
   soon,
+  veil,
   arrow,
   span,
   index,
@@ -699,6 +763,13 @@ function BoardCard({
    *  cards are square in the file and which are cropped. */
   photo?: string;
   soon?: string;
+  /** The loud form of `soon`: the label to print across the middle of the
+   *  card, over a wash dark enough that the picture cannot be mistaken for a
+   *  live one. See `CardVeil`. Mutually exclusive with `soon` — two marks
+   *  saying the same thing on one card is one too many — and like `soon` it
+   *  says nothing about whether the card is a link: `href` is what decides
+   *  that, and a veiled card has none. */
+  veil?: string;
   arrow?: "back";
   span?: "wide" | "full";
   index: number;
@@ -729,10 +800,26 @@ function BoardCard({
         </>
       ) : null}
 
+      {/* Over the picture, under the chrome: the icon chip, the kicker and the
+          title are all rendered after this and so stay crisp on top of it. The
+          wash is what makes the card read as unavailable; the words on it are
+          still the words. */}
+      {veil ? <CardVeil /> : null}
+
       <span className="relative flex items-start justify-between">
         <span
           aria-hidden="true"
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors sm:h-10 sm:w-10 ${
+          /* **A veiled card has no chip below `sm`.** Under the veil the icon
+             is one of two marks saying the same thing, and on a phone the card
+             is 126px tall: the chip takes the top 50px, the kicker and title
+             the bottom 50, and the 27px left between them is not two lines of
+             label. French is where that bites — "Bientôt disponible" wraps at
+             every size this card ever is — and the fix that keeps the label
+             legible is the mark that is carrying the least. From `sm` the card
+             is twice as tall and the chip comes back. */
+          className={`h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors sm:h-10 sm:w-10 ${
+            veil ? "hidden sm:flex" : "flex"
+          } ${
             photo
               ? "border border-white/15 bg-white/10 text-white/80 backdrop-blur-md group-hover:text-white"
               : "bg-card-raised text-ink-dim group-hover:text-ink"
@@ -746,7 +833,7 @@ function BoardCard({
             is the arrow, and a second one in the corner was the same sign
             twice — and otherwise the arrow that leans on hover. */}
         {soon ? <SoonChip label={soon} onDark={Boolean(photo)} /> : null}
-        {!soon && arrow !== "back" ? (
+        {!soon && !veil && arrow !== "back" ? (
           <span
             aria-hidden="true"
             className={`shrink-0 transition-transform duration-300 group-hover:translate-x-0.5 ${
@@ -803,6 +890,9 @@ function BoardCard({
           />
         ) : null}
       </span>
+
+      {/* Last child, so it is over everything including the title block. */}
+      {veil ? <SoonBanner label={veil} /> : null}
     </>
   );
 
@@ -843,9 +933,22 @@ function BoardCard({
            only *half* of the pressable pair: `hover:bg-card-raised` stays off,
            and so does the pointer cursor, so a card that cannot be played
            still does not promise a click. What it keeps from before is coming
-           out of its own mute, which is the louder half of the reaction. */
-        className={`${shape} transition-[opacity,border-color] duration-300 hover:border-ink/25 ${
-          photo ? "opacity-80 hover:opacity-100" : "opacity-60 hover:opacity-80"
+           out of its own mute, which is the louder half of the reaction.
+
+           **A veiled card answers the pointer with nothing at all**, and it
+           carries no mute either. Both follow from the veil: the wash is
+           already darker than any opacity this branch applied, so muting on
+           top of it only makes the title illegible — and a card that brightens
+           under the pointer is a card inviting a press, which is the one thing
+           a label reading "Coming Soon" across its middle must not do. */
+        className={`${shape} transition-[opacity,border-color] duration-300 ${
+          veil
+            ? ""
+            : `hover:border-ink/25 ${
+                photo
+                  ? "opacity-80 hover:opacity-100"
+                  : "opacity-60 hover:opacity-80"
+              }`
         }`}
       >
         {inner}
@@ -891,6 +994,59 @@ function CardTrace() {
   if (!pending) return null;
 
   return <span aria-hidden className="board-card-trace" />;
+}
+
+/**
+ * The wash a veiled card wears over its photograph.
+ *
+ * Darker than anything else on the board by a wide margin, which is the point:
+ * every other card is a photograph at full strength, and a mode that is months
+ * off has to be distinguishable from them at a glance rather than by reading a
+ * 10px chip in the corner. Black rather than the card's own colour — the
+ * opposite of `CardScrim`'s rule — because this is not a picture dissolving
+ * into the board, it is a picture being switched off.
+ *
+ * It is one flat layer and not a blur: `backdrop-filter` over a card that also
+ * scales its picture on hover costs a compositing pass per card, and the board
+ * has thirteen of them.
+ */
+function CardVeil() {
+  return (
+    <span
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 bg-black/70"
+    />
+  );
+}
+
+/**
+ * "Coming Soon", across the middle of the card.
+ *
+ * **Biased above centre, not centred**, which is what keeps it clear of the
+ * title block at the foot: `place-items-center` inside a box with bottom
+ * padding lands the label halfway up the *remaining* space, so on a 147px
+ * phone card the two lines of label and the two of title do not meet. A
+ * translate would have had to be a guess at the title's height, which changes
+ * with the language.
+ *
+ * The type is the card's own title size and a step up from it, rather than
+ * something larger: at a quarter of the board a 24px label in French
+ * ("Bientôt disponible") is three lines, and three lines of label is a card
+ * with a paragraph on it. It is the *contrast* that makes this read as the
+ * loudest thing on the card — white at full strength over a 70% wash — not the
+ * size.
+ */
+function SoonBanner({ label }: { label: string }) {
+  return (
+    /* Not `aria-hidden`: this label *is* the "not yet", the way the chip it
+       replaced was, so it has to be read out. `aria-disabled` on the card says
+       the same thing to the tree but not in words. */
+    <span className="pointer-events-none absolute inset-0 grid place-items-center px-3 pb-10 sm:pb-12">
+      <span className="font-display text-center text-sm font-semibold uppercase leading-tight tracking-[0.06em] text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.8)] sm:text-xl">
+        {label}
+      </span>
+    </span>
+  );
 }
 
 function SoonChip({ label, onDark }: { label: string; onDark?: boolean }) {

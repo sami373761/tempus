@@ -1,5 +1,5 @@
 /**
- * Parses data/events.txt and prints a report without touching the database.
+ * Parses data/tarihsel_olaylar_500_5_dil.txt and prints a report without touching the database.
  *
  *   npm run events:check [-- path/to/file.txt]
  */
@@ -7,7 +7,7 @@
 import { formatHistoricalDate } from "../lib/historical-date.ts";
 import { parseEventsFile } from "./parse-events.ts";
 
-const path = process.argv[2] ?? "data/events.txt";
+const path = process.argv[2] ?? "data/tarihsel_olaylar_500_5_dil.txt";
 const result = parseEventsFile(path);
 
 console.log(`file     : ${path}`);

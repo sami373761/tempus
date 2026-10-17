@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   maxDigits,
@@ -262,6 +262,50 @@ export function DateEntry({
       />
     </div>
   );
+}
+
+/**
+ * The width below which there is no typing a date at all: the rail is the only
+ * way to answer a round.
+ *
+ * `md`, the same breakpoint the controls row already changes shape at. Two
+ * reasons it is a rule rather than a preference the player can override:
+ *
+ *   * **The entry costs a phone a row it has not got.** Above `md` the pill,
+ *     the advance button and the switch stand across one line; below it the
+ *     pill drops to a line of its own, which on a screen that is one viewport
+ *     and must not scroll comes out of the photograph. The whole round pays
+ *     for a control most players never press.
+ *   * **It is not the better input there anyway.** Raising the numeric keypad
+ *     on a phone covers the game — the picture, the rail and the button all
+ *     go behind it — which is why the entry never takes focus on a touch
+ *     screen in the first place (see the focus effect above). A drag is the
+ *     affordance a phone actually has.
+ *
+ * The switch is hidden by a CSS class as well as by this hook, so it is never
+ * painted for a frame before the hook has a window to measure; the hook is
+ * what stops a player who turned the entry on at a desktop width and then
+ * narrowed the window from being left with a folded-away field as their only
+ * way to answer.
+ */
+export const KEYBOARD_ENTRY_QUERY = "(min-width: 768px)";
+
+/** Whether this window is wide enough to type a date in. */
+export function useKeyboardEntry(): boolean {
+  // False until measured, which matches the server's render and the class the
+  // switch is hidden with: the narrow case is the safe default, because it
+  // only ever removes a second way of doing something the rail already does.
+  const [allowed, setAllowed] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia(KEYBOARD_ENTRY_QUERY);
+    const sync = () => setAllowed(query.matches);
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, []);
+
+  return allowed;
 }
 
 /**

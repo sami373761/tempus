@@ -41,7 +41,9 @@ export default async function ComparePage() {
           game knows the set is over.
 
           It is a `fixed` pill in the top bar's own row since 2026-10-08
-          (`RoundHead`), so it is no longer one of the rows this screen's
+          (`RoundHead`, now shared from components/round-head.tsx by every
+          game that wants one), so it is no longer one of the rows this
+          screen's
           height budget pays for — `--compare-chrome` dropped by its 84px and
           the photographs took them. */}
       {rounds.length > 0 ? (

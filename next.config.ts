@@ -29,6 +29,20 @@ const nextConfig: NextConfig = {
    * be allowed here. Dev-only; `next build` ignores it.
    */
   allowedDevOrigins: ["192.168.1.2", "192.168.1.*", "192.168.0.*", "10.0.0.*"],
+  /**
+   * libheif in WebAssembly, for HEIC profile pictures. Loaded by Node as it
+   * ships rather than bundled: the bundler gains nothing on a wasm blob and
+   * has broken its loader before. (sharp is on Next's own list already.)
+   */
+  serverExternalPackages: ["heic-decode", "libheif-js"],
+  experimental: {
+    serverActions: {
+      /* Profile pictures may be up to 1 MB (`AVATAR_MAX_BYTES`), and Next's
+         default limit is 1 MB for the whole request — a file at the limit
+         would be refused before the action could say why. */
+      bodySizeLimit: "2mb",
+    },
+  },
   images: {
     // Images live in Cloudflare R2 and are served from its public/CDN hostname.
     remotePatterns: r2Hostname

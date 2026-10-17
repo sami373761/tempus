@@ -33,9 +33,9 @@ import type { Dict } from "@/lib/i18n/dictionary";
  * to clear it, so an open row is visibly one block rather than two lines that
  * happen to be adjacent.
  *
- * The questions are numbered keys (`faqQ1`…`faqA6`) rather than an array in the
+ * The questions are numbered keys (`faqQ1`…`faqA8`) rather than an array in the
  * dictionary, because `Dict` is derived from the English dictionary and that is
- * what makes a missing translation a type error. A seventh question is two keys
+ * what makes a missing translation a type error. A ninth question is two keys
  * in five dictionaries and one line here.
  */
 export function FaqSection({ t }: { t: Dict }) {
@@ -46,6 +46,8 @@ export function FaqSection({ t }: { t: Dict }) {
     [t.faqQ4, t.faqA4],
     [t.faqQ5, t.faqA5],
     [t.faqQ6, t.faqA6],
+    [t.faqQ7, t.faqA7],
+    [t.faqQ8, t.faqA8],
   ] as const;
 
   return (
@@ -61,7 +63,7 @@ export function FaqSection({ t }: { t: Dict }) {
       </div>
 
       {/* A rule above the first row and below the last, so the list reads as a
-          bounded run of text rather than as five separators floating in the
+          bounded run of text rather than as seven separators floating in the
           page. */}
       <div className="border-t border-hairline">
         {items.map(([question, answer], i) => (

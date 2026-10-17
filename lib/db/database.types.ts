@@ -418,6 +418,8 @@ export type Database = {
           token_hash: string;
           created_at: string;
           last_seen_at: string;
+          /** The account that took the seat, if signed in. Read by the TP trigger. */
+          user_id: string | null;
         };
         Insert: {
           match_id: string;
@@ -425,10 +427,12 @@ export type Database = {
           token_hash: string;
           created_at?: string;
           last_seen_at?: string;
+          user_id?: string | null;
         };
         Update: {
           token_hash?: string;
           last_seen_at?: string;
+          user_id?: string | null;
         };
         Relationships: [
           {
@@ -549,18 +553,33 @@ export type Database = {
           id: string;
           /** Null until the player picks one — see normalize_username(). */
           username: string | null;
+          /** Null: show the highest earned badge. Service role writes only. */
+          worn_badge: string | null;
+          /** True: the player took their badge off. Service role writes only. */
+          badge_off: boolean;
+          /** R2 key under user_profile_pictures/, or null. Service role writes only. */
+          avatar_key: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id: string;
           username?: string | null;
+          worn_badge?: string | null;
+          badge_off?: boolean;
+          avatar_key?: string | null;
           created_at?: string;
           updated_at?: string;
         };
-        /** `username` is the only column granted to `authenticated`. */
+        /**
+         * `username` is the only column granted to `authenticated`;
+         * `worn_badge` is written by the service role.
+         */
         Update: {
           username?: string | null;
+          worn_badge?: string | null;
+          badge_off?: boolean;
+          avatar_key?: string | null;
         };
         Relationships: [];
       };
@@ -673,6 +692,63 @@ export type Database = {
         };
         Relationships: [];
       };
+      score_entry: {
+        Row: {
+          id: number;
+          user_id: string;
+          game: string;
+          kind: string;
+          source: string;
+          tp: number;
+          opponent_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          game: string;
+          kind: string;
+          source: string;
+          tp: number;
+          opponent_id?: string | null;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
+      solo_set: {
+        Row: {
+          id: string;
+          user_id: string;
+          game: string;
+          kind: string;
+          answered: number;
+          correct: number;
+          perfects: number;
+          top_tier: number;
+          tp: number;
+          created_at: string;
+          closed_at: string | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      solo_answer: {
+        Row: {
+          round_id: string;
+          set_id: string;
+          user_id: string;
+          game: string;
+          event_id: string;
+          verdict: string;
+          correct: boolean;
+          tp: number;
+          answered_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: {
       event_challenge_stats: {
@@ -721,6 +797,43 @@ export type Database = {
       };
     };
     Functions: {
+      bank_solo_round: {
+        Args: {
+          p_user_id: string;
+          p_set_id: string;
+          p_game: string;
+          p_round_id: string;
+          p_event_id: string;
+          p_verdict: string;
+          p_correct: boolean;
+          p_tp: number;
+          p_set_size: number;
+        };
+        Returns: Json;
+      };
+      player_stats: {
+        Args: { p_user_id: string };
+        Returns: Json;
+      };
+      shown_badge: {
+        Args: { p_user_id: string };
+        Returns: string | null;
+      };
+      leaderboard: {
+        Args: { p_since?: string | null; p_limit?: number };
+        Returns: {
+          rank: number;
+          username: string;
+          badge_slug: string | null;
+          avatar_key: string | null;
+          tp: number;
+          perfects: number;
+        }[];
+      };
+      leaderboard_position: {
+        Args: { p_user_id: string; p_since?: string | null };
+        Returns: { rank: number; tp: number }[];
+      };
       array_is_distinct: {
         Args: { ids: string[] };
         Returns: boolean;

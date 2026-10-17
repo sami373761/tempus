@@ -1,5 +1,6 @@
 "use server";
 
+import { getCurrentUser } from "@/lib/auth/server";
 import { createAdminDbClient } from "@/lib/db/admin";
 import {
   abandonMatch,
@@ -75,7 +76,10 @@ export async function createVersusMatch(
   const admin = createAdminDbClient();
 
   try {
-    const credentials = await createMatch(admin, mode);
+    // The seat is paid TP at the end only if an account took it; the session
+    // is read here, never passed in (supabase/migrations/20261017120000_scoring.sql).
+    const user = await getCurrentUser();
+    const credentials = await createMatch(admin, mode, user?.id ?? null);
     return { ok: true, ...credentials };
   } catch (error) {
     console.error("createVersusMatch failed", error);
@@ -102,7 +106,8 @@ export async function joinVersusMatch(
   const admin = createAdminDbClient();
 
   try {
-    const result = await joinMatch(admin, code);
+    const user = await getCurrentUser();
+    const result = await joinMatch(admin, code, user?.id ?? null);
     if (!result.ok) return { ok: false, reason: result.reason };
     return { ok: true, ...result.credentials };
   } catch (error) {
@@ -210,7 +215,7 @@ export async function answerVersusRematch(
   accept: boolean,
 ): Promise<ViewResult> {
   return withSeat(matchId, token, async (admin, seat) => {
-    if (accept) await acceptRematch(admin, matchId);
+    if (accept) await acceptRematch(admin, matchId, seat);
     else await declineRematch(admin, matchId, seat);
 
     const locale = await readLocale();

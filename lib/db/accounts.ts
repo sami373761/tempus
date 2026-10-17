@@ -50,14 +50,39 @@ export function normalizeUsername(raw: string): string | null {
   return USERNAME_RE.test(cleaned) ? cleaned : null;
 }
 
-/** Why a typed name was refused. Separate from "too short" because the two
- *  need different sentences: one is a length to fix, the other is a character
- *  set the player cannot see from the field. */
-export type UsernameProblem = "too-short" | "too-long" | "bad-characters";
+/**
+ * Why a typed name was refused.
+ *
+ * Four problems rather than one, because the four need four different
+ * sentences: a length is something the player can see in the field, a space is
+ * the mistake almost everybody makes and has an obvious fix, and a character
+ * the column cannot hold is the one refusal that cannot be worked out by
+ * looking at what was typed.
+ *
+ * `has-space` is split out of `bad-characters` for that last reason: the list
+ * of offending characters is printed back to the player, and a space printed
+ * in a sentence is invisible.
+ */
+export type UsernameProblem =
+  | "too-short"
+  | "too-long"
+  | "has-space"
+  | "bad-characters";
 
 export type UsernameCheck =
   | { ok: true; username: string }
-  | { ok: false; problem: UsernameProblem };
+  | {
+      ok: false;
+      problem: UsernameProblem;
+      /** The characters the field refused, as typed, de-duplicated and in
+       *  order — what the `{chars}` in `authErrUsernameChars` is filled with.
+       *  Empty for every problem but `bad-characters`. */
+      rejected: string;
+    };
+
+/** Shortest name the column holds. The counterpart of `USERNAME_MAX`, and the
+ *  number the refusal sentence quotes. */
+const USERNAME_MIN = 3;
 
 /**
  * What a form does with a typed name: accept it, or say why not.
@@ -76,13 +101,37 @@ export type UsernameCheck =
  * the index could treat as one name. (`"İ".toLowerCase()` is not even a
  * single character — it is `i` plus a combining dot — which is exactly the
  * kind of thing a username column must not be asked to decide about.)
+ *
+ * **The refused characters come back with the refusal**, which is why this
+ * returns `rejected` rather than just a problem: the form prints them, so the
+ * player is told "ş and !" instead of being left to compare their name against
+ * a character class. They are taken from the *trimmed, un-folded* text so the
+ * list reads back as what was typed — a rejected "Ş" is reported as "Ş", not
+ * as the "ş" the fold would have made of it.
+ *
+ * Order of the checks is the order of the sentences' usefulness: a name with
+ * both a space and an accent is told about the space, because that is the one
+ * with a fix in it.
  */
 export function validateUsername(raw: string): UsernameCheck {
-  const folded = raw.trim().toLowerCase();
+  const typed = raw.trim();
+  const folded = typed.toLowerCase();
 
-  if (!/^[a-z0-9_]*$/.test(folded)) return { ok: false, problem: "bad-characters" };
-  if (folded.length < 3) return { ok: false, problem: "too-short" };
-  if (folded.length > USERNAME_MAX) return { ok: false, problem: "too-long" };
+  if (/\s/.test(typed)) return { ok: false, problem: "has-space", rejected: "" };
+
+  const rejected = [
+    ...new Set(
+      [...typed].filter((char) => !/^[a-z0-9_]$/.test(char.toLowerCase())),
+    ),
+  ].join(" ");
+  if (rejected) return { ok: false, problem: "bad-characters", rejected };
+
+  if (folded.length < USERNAME_MIN) {
+    return { ok: false, problem: "too-short", rejected: "" };
+  }
+  if (folded.length > USERNAME_MAX) {
+    return { ok: false, problem: "too-long", rejected: "" };
+  }
 
   return { ok: true, username: folded };
 }
@@ -121,6 +170,42 @@ export async function readUsername(
 
   if (error) throw new Error(`readUsername: ${error.message}`);
   return data?.username ?? null;
+}
+
+/** The R2 key of a player's picture, or null for the default. */
+export async function readAvatarKey(
+  client: DbClient,
+  userId: string,
+): Promise<string | null> {
+  const { data, error } = await client
+    .from("profile")
+    .select("avatar_key")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) throw new Error(`readAvatarKey: ${error.message}`);
+  return data?.avatar_key ?? null;
+}
+
+/**
+ * Points a profile at a new picture (or none) and returns the key it replaced,
+ * so the caller can delete that object once the row no longer names it.
+ * Service role only — `avatar_key` is not in the column grant.
+ */
+export async function setAvatarKey(
+  admin: DbClient,
+  userId: string,
+  avatarKey: string | null,
+): Promise<string | null> {
+  const previous = await readAvatarKey(admin, userId);
+
+  const { error } = await admin
+    .from("profile")
+    .update({ avatar_key: avatarKey })
+    .eq("id", userId);
+  if (error) throw new Error(`setAvatarKey: ${error.message}`);
+
+  return previous === avatarKey ? null : previous;
 }
 
 /** Distinguishes "that name is taken" from "that write failed", which is the
@@ -194,34 +279,40 @@ export async function readBadgeProgress(
 /**
  * Sets one player's progress towards one badge. **Service role only.**
  *
- * Nothing calls this yet, and that is the point: it is the seam the achievement
- * rules will be written against when they are decided. An upsert rather than an
- * update so the first time a badge is touched does not need a row to exist, and
+ * The seam the badge rules write through (`refreshBadges` in ./scoring.ts,
+ * rules in lib/game/badge-rules.ts). An upsert rather than an update so the
+ * first time a badge is touched does not need a row to exist, and
  * `unlockedAt` is passed rather than derived — whether reaching the target is
  * what earns the badge is exactly the kind of rule this module must not decide.
+ * **A caller must pass the existing `unlockedAt` back**: omitting it clears it.
  */
 export async function writeBadgeProgress(
   client: DbClient,
-  input: {
-    userId: string;
-    badgeSlug: string;
-    progress: number;
-    target: number;
-    unlockedAt?: string | null;
-    details?: Record<string, Json>;
-  },
+  input: BadgeProgressWrite | readonly BadgeProgressWrite[],
 ): Promise<void> {
+  const rows = (Array.isArray(input) ? input : [input]) as BadgeProgressWrite[];
+  if (rows.length === 0) return;
+
   const { error } = await client.from("user_badge_progress").upsert(
-    {
-      user_id: input.userId,
-      badge_slug: input.badgeSlug,
-      progress: input.progress,
-      target: input.target,
-      unlocked_at: input.unlockedAt ?? null,
-      details: (input.details ?? {}) as Json,
-    },
+    rows.map((row) => ({
+      user_id: row.userId,
+      badge_slug: row.badgeSlug,
+      progress: row.progress,
+      target: row.target,
+      unlocked_at: row.unlockedAt ?? null,
+      details: (row.details ?? {}) as Json,
+    })),
     { onConflict: "user_id,badge_slug" },
   );
 
   if (error) throw new Error(`writeBadgeProgress: ${error.message}`);
+}
+
+export interface BadgeProgressWrite {
+  userId: string;
+  badgeSlug: string;
+  progress: number;
+  target: number;
+  unlockedAt?: string | null;
+  details?: Record<string, Json>;
 }

@@ -7,8 +7,6 @@ import { ScrollReveal } from "@/components/scroll-reveal";
 import { SiteMark } from "@/components/site-header";
 import { SiteMenu } from "@/components/site-menu";
 import { getCurrentAccount } from "@/lib/auth/server";
-import { createServerDbClient } from "@/lib/db/server";
-import { countPublishedEvents } from "@/lib/db/queries";
 import { SUPPORTED_LOCALES } from "@/lib/db/types";
 import { readLocaleContext } from "@/lib/i18n/server";
 import {
@@ -68,28 +66,12 @@ export default async function HomePage() {
      objects rather than as single URLs. */
   const photos = boardPhotos();
 
-  /* The explorer's library panel states how big the illustrated library is —
-     the count of published *and* illustrated rows, the site's own rule rather
-     than the size of the dataset. It is read rather than written down so it
-     cannot go stale as pictures are attached.
-
-     `allPools` is what makes it the *library* rather than one game's pool: the
-     subject games (football, and whatever follows it) draw from events of
-     their own that the general games never see, and the sentence this number
-     sits in is about every photographed event on the site.
-
-     This is the only database read the home page makes, and it is guarded for
-     that reason: until now the page rendered with no connection at all, and a
-     front page that 500s because a count failed would be a worse trade than a
-     panel showing a dash. */
-  let eventCount: number | null = null;
-  try {
-    eventCount = await countPublishedEvents(await createServerDbClient(), {
-      allPools: true,
-    });
-  } catch {
-    eventCount = null;
-  }
+  /* The explorer's library panel used to state how big the illustrated library
+     is, read from the database so it could not go stale. It states "1000+"
+     now, which was asked for — so this page makes **no database read at all**,
+     and the `try`/`catch` that kept a failed count from 500-ing the front page
+     went with it. See `ExplorerStats` in components/home-explorer.tsx before
+     putting a number back: the read has to come back with it. */
 
   return (
     <>
@@ -124,8 +106,14 @@ export default async function HomePage() {
           594px after the mobile board was shortened), or it puts the overflow
           back and the padding is skipped again. It changes nothing above `sm`:
           symmetric padding inside `min-h-dvh` leaves the block centred on the
-          screen. */}
-      <section className="flex min-h-dvh flex-col items-center justify-center gap-10 px-6 py-6 text-center sm:py-8">
+          screen.
+
+          **`min-h-dvh` only from `md`.** On a phone the block is shorter than
+          a tall screen, and a full-height hero kept the explorer's heading a
+          screen down behind empty black. There the hero is its content, and the
+          board's own cell grows when the other games open (see
+          components/game-board.tsx), sliding the rest of the page down. */}
+      <section className="flex flex-col items-center justify-center gap-10 px-6 py-6 text-center sm:py-8 md:min-h-dvh">
         {/* The masthead is a row on the board's own column, which is what puts
             the mark over the top-left corner of the first card and the menu
             button over the top-right corner of the second. `--board-w` is the
@@ -203,10 +191,14 @@ export default async function HomePage() {
           keeps the other end honest — on a tall window the hero is already
           leaving an enormous slack and the run-up should not add to it.
 
-          Below `md` the board is two columns of four rows and fills the first
-          screen outright, so there is no slack to compensate for and the plain
-          `14vh` is the whole of the gap. */}
-      <div className="mx-auto max-w-[calc(var(--board-w)+3rem)] px-6 pt-[14vh] md:pt-[min(26vh,calc(min(var(--board-w),100vw_-_3rem)*0.2))]">
+          **Below `md` it is a flat 3rem**, down from `14vh`, asked for: on a
+          phone the hero already fills the first screen outright, so there is no
+          slack to compensate for — and 14vh on an 844px window was 118px of
+          nothing between the last card and this block's heading, which put the
+          block's own pills most of a second screen down. A fixed 48px rather
+          than a smaller `vh` because the quantity that should set this gap is
+          the type above and below it, not the height of the window. */}
+      <div className="mx-auto max-w-[calc(var(--board-w)+3rem)] px-6 pt-12 md:pt-[min(26vh,calc(min(var(--board-w),100vw_-_3rem)*0.2))]">
         <ScrollReveal>
           {/* The block's name, outside the card rather than in a corner of it —
               the same arrangement the bento below has, so the two sections
@@ -228,10 +220,7 @@ export default async function HomePage() {
             locale={locale}
             art={explorerArt()}
             model={explorerModel()}
-            stats={{
-              events: eventCount,
-              languages: SUPPORTED_LOCALES.length,
-            }}
+            stats={{ languages: SUPPORTED_LOCALES.length }}
           />
         </ScrollReveal>
       </div>

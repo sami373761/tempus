@@ -48,9 +48,12 @@ export default async function BasketballPage() {
     // One screen, exactly — the same budget `/guess` and `/football` run on,
     // and the same safety valve for a window too short to honour it.
     <div className="mx-auto flex h-[calc(100dvh-var(--site-bar-h))] max-w-6xl flex-col overflow-y-auto px-6 pb-6 pt-2">
-      {/* No visible masthead, as on `/guess`: the picture and the rail say what
-          the game is, and a heading would cost the height the card needs. The
-          rail's own pane heading carries the name. */}
+      {/* No masthead in the flow, as on `/guess`: a heading here would cost
+          the height the card needs. The game's name is a pill in the top
+          bar's own row instead (`RoundHead`, passed as `headBlurb` below),
+          which costs this screen's budget nothing — it used to be the rail's
+          own pane heading, and that was both a line of flow and, on this
+          screen's one-pane rail, a label `paneLabel` had no era to fill. */}
       <h1 className="sr-only">{t.basketballTitle}</h1>
 
       {events.length > 0 ? (
@@ -65,6 +68,11 @@ export default async function BasketballPage() {
           title={t.basketballTitle}
           otherHref="/guess"
           otherLabel={t.timelineTitle}
+          // One rail and no era to name over it: the heading comes off and
+          // the row it leaves carries the round's result card instead. See
+          // `railHeading` on the game.
+          railHeading={false}
+          headBlurb={t.cardBasketballBlurb}
         />
       ) : (
         <p className="text-center text-ink-dim">{t.noEvents}</p>

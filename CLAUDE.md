@@ -1,8 +1,8 @@
 # TEMPUS
 
 A historical date-guessing game. Playable: `/guess` (date guessing), `/compare`
-(comparison), `/versus` (head-to-head date guessing). Accounts and badges exist.
-There is no admin UI yet, and no scores are saved.
+(comparison), `/versus` (head-to-head date guessing). Accounts, TP scoring,
+badges and the leaderboard are live. There is no admin UI yet.
 
 Stack: Next.js 15 (App Router) · TypeScript · Tailwind v4 · Supabase Postgres 17
 · Cloudflare R2 · targeted at Vercel.
@@ -75,6 +75,7 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
   - `historical_year_label()` ↔ `formatYear()`
   - `era_slug_for_year()` ↔ `eraForYear()` (verify with `npm run era:check`)
   - `normalize_username()` ↔ `normalizeUsername()` in `lib/db/accounts.ts`
+  - TP bonus amounts in `lib/game/points.ts` ↔ `scoring.sql` functions/triggers
 - **Eras:** `year <= 0` → `bce`, `1..2026` → `ce`, `> 2026` → `future`. Era
   category links are maintained by a trigger; never write them by hand.
 - **An event with no primary image is hidden from the site.** Queries in
@@ -102,7 +103,8 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
   behind a validated Server Action.
   - `profile` → RLS, column-scoped grant on `username` only.
   - `event_date_challenge` → service role only (game is playable signed out).
-  - `user_badge_progress` → service role only (players must not award themselves badges).
+  - `user_badge_progress`, `score_entry`, `solo_set`, `solo_answer` → service
+    role only (players must not award themselves points or badges).
 - Admin auth is `app_metadata.role = 'admin'`; `app/admin/layout.tsx` is the gate.
 - The `event_localized` view uses `security_invoker = true` (PG15+).
 - Migrations are append-only; never edit an applied one.
@@ -156,8 +158,11 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
 - Tier labels and colours live only in `lib/game/verdict-style.ts`.
 - `versus_seat_result()` in SQL names `'wayOff'`; renaming a tier needs a migration.
 - **Sets of ten:** rules in `lib/game/set.ts`. Never inline 10 — use
-  `QUESTIONS_PER_SET`. Sets live in component state; **do not add game/score
-  tables speculatively.**
+  `QUESTIONS_PER_SET`.
+- **TP:** tier → TP in `lib/game/points.ts`; the ledger is `score_entry`
+  (idempotent on `source`). Badge rules only in `lib/game/badge-rules.ts`.
+- **Solo rounds are masked:** deals return `DealtEvent` + signed token, the year
+  comes only from `app/actions/scoring.ts` reveals. Never send a year in a deal.
 - **Round queue:** refill to `ROUND_QUEUE_TARGET` (3), server deals
   `ROUND_QUEUE_DEPTH` (2). Keep them different — equal values reintroduce a
   dead "Next round" button on question 2.
@@ -201,8 +206,8 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
   middleware matcher. Its origin comes from the request `Host`, not env.
 - `hasPasswordIdentity()` decides the password form's shape and is re-checked
   server-side in `updatePassword`.
-- Badge progress (`user_badge_progress`) is infrastructure only; no rules compute
-  it yet. `writeBadgeProgress()` is the seam for them.
+- Badges are one 6-rung ladder; `refreshBadges()` recomputes them and never
+  clears `unlocked_at`. Worn badge: `profile.worn_badge`, else highest.
 
 ## UI invariants
 
@@ -244,8 +249,8 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
    bucket (old `ce/` copies, `bce/formation-ofthe-moon.jpeg`,
    `ce/ashoka-adopts-buddhism.jpeg`) are safe to delete — never attach them.
 3. Only era categories exist; no topic tags.
-4. No saved scores, solo sessions or real leaderboard data (`/leaderboard` is
-   sample data).
+4. Solo reveals are server actions, queued behind pending deals; latency is
+   high in dev because the DB is in ap-southeast-2.
 5. No admin UI. `eventChallengeStats()` is ready for its first screen.
 6. Google sign-in needs the provider enabled in the Supabase dashboard; the
    Google-only "set a password" path is untested.

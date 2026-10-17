@@ -59,6 +59,12 @@ export const TRANSPARENT_ROUTES = [
   // (app/(public)/basketball/page.tsx), so it gets the same bar: a route whose
   // full-bleed backdrop runs behind it needs the glass pill, not a card.
   "/basketball",
+  // Both portrait games paint a full-bleed `TimelineBackdrop` of their own,
+  // exactly as the rails above do, and both now stand a glass masthead pill
+  // in this row (`RoundHead`). A card-surfaced menu button beside it over a
+  // photograph was the one thing in that row not made of the same material.
+  "/screen",
+  "/when-born",
 ];
 
 /**

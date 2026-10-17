@@ -9,14 +9,19 @@ import {
   requireAccount,
 } from "@/lib/auth/server";
 import {
+  BADGE_BY_SLUG,
   BADGES,
-  DEFAULT_AVATAR_SRC,
-  LADDER_BADGES,
   type Badge,
 } from "@/lib/badges";
-import { readBadgeProgress } from "@/lib/db/accounts";
+import { avatarSrc } from "@/lib/avatar";
+import { readAvatarKey } from "@/lib/db/accounts";
+import { createAdminDbClient } from "@/lib/db/admin";
+import {
+  readLeaderboardPosition,
+  readShownBadge,
+  refreshBadges,
+} from "@/lib/db/scoring";
 import { createServerDbClient } from "@/lib/db/server";
-import type { BadgeProgress } from "@/lib/db/types";
 import { format } from "@/lib/i18n/dictionary";
 import { readLocaleContext } from "@/lib/i18n/server";
 
@@ -28,9 +33,9 @@ export async function generateMetadata(): Promise<Metadata> {
 /**
  * Where the menu's Account row lands.
  *
- * **Deliberately small.** The site stores a username and nothing else about a
- * player, so this is that name, the address the session is keyed on, the
- * password, the badges and the way out. There is no avatar upload, no
+ * **Deliberately small.** The site stores a username and a picture and nothing
+ * else about a player, so this is that picture and name, the address the
+ * session is keyed on, the password, the badges and the way out. There are no
  * notification settings and no match history, because none of those exist to
  * settle — and a settings page padded with controls that do nothing is the same
  * mistake the board's unbuilt cards avoid by labelling themselves.
@@ -39,10 +44,11 @@ export async function generateMetadata(): Promise<Metadata> {
  * visitor before anything renders, and `requireAccount` is the boundary that
  * holds if the matcher is ever narrowed.
  *
- * The badge the player is *wearing* is the top ladder rank they have earned,
- * which is the rule the ladder already states — "the higher badge replaces the
- * one below it". With none earned the picture is a plain circle, which is the
- * honest version of the same thing rather than a borrowed bronze.
+ * The badge the player is *wearing* is the one they chose on /achievements, or
+ * the top rung they have earned when they have not chosen (`shown_badge` in
+ * the scoring migration — the same rule the leaderboard draws). With none
+ * earned the picture is a plain circle, which is the honest version of the
+ * same thing rather than a borrowed bronze.
  */
 export default async function AccountPage() {
   const { t } = await readLocaleContext();
@@ -58,17 +64,33 @@ export default async function AccountPage() {
   const user = await getCurrentUser();
   const hasPassword = user ? hasPasswordIdentity(user) : true;
 
-  let progress: BadgeProgress[] = [];
+  // Guarded like the badge read below: a picture that cannot be read is the
+  // default picture, not a page that fails.
+  let avatarKey: string | null = null;
   try {
-    progress = await readBadgeProgress(await createServerDbClient(), account.id);
-  } catch {
-    progress = [];
+    avatarKey = await readAvatarKey(await createServerDbClient(), account.id);
+  } catch (error) {
+    console.error("account: avatar read failed", error);
   }
+  const avatar = avatarSrc(avatarKey);
 
-  const unlocked = new Set(
-    progress.filter((row) => row.unlockedAt !== null).map((row) => row.slug),
-  );
-  const worn = highestWornBadge(unlocked);
+  // Re-measured here as on /achievements, so the count of badges and the
+  // ring on the picture are never a visit behind.
+  let earned = 0;
+  let totalTp = 0;
+  let worn: Badge | null = null;
+  let rank: number | null = null;
+  try {
+    const admin = createAdminDbClient();
+    const state = await refreshBadges(admin, account.id);
+    earned = state.badges.filter((badge) => badge.unlockedAt !== null).length;
+    totalTp = state.stats.tp;
+    const shown = await readShownBadge(admin, account.id);
+    worn = shown ? BADGE_BY_SLUG[shown] : null;
+    rank = (await readLeaderboardPosition(admin, account.id, "all"))?.rank ?? null;
+  } catch (error) {
+    console.error("account: badge refresh failed", error);
+  }
 
   return (
     <div className="mx-auto max-w-[calc(var(--board-w)+3rem)] px-6 pb-32 pt-12 sm:pt-16">
@@ -92,10 +114,10 @@ export default async function AccountPage() {
               is enough for all six. */}
           <div className="flex h-[10rem] items-center justify-center">
             {worn ? (
-              <BadgeFrame badge={worn} avatar={72} avatarSrc={DEFAULT_AVATAR_SRC} />
+              <BadgeFrame badge={worn} avatar={72} avatarSrc={avatar} />
             ) : (
               <img
-                src={DEFAULT_AVATAR_SRC}
+                src={avatar}
                 alt=""
                 aria-hidden="true"
                 className="h-[88px] w-[88px] rounded-full border border-hairline object-cover"
@@ -112,9 +134,17 @@ export default async function AccountPage() {
             {account.email}
           </p>
 
-          <p className="mt-6 text-[13px] font-semibold text-ink">
+          <p className="mt-6 font-display text-2xl font-semibold tabular-nums text-ink">
+            {format(t.badgesTotalTp, { n: totalTp.toLocaleString("en-US") })}
+          </p>
+          {rank !== null && (
+            <p className="mt-1 text-[13px] text-ink-dim">
+              {format(t.accountRank, { n: rank })}
+            </p>
+          )}
+          <p className="mt-4 text-[13px] font-semibold text-ink">
             {format(t.accountBadgesEarned, {
-              n: unlocked.size,
+              n: earned,
               total: BADGES.length,
             })}
           </p>
@@ -131,25 +161,10 @@ export default async function AccountPage() {
           username={account.username}
           email={account.email}
           hasPassword={hasPassword}
+          avatarUrl={avatar}
+          hasAvatar={avatarKey !== null}
         />
       </div>
     </div>
   );
-}
-
-/**
- * The badge a player wears: the highest rank on the ladder they have earned.
- *
- * `LADDER_BADGES` is already in climbing order, so this is the last one that is
- * unlocked rather than a sort. The two standalone badges are deliberately not
- * considered — the ladder's own rule is that a rank is replaced by the one
- * above it, and which of ruby or amethyst outranks a diamond is not a question
- * anything has answered yet.
- */
-function highestWornBadge(unlocked: ReadonlySet<string>): Badge | null {
-  let worn: Badge | null = null;
-  for (const badge of LADDER_BADGES) {
-    if (unlocked.has(badge.slug)) worn = badge;
-  }
-  return worn;
 }

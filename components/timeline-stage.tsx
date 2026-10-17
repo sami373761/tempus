@@ -24,7 +24,7 @@ import { formatYear, formatYearMagnitude } from "@/lib/historical-date";
 import { dateLabels, type Dict } from "@/lib/i18n/dictionary";
 
 /**
- * The date-guessing *stage*: the five-pane camera, the rail, the picture and
+ * The date-guessing *stage*: the four-pane camera, the rail, the picture and
  * the chrome that dresses them — everything both the solo game and the
  * head-to-head game put on screen, and none of the rules either of them plays
  * by.
@@ -483,7 +483,7 @@ export function TimelinePaneView({
   /**
    * Whether to print the pane's own name above the rail.
    *
-   * On the five-pane timeline this is how a player knows which era they have
+   * On the general timeline this is how a player knows which era they have
    * panned into, so it defaults to on. A one-pane game has nowhere to pan and
    * names itself in its own chrome, where the name can sit beside the round's
    * other furniture instead of costing the rail a line of its own.
@@ -527,6 +527,8 @@ export function TimelinePaneView({
   onEnter: (pane: TimelinePane) => void;
 }) {
   const rail = useRef<HTMLDivElement>(null);
+  const band = useRef<HTMLDivElement>(null);
+  const bubble = useRef<HTMLSpanElement>(null);
   const [dragging, setDragging] = useState(false);
   /**
    * The rail's width in pixels, which is what decides how many of its ticks
@@ -534,6 +536,15 @@ export function TimelinePaneView({
    * for what that first render prints.
    */
   const [railWidth, setRailWidth] = useState(0);
+  /**
+   * The pane's own width, and the marker bubble's. Both exist for one sum —
+   * how far the bubble may hang past the end of the rail before it is cut
+   * off — and both are measured rather than assumed, because neither is a
+   * number this component gets to choose: the pane's padding changes with the
+   * breakpoint and the bubble's width changes with the language.
+   */
+  const [paneWidth, setPaneWidth] = useState(0);
+  const [bubbleWidth, setBubbleWidth] = useState(0);
   // How this language writes a year — the era's abbreviation and its place
   // beside the number. Every date drawn on the rail goes through it.
   const labels = dateLabels(t);
@@ -543,7 +554,7 @@ export function TimelinePaneView({
   const frozen = answered || locked;
 
   /* Measured rather than read off a breakpoint, because the rail's width is
-     not the window's: the same five-pane ruler is the full width of `/guess`
+     not the window's: the same general ruler is the full width of `/guess`
      and half of the split layouts, and a viewport-keyed rule would thin the
      labels on a phone and leave them colliding in a 300px column on a desktop.
      `ResizeObserver` also covers the width changing without a resize at all —
@@ -559,9 +570,38 @@ export function TimelinePaneView({
     return () => observer.disconnect();
   }, []);
 
+  /* The two boxes the bubble's clamp is solved from. The pane is observed
+     rather than read once because its padding steps at `sm`; the bubble
+     because the year inside it changes with every drag and the words around
+     that year change with the language — "10 billion BCE" is 105px in Turkish
+     and 161px in Spanish, on a rail that is 278px wide on a phone. */
+  useEffect(() => {
+    const paneNode = band.current;
+    const bubbleNode = bubble.current;
+    if (!paneNode) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const width =
+          entry.borderBoxSize?.[0]?.inlineSize ?? entry.contentRect.width;
+        if (entry.target === paneNode) setPaneWidth(width);
+        else setBubbleWidth(width);
+      }
+    });
+    observer.observe(paneNode);
+    if (bubbleNode) observer.observe(bubbleNode);
+    return () => observer.disconnect();
+  }, [showGuess]);
+
   const ticks = paneTicks(pane);
   const tickLabels = ticks.map((tickYear) => formatYearMagnitude(tickYear, labels));
   const labelled = tickLabelsShown(pane, ticks, tickLabels, railWidth);
+  const bubbleShift = bubbleEdgeShift({
+    fraction,
+    railWidth,
+    paneWidth,
+    bubbleWidth,
+  });
 
   function fractionFromClientX(clientX: number): number {
     const box = rail.current?.getBoundingClientRect();
@@ -624,8 +664,8 @@ export function TimelinePaneView({
       inert={!active}
       style={{ pointerEvents: active ? undefined : "none" }}
     >
-      <div className="mx-auto flex max-w-5xl flex-col">
-        {/* The era's name and nothing else. Three of the five panes carried a
+      <div ref={band} className="mx-auto flex max-w-5xl flex-col">
+        {/* The era's name and nothing else. Three of the panes carried a
             line of description under the heading until 2026-10-06; the common
             era and the future never did, so the row of panes read as a
             heading on two of them and a small essay on the other three.
@@ -651,23 +691,27 @@ export function TimelinePaneView({
             <EdgeButton
               key={door.target}
               side={door.side}
-              // A door opens onto a shared boundary, so it appears exactly
-              // when the marker reaches that end of the rail — and it closes
-              // the moment the guess is locked in. From then until the next
-              // round the camera is the only thing that moves between eras:
-              // it is travelling to the answer, and a player who walked off to
-              // another era mid-reveal would be looking at a rail with neither
-              // their marker nor the answer on it. It also keeps the answer's
-              // own pane from offering a door merely because the marker it
-              // remembers happens to be parked at one end.
-              visible={
-                !answered &&
-                (door.side === "left" ? fraction <= 0 : fraction >= 1)
-              }
+              // **Open for the whole of the round**, rather than appearing
+              // only once the marker has been dragged to that end of the
+              // rail. The reveal-on-arrival version made the way out of an era
+              // something a player had to discover by pushing the marker into
+              // a wall; a phone has no hover to discover it with, and on a
+              // rail 278px wide the discovery cost a drag the length of the
+              // screen. A door standing at each end says the timeline
+              // continues, which is the one thing the rail cannot say for
+              // itself.
+              //
+              // It still closes the moment the guess is locked in. From then
+              // until the next round the camera is the only thing that moves
+              // between eras: it is travelling to the answer, and a player who
+              // walked off to another era mid-reveal would be looking at a
+              // rail with neither their marker nor the answer on it.
+              visible={!answered}
+              // The glyph is the whole button now, so the era it opens onto is
+              // named here or nowhere.
+              label={doorLabel(door.target, t)}
               onClick={() => onEnter(door.target)}
-            >
-              {doorLabel(door.target, t)}
-            </EdgeButton>
+            />
           ))}
 
           <div
@@ -854,17 +898,51 @@ export function TimelinePaneView({
                 aria-valuenow={year}
                 aria-valuetext={formatYear(year, labels)}
                 onKeyDown={onKeyDown}
-                className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+                // Above the answer's own marker (`z-20`) and the opponent's
+                // ring (`z-10`), which are both painted on this rail and both
+                // land near it at the reveal. It is the one thing on the rail
+                // the player is holding, so nothing is allowed over it.
+                className="absolute top-1/2 z-30 -translate-x-1/2 -translate-y-1/2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
                 style={{
                   left: `${fraction * 100}%`,
                   transition: dragging ? "none" : "left 220ms ease-out",
                 }}
               >
-                <div className="h-6 w-6 rounded-full bg-ink" />
-                {/* Centred on the marker at every position: the bubble reads as
-                  the marker's own label, so it must not drift sideways as the
-                  rail ends are approached. */}
-                <span className="absolute bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-ink px-3 py-1 text-xs font-semibold tabular-nums text-page">
+                {/* A notch smaller on a phone. At 24px the handle's own
+                    radius is nearly as wide as the room the pane's padding
+                    leaves past the end of the rail, so at either extreme it
+                    sat half in that margin with its outer edge against the
+                    clip. 20px keeps it comfortably inside, and it is still
+                    well over the 44px touch target the rail under it
+                    provides. */}
+                <div className="h-5 w-5 rounded-full bg-ink sm:h-6 sm:w-6" />
+                {/* Centred on the marker — it reads as the marker's own label,
+                    so it must not drift sideways — **until centring it would
+                    put it off the screen**.
+
+                    At the ends of a phone's rail that is most of the deep
+                    panes: "10 billion BCE" is 161px in Spanish against the
+                    32px of pane padding the bubble has to hang into, so a
+                    bubble centred on a marker at either extreme loses its
+                    first or last word to the clip. `bubbleEdgeShift` gives
+                    back exactly the overrun and not a pixel more, so the
+                    bubble is centred everywhere it can be and merely *inside*
+                    everywhere it cannot. A label nobody can read is worse than
+                    one that leans. */}
+                <span
+                  ref={bubble}
+                  className="absolute bottom-7 left-1/2 whitespace-nowrap rounded-full bg-ink px-2.5 py-1 text-[11px] font-semibold tabular-nums text-page sm:px-3 sm:text-xs"
+                  style={{
+                    // Written as one `transform` rather than as a
+                    // `-translate-x-1/2` class plus an offset: Tailwind v4
+                    // compiles that class to the `translate` *property*, which
+                    // composes with `transform` instead of overriding it, and
+                    // a reader would have to know that to predict where this
+                    // lands.
+                    transform: `translateX(calc(-50% + ${bubbleShift}px))`,
+                    transition: dragging ? "none" : "transform 220ms ease-out",
+                  }}
+                >
                   {formatYear(year, labels)}
                 </span>
               </div>
@@ -877,19 +955,75 @@ export function TimelinePaneView({
 }
 
 /**
- * The BC / Future entrances: parked just past the end of the rail and only
- * rendered interactive once revealed, so a hidden button cannot be tabbed into.
+ * How far the marker's year bubble has to give way at the ends of a rail, in
+ * pixels, so that none of it is cut off.
+ *
+ * The rail sits inside the pane's own horizontal padding, and that padding is
+ * the whole of the room a bubble centred on an end marker has to hang into.
+ * The padding is measured rather than assumed — it steps at `sm` — and so is
+ * the bubble, whose width is a property of the language and the year, not of
+ * this layout: "1013 CE" is 77px and "10 mil millones a. C." is 161px.
+ *
+ * Zero is the ordinary answer and the one every desktop width gives: a bubble
+ * that fits stays centred on its marker. Returns zero as well before anything
+ * has been measured (the server's render, and the first client one), so the
+ * markup React hydrates against is the centred one.
+ */
+function bubbleEdgeShift({
+  fraction,
+  railWidth,
+  paneWidth,
+  bubbleWidth,
+}: {
+  fraction: number;
+  railWidth: number;
+  /** The pane's border box. What it has over the rail is the padding. */
+  paneWidth: number;
+  bubbleWidth: number;
+}): number {
+  if (railWidth <= 0 || paneWidth <= 0 || bubbleWidth <= 0) return 0;
+
+  const slack = Math.max(0, (paneWidth - railWidth) / 2);
+  const half = bubbleWidth / 2;
+  const centre = fraction * railWidth;
+
+  const min = half - slack;
+  const max = railWidth + slack - half;
+  // Wider than the rail and both margins together: nothing can hold all of
+  // it, so it is centred on the rail and the two ends give equally.
+  if (min > max) return railWidth / 2 - centre;
+
+  return Math.min(max, Math.max(min, centre)) - centre;
+}
+
+/**
+ * The entrances to the neighbouring eras: one round glyph at each end of the
+ * rail, parked just past it, and only interactive once revealed — so a hidden
+ * button cannot be tabbed into.
+ *
+ * **An arrow and nothing else.** It carried the name of the era it opened onto
+ * until this pass ("Evolution", "BC"), which is three to five words across the
+ * five languages and up to 170px of pill at the end of a 278px rail — on a
+ * phone the two doors met in the middle and stood over the marker between
+ * them. The name was never what the control *did*, either: it says "there is
+ * more timeline this way", which is exactly what an arrow says and what a word
+ * only says once it has been read. It survives as the button's accessible
+ * name, where it costs no width.
+ *
+ * The box is the site menu's button (`--menu-btn`), like every other round
+ * glyph control on these screens, so the three of them are one size.
  */
 export function EdgeButton({
   side,
   visible,
+  label,
   onClick,
-  children,
 }: {
   side: "left" | "right";
   visible: boolean;
+  /** The era this opens onto. The button's name, not its text. */
+  label: string;
   onClick: () => void;
-  children: React.ReactNode;
 }) {
   return (
     <button
@@ -897,7 +1031,9 @@ export function EdgeButton({
       onClick={onClick}
       tabIndex={visible ? 0 : -1}
       aria-hidden={!visible}
-      className={`absolute top-0 z-10 flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-5 py-2.5 text-sm font-semibold text-ink backdrop-blur-xl transition-all duration-500 ease-out hover:bg-white/20 ${
+      aria-label={label}
+      title={label}
+      className={`absolute top-0 z-10 flex h-[var(--menu-btn)] w-[var(--menu-btn)] items-center justify-center rounded-full border border-white/15 bg-white/10 text-ink backdrop-blur-xl transition-all duration-500 ease-out hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
         side === "left" ? "left-0" : "right-0"
       } ${
         visible
@@ -905,9 +1041,7 @@ export function EdgeButton({
           : `pointer-events-none opacity-0 ${side === "left" ? "translate-x-6" : "-translate-x-6"}`
       }`}
     >
-      {side === "left" && <Arrow direction="left" />}
-      {children}
-      {side === "right" && <Arrow direction="right" />}
+      <Arrow direction={side} />
     </button>
   );
 }
@@ -917,7 +1051,7 @@ function Arrow({ direction }: { direction: "left" | "right" }) {
     <svg
       viewBox="0 0 24 24"
       aria-hidden="true"
-      className="h-3.5 w-3.5"
+      className="h-[18px] w-[18px]"
       fill="none"
       stroke="currentColor"
       strokeWidth="2.4"
@@ -938,8 +1072,6 @@ export function doorLabel(pane: TimelinePane, t: Dict): string {
       return t.evolution;
     case "civilization":
       return t.bc;
-    case "future":
-      return t.future;
     // A one-pane set has no doors, so this is unreachable for football today;
     // it is here because the switch is exhaustive over `TimelinePane` and a
     // silent fall-through to "CE" is exactly the sort of wrong label that
@@ -1089,8 +1221,6 @@ export function paneLabel(pane: TimelinePane, t: Dict): string {
       return t.evolutionEra;
     case "civilization":
       return t.civilizationEra;
-    case "future":
-      return t.future;
     // The two subject rails cover no era — they cover a subject — so their
     // heading is the subject's name.
     case "football":
@@ -1144,6 +1274,7 @@ export function PosterCard({
   event,
   badge,
   pill = null,
+  counter = null,
   titleHidden = false,
   t,
 }: {
@@ -1160,6 +1291,20 @@ export function PosterCard({
    * still a playable round, so this is never a reason to refuse to deal one.
    */
   pill?: string | null;
+  /**
+   * Position in the set, in the corner opposite the pill.
+   *
+   * On the picture rather than in the column beside it, which is a narrow
+   * screen's doing: a poster is 2:3, so on a phone the column above it was a
+   * title, a line of prose and a counter standing over a picture that had
+   * already run out of height. That block is a desktop row now and the count
+   * came down onto the card, where it costs the layout nothing and is read in
+   * the same glance as the picture it counts.
+   *
+   * Null on a screen that counts somewhere else — the head-to-head mode puts
+   * its clock here instead.
+   */
+  counter?: React.ReactNode;
   /**
    * Who owns the poster's lower third.
    *
@@ -1235,6 +1380,13 @@ export function PosterCard({
           <span className="absolute left-3 top-3 z-10 rounded-full border border-white/20 bg-black/55 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-white/80 backdrop-blur-md">
             {pill}
           </span>
+        )}
+
+        {/* Top-right, opposite the pill and clear of it: the two are the same
+            kind of label and the picture between them is what the round is
+            about, so neither is allowed into the middle. */}
+        {counter && (
+          <div className="absolute right-3 top-3 z-10">{counter}</div>
         )}
 
         {/* The title, over the poster's own lower third. The scrim is what

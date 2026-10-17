@@ -10,6 +10,7 @@ import {
   type AuthErrorCode,
   type AuthState,
 } from "@/app/actions/auth";
+import { authErrorText, usernameRefusal } from "@/components/auth-message";
 import { format, type Dict } from "@/lib/i18n/dictionary";
 
 /**
@@ -50,6 +51,23 @@ export function AuthForm({
 }) {
   const [mode, setMode] = useState<Mode>("signin");
 
+  /* The typed username, held here rather than left to the DOM, because the
+     field has to be able to answer before it is submitted — see `Field`'s
+     `error` and `usernameRefusal`. `settled` is "the player has left the
+     field at least once", which is what gates the one refusal that would
+     otherwise fire on the second keystroke. */
+  const [username, setUsername] = useState("");
+  const [settled, setSettled] = useState(false);
+
+  /** Switching doors clears the name along with the inputs — the form is keyed
+   *  on the mode, so the DOM resets and this would otherwise be left holding a
+   *  refusal for a field that is no longer on screen. */
+  function switchTo(next: Mode) {
+    setMode(next);
+    setUsername("");
+    setSettled(false);
+  }
+
   const idle: AuthState = initialError
     ? { status: "error", code: initialError }
     : { status: "idle" };
@@ -59,6 +77,17 @@ export function AuthForm({
   const [googleState, google] = useActionState(signInWithGoogle, { status: "idle" });
 
   const state = mode === "signin" ? signInState : signUpState;
+
+  /* The field's own answer, suppressed once the round trip has given the same
+     one: the action re-runs the identical check, so leaving both on screen
+     would print the same sentence twice, once under the input and once over
+     the button. */
+  const answered =
+    signUpState.status === "error" &&
+    signUpState.code.startsWith("username-");
+  const usernameError = answered
+    ? null
+    : usernameRefusal(t, username, { settled });
 
   /* The inbox notice replaces the whole form rather than sitting above it.
      There is nothing left to fill in at that point, and a form still on screen
@@ -102,7 +131,7 @@ export function AuthForm({
             key={value}
             type="button"
             aria-pressed={mode === value}
-            onClick={() => setMode(value)}
+            onClick={() => switchTo(value)}
             className={`rounded-full px-4 py-2 text-[14px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
               mode === value
                 ? "bg-ink text-page"
@@ -123,7 +152,7 @@ export function AuthForm({
       </form>
 
       {googleState.status === "error" ? (
-        <ErrorNote t={t} code={googleState.code} />
+        <ErrorNote t={t} state={googleState} />
       ) : null}
 
       <div className="auth-rule my-6 flex items-center gap-3">
@@ -147,17 +176,30 @@ export function AuthForm({
         {mode === "signup" ? (
           <Field
             label={t.authUsername}
+            /* The rules before the first keystroke, the specific refusal
+               after it. The hint is what the field is *for* — a player should
+               not have to make a mistake to learn that a space is not allowed
+               — and the error replaces it only while there is something
+               wrong, so the two never stack up under one input. */
             hint={t.authUsernameHint}
+            error={usernameError}
             name="username"
             type="text"
             autoComplete="username"
             required
-            minLength={3}
-            maxLength={20}
-            /* See the note on the account page's field: the server decides,
-               this answers sooner. */
-            pattern="[A-Za-z0-9_]+"
-            title={t.authUsernameHint}
+            /* **No `pattern`, `minLength` or `maxLength`.** All three were
+               here, and all three hand the refusal to the browser: Chrome
+               answers a failed `pattern` with "Please match the requested
+               format" in the browser's own language, which is neither the
+               site's language nor an explanation, and it blocks the submit
+               before anything of ours is reached. `maxLength` is worse than
+               a refusal — it silently eats the characters past the twentieth.
+               The check is `validateUsername` in both places instead: live in
+               this field, and again in the Server Action, which is the one
+               that decides. */
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            onBlur={() => setSettled(true)}
           />
         ) : null}
 
@@ -179,7 +221,7 @@ export function AuthForm({
           minLength={mode === "signup" ? 8 : undefined}
         />
 
-        {state.status === "error" ? <ErrorNote t={t} code={state.code} /> : null}
+        {state.status === "error" ? <ErrorNote t={t} state={state} /> : null}
 
         <SubmitButton
           label={mode === "signin" ? t.authSubmitSignIn : t.authSubmitSignUp}
@@ -200,25 +242,73 @@ function Panel({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * One labelled input, with one line under it.
+ *
+ * **The hint and the error share that line**, which is the whole arrangement:
+ * the hint states the rules so they can be followed, and the error replaces it
+ * with the one that was broken. Stacking them would put the rule the player
+ * has just failed directly under the complaint about failing it, and it would
+ * move the field every time a refusal arrived or left.
+ *
+ * `aria-invalid` and `aria-describedby` are what carry that to a screen
+ * reader; the line is `role="status"` rather than `role="alert"` because it
+ * changes while the player is typing, and an assertive live region would
+ * interrupt them on every keystroke. The submit's own failure is the alert —
+ * see `ErrorNote`.
+ */
 function Field({
   label,
   hint,
+  error,
   name,
   ...input
 }: {
   label: string;
   hint?: string;
+  /** The refusal this field has already decided on, if any. Replaces `hint`. */
+  error?: string | null;
   name: string;
 } & React.InputHTMLAttributes<HTMLInputElement>) {
+  const note = error ?? hint;
+
+  /* The refused field borrows the `bad` tier's colour, which is the one place
+     on the site an input is not a neutral. Written as `color-mix` inline
+     rather than as a token, for the reason the verdict ladder has only five:
+     this is the same red at two strengths, not a sixth step in the palette. */
+  const bad = (strength: number) =>
+    `color-mix(in srgb, var(--color-bad) ${strength}%, transparent)`;
+
   return (
     <label className="flex flex-col gap-1.5">
       <span className="text-[13px] font-semibold text-ink">{label}</span>
       <input
         name={name}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={note ? `${name}-note` : undefined}
         {...input}
-        className="w-full rounded-2xl border border-hairline bg-card-raised/70 px-4 py-3 text-[15px] text-ink transition-colors placeholder:text-ink-dim focus:border-ink/25 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-accent"
+        className={`w-full rounded-2xl border bg-card-raised/70 px-4 py-3 text-[15px] text-ink transition-colors placeholder:text-ink-dim focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-accent ${
+          error ? "" : "border-hairline focus:border-ink/25"
+        }`}
+        style={error ? { borderColor: bad(45) } : undefined}
       />
-      {hint ? <span className="text-[12px] text-ink-dim">{hint}</span> : null}
+      {note ? (
+        <span
+          id={`${name}-note`}
+          role="status"
+          className={`text-[12px] leading-relaxed ${error ? "" : "text-ink-dim"}`}
+          style={
+            error
+              ? {
+                  color:
+                    "color-mix(in srgb, var(--color-bad) 60%, var(--color-ink))",
+                }
+              : undefined
+          }
+        >
+          {note}
+        </span>
+      ) : null}
     </label>
   );
 }
@@ -283,26 +373,15 @@ function GoogleMark() {
   );
 }
 
-/** One failure, said once. The codes come from `app/actions/auth.ts`. */
-function ErrorNote({ t, code }: { t: Dict; code: AuthErrorCode }) {
-  const MESSAGES: Record<AuthErrorCode, string> = {
-    "invalid-credentials": t.authErrInvalidCredentials,
-    "email-invalid": t.authErrEmailInvalid,
-    "email-taken": t.authErrEmailTaken,
-    "password-weak": t.authErrPasswordWeak,
-    "password-mismatch": t.authErrPasswordMismatch,
-    "username-invalid": t.authErrUsernameInvalid,
-    "username-chars": t.authErrUsernameChars,
-    "username-taken": t.authErrUsernameTaken,
-    "rate-limited": t.authErrRateLimited,
-    "provider-failed": t.authErrProviderFailed,
-    /* Only the account page can raise this one — the sign-in form never asks
-       for a *current* password — but the table is exhaustive over the code
-       union, which is what makes a new failure a compile error here. */
-    "current-password-wrong": t.authErrCurrentPassword,
-    generic: t.authErrGeneric,
-  };
-
+/** One failure, said once. The codes come from `app/actions/auth.ts`, and the
+ *  sentences from `authErrorText` — the table the account panel reads too. */
+function ErrorNote({
+  t,
+  state,
+}: {
+  t: Dict;
+  state: Extract<AuthState, { status: "error" }>;
+}) {
   return (
     /* `role="alert"` so it is announced when it arrives — it is the answer to
        the press that just happened, and a player using a screen reader would
@@ -316,7 +395,7 @@ function ErrorNote({ t, code }: { t: Dict; code: AuthErrorCode }) {
         color: "color-mix(in srgb, var(--color-bad) 60%, var(--color-ink))",
       }}
     >
-      {MESSAGES[code]}
+      {authErrorText(t, state.code, state.detail)}
     </p>
   );
 }

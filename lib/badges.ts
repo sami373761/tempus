@@ -36,7 +36,11 @@ export type BadgeSlug =
 
 export type Badge = {
   slug: BadgeSlug;
-  /** Where it sits on the ladder, or `null` for the two that stand outside it. */
+  /**
+   * Where it sits on the ladder. All six are rungs since TP (2026-10-17):
+   * Ruby and Amethyst stood outside it as one-off feats until then, which is
+   * why the type still allows `null`.
+   */
   rank: number | null;
   src: string;
   /**
@@ -61,9 +65,9 @@ function frameOf(width: number, height: number, cx: number, cy: number, r: numbe
 }
 
 /**
- * The ladder first, in the order it is climbed, then the two standalone
- * badges. Rendering order on the page is this order, so a rank can never show
- * up out of sequence.
+ * The ladder, in the order it is climbed. Rendering order on the page is this
+ * order, so a rank can never show up out of sequence. What earns each rung is
+ * lib/game/badge-rules.ts.
  */
 export const BADGES: readonly Badge[] = [
   {
@@ -104,7 +108,7 @@ export const BADGES: readonly Badge[] = [
   },
   {
     slug: "ruby",
-    rank: null,
+    rank: 5,
     src: "/badges/ruby.webp",
     frame: frameOf(961, 881, 484.7, 409.8, 260),
     nameKey: "badgeRuby",
@@ -113,7 +117,7 @@ export const BADGES: readonly Badge[] = [
   },
   {
     slug: "amethyst",
-    rank: null,
+    rank: 6,
     src: "/badges/amethyst.webp",
     frame: frameOf(1075, 877, 511.7, 394.4, 260),
     nameKey: "badgeAmethyst",
@@ -154,11 +158,8 @@ export const RING_BOX: { w: number; h: number } = (() => {
   return { w: 2 * Math.max(left, right), h: 2 * Math.max(top, bottom) };
 })();
 
-/** The four ranks, in climbing order. */
+/** The ranks, in climbing order — all six now. */
 export const LADDER_BADGES = BADGES.filter((badge) => badge.rank !== null);
-
-/** The two that are earned once and stand outside the ladder. */
-export const STANDALONE_BADGES = BADGES.filter((badge) => badge.rank === null);
 
 /** The stand-in picture the preview area dresses, and the only avatar there is. */
 export const DEFAULT_AVATAR_SRC = "/default-profile-picture.jpg";
@@ -170,24 +171,6 @@ export const BADGE_BY_SLUG: Record<BadgeSlug, Badge> = Object.fromEntries(
 
 export function isBadgeSlug(value: string): value is BadgeSlug {
   return value in BADGE_BY_SLUG;
-}
-
-/**
- * The two badges that are not shown for what they are until they are earned.
- *
- * Ruby and amethyst are the standalone feats, and the achievements page used to
- * single them out: the other four showed their artwork while these two were
- * darkened to a silhouette with a neutral ramp, so neither the ring's colour
- * nor the stone's was given away. **The rail that replaced that page has no
- * special case**, because every badge is drawn as a white silhouette now and
- * none of the six gives its colour away until it is earned. The list stays for
- * whatever next needs to know which two are feats rather than rungs — but note
- * that `rank === null` already says that, so a caller should prefer it.
- */
-export const MYSTERY_BADGES: readonly BadgeSlug[] = ["ruby", "amethyst"];
-
-export function isMysteryBadge(slug: BadgeSlug): boolean {
-  return MYSTERY_BADGES.includes(slug);
 }
 
 /**
@@ -231,9 +214,14 @@ export const BADGE_RAMP: Record<BadgeSlug, BadgeRamp> = {
 
 export const MYSTERY_RAMP: BadgeRamp = ["#a39c93", "#6b6f76", "#3a3d42"];
 
-/** The ramp to actually paint: the badge's own, unless it is still a mystery. */
-export function rampFor(slug: BadgeSlug, unlocked: boolean): BadgeRamp {
-  return !unlocked && isMysteryBadge(slug) ? MYSTERY_RAMP : BADGE_RAMP[slug];
+/**
+ * The ramp to actually paint. It hid Ruby's and Amethyst's colours behind
+ * `MYSTERY_RAMP` until they were earned, while they stood outside the ladder;
+ * all six are rungs now and none is hidden, so the flag no longer changes the
+ * answer. Kept in the signature for whatever paints a locked badge next.
+ */
+export function rampFor(slug: BadgeSlug, _unlocked: boolean): BadgeRamp {
+  return BADGE_RAMP[slug];
 }
 
 /** A ramp as the `linear-gradient()` a fill or a rule can take directly. */

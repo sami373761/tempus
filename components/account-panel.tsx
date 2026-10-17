@@ -10,14 +10,17 @@ import {
   type AuthErrorCode,
   type AuthState,
 } from "@/app/actions/auth";
+import { removeAvatar, uploadAvatar } from "@/app/actions/avatar";
+import { authErrorText } from "@/components/auth-message";
+import { AVATAR_ACCEPT, AVATAR_MAX_BYTES, looksLikeAvatarFile } from "@/lib/avatar";
 import type { Dict } from "@/lib/i18n/dictionary";
 
 /**
  * The two things an account can change about itself, and the way out.
  *
- * Deliberately short. There are no game records to manage, no notification
- * settings to toggle and no profile to fill in — the site stores a username and
- * nothing else about a player (see `public.profile`). So this is a name, a
+ * Deliberately short. There are no game records to manage and no notification
+ * settings to toggle — the site stores a username and a picture and nothing
+ * else about a player (see `public.profile`). So this is a photo, a name, a
  * password and a sign-out, and everything else on the page is read-only
  * information rendered on the server.
  *
@@ -53,8 +56,14 @@ export function AccountPanel({
   username,
   email,
   hasPassword,
+  avatarUrl,
+  hasAvatar,
 }: {
   t: Dict;
+  /** What the player's picture currently is — theirs, or the default. */
+  avatarUrl: string;
+  /** Whether that is an upload of theirs, i.e. whether there is one to remove. */
+  hasAvatar: boolean;
   /** The current name, or null when one has never been chosen. */
   username: string | null;
   /** The address the session is keyed on. Shown, never editable — see below. */
@@ -72,6 +81,8 @@ export function AccountPanel({
 
   return (
     <div className="flex flex-col gap-4">
+      <PhotoRow t={t} avatarUrl={avatarUrl} hasAvatar={hasAvatar} />
+
       <Row title={t.accountUsernameTitle} blurb={t.accountUsernameBlurb}>
         <Editor
           t={t}
@@ -102,15 +113,15 @@ export function AccountPanel({
                 autoComplete="username"
                 autoFocus
                 required
-                minLength={3}
-                maxLength={20}
-                /* The column's own character set, so the browser refuses a
-                   Turkish ş here rather than at the end of a round trip. It
-                   is a courtesy and not the rule — `validateUsername` on the
-                   server is — but it is the one that answers while the name
-                   is still being typed. Case is not part of it: "Ali" is
-                   accepted and stored as "ali". */
-                pattern="[A-Za-z0-9_]+"
+                /* **No `pattern`, `minLength` or `maxLength`.** They handed
+                   the refusal to the browser, which answers a failed
+                   `pattern` with "Please match the requested format" in its
+                   own language — neither this site's language nor an
+                   explanation — and `maxLength` silently ate everything past
+                   the twentieth character. `validateUsername` decides in the
+                   Server Action instead, and `Feedback` prints its sentence
+                   under the field. Case is not part of it: "Ali" is accepted
+                   and stored as "ali". */
                 title={t.authUsernameHint}
                 aria-label={t.accountUsernameTitle}
                 className={FIELD}
@@ -214,6 +225,132 @@ export function AccountPanel({
 }
 
 /* -------------------------------------------------------------------------- */
+
+/**
+ * The picture, and the two things that can be done to it.
+ *
+ * **Picking a file is the submit.** There is nothing to fill in beside it, so
+ * a separate Save would be a second click that can only ever mean yes. The
+ * size and type are checked here first — the same limits the action enforces
+ * — so an oversized phone photo is refused at once instead of after the whole
+ * file has been sent.
+ *
+ * No local preview while it uploads: Chrome cannot draw a HEIC, and a preview
+ * that works for three formats out of four is a broken image a quarter of the
+ * time. The new picture arrives with the page's revalidation instead.
+ */
+function PhotoRow({
+  t,
+  avatarUrl,
+  hasAvatar,
+}: {
+  t: Dict;
+  avatarUrl: string;
+  hasAvatar: boolean;
+}) {
+  const idle = { status: "idle" } as AuthState;
+  const [uploadState, upload, uploading] = useActionState(uploadAvatar, idle);
+  const [removeState, remove, removing] = useActionState(removeAvatar, idle);
+  /* Which of the two forms spoke last, so a stale "Photo removed." does not
+     sit under a fresh upload, and a refusal decided here before any request
+     replaces both. */
+  const [last, setLast] = useState<"upload" | "remove" | null>(null);
+  const [refusal, setRefusal] = useState<AuthErrorCode | null>(null);
+  const form = useRef<HTMLFormElement>(null);
+
+  function picked(event: React.ChangeEvent<HTMLInputElement>) {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    setLast("upload");
+    const problem: AuthErrorCode | null = !looksLikeAvatarFile(file)
+      ? "photo-type"
+      : file.size > AVATAR_MAX_BYTES
+        ? "photo-too-large"
+        : null;
+    setRefusal(problem);
+    if (problem) {
+      // Cleared so choosing the same file again still fires `change`.
+      input.value = "";
+      return;
+    }
+    form.current?.requestSubmit();
+  }
+
+  const busy = uploading || removing;
+
+  return (
+    <Row title={t.accountPhotoTitle} blurb={t.accountPhotoBlurb}>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <img
+          src={avatarUrl}
+          alt=""
+          aria-hidden="true"
+          className="h-16 w-16 shrink-0 rounded-full border border-hairline object-cover"
+        />
+
+        <div className="flex flex-wrap items-center gap-2">
+          <form ref={form} action={upload}>
+            {/* The input is the control and the label is what it looks like:
+                a native file button cannot be styled, and hiding it with
+                `sr-only` keeps it focusable — the ring is drawn on the label
+                while the input inside it has focus. */}
+            <label
+              aria-busy={uploading}
+              className={`inline-block cursor-pointer rounded-full bg-ink px-5 py-2.5 text-[14px] font-semibold text-page transition-opacity hover:opacity-90 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent ${
+                busy ? "pointer-events-none opacity-60" : ""
+              }`}
+            >
+              {uploading
+                ? t.accountPhotoUploading
+                : hasAvatar
+                  ? t.accountPhotoChange
+                  : t.accountPhotoUpload}
+              <input
+                type="file"
+                name="photo"
+                accept={AVATAR_ACCEPT}
+                disabled={busy}
+                onChange={picked}
+                className="sr-only"
+              />
+            </label>
+          </form>
+
+          {hasAvatar ? (
+            <form
+              action={remove}
+              onSubmit={() => {
+                setLast("remove");
+                setRefusal(null);
+              }}
+            >
+              <button
+                type="submit"
+                disabled={busy}
+                aria-busy={removing}
+                className="rounded-full border border-hairline bg-card-raised/70 px-5 py-2.5 text-[14px] font-semibold text-ink transition-colors hover:bg-card-raised disabled:cursor-progress disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              >
+                {removing ? t.authWorking : t.accountPhotoRemove}
+              </button>
+            </form>
+          ) : null}
+        </div>
+      </div>
+
+      <p className="mt-3 text-[12px] text-ink-dim">{t.accountPhotoHint}</p>
+
+      {refusal ? (
+        <Note tone="bad">{authErrorText(t, refusal)}</Note>
+      ) : last === "upload" ? (
+        <Feedback t={t} state={uploadState} success={t.accountPhotoSaved} />
+      ) : last === "remove" ? (
+        <Feedback t={t} state={removeState} success={t.accountPhotoRemoved} />
+      ) : null}
+    </Row>
+  );
+}
 
 const FIELD =
   "w-full rounded-2xl border border-hairline bg-card-raised/70 px-4 py-3 text-[15px] text-ink transition-colors placeholder:text-ink-dim focus:border-ink/25 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-accent";
@@ -409,7 +546,7 @@ function Feedback({
   success: string;
 }) {
   if (state.status === "error") {
-    return <Note tone="bad">{errorText(t, state.code)}</Note>;
+    return <Note tone="bad">{authErrorText(t, state.code, state.detail)}</Note>;
   }
   if (state.status === "saved") return <Note tone="good">{success}</Note>;
   return null;
@@ -436,24 +573,4 @@ function Note({
       {children}
     </p>
   );
-}
-
-/** The same table the sign-in form uses, and for the same reason: codes on the
- *  wire, sentences in the dictionary. */
-function errorText(t: Dict, code: AuthErrorCode): string {
-  const MESSAGES: Record<AuthErrorCode, string> = {
-    "invalid-credentials": t.authErrInvalidCredentials,
-    "email-invalid": t.authErrEmailInvalid,
-    "email-taken": t.authErrEmailTaken,
-    "password-weak": t.authErrPasswordWeak,
-    "password-mismatch": t.authErrPasswordMismatch,
-    "username-invalid": t.authErrUsernameInvalid,
-    "username-chars": t.authErrUsernameChars,
-    "username-taken": t.authErrUsernameTaken,
-    "rate-limited": t.authErrRateLimited,
-    "provider-failed": t.authErrProviderFailed,
-    "current-password-wrong": t.authErrCurrentPassword,
-    generic: t.authErrGeneric,
-  };
-  return MESSAGES[code];
 }

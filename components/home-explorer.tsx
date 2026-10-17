@@ -172,11 +172,19 @@ const ITEMS: readonly Item[] = [
   },
 ];
 
+/**
+ * What the library panel states about itself.
+ *
+ * **The event count is not in here, and that is deliberate.** It used to be:
+ * the home page read the live count of published, illustrated rows and this
+ * panel printed it. The tile says `explorerStatEventsValue` — a round claim
+ * about the library rather than a measurement of it — which was asked for, and
+ * which is why the home page now makes no database read at all. Putting a
+ * number back means putting the read back with it; it must not be reintroduced
+ * as a hard-coded one, since a figure nobody checks is the thing the read was
+ * there to prevent.
+ */
 export type ExplorerStats = {
-  /** Events the game can actually draw from — published *and* illustrated.
-   *  Null when the count could not be read, which leaves the tile showing a
-   *  dash rather than a number nobody checked. */
-  events: number | null;
   languages: number;
 };
 
@@ -199,6 +207,15 @@ export function HomeExplorer({
   const [rank, setRank] = useState<BadgeSlug>("gold");
 
   const stage: StageId = open ?? "idle";
+
+  /* The item the phone's detail block is showing. It lags `open` by design:
+     on close it has to keep the body that is collapsing, or the text would
+     vanish on the first frame of a 780ms animation and leave an empty box
+     closing. Derived during render for the reason `shown` below is — an effect
+     would paint one frame of the wrong thing first. */
+  const opened = ITEMS.find((item) => item.id === open) ?? null;
+  const [detail, setDetail] = useState<Item | null>(null);
+  if (opened && opened !== detail) setDetail(opened);
 
   /* The layer held opaque under the dissolve, derived during render rather
      than in an effect so the incoming layer is never painted once with the
@@ -243,7 +260,7 @@ export function HomeExplorer({
        below. The padding comes in with it: the distance from the card's edge
        is part of the same scale, and 32px of it on a 768px screen is a tenth
        of the width spent on nothing. */
-    <section className="@container overflow-hidden rounded-card border border-hairline bg-card p-5 sm:p-6 lg:p-8">
+    <section className="@container overflow-hidden rounded-card border border-hairline bg-card p-4 sm:p-6 lg:p-8">
       {/* The card carried a `Tempus` heading and a line of blurb above this row
           until 2026-10-06; both were removed on request and nothing replaced
           them *inside* the card. The block's heading is above it now, outside
@@ -289,7 +306,7 @@ export function HomeExplorer({
           Lengthen a body or enlarge the type and both ends have to be
           re-measured: the failure is silent, a line clipped off each end of the
           list. */}
-      <div className="mt-5 grid gap-6 md:h-[clamp(39rem,898px_-_26.3cqw,45rem)] md:grid-cols-[auto_minmax(0,clamp(14rem,32.2cqw,21rem))_minmax(0,1fr)] md:gap-x-4 md:gap-y-0 lg:gap-x-5">
+      <div className="mt-3 grid gap-3 md:mt-5 md:gap-6 md:h-[clamp(39rem,898px_-_26.3cqw,45rem)] md:grid-cols-[auto_minmax(0,clamp(14rem,32.2cqw,21rem))_minmax(0,1fr)] md:gap-x-4 md:gap-y-0 lg:gap-x-5">
         {/* The stepper's rail. A column of the grid rather than something laid
             over the card's padding: the pills must not shift when it arrives,
             and 36px of button does not fit in 32px of padding. Gone entirely
@@ -315,10 +332,19 @@ export function HomeExplorer({
             Six pills stacked vertically were 420px of list above the stage —
             the coin started below the fold on every phone — and each one was a
             60px bar holding a 30px chip and two words. As a 3x2 grid they are
-            half the height and an easier target, which is what was asked for;
-            the one that is open takes the whole row and leads the grid, so the
-            body it opens is laid out across the card rather than inside a
-            third of it.
+            half the height and an easier target.
+
+            **On a phone the grid never moves.** The open pill used to take
+            `order-first col-span-3`, so pressing one re-laid the whole grid in
+            a single frame: the pressed cell jumped to the top left, the other
+            five re-flowed around it, and the stage below was pushed down by
+            the body that had just opened inside it. None of that is
+            animatable — `order` and `grid-column` do not interpolate — so the
+            one gesture on the block that is meant to be a slow dissolve was
+            the only one that was a jump cut. The body now opens *under* the
+            grid instead (see `MobileDetail`), which leaves every cell where
+            the thumb found it and makes the opening the same crossfade the
+            desktop layout has.
 
             From `md` it is the column it was: centred in a box of fixed height
             and clipped, so a longer body pushes the pills apart around the
@@ -344,6 +370,12 @@ export function HomeExplorer({
           ))}
         </ul>
 
+        {/* The open panel's words, on a phone. A grid row of its own between
+            the pills and the stage, and `display: none` from `md` — where the
+            same text is inside the pill that opened it, laid out at the pill's
+            own open width. */}
+        <MobileDetail t={t} item={detail} open={open !== null} rank={rank} onPickRank={setRank} />
+
         {/* Under `md` the stage is a block of its own under the pills, so it
             needs a shape; above, it takes the column's fixed height. The floor
             is what the panels that are *not* one photograph need — three
@@ -366,7 +398,13 @@ export function HomeExplorer({
              `overflow-hidden`. Pinning the width makes the ratio set the
              height, the floor raise it, and the picture end where the card
              does. */
-          className={`explorer-motion relative aspect-[4/3] w-full min-h-[20rem] overflow-hidden rounded-[22px] border transition-colors ease-out md:aspect-auto md:h-full md:min-h-0 ${
+          /* The floor was `20rem` while the panels that are not one
+             photograph needed it — three stacked statistics and three stacked
+             subject squares. Both are three-across on a phone now, so the
+             ratio alone is enough and 13rem is only a guard for the narrowest
+             screens. It is 100px of height given back, which is what lets the
+             pills and the picture be on the same screen. */
+          className={`explorer-motion relative aspect-[4/3] w-full min-h-[13rem] overflow-hidden rounded-[22px] border transition-colors ease-out md:aspect-auto md:h-full md:min-h-0 ${
             open === null ? "border-transparent bg-transparent" : "border-hairline bg-page"
           }`}
           style={{ transitionDuration: `${FADE_MS}ms` }}
@@ -443,23 +481,34 @@ const PILL_SHELL = "rounded-[30px] border border-hairline bg-card-raised";
 const PILL_PAD = "px-5 py-3.5";
 const PILL_HEAD = "flex items-center gap-3 text-base font-semibold text-ink";
 
-/** What a *closed* pill wears below `md`, where it is one cell of a 3x2 grid
- *  rather than a bar across a column.
+/** What a pill wears below `md`, where it is one cell of a 3x2 grid rather
+ *  than a bar across a column.
  *
- *  A phone's cell is about 87px wide, which is not enough for a 30px chip, two
+ *  A phone's cell is about 87px wide, which is not enough for a 26px chip, two
  *  words and 40px of padding on one line — so the chip goes above the label and
  *  the label is allowed to wrap. `break-words` is for the one case that still
- *  does not fit at 11px: German's "Ereignisbibliothek", which has no space in
+ *  does not fit at 10px: German's "Ereignisbibliothek", which has no space in
  *  it to break at. The type comes up a step at `sm`, where a cell is nearly
- *  200px and an 11px label in the middle of one reads as a caption that has
+ *  200px and a 10px label in the middle of one reads as a caption that has
  *  lost its picture.
+ *
+ *  **It is what a pill wears whether or not it is open**, which is new: the
+ *  open pill used to switch to the `md` row layout at every width, so on a
+ *  phone it was a 30px chip and a left-aligned label inside a third of the
+ *  card. The body is no longer inside the pill down there (see `MobileDetail`),
+ *  so there is nothing for the row layout to be the head of.
+ *
+ *  The type and the padding came down a step on 2026-10-11, asked for, and the
+ *  two are the same saving: 10px of label over a 26px chip is a 56px cell
+ *  against the 86px it was, and six of those are 60px of height the picture
+ *  below them gets back.
  *
  *  From `md` every one of these is overridden back to the row the open pill
  *  and the measured twin both use, so the two states agree at exactly one
  *  breakpoint — which is what lets the twin be measured against one layout
  *  rather than two. */
 const PILL_HEAD_COMPACT =
-  "flex h-full flex-col items-center justify-center gap-1.5 px-1 py-3 text-center text-[11px] font-semibold leading-tight text-ink sm:gap-2 sm:py-3.5 sm:text-[13px] md:h-auto md:flex-row md:items-center md:justify-start md:gap-3 md:px-5 md:py-3.5 md:text-left md:text-base md:leading-normal";
+  "flex h-full flex-col items-center justify-center gap-1 px-1 py-2.5 text-center text-[10px] font-semibold leading-tight text-ink sm:gap-1.5 sm:py-3 sm:text-[12px] md:h-auto md:flex-row md:items-center md:justify-start md:gap-3 md:px-5 md:py-3.5 md:text-left md:text-base md:leading-normal";
 
 /** The shell's left and right border, which the body's laid-out width has to
  *  come off (see `openWidth`): the pill is `border-box` at 100% of its row, so
@@ -537,15 +586,10 @@ function Pill({
   }, []);
 
   return (
-    /* The open pill spans the phone's three columns and is dealt first, so the
-       grid never has to leave a hole where a cell used to be: the five that are
-       still closed follow it, three and two. `order` is a grid *and* a flex
-       property, hence the `md:` reset — the column from `md` up is a flex
-       column and would honour it too. */
-    <li
-      ref={row}
-      className={`relative ${open ? "order-first col-span-3 md:order-none" : ""}`}
-    >
+    /* Nothing about `open` touches this element. The open pill used to be
+       dealt first and span the phone's three columns, which re-laid the grid
+       in one frame — see the note on the `ul` in `HomeExplorer`. */
+    <li ref={row} className="relative">
       {/* The twin. Same shell and same head, `w-max` so it reports the width the
           pill would have if it hugged its label — border included, which is why
           it carries the shell's classes rather than a copy of its padding. */}
@@ -597,10 +641,16 @@ function Pill({
              pill's body is zero-height, so the button *is* the whole of what
              you see. There is deliberately no scale: the reference's pill does
              not move, measured identical to the pixel across a hover. */
-          className={`w-full transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+          className={`w-full transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${PILL_HEAD_COMPACT} ${
             open
-              ? `text-left ${PILL_PAD} ${PILL_HEAD}`
-              : `${PILL_HEAD_COMPACT} hover:bg-hairline`
+              ? /* The fill is the only thing that marks the open pill on a
+                   phone, now that it no longer changes shape or place: the
+                   chip's plus has turned into the mode's icon, which is the
+                   other half of it. From `md` the pill opens into a panel and
+                   the fill would be a panel in a second colour, so it is
+                   dropped there. */
+                "bg-hairline md:bg-transparent"
+              : "hover:bg-hairline"
           }`}
         >
           <IconChip open={open}>{item.icon}</IconChip>
@@ -608,19 +658,21 @@ function Pill({
               line to grow into and nothing below it to push — and truncation
               is the row's, where a long name in one of five languages would
               otherwise set the closed pill's width. */}
-          <span
-            className={
-              open ? "truncate" : "w-full break-words md:w-auto md:truncate"
-            }
-          >
+          <span className="w-full break-words md:w-auto md:truncate">
             {title}
           </span>
         </button>
 
         {/* `0fr` -> `1fr` is the whole height animation. The child must own the
-            `overflow-hidden` or the text spills out of the collapsed row. */}
+            `overflow-hidden` or the text spills out of the collapsed row.
+
+            **`md` and up only.** On a phone the pill is a third of the card
+            wide and this paragraph has nowhere to be; `MobileDetail` carries
+            it in a full-width block under the grid instead. `display: none`
+            rather than a second copy of the markup, so the text is in the
+            document exactly once at every width. */}
         <div
-          className="explorer-motion grid transition-[grid-template-rows]"
+          className="explorer-motion hidden transition-[grid-template-rows] md:grid"
           style={{
             gridTemplateRows: open ? "1fr" : "0fr",
             transitionDuration: `${FADE_MS}ms`,
@@ -661,6 +713,79 @@ function Pill({
 }
 
 /**
+ * The open panel's words on a phone, in a block of their own under the pill
+ * grid.
+ *
+ * It exists because the pill grid must not move. Below `md` a pill is a third
+ * of the card and the body it opens cannot be inside it, so the body used to
+ * be bought with `order-first col-span-3` on the pill — a re-layout of the
+ * whole grid in one frame, with the picture below shoved down by however tall
+ * the paragraph turned out to be. This takes the opposite trade: the grid is
+ * fixed, and the one thing that changes height is a row that was already
+ * between the pills and the stage.
+ *
+ * **It animates exactly like the pill body it replaces** — `0fr` -> `1fr` on a
+ * grid row, the same `FADE_MS` and the same easing — which is the whole point:
+ * the phone and the desktop now open with one gesture rather than two, and the
+ * stage's crossfade underneath is running on the same clock.
+ *
+ * `item` lags `open` on the way out (see `detail` in `HomeExplorer`), so the
+ * text being collapsed is the text that was being read. It is only ever null
+ * before the first pill is opened, where the block has never been seen.
+ *
+ * `inert` while closed, for the reason every collapsed body on this site is:
+ * the achievement swatches inside one are buttons, and a zero-height row does
+ * not take them out of the tab order.
+ */
+function MobileDetail({
+  t,
+  item,
+  open,
+  rank,
+  onPickRank,
+}: {
+  t: Dict;
+  item: Item | null;
+  open: boolean;
+  rank: BadgeSlug;
+  onPickRank: (next: BadgeSlug) => void;
+}) {
+  return (
+    <div
+      className="explorer-motion grid transition-[grid-template-rows] md:hidden"
+      style={{
+        gridTemplateRows: open ? "1fr" : "0fr",
+        transitionDuration: `${FADE_MS}ms`,
+        transitionTimingFunction: EASE,
+      }}
+      inert={!open}
+    >
+      <div className="overflow-hidden">
+        <div
+          /* The pill's own surface and hairline, at a radius that suits a
+             block the width of the card: `PILL_SHELL`'s 30px is half a closed
+             pill's height and reads as a stadium on one, as a lozenge on
+             this. */
+          className="explorer-motion rounded-[20px] border border-hairline bg-card-raised px-4 py-3.5 transition-opacity"
+          style={{
+            opacity: open ? 1 : 0,
+            transitionDuration: `${open ? FADE_MS : FADE_MS / 2}ms`,
+          }}
+        >
+          <p className="text-[14px] leading-relaxed text-ink-dim">
+            {item ? t[item.bodyKey] : ""}
+          </p>
+
+          {item?.id === "badges" ? (
+            <RankSwatches t={t} rank={rank} onPick={onPickRank} />
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
  * The ring with the plus in it. Open collapses the upright stroke rather than
  * swapping the glyph for a minus: one line leaving is a mark that changed its
  * mind, two glyphs crossfading is a mark that was replaced.
@@ -673,7 +798,11 @@ function IconChip({
   children: React.ReactNode;
 }) {
   return (
-    <span className="relative grid h-[30px] w-[30px] shrink-0 place-items-center rounded-full border border-ink/35 text-ink">
+    /* 26px on a phone and 30px from `md`. The smaller one is part of the same
+       saving the compact head's type is: it is the tallest thing in a cell
+       that is now 56px high. The `md` size is what the measured twin reports,
+       so the pill widths above that breakpoint are untouched. */
+    <span className="relative grid h-[26px] w-[26px] shrink-0 place-items-center rounded-full border border-ink/35 text-ink md:h-[30px] md:w-[30px]">
       {/* The mode's own icon, which is what the chip holds once it is open —
           the plus has said all it has to say by then. */}
       <span
@@ -688,13 +817,13 @@ function IconChip({
             strokes re-weighted — the line stays what it is everywhere else on
             the page. It was 22px and 0.58 for an afternoon, and at 11.6px a
             marker on a ruler is a smudge rather than a drawing. */}
-        <span className="scale-[0.9]">{children}</span>
+        <span className="scale-[0.78] md:scale-[0.9]">{children}</span>
       </span>
 
       <svg
         viewBox="0 0 12 12"
         aria-hidden
-        className="explorer-motion h-4 w-4 transition-opacity"
+        className="explorer-motion h-3.5 w-3.5 transition-opacity md:h-4 md:w-4"
         fill="none"
         stroke="currentColor"
         strokeWidth={1.4}
@@ -934,7 +1063,7 @@ function StageSubjects({
        full size. Tall panels use the whole plate and are what the three
        pictures can take: all three are centred compositions, and the football
        master was a portrait phone shot before it was cropped square. */
-    <div className="grid h-full grid-cols-1 grid-rows-3 gap-2.5 p-4 sm:grid-cols-3 sm:grid-rows-1 sm:gap-3.5 sm:p-5">
+    <div className="grid h-full grid-cols-3 grid-rows-1 gap-2 p-3 sm:gap-3.5 sm:p-5">
       {subjects.map((subject, i) => (
         <figure
           key={subject.key}
@@ -957,7 +1086,7 @@ function StageSubjects({
           {/* The name sits on the picture rather than under it, which is what
               lets the picture have the whole panel. Bottom-weighted, like the
               board's `CardScrim` and for the same reason. */}
-          <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-3 pb-3 pt-10 text-center text-xs font-semibold text-white">
+          <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-1.5 pb-2 pt-6 text-center text-[10px] font-semibold leading-tight text-white sm:px-3 sm:pb-3 sm:pt-10 sm:text-xs">
             {subject.label}
           </figcaption>
         </figure>
@@ -1067,12 +1196,17 @@ function StageBadge({
 }
 
 /**
- * What the library is, in three numbers over the pattern.
+ * What the library is, in three figures over the pattern.
  *
- * The event count is read from the database rather than written down, and it is
- * the count the *site* uses — published and illustrated — so it can never claim
- * more than the games can actually deal. A failed read shows a dash: a number
- * nobody checked is worse here than no number at all.
+ * Only one of the three is formatted: the language count, which is the length
+ * of a list this code can see. The other two are written per language — see
+ * `explorerStatSpanValue` for why the span is, and `ExplorerStats` for why the
+ * event figure now is.
+ *
+ * **Three across at every width**, including a phone, where they used to stack.
+ * Stacked, the three tiles were 300px of panel and the picture behind them was
+ * never visible at the same time as the pills that opened it; across, the whole
+ * panel is a third of that and the type comes down a step to pay for it.
  */
 function StageLibrary({
   t,
@@ -1090,10 +1224,7 @@ function StageLibrary({
   const number = new Intl.NumberFormat(locale);
 
   const tiles = [
-    {
-      value: stats.events === null ? "—" : number.format(stats.events),
-      label: t.explorerStatEvents,
-    },
+    { value: t.explorerStatEventsValue, label: t.explorerStatEvents },
     { value: number.format(stats.languages), label: t.explorerStatLanguages },
     { value: t.explorerStatSpanValue, label: t.explorerStatSpan },
   ];
@@ -1119,28 +1250,31 @@ function StageLibrary({
           rather than edge-weighted for the numerals to hold. */}
       <div aria-hidden className="absolute inset-0 bg-black/62" />
 
-      <div className="absolute inset-0 grid place-items-center p-5 sm:p-8">
+      <div className="absolute inset-0 grid place-items-center p-3 sm:p-8">
         {/* Value over label rather than beside it. Side by side, the three
             labels start at three different x positions — the number's width is
             the whole of the difference, and "4,54 milyar" against "5" is as far
             apart as that gets. Stacked, they line up in every language without
             a width being reserved for the widest number any of them has. */}
-        <dl className="grid w-full max-w-xl gap-3 sm:grid-cols-3">
+        <dl className="grid w-full max-w-xl grid-cols-3 gap-2 sm:gap-3">
           {tiles.map((tile, i) => (
             <div
               key={tile.label}
               /* `flex-col-reverse` so the term can stay before its definition
                  in the markup, which is the order a `dl` requires, while the
                  number is the line on top. */
-              className={`flex flex-col-reverse gap-2 rounded-2xl border border-white/15 bg-black/35 px-5 py-4 backdrop-blur-xl ${
+              className={`flex flex-col-reverse gap-1.5 rounded-xl border border-white/15 bg-black/35 px-2.5 py-3 backdrop-blur-xl sm:gap-2 sm:rounded-2xl sm:px-5 sm:py-4 ${
                 active ? "explorer-tile-in" : ""
               }`}
               style={{ "--tile-i": i } as React.CSSProperties}
             >
-              <dt className="text-[13px] leading-snug text-white/70">
+              <dt className="text-[10px] leading-snug text-white/70 sm:text-[13px]">
                 {tile.label}
               </dt>
-              <dd className="font-display text-[26px] font-semibold leading-none text-white">
+              {/* `leading-tight` rather than `leading-none` below `sm`: a
+                  third of a phone's panel is ~67px of text column, and
+                  "4,54 milyar" takes two lines in it. */}
+              <dd className="font-display text-[17px] font-semibold leading-tight text-white sm:text-[26px] sm:leading-none">
                 {tile.value}
               </dd>
             </div>

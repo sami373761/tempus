@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Link from "next/link";
 
 import { ShareButton, SUMMARY_BUTTON } from "@/components/set-summary";
+import { PointsLine, type SetPoints } from "@/components/solo-points";
 import { VERDICTS, type Verdict } from "@/lib/game/scoring";
 import type { SetResult } from "@/lib/game/set";
 import {
@@ -50,10 +52,13 @@ import { format, type Dict } from "@/lib/i18n/dictionary";
 export function SurvivalSummary({
   results,
   onPlayAgain,
+  points = null,
   t,
 }: {
   results: readonly SetResult[];
   onPlayAgain: () => void;
+  /** The run's TP, milestones included. */
+  points?: SetPoints | null;
   t: Dict;
 }) {
   const summary = summarizeSurvival(results);
@@ -71,7 +76,7 @@ export function SurvivalSummary({
   }, []);
 
   return (
-    <div className="flex min-h-0 w-full flex-1 items-center justify-center py-2">
+    <div className="flex w-full flex-1 justify-center py-2">
       <div
         ref={panel}
         tabIndex={-1}
@@ -80,7 +85,12 @@ export function SurvivalSummary({
         // Wider than the set summary's `max-w-md`, which is the dot grid's
         // doing: at 20 columns a 13px dot wants more than a phone-width column
         // to sit in without the rows reading as a wall.
-        className="set-summary-in flex max-h-full w-full max-w-lg flex-col gap-5 overflow-y-auto rounded-3xl border border-white/12 bg-black/45 px-7 py-7 text-center shadow-2xl shadow-black/70 backdrop-blur-2xl focus:outline-none"
+        //
+        // It grows rather than scrolling, and `my-auto` centres it — the set
+        // summary's rule, and this is the screen that most needs it: a long
+        // run's sequence block is two hundred dots and no cap on this panel's
+        // height would have held it anyway.
+        className="set-summary-in my-auto flex w-full max-w-lg flex-col gap-5 rounded-3xl border border-white/12 bg-black/45 px-7 py-7 text-center shadow-2xl shadow-black/70 backdrop-blur-2xl focus:outline-none"
       >
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
@@ -123,6 +133,8 @@ export function SurvivalSummary({
 
         <Sequence results={results} t={t} />
 
+        {points && <PointsLine points={points} t={t} />}
+
         <div className="flex flex-col gap-2.5">
           <button
             type="button"
@@ -148,6 +160,16 @@ export function SurvivalSummary({
             }}
             t={t}
           />
+
+          {/* The set summary's third button, for its reason: the one way off
+              this screen that is not another run, on a page that does not
+              scroll and under a bar that hides when it does. */}
+          <Link
+            href="/"
+            className={`${SUMMARY_BUTTON} inline-flex items-center justify-center border-white/25 bg-transparent text-white/80 hover:border-white/45 hover:text-ink`}
+          >
+            {t.backHome}
+          </Link>
         </div>
 
         <a

@@ -11,9 +11,13 @@ import {
   setMatchReady,
   submitVersusGuess,
 } from "@/app/actions/versus";
-import { DateEntry, InputModeToggle } from "@/components/date-entry";
+import {
+  DateEntry,
+  InputModeToggle,
+  useKeyboardEntry,
+} from "@/components/date-entry";
 import { RoundTimer } from "@/components/round-timer";
-import { SetProgress } from "@/components/set-summary";
+import { SetProgress, SUMMARY_BUTTON } from "@/components/set-summary";
 import { TimelineBackdrop } from "@/components/timeline-backdrop";
 import {
   openingFractions,
@@ -550,7 +554,13 @@ function StageRound({
   // Typing the date rather than dragging for it. A preference, not a round's
   // state: a player who wanted to type one date almost certainly wants to type
   // the next.
-  const [direct, setDirect] = useState(false);
+  // Typing the year rather than dragging — a *wish*, granted only where there
+  // is room for the control. See `useKeyboardEntry`: below `md` the entry
+  // takes a row of its own out of a screen that must not scroll, to hold a
+  // field whose keypad covers the match.
+  const [directWanted, setDirectWanted] = useState(false);
+  const keyboardEntry = useKeyboardEntry();
+  const direct = directWanted && keyboardEntry;
   const [entry, setEntry] = useState<DateEntryValue>(EMPTY_DATE_ENTRY);
   const [invalid, setInvalid] = useState(false);
 
@@ -847,7 +857,7 @@ function StageRound({
         secondsLeft={secondsLeft}
         direct={direct}
         onDirect={() => {
-          setDirect((current) => !current);
+          setDirectWanted((current) => !current);
           setInvalid(false);
         }}
         entry={entry}
@@ -911,7 +921,13 @@ function PosterRound({
   // nowhere to pan to here.
   const [fraction, setFraction] = useState(0.5);
   const [guess, setGuess] = useState<number | null>(null);
-  const [direct, setDirect] = useState(false);
+  // Typing the year rather than dragging — a *wish*, granted only where there
+  // is room for the control. See `useKeyboardEntry`: below `md` the entry
+  // takes a row of its own out of a screen that must not scroll, to hold a
+  // field whose keypad covers the match.
+  const [directWanted, setDirectWanted] = useState(false);
+  const keyboardEntry = useKeyboardEntry();
+  const direct = directWanted && keyboardEntry;
   const [entry, setEntry] = useState<DateEntryValue>(EMPTY_DATE_ENTRY);
   const [invalid, setInvalid] = useState(false);
 
@@ -1111,7 +1127,7 @@ function PosterRound({
             secondsLeft={secondsLeft}
             direct={direct}
             onDirect={() => {
-              setDirect((current) => !current);
+              setDirectWanted((current) => !current);
               setInvalid(false);
             }}
             entry={entry}
@@ -1199,7 +1215,7 @@ function RoundControls({
           animate out as well as in, and `inert` is what takes a clipped field
           out of reach. */}
       <div
-        className="entry-shell md:justify-self-end"
+        className="entry-shell hidden md:block md:justify-self-end"
         data-shown={direct}
         inert={!direct}
       >
@@ -1224,12 +1240,11 @@ function RoundControls({
         </div>
       </div>
 
-      {/* Below `md` the three do not fit across a phone, so the entry takes a
-          row of its own above them while the button and the switch stay side
-          by side — which is what this wrapper's `md:contents` is for: above the
-          breakpoint it stops being a box and its two children become the grid's
-          own middle and right cells. */}
-      <div className="flex items-center gap-3 md:contents">
+      {/* **Below `md` this row holds nothing but the button.** The entry and
+          its switch are a desktop control now (`useKeyboardEntry`), so the
+          grid has one centred cell there and the wrapper's `md:contents` is
+          what gives the two of them their own cells once the sides exist. */}
+      <div className="flex items-center justify-center gap-3 md:contents">
         <div className="grid place-items-center">
           <div
             className={`col-start-1 row-start-1 transition-opacity duration-300 ${
@@ -1278,8 +1293,8 @@ function RoundControls({
             There is nothing to switch to mid-reveal anyway: the rail is back on
             screen carrying the answer. */}
         <div
-          className={`transition-opacity duration-300 md:ml-3 md:justify-self-start ${
-            size === "lg" ? "sm:[--menu-btn:46px]" : ""
+          className={`hidden transition-opacity duration-300 md:ml-3 md:block md:justify-self-start ${
+            size === "lg" ? "md:[--menu-btn:46px]" : ""
           } ${answered || !playing ? "opacity-0" : "opacity-100"}`}
           inert={answered || !playing}
         >
@@ -1474,13 +1489,17 @@ function VersusSummary({
   const youAsked = view.rematchBy === view.seat;
 
   return (
-    <div className="relative flex min-h-0 w-full flex-1 items-center justify-center py-2">
+    <div className="relative flex w-full flex-1 justify-center py-2">
       <div
         ref={panel}
         tabIndex={-1}
         role="group"
         aria-label={`${t.versusTitle} — ${headline}`}
-        className="set-summary-in flex max-h-full w-full max-w-md flex-col gap-5 overflow-y-auto rounded-3xl border border-white/12 bg-black/45 px-7 py-7 text-center shadow-2xl shadow-black/70 backdrop-blur-2xl focus:outline-none"
+        // It grows rather than scrolling inside itself, centred by `my-auto`:
+        // the solo summary's rule (see `SetSummary`), and this panel is the
+        // one with a rematch state machine under its buttons, so it is the
+        // likeliest of all of them to overrun a phone.
+        className="set-summary-in my-auto flex w-full max-w-md flex-col gap-5 rounded-3xl border border-white/12 bg-black/45 px-7 py-7 text-center shadow-2xl shadow-black/70 backdrop-blur-2xl focus:outline-none"
       >
         <div>
           {/* The kicker names the game as well as the mode, because a match
@@ -1550,14 +1569,18 @@ function VersusSummary({
           )}
 
           <ShareMatchButton view={view} modeName={modeName} t={t} />
-        </div>
 
-        <Link
-          href="/"
-          className="text-xs text-white/55 underline-offset-4 transition hover:text-ink hover:underline"
-        >
-          {t.versusBackHome}
-        </Link>
+          {/* The way home, as a button rather than the quiet link it was: it
+              is the control every one of the site's result screens now ends
+              on, and the one a phone cannot reach any other way — this page
+              does not scroll and the bar above it hides when a page does. */}
+          <Link
+            href="/"
+            className={`${SUMMARY_BUTTON} inline-flex items-center justify-center border-white/25 bg-transparent text-white/80 hover:border-white/45 hover:text-ink`}
+          >
+            {t.versusBackHome}
+          </Link>
+        </div>
       </div>
 
       {/* The opponent's request, over the whole screen rather than over the

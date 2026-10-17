@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 
-import { BadgeShowcase } from "@/components/badge-showcase";
+import { BadgeShowcase, type BadgeView } from "@/components/badge-showcase";
 import { requireAccount } from "@/lib/auth/server";
-import { BADGES } from "@/lib/badges";
-import { readBadgeProgress } from "@/lib/db/accounts";
-import { createServerDbClient } from "@/lib/db/server";
-import type { BadgeProgress } from "@/lib/db/types";
+import type { BadgeSlug } from "@/lib/badges";
+import { createAdminDbClient } from "@/lib/db/admin";
+import { readShownBadge, refreshBadges } from "@/lib/db/scoring";
+import { EMPTY_STATS, evaluateBadges } from "@/lib/game/badge-rules";
 import { readLocaleContext } from "@/lib/i18n/server";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -44,48 +44,51 @@ export async function generateMetadata(): Promise<Metadata> {
  * *one* badge while six were on screen; a card now carries its own badge's
  * answer. See `components/badge-showcase.tsx`.
  *
- * **Nothing writes badge progress yet.** The rules are not decided (see
- * 20261006130000_accounts_and_badges.sql), so every card reads 0%. The read is
- * real, though: the day the rules land, this page shows their output without
- * being touched.
+ * **It re-measures on every visit** (`refreshBadges`), which is what makes a
+ * badge earned by a path with no hook of its own — a head-to-head win, banked
+ * by a trigger — land here the next time the player looks. The writes go
+ * through the service role, the only role that may award a badge.
  */
 export default async function AchievementsPage() {
   const { t } = await readLocaleContext();
   const account = await requireAccount("/achievements");
 
   /* Guarded like the home page's event count, and for the same reason: a
-     failed read should cost the player their numbers, not the page. Zeros are
-     also what an account with no rows yet reads as, so the fallback is the
-     normal case rather than a special one. */
-  let progress: BadgeProgress[] = badgeZeros();
+     failed read should cost the player their numbers, not the page. The
+     fallback is an evaluation of no stats at all — six cards at zero with
+     their real thresholds and quests, which is also what a new account
+     genuinely reads. */
+  let badges: BadgeView[] = toViews(evaluateBadges(EMPTY_STATS));
+  let totalTp = 0;
+  let shown: BadgeSlug | null = null;
   try {
-    progress = await readBadgeProgress(await createServerDbClient(), account.id);
-  } catch {
-    progress = badgeZeros();
+    const admin = createAdminDbClient();
+    const state = await refreshBadges(admin, account.id);
+    badges = toViews(state.badges);
+    totalTp = state.stats.tp;
+    shown = await readShownBadge(admin, account.id);
+  } catch (error) {
+    console.error("achievements: badge refresh failed", error);
   }
 
   return (
     <div className="pb-8 pt-12">
-      <BadgeShowcase t={t} progress={progress} />
+      <BadgeShowcase t={t} badges={badges} totalTp={totalTp} shown={shown} />
     </div>
   );
 }
 
-/**
- * What the page falls back to when the read fails.
- *
- * Built from the code-side badge list rather than from the table, because the
- * fallback has to work when the table is exactly what could not be reached. The
- * target of 1 is a denominator, not a rule — `0 / 1` is the honest reading of
- * "nothing is known yet", and the real targets come from `badge.default_target`
- * on every path that works.
- */
-function badgeZeros(): BadgeProgress[] {
-  return BADGES.map((badge) => ({
-    slug: badge.slug,
-    progress: 0,
-    target: 1,
-    unlockedAt: null,
-    details: {},
+function toViews(
+  evaluations: ReturnType<typeof evaluateBadges> | Awaited<ReturnType<typeof refreshBadges>>["badges"],
+): BadgeView[] {
+  return evaluations.map((evaluation) => ({
+    slug: evaluation.slug,
+    tp: evaluation.tp,
+    tpTarget: evaluation.tpTarget,
+    quests: evaluation.quests,
+    unlocked:
+      "unlockedAt" in evaluation
+        ? evaluation.unlockedAt !== null
+        : evaluation.earned,
   }));
 }
