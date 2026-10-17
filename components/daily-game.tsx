@@ -29,6 +29,7 @@ import {
   serializeGuestStore,
   type DailyAnswer,
   type DailyAudience,
+  type DailyGuestStore,
 } from "@/lib/game/daily";
 import {
   DEFAULT_PANE,
@@ -58,6 +59,13 @@ import { format, type Dict } from "@/lib/i18n/dictionary";
  * That is the head-to-head mode's rule and it is here for the same reason: a
  * member's daily score is durable, and a client that knew the answers could
  * write a perfect one.
+ *
+ * **The note is part of the answer, so it arrives with it.** A description is
+ * prose about the event and names its date as often as not, so the page sends
+ * it only for questions already answered; the one for the question on screen
+ * comes back in the same reply as its year and is kept in `notes`, keyed by
+ * question. A guest keeps theirs beside the attempt in `localStorage`, so a
+ * reload loses neither.
  *
  * **`answers` is the attempt, and `shownIdx` is the screen.** They are two
  * pieces of state rather than one because an answer is *final the moment it is
@@ -145,6 +153,16 @@ export function DailyGame({
   const [sending, setSending] = useState(false);
   const [failed, setFailed] = useState(false);
   const [points, setPoints] = useState(bankedPoints);
+  /**
+   * Each answered question's note, as its reveal brought it back — on this
+   * page, or (for a guest) on an earlier visit, read back from the store.
+   *
+   * Absent means nothing has said, which is not the same as null ("it has
+   * none"), though both read the same way below: they fall back to the
+   * event's own description, which the page filled in for a member's earlier
+   * answers and left null for everything else.
+   */
+  const [notes, setNotes] = useState<RevealNotes>({});
 
   const travelTimer = useRef<number | null>(null);
   const resetTimer = useRef<number | null>(null);
@@ -169,20 +187,22 @@ export function DailyGame({
     if (member) return;
 
     let stored: DailyAnswer[] = [];
+    let storedNotes: RevealNotes = {};
     try {
-      stored = parseGuestStore(
-        window.localStorage.getItem(DAILY_GUEST_STORE_KEY),
-        puzzleDate,
-      );
+      const raw = window.localStorage.getItem(DAILY_GUEST_STORE_KEY);
+      stored = parseGuestStore(raw, puzzleDate);
+      storedNotes = parseRevealNotes(raw, puzzleDate, stored.length);
     } catch {
       // Storage can be unavailable outright (private mode in some browsers,
       // or a blocked origin). The honest consequence is that a guest there can
       // replay the day, and there is nothing client-side that could prevent
       // it — so the game is played rather than refused.
       stored = [];
+      storedNotes = {};
     }
 
     setAnswers(stored);
+    setNotes(storedNotes);
     setShownIdx(stored.length);
     setResumedComplete(stored.length >= QUESTIONS_PER_DAILY);
     setHydrated(true);
@@ -192,17 +212,31 @@ export function DailyGame({
   // answer is graded rather than from when the player presses on. Guarded on
   // `hydrated`, or the empty initial state would overwrite the real one before
   // the effect above has read it.
+  //
+  // The notes ride in the same record rather than a key of their own, so they
+  // are replaced with the day they belong to and there is still nothing to
+  // prune. `parseGuestStore` reads only `answers`, and a record written before
+  // notes existed reads back as having none, so the stored attempt's shape is
+  // untouched either way.
   useEffect(() => {
     if (member || !hydrated) return;
     try {
+      const store: DailyGuestStore & { notes: (string | null)[] } = {
+        puzzleDate,
+        answers,
+        // One per answer, in order, so a note can never outlive the answer it
+        // came with — the store is truncated at the first gap on the way in,
+        // and this keeps the two lists the same length on the way out.
+        notes: answers.map((answer) => notes[answer.idx] ?? null),
+      };
       window.localStorage.setItem(
         DAILY_GUEST_STORE_KEY,
-        serializeGuestStore({ puzzleDate, answers }),
+        serializeGuestStore(store),
       );
     } catch {
       // See above: nothing to recover, and nothing worth telling the player.
     }
-  }, [member, hydrated, puzzleDate, answers]);
+  }, [member, hydrated, puzzleDate, answers, notes]);
 
   /* ----------------------------------------------------------------------
      The round
@@ -294,6 +328,13 @@ export function DailyGame({
             ? [...current, result.answer]
             : current,
         );
+        // Keyed by the reply's own index rather than `shownIdx`, for the
+        // reason the append above is guarded: it is the answer's note, not the
+        // screen's.
+        setNotes((current) => ({
+          ...current,
+          [result.answer.idx]: result.note,
+        }));
         if (result.banked) setPoints(result.banked.points);
         return;
       }
@@ -422,7 +463,11 @@ export function DailyGame({
                   locale={locale}
                   t={t}
                 />
-                <NoteFlank note={event.description} eventId={event.id} t={t} />
+                <NoteFlank
+                  note={notes[shownIdx] ?? event.description}
+                  eventId={event.id}
+                  t={t}
+                />
               </>
             )}
 
@@ -584,4 +629,44 @@ export function DailyGame({
       )}
     </div>
   );
+}
+
+/** Notes by question index — see `notes` in the component. */
+type RevealNotes = Record<number, string | null>;
+
+/**
+ * The notes out of a guest's stored record, for the first `count` questions —
+ * the answers `parseGuestStore` kept.
+ *
+ * Read here rather than in lib/game/daily.ts because they are not part of the
+ * attempt: nothing is graded, banked or resumed from them, and the stored
+ * answer's shape is the database's as well as the browser's. Validated anyway,
+ * on the attempt's own rules — the same day, nothing past the answers — and a
+ * hand-edited entry that is not a string is dropped, which only ever hands back
+ * the placeholder. What a guest can write into their own store is shown to
+ * nobody but them, and as text.
+ */
+function parseRevealNotes(
+  raw: string | null,
+  puzzleDate: string,
+  count: number,
+): RevealNotes {
+  if (!raw || count === 0) return {};
+
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null) return {};
+    const record = parsed as Record<string, unknown>;
+    if (record.puzzleDate !== puzzleDate || !Array.isArray(record.notes)) {
+      return {};
+    }
+
+    const notes: RevealNotes = {};
+    record.notes.slice(0, count).forEach((note: unknown, idx: number) => {
+      if (typeof note === "string") notes[idx] = note;
+    });
+    return notes;
+  } catch {
+    return {};
+  }
 }

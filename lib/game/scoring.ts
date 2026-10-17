@@ -291,6 +291,55 @@ export function gradeGuess(
 }
 
 /**
+ * `gradeGuess` run backwards: the whole-year gaps that grade as `verdict` for
+ * an event at `actual`, inclusive.
+ *
+ * For a caller that has to *produce* a guess of a given quality rather than
+ * judge one — the head-to-head's computer opponent (lib/game/versus-bot.ts)
+ * picks a tier first and then a gap inside it. Read off the same `tolerance()`
+ * and the same first-match order as the grader, so the two cannot drift: an
+ * integer gap is within a tolerance exactly when it is within that
+ * tolerance's floor, so band `i` owns `floor(tol(i-1)) < d <= floor(tol(i))`.
+ * The floors rather than the raw tolerances, because a fractional edge like
+ * 1724.65 admits 1724 and refuses 1725 exactly as 1724 would. "Tune only via
+ * `BANDS`" stays true: nothing here is a number of its own.
+ *
+ * `perfect`'s zero tolerance makes it `[0, 0]`. `wayOff` has no band of its
+ * own, so it opens one year past the widest band and has no outer edge —
+ * `max` is `Infinity`; the rails are the caller's business, not the ladder's.
+ *
+ * Null when the band is empty for this event: two tolerances that floor to the
+ * same year leave nothing between them. The general ladder never does that
+ * (its floors alone strictly increase), but a subject ladder could, and a
+ * caller has to be told rather than handed an inverted range.
+ */
+export function verdictDistanceRange(
+  verdict: Verdict,
+  actual: number,
+  bands: BandSet = BANDS,
+): { min: number; max: number } | null {
+  const depth = Math.max(1, Math.abs(PRESENT_YEAR - actual));
+  const found = bands.findIndex((band) => band.verdict === verdict);
+  // `wayOff` is the implied tier after the last band; any other verdict the
+  // ladder does not name can never be returned by `gradeGuess`.
+  const at = found === -1 && verdict === "wayOff" ? bands.length : found;
+  if (at === -1) return null;
+
+  // The largest gap a better band already claims — the grader takes the first
+  // band that fits, so everything up to here is somebody else's.
+  let claimed = -1;
+  for (let i = 0; i < at; i += 1) {
+    claimed = Math.max(claimed, Math.floor(tolerance(bands[i]!, depth)));
+  }
+
+  const min = claimed + 1;
+  if (at === bands.length) return { min, max: Infinity };
+
+  const max = Math.floor(tolerance(bands[at]!, depth));
+  return min <= max ? { min, max } : null;
+}
+
+/**
  * The same grading as a number, for the head-to-head mode.
  *
  * Two players need to be ranked against each other, and a tier cannot do it:

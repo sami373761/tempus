@@ -88,7 +88,13 @@ export const config = {
     /* Everything but static assets and the auth callback. The callback must be
        excluded: it is the one route whose whole job is to exchange a `code` for
        a session, and a middleware that reads the session first would run before
-       there is one. */
-    "/((?!_next/static|_next/image|favicon.ico|auth/callback|.*\\.(?:svg|png|jpg|jpeg|webp|avif|mp4|ico)$).*)",
+       there is one. The masked round pictures are excluded too: their URLs end
+       in an opaque token rather than an image extension, so the asset rule
+       below misses them, and a session refresh per picture would put a
+       Supabase round trip in front of every image of a match for nothing — the
+       route reads no session. The online match's heartbeat likewise: it is
+       authorised by its seat token, never by a cookie, and it fires every
+       second and a half for most of a round. */
+    "/((?!_next/static|_next/image|favicon.ico|auth/callback|api/masked-image/|api/versus/tick|.*\\.(?:svg|png|jpg|jpeg|webp|avif|mp4|ico)$).*)",
   ],
 };

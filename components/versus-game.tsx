@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import {
   answerVersusRematch,
+  cancelVersusSearch,
   fetchMatchView,
   joinVersusMatch,
   requestVersusRematch,
@@ -33,6 +35,19 @@ import {
   TimelinePaneView,
 } from "@/components/timeline-stage";
 import { VersusLobby, Waiting } from "@/components/versus-lobby";
+import {
+  clearVersusSeat,
+  FindOpponentError,
+  readVersusSeat,
+  useFindOpponent,
+  VersusSearch,
+  writeLastOnlineMatch,
+  writeVersusSeat,
+  type SeatCredentials,
+  type StoredSeat,
+} from "@/components/versus-search";
+import { signInHref } from "@/lib/auth/paths";
+import { signedDelta } from "@/lib/game/chrono-rating";
 import type { SupportedLocale } from "@/lib/db/types";
 import {
   directYear,
@@ -41,15 +56,23 @@ import {
 } from "@/lib/game/date-entry";
 import {
   applyMatchRow,
+  foldView,
+  inMatchIntro,
   matchOutcome,
+  opponentAnswered,
   otherSeat,
+  PUBLIC_MATCH_INTRO_SECONDS,
+  PUBLIC_TICK_JITTER_MS,
+  PUBLIC_TICK_MS,
   revealedRound,
+  VERSUS_TICK_PATH,
   versusModeSpec,
   type MaskedEvent,
   type MatchView,
   type RoundResult,
   type Seat,
   type SeatAnswer,
+  type TickResponse,
   type VersusModeSpec,
 } from "@/lib/game/versus";
 import {
@@ -112,6 +135,18 @@ import { dateLabels, format, type Dict } from "@/lib/i18n/dictionary";
  * real limitation, and it is why the opponent's clock keeps running rather
  * than the match ending.
  *
+ * **An online match is this screen with five differences**, every one keyed
+ * on `view.isPublic` and none on who the opponent is. The lobby is the search
+ * (components/versus-search.tsx) rather than an invitation. Round one opens
+ * behind an "opponent found" card for the seconds its `round_started_at` is
+ * stamped ahead of the clock. While the opponent has not answered, the client
+ * prompts the server on a jittered heartbeat (`PUBLIC_TICK_MS` — the reason is
+ * written there), which is also the only way it hears that they have: a public
+ * match never pushes a first answer. The opponent is called by name rather
+ * than "them", and presence is off. And the end screen offers a fresh search
+ * and the rating change instead of a rematch. An invitation is exactly what it
+ * was.
+ *
  * **Where the guess lives.** The match state is here; the *rail* state — which
  * era is on camera, where each marker stands, whether the player is typing the
  * date rather than dragging for it — belongs to whichever round body is on
@@ -152,6 +187,7 @@ export function VersusGame({
   t: Dict;
   locale: SupportedLocale;
 }) {
+  const router = useRouter();
   const [session, setSession] = useState<StoredSeat | null>(null);
   const [view, setView] = useState<MatchView | null>(null);
   const [fatal, setFatal] = useState<string | null>(null);
@@ -173,23 +209,16 @@ export function VersusGame({
   // One question fetch per round, with the key cleared on failure so a
   // dropped request is retried rather than leaving a blank card.
   const fetchedRound = useRef<string | null>(null);
+  // The same for the read an online match needs once it is over (see below).
+  const fetchedSettlement = useRef<string | null>(null);
 
   /**
-   * Fold a freshly fetched view in.
-   *
-   * A fetch can land after a push that is newer — the socket and the HTTP
-   * request are two races against each other — so the version decides. The
-   * questions are merged either way: they are the one thing a push never
-   * carries, so a stale fetch is still the only source for them.
+   * Fold a freshly fetched view in — by version, keeping what only a fetch
+   * can carry (the questions, and an online match's names, ratings and rating
+   * changes) even from one that lost the race to a push. See `foldView`.
    */
   const adopt = useCallback((next: MatchView) => {
-    setView((current) => {
-      if (!current) return next;
-      const events = { ...current.events, ...next.events };
-      return next.version < current.version
-        ? { ...current, events }
-        : { ...next, events };
-    });
+    setView((current) => (current ? foldView(current, next) : next));
   }, []);
 
   /** Ask the server where the match is, and re-measure the clock while at it. */
@@ -216,7 +245,7 @@ export function VersusGame({
     let cancelled = false;
 
     (async () => {
-      let seat = readSeat(code);
+      let seat = readVersusSeat(code);
 
       // A stored seat that the server does not recognise is a seat from a
       // match that has since been swept. Drop it and come in as a new player
@@ -229,7 +258,7 @@ export function VersusGame({
           return;
         }
         if (problem === "forbidden" || problem === "not-found") {
-          clearSeat(code);
+          clearVersusSeat(code);
           seat = null;
         } else {
           setFatal(t.versusCreateFailed);
@@ -250,7 +279,7 @@ export function VersusGame({
         token: joined.token,
         seat: joined.seat,
       };
-      writeSeat(code, fresh);
+      writeVersusSeat(code, fresh);
 
       const problem = await refresh(fresh);
       if (cancelled) return;
@@ -268,16 +297,29 @@ export function VersusGame({
 
   /* --- the live channel -------------------------------------------------- */
 
-  useEffect(() => {
-    if (!session) return;
+  // Whether this is an online match, once a view has said so. Stamped at
+  // creation and never changed, so the subscription below is made once — and
+  // not before it is known, because it decides whether this seat announces
+  // itself at all (see lib/realtime/match-channel.ts).
+  const isPublic = view ? view.isPublic : null;
 
-    return subscribeToMatch(session.matchId, session.seat, {
-      onRow: (row) =>
-        setView((current) => (current ? applyMatchRow(current, row) : current)),
-      onOpponentPresence: setOpponentOnline,
-      onConnected: setConnected,
-    });
-  }, [session]);
+  useEffect(() => {
+    if (!session || isPublic === null) return;
+
+    return subscribeToMatch(
+      session.matchId,
+      session.seat,
+      {
+        onRow: (row) =>
+          setView((current) =>
+            current ? applyMatchRow(current, row) : current,
+          ),
+        onOpponentPresence: setOpponentOnline,
+        onConnected: setConnected,
+      },
+      { presence: !isPublic },
+    );
+  }, [session, isPublic]);
 
   // Anything that changed while the socket was down was never delivered and
   // is never replayed, so coming back up has to be followed by a read.
@@ -294,6 +336,10 @@ export function VersusGame({
 
   useEffect(() => {
     if (!timed) return;
+    // Read once on the way in as well: the clock does not run in the lobby,
+    // so until the first tick a match is drawn against the instant the lobby
+    // last rendered — an online search's whole length ago.
+    setNow(Date.now());
     const id = window.setInterval(() => setNow(Date.now()), TICK_MS);
     return () => window.clearInterval(id);
   }, [timed]);
@@ -320,6 +366,170 @@ export function VersusGame({
 
     void refresh(session);
   }, [now, serverNow, deadline, session, view, refresh]);
+
+  /* --- the online heartbeat ---------------------------------------------- */
+
+  // Round one of an online match opens on the "opponent found" card. Not a
+  // phase: its `round_started_at` is stamped a few seconds ahead of the clock
+  // (PUBLIC_MATCH_INTRO_SECONDS), so the intro is exactly "the round has not
+  // started yet" — read off the same corrected clock the countdown uses, so
+  // both players' cards lift at the same instant.
+  //
+  // Round one of an online match *only*. Every other round's start is stamped
+  // at the server's "now", and a clock offset a few dozen milliseconds out
+  // would read that as a future instant too — flashing a full-screen card at
+  // the top of every round, and of an invitation's first.
+  const intro =
+    view !== null &&
+    view.isPublic &&
+    view.currentIdx === 0 &&
+    inMatchIntro(view, serverNow);
+
+  // The version in hand, readable by the heartbeat without restarting it on
+  // every push. A beat answers with a view only for the opponent's lock-in or
+  // for a change this version shows the push has lost (`tickMatch` in
+  // lib/db/matches.ts), so most beats cost a few bytes.
+  const knownVersion = useRef(0);
+  useEffect(() => {
+    knownVersion.current = view?.version ?? 0;
+  }, [view?.version]);
+
+  // While the opponent has not answered a live online round, prompt the
+  // server on a jittered cadence — the reason is on `PUBLIC_TICK_MS`. It
+  // beats against every online opponent alike, right up to the deadline, and
+  // stops the moment a beat says theirs is in. An invitation never beats;
+  // both of its players have a browser to push from.
+  //
+  // `fetch` to a Route Handler, never a Server Action: actions run one at a
+  // time, and a beat in the queue would hold a last-second lock-in back past
+  // the deadline (see app/api/versus/tick/route.ts). Out of the queue, a beat
+  // and a lock-in can be in flight together — both go through the row lock,
+  // in whichever order they arrive — so there is nothing to step aside for.
+  const beating =
+    session !== null &&
+    view !== null &&
+    view.isPublic &&
+    view.phase === "playing" &&
+    !intro &&
+    !opponentAnswered(view);
+
+  useEffect(() => {
+    if (!beating || !session) return;
+
+    let disposed = false;
+    let timer: number | null = null;
+    // Aborted on the way out, so a beat answering after the round (or the
+    // page) has moved on is not even read.
+    const inFlight = new AbortController();
+
+    function schedule() {
+      if (disposed) return;
+      const jitter = (Math.random() * 2 - 1) * PUBLIC_TICK_JITTER_MS;
+      timer = window.setTimeout(() => void beat(), PUBLIC_TICK_MS + jitter);
+    }
+
+    // One beat in flight at a time: the next is scheduled when this one has
+    // answered, so a slow server is asked less often rather than queued up.
+    async function beat() {
+      timer = null;
+      try {
+        const response = await fetch(VERSUS_TICK_PATH, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            matchId: session!.matchId,
+            token: session!.token,
+            knownVersion: knownVersion.current,
+          }),
+          cache: "no-store",
+          signal: inFlight.signal,
+        });
+        const result = (await response.json()) as TickResponse;
+        if (disposed) return;
+        if (result.ok && result.view) adopt(result.view);
+      } catch {
+        // A dropped beat (or an aborted one) is the next beat's job.
+        if (disposed) return;
+      }
+      schedule();
+    }
+
+    schedule();
+
+    return () => {
+      disposed = true;
+      inFlight.abort();
+      if (timer !== null) window.clearTimeout(timer);
+    };
+  }, [beating, session, adopt]);
+
+  /* --- an online match's identity and result ----------------------------- */
+
+  // The names, ratings and rating changes of an online match are not on the
+  // pushed row (MATCH_CLIENT_COLUMNS in lib/game/versus.ts — identity, on a
+  // row anyone can list), so the moments they change are moments to read the
+  // view. When the match fills, the question fetch below is already that
+  // read: the lobby's view has no questions. When it ends, nothing else would
+  // ask, so this does — once, with the key cleared on failure like the
+  // question fetch's. A lobby closed with nobody in it has no result to read.
+  useEffect(() => {
+    if (!session || !view || !view.isPublic) return;
+    if (view.phase !== "complete" && view.phase !== "abandoned") return;
+    if (!view.seats[1].joined || !view.seats[2].joined) return;
+
+    // Kept for the start page's next search, which then avoids this opponent
+    // too (see `useFindOpponent`).
+    writeLastOnlineMatch(session);
+
+    const key = `${view.matchId}:${view.generation}`;
+    if (fetchedSettlement.current === key) return;
+    fetchedSettlement.current = key;
+
+    void refresh(session).then((problem) => {
+      if (problem) fetchedSettlement.current = null;
+    });
+  }, [session, view, refresh]);
+
+  // The search this page would leave open if it went away now: a public lobby
+  // this tab is still searching from. Leaving any way but Cancel — a link in
+  // the site bar, Back — used to leave it matchable, and whoever was seated
+  // opposite played ten rounds against nobody while an absent account was
+  // rated the loss. So it is closed as the page unmounts. Not once the search
+  // has handed the player on (`moved`), when the lobby is already closed and
+  // the request would only delay the next page's first read in the action
+  // queue; and not once the lobby has filled — `cancelSearch` would refuse
+  // anyway, a filled lobby being a match.
+  const openSearch = useRef<StoredSeat | null>(null);
+  const handedOff = useRef(false);
+  useEffect(() => {
+    openSearch.current =
+      !handedOff.current &&
+      session !== null &&
+      view !== null &&
+      view.isPublic &&
+      view.phase === "lobby"
+        ? session
+        : null;
+  });
+
+  // Deferred by a tick and called off by a remount, because development's
+  // StrictMode unmounts and remounts every component once on the way in, and
+  // a cancel sent then would close the search the player has just opened.
+  const pendingLeave = useRef<number | null>(null);
+  useEffect(() => {
+    if (pendingLeave.current !== null) {
+      window.clearTimeout(pendingLeave.current);
+      pendingLeave.current = null;
+    }
+    return () => {
+      const seat = openSearch.current;
+      if (!seat) return;
+      pendingLeave.current = window.setTimeout(() => {
+        pendingLeave.current = null;
+        void cancelVersusSearch(seat.matchId, seat.token).catch(() => {});
+      }, 0);
+    };
+  }, []);
 
   /* --- questions --------------------------------------------------------- */
 
@@ -370,6 +580,11 @@ export function VersusGame({
    * returned for a *hard* failure — "closed" and "stale" are not failures,
    * they are the server having got there first, and the marker stays where the
    * player put it.
+   *
+   * `early` is the one soft answer that does bring the marker back: the round
+   * had not started (an online match's intro, a few milliseconds of clock
+   * disagreement at its edge), so nothing was recorded and the round the
+   * player is about to be shown is still theirs to answer.
    */
   const submit = useCallback(
     async (year: number): Promise<boolean> => {
@@ -384,9 +599,29 @@ export function VersusGame({
 
       if (!result.ok) return false;
       adopt(result.view);
-      return true;
+      return result.outcome !== "early";
     },
     [session, view, adopt],
+  );
+
+  // A seat in another match, handed back by the search when it merged this
+  // lobby into an older one. Replaced rather than pushed: the lobby left
+  // behind is closed, and Back landing on it would only bounce to the start.
+  // The page keys this component on the code, so the new URL is a clean
+  // mount rather than this state carried into another match.
+  const moved = useCallback(
+    (credentials: SeatCredentials) => {
+      // The lobby this leaves is already closed (the move closed it).
+      handedOff.current = true;
+      openSearch.current = null;
+      writeVersusSeat(credentials.code, {
+        matchId: credentials.matchId,
+        token: credentials.token,
+        seat: credentials.seat,
+      });
+      router.replace(`/versus/${credentials.code}`);
+    },
+    [router],
   );
 
   async function ready() {
@@ -426,8 +661,18 @@ export function VersusGame({
   const event = view.events[view.currentIdx] ?? null;
   const revealed = revealedRound(view);
 
-  const remainingMs = deadline === null ? 0 : deadline - serverNow;
+  // Clamped to the round's own length. During an online match's intro the
+  // deadline is the intro *plus* the round away, and a ring that opened at 23
+  // of 20 seconds would be a clock that is wrong for its first three.
+  const remainingMs =
+    deadline === null
+      ? 0
+      : view.phase === "playing"
+        ? Math.min(deadline - serverNow, view.roundSeconds * 1000)
+        : deadline - serverNow;
   const secondsLeft = Math.max(0, Math.ceil(remainingMs / 1000));
+
+  const searching = isSearchScreen(view);
 
   // Whether one of the two round bodies is what is on screen. A match in a
   // playing phase whose question has not arrived yet is *not* — the fetch for
@@ -462,11 +707,25 @@ export function VersusGame({
         <TimelineBackdrop pane={spec.homePane} panes={spec.panes} />
       )}
 
-      {view.phase === "lobby" ? (
+      {searching ? (
+        session ? (
+          <VersusSearch
+            view={view}
+            matchId={session.matchId}
+            token={session.token}
+            onAdopt={adopt}
+            onMoved={moved}
+            t={t}
+          />
+        ) : (
+          <LoadingNotice label={t.versusJoining} />
+        )
+      ) : view.phase === "lobby" ? (
         <VersusLobby view={view} onReady={ready} busy={busy} t={t} />
       ) : view.phase === "complete" || view.phase === "abandoned" ? (
         <VersusSummary
           view={view}
+          seat={session}
           onRematch={askRematch}
           onAnswerRematch={answerRematch}
           busy={busy}
@@ -474,20 +733,223 @@ export function VersusGame({
         />
       ) : event === null ? (
         <LoadingNotice label={t.versusStarting} />
-      ) : spec.layout === "poster" ? (
-        <PosterRound key={view.mode} {...round} event={event} />
       ) : (
-        <StageRound key={view.mode} {...round} event={event} />
+        // `contents`, so the wrapper adds no box to a layout that is a height
+        // budget; it is only there to carry `inert` while the intro card is
+        // over the round. The question is mounted under the card on purpose
+        // — its picture loads behind it, and the round opens on a photograph
+        // rather than on a fade-in — but nothing in it can be reached early.
+        <div className="contents" inert={intro}>
+          {spec.layout === "poster" ? (
+            <PosterRound key={view.mode} {...round} event={event} />
+          ) : (
+            <StageRound key={view.mode} {...round} event={event} />
+          )}
+        </div>
+      )}
+
+      {/* Over whatever is under it, the question or the wait for it: the
+          host's lobby fills on a push that carries no question, and the card
+          should not wait for the fetch that brings one. */}
+      {/* `known`: the names come with the first view read after the fill (they
+          are not on the push — see the identity effect above), and that is the
+          view that brings the first question too. */}
+      {intro && (
+        <MatchIntro
+          view={view}
+          serverNow={serverNow}
+          known={event !== null}
+          t={t}
+        />
       )}
 
       {/* Advisory only: the match never pauses for a missing opponent, it just
           says so. Hidden in the lobby, where "not here yet" is the screen's
-          whole subject and this would be saying it twice. */}
-      {view.phase !== "lobby" && !opponentOnline && (
+          whole subject and this would be saying it twice — and in every
+          online match, which has no presence to report (see
+          lib/realtime/match-channel.ts). */}
+      {!view.isPublic && view.phase !== "lobby" && !opponentOnline && (
         <p className="pointer-events-none fixed inset-x-0 bottom-3 z-30 text-center text-[11px] text-white/45">
           {connected ? t.versusOpponentOffline : t.versusReconnecting}
         </p>
       )}
+    </div>
+  );
+}
+
+/**
+ * Whether an online match is still the search screen.
+ *
+ * The lobby phase, plainly — and one more case that is not plain: a lobby
+ * closed *by the search itself*. When a poll merges this player into an older
+ * lobby, the same transaction closes theirs, and the push saying so can beat
+ * the poll's own answer home. Swapping to a result screen on that push would
+ * unmount the search with the answer — the seat in the match they were moved
+ * into — still on its way, and strand them there with an opponent waiting.
+ * So a closed lobby that never had a second player stays the search, whose
+ * next answer is either that seat or "gone", and either one moves the tab on.
+ */
+function isSearchScreen(view: MatchView): boolean {
+  if (!view.isPublic) return false;
+  if (view.phase === "lobby") return true;
+  return view.phase === "abandoned" && !view.seats[otherSeat(view.seat)].joined;
+}
+
+/**
+ * The name the opponent goes by on this screen.
+ *
+ * An invitation is between two people who know each other, and "them" is all
+ * the label needs to be. An online opponent is a stranger with a username,
+ * and a guest is "Guest" — the same word for every guest, so nothing about
+ * how an opponent is labelled says anything but what their seat carries.
+ */
+function opponentName(view: MatchView, t: Dict): string {
+  if (!view.isPublic) return t.versusThemLabel;
+  return view.names[otherSeat(view.seat)] ?? t.versusGuestName;
+}
+
+/**
+ * A name short enough for a pill under a rail marker, which has no room to
+ * truncate with CSS — it is one `whitespace-nowrap` string beside a year.
+ * Usernames are at most twenty characters, so this only ever trims the long
+ * ones, and it trims by code point so a name is never cut mid-character.
+ */
+function railName(name: string): string {
+  const characters = Array.from(name);
+  return characters.length <= RAIL_NAME_MAX
+    ? name
+    : `${characters.slice(0, RAIL_NAME_MAX - 1).join("")}…`;
+}
+
+const RAIL_NAME_MAX = 12;
+
+/**
+ * "Opponent found": the few seconds between a public match filling and its
+ * first question.
+ *
+ * Over the whole screen, like the rematch request, and opaque enough that the
+ * question already mounted underneath is a blur rather than a head start —
+ * the first twenty seconds are counted from the moment this lifts, for both
+ * seats, so reading the picture through it would be time nobody else got.
+ * The names are the point of the card: until now the player has only seen a
+ * clock, and the first thing they want is who they are playing.
+ */
+function MatchIntro({
+  view,
+  serverNow,
+  known,
+  t,
+}: {
+  view: MatchView;
+  serverNow: number;
+  /**
+   * Whether the view in hand has been read since the match filled. Until then
+   * its names are the lobby's — the opponent's still empty — and printing them
+   * would flash "Guest" before the real name, so both seats wait together.
+   */
+  known: boolean;
+  t: Dict;
+}) {
+  const them = otherSeat(view.seat);
+  // Clamped at both ends: never "0" while the card is still up, and never
+  // more than the intro is long — the first frame after a search can be drawn
+  // against a clock that has not ticked since the lobby (see the clock above).
+  const startsIn =
+    view.roundStartedAt === null
+      ? PUBLIC_MATCH_INTRO_SECONDS
+      : Math.min(
+          PUBLIC_MATCH_INTRO_SECONDS,
+          Math.max(1, Math.ceil((view.roundStartedAt - serverNow) / 1000)),
+        );
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/75 px-6 backdrop-blur-2xl">
+      <div className="versus-modal-in w-full max-w-md rounded-3xl border border-white/15 bg-black/80 px-7 py-7 text-center shadow-2xl shadow-black/70">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
+          {t.versusTitle}
+          <span className="px-1.5 text-white/30">·</span>
+          {t.versusOnlineTitle}
+        </p>
+        <h2
+          role="status"
+          aria-live="polite"
+          className="mt-1 font-display text-2xl font-semibold text-ink"
+        >
+          {t.versusOpponentFound}
+        </h2>
+
+        <div className="mt-6 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
+          <IntroSeat
+            label={t.versusYouLabel}
+            name={known ? (view.names[view.seat] ?? t.versusGuestName) : null}
+            rating={known ? view.ratings[view.seat] : null}
+            t={t}
+          />
+          <span className="text-xs font-semibold uppercase tracking-[0.18em] text-white/40">
+            {t.versusVs}
+          </span>
+          <IntroSeat
+            label={t.versusOpponent}
+            name={known ? (view.names[them] ?? t.versusGuestName) : null}
+            rating={known ? view.ratings[them] : null}
+            t={t}
+          />
+        </div>
+
+        {/* Read on demand rather than announced: a live region counting down
+            three seconds says a number over the heading it should be
+            reading. */}
+        <p
+          aria-live="off"
+          className="mt-6 text-sm font-semibold tabular-nums text-white/70"
+        >
+          {format(t.versusMatchStartsIn, { n: startsIn })}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function IntroSeat({
+  label,
+  name,
+  rating,
+  t,
+}: {
+  label: string;
+  /** Null while the view is still the lobby's: drawn as the wait. */
+  name: string | null;
+  rating: number | null;
+  t: Dict;
+}) {
+  return (
+    <div className="flex min-w-0 flex-col items-center gap-1">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/45">
+        {label}
+      </p>
+      {/* One line tall either way, so the card does not jump when the names
+          land. */}
+      <p className="flex h-7 w-full min-w-0 items-center justify-center font-display text-lg font-semibold text-ink">
+        {name === null ? (
+          <span aria-hidden="true" className="flex items-center gap-1">
+            {[0, 1, 2].map((dot) => (
+              <span
+                key={dot}
+                className="versus-dot h-1 w-1 rounded-full bg-current"
+                style={{ animationDelay: `${dot * 160}ms` }}
+              />
+            ))}
+          </span>
+        ) : (
+          // Its own box, so a long name still ellipsises inside the flex row.
+          <span className="min-w-0 truncate">{name}</span>
+        )}
+      </p>
+      {/* A rating only where there is one: a guest has none, and an empty
+          line keeps the two columns level rather than printing a zero. */}
+      <p className="h-4 text-xs tabular-nums text-white/60">
+        {rating === null ? "" : format(t.versusRatingValue, { n: rating })}
+      </p>
     </div>
   );
 }
@@ -767,9 +1229,20 @@ function StageRound({
         }
         badge={
           revealed ? (
-            <RoundOutcome round={revealed} you={view.seat} locale={locale} t={t} />
+            <RoundOutcome
+              round={revealed}
+              you={view.seat}
+              theirName={opponentName(view, t)}
+              locale={locale}
+              t={t}
+            />
           ) : answered ? (
             <WaitingBadge label={t.versusWaitingForOpponent} />
+          ) : opponentAnswered(view) ? (
+            <OpponentLockedBadge
+              label={t.versusOpponentLocked}
+              placement="bottom"
+            />
           ) : null
         }
       />
@@ -840,7 +1313,7 @@ function StageRound({
                       ? revealed.seats[them].guess
                       : null
                   }
-                  opponentLabel={t.versusThemLabel}
+                  opponentLabel={railName(opponentName(view, t))}
                   locale={locale}
                   t={t}
                   onEnter={enter}
@@ -1015,11 +1488,19 @@ function PosterRound({
               <RoundOutcome
                 round={revealed}
                 you={view.seat}
+                theirName={opponentName(view, t)}
                 locale={locale}
                 t={t}
               />
             ) : answered ? (
               <WaitingBadge label={t.versusWaitingForOpponent} />
+            ) : opponentAnswered(view) ? (
+              // At the top on a poster: its foot is the title, which this
+              // must not cover while the round is still being answered.
+              <OpponentLockedBadge
+                label={t.versusOpponentLocked}
+                placement="top"
+              />
             ) : null
           }
           t={t}
@@ -1112,7 +1593,7 @@ function PosterRound({
                   : null
               }
               opponentYear={revealed ? revealed.seats[them].guess : null}
-              opponentLabel={t.versusThemLabel}
+              opponentLabel={railName(opponentName(view, t))}
               locale={locale}
               t={t}
               // A one-pane set has no doors, so `paneEntrances` returns none
@@ -1331,15 +1812,22 @@ function MatchCounters({ view, t }: { view: MatchView; t: Dict }) {
   );
 }
 
-/** Both scores on one pill, this player's first — it is always theirs. */
+/**
+ * Both scores on one pill, this player's first — it is always theirs.
+ *
+ * The opponent's label is a username in an online match, so it is the one
+ * part of the pill that can be long; it truncates on its own rather than
+ * pushing the pill into the timer opposite.
+ */
 function ScorePill({ view, t }: { view: MatchView; t: Dict }) {
   const them = otherSeat(view.seat);
 
   return (
-    <span className="rounded-full border border-white/20 bg-black/55 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-white/80 backdrop-blur-md">
+    <span className="flex max-w-[15rem] items-center whitespace-nowrap rounded-full border border-white/20 bg-black/55 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-white/80 backdrop-blur-md">
       {t.versusYouLabel} {view.seats[view.seat].score}
       <span className="px-1 text-white/35">·</span>
-      {view.seats[them].score} {t.versusThemLabel}
+      {view.seats[them].score}
+      <span className="ml-1 min-w-0 truncate">{opponentName(view, t)}</span>
     </span>
   );
 }
@@ -1365,11 +1853,14 @@ function paneFor(
 function RoundOutcome({
   round,
   you,
+  theirName,
   locale,
   t,
 }: {
   round: RoundResult;
   you: Seat;
+  /** "Them", or an online opponent's name — see `opponentName`. */
+  theirName: string;
   locale: SupportedLocale;
   t: Dict;
 }) {
@@ -1393,7 +1884,7 @@ function RoundOutcome({
       <div className="flex w-full items-start justify-center gap-5">
         <SeatOutcome label={t.versusYouLabel} answer={mine} locale={locale} t={t} />
         <span className="mt-1 text-sm font-semibold text-white/30">·</span>
-        <SeatOutcome label={t.versusThemLabel} answer={theirs} locale={locale} t={t} />
+        <SeatOutcome label={theirName} answer={theirs} locale={locale} t={t} />
       </div>
     </div>
   );
@@ -1411,7 +1902,7 @@ function SeatOutcome({
 }) {
   return (
     <div className="flex min-w-[6.5rem] flex-col items-center">
-      <p className="on-photo text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">
+      <p className="on-photo max-w-[9rem] truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">
         {label}
       </p>
       <p
@@ -1443,6 +1934,57 @@ function WaitingBadge({ label }: { label: string }) {
 }
 
 /**
+ * "Your opponent locked in", while this player still has the round to answer.
+ *
+ * A pill rather than the scrim the wait and the result wear: the player is
+ * still looking at the picture to answer it, so this may cost it a corner and
+ * no more. It is the same fact the server already pushes (`answered_count`)
+ * made visible, and it is the pressure that makes a race a race — without it
+ * a player has no way to know the other has already moved.
+ */
+function OpponentLockedBadge({
+  label,
+  placement,
+}: {
+  label: string;
+  /**
+   * Where the picture has room: the foot of a stage photograph, whose title is
+   * under the picture rather than on it, and the head of a poster, whose
+   * title is painted on its foot.
+   */
+  placement: "top" | "bottom";
+}) {
+  return (
+    <div
+      className={`versus-overlay-in pointer-events-none absolute inset-x-0 z-20 flex justify-center px-4 ${
+        placement === "top" ? "top-3" : "bottom-3"
+      }`}
+    >
+      <p
+        role="status"
+        aria-live="polite"
+        className="on-photo flex max-w-full items-center gap-2 rounded-full border border-white/20 bg-black/65 px-3 py-1.5 text-[11px] font-semibold text-ink backdrop-blur-md"
+      >
+        <svg
+          viewBox="0 0 16 16"
+          aria-hidden="true"
+          className="h-3 w-3 shrink-0"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="3" y="7" width="10" height="7" rx="1.5" />
+          <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
+        </svg>
+        <span className="truncate">{label}</span>
+      </p>
+    </div>
+  );
+}
+
+/**
  * The end of a match.
  *
  * Built on the solo summary's panel rather than being it: a set summary is one
@@ -1450,15 +1992,30 @@ function WaitingBadge({ label }: { label: string }) {
  * different shape with a different headline. What is shared is the vocabulary
  * — the same glass, the same per-round pips, the same three buttons — so the
  * two screens read as the same game ending two ways.
+ *
+ * **An online match ends differently in three places.** There is no rematch
+ * — the same two players are not paired twice running, and "again" there
+ * means somebody new — so the first button opens a fresh search instead and
+ * the rematch request never appears. The rating change is shown, because it
+ * is what an online match was *for*; a guest is told what signing in would
+ * have kept. And a match someone walked out of says who, because online the
+ * one who left loses it, and "your opponent left" would be wrong half the
+ * time. An invitation's summary is exactly what it was.
  */
 function VersusSummary({
   view,
+  seat,
   onRematch,
   onAnswerRematch,
   busy,
   t,
 }: {
   view: MatchView;
+  /**
+   * This tab's seat in the match, which "Find new opponent" hands in so the
+   * server keeps these two players apart next time (see `useFindOpponent`).
+   */
+  seat: StoredSeat | null;
   onRematch: () => void;
   onAnswerRematch: (accept: boolean) => void;
   busy: boolean;
@@ -1468,6 +2025,7 @@ function VersusSummary({
   const them = otherSeat(view.seat);
   const outcome = matchOutcome(view);
   const modeName = t[versusModeSpec(view.mode).titleKey];
+  const findNew = useFindOpponent(seat);
 
   // The match ending is a change of screen and the button that was pressed is
   // gone, so focus has to be moved or a keyboard user is dropped at the top of
@@ -1488,13 +2046,39 @@ function VersusSummary({
   const theyAsked = view.rematchBy === them;
   const youAsked = view.rematchBy === view.seat;
 
+  // What the heading says, and in which colour. An invitation keeps its one
+  // word for a match that ended early; online, a walk-out is a result — the
+  // database settles it as a loss for whoever left — so the heading names
+  // who left and is coloured as the result it is.
+  const forfeit = view.isPublic && view.phase === "abandoned";
+  const title = !forfeit
+    ? view.phase === "abandoned"
+      ? t.versusLeft
+      : headline
+    : view.forfeitSeat === view.seat
+      ? t.versusYouLeft
+      : view.forfeitSeat === them
+        ? t.versusLeft
+        : t.versusMatchFinished;
+  const titleColor = forfeit
+    ? view.forfeitSeat === them
+      ? "var(--color-good)"
+      : view.forfeitSeat === view.seat
+        ? "var(--color-ink-dim)"
+        : "var(--color-ink)"
+    : outcome.winner === null
+      ? "var(--color-ink)"
+      : youWon
+        ? "var(--color-good)"
+        : "var(--color-ink-dim)";
+
   return (
     <div className="relative flex w-full flex-1 justify-center py-2">
       <div
         ref={panel}
         tabIndex={-1}
         role="group"
-        aria-label={`${t.versusTitle} — ${headline}`}
+        aria-label={`${t.versusTitle} — ${view.isPublic ? title : headline}`}
         // It grows rather than scrolling inside itself, centred by `my-auto`:
         // the solo summary's rule (see `SetSummary`), and this panel is the
         // one with a rematch state machine under its buttons, so it is the
@@ -1508,20 +2092,13 @@ function VersusSummary({
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
             {t.versusTitle}
             <span className="px-1.5 text-white/30">·</span>
-            {modeName}
+            {view.isPublic ? t.versusOnlineTitle : modeName}
           </p>
           <h2
             className="mt-1 font-display text-3xl font-semibold leading-none tracking-tight"
-            style={{
-              color:
-                outcome.winner === null
-                  ? "var(--color-ink)"
-                  : youWon
-                    ? "var(--color-good)"
-                    : "var(--color-ink-dim)",
-            }}
+            style={{ color: titleColor }}
           >
-            {view.phase === "abandoned" ? t.versusLeft : headline}
+            {title}
           </h2>
         </div>
 
@@ -1532,10 +2109,10 @@ function VersusSummary({
               them: view.seats[them].score,
             })}
           </p>
-          <p className="mt-2 text-sm text-white/70">
+          <p className="mt-2 flex items-center justify-center text-sm text-white/70">
             {t.versusYouLabel}
             <span className="px-1.5 text-white/30">·</span>
-            {t.versusThemLabel}
+            <span className="min-w-0 truncate">{opponentName(view, t)}</span>
           </p>
         </div>
 
@@ -1548,24 +2125,51 @@ function VersusSummary({
           </span>
         </p>
 
-        <div className="flex flex-col gap-2.5">
-          <button
-            type="button"
-            onClick={onRematch}
-            disabled={busy || youAsked || view.phase === "abandoned"}
-            aria-busy={busy}
-            className={`w-full rounded-full border border-transparent px-6 py-2.5 text-sm font-semibold transition ${
-              youAsked
-                ? "cursor-default border-white/20 bg-transparent text-white/50"
-                : "bg-ink text-page hover:opacity-85"
-            }`}
-          >
-            {t.versusRematch}
-          </button>
+        {view.isPublic && <RatingChange view={view} t={t} />}
 
-          {youAsked && <Waiting label={t.versusRematchAsked} />}
-          {view.rematchDeclinedBy === them && (
-            <p className="text-xs text-white/55">{t.versusRematchDeclined}</p>
+        <div className="flex flex-col gap-2.5">
+          {view.isPublic ? (
+            <>
+              <button
+                type="button"
+                onClick={findNew.find}
+                aria-busy={findNew.busy}
+                className={`${SUMMARY_BUTTON} relative border-transparent bg-ink text-page hover:opacity-85 ${
+                  findNew.busy ? "cursor-progress" : ""
+                }`}
+              >
+                {t.versusFindNew}
+                {findNew.busy && (
+                  <span aria-hidden="true" className="round-trace">
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                )}
+              </button>
+              <FindOpponentError error={findNew.error} t={t} />
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={onRematch}
+                disabled={busy || youAsked || view.phase === "abandoned"}
+                aria-busy={busy}
+                className={`w-full rounded-full border border-transparent px-6 py-2.5 text-sm font-semibold transition ${
+                  youAsked
+                    ? "cursor-default border-white/20 bg-transparent text-white/50"
+                    : "bg-ink text-page hover:opacity-85"
+                }`}
+              >
+                {t.versusRematch}
+              </button>
+
+              {youAsked && <Waiting label={t.versusRematchAsked} />}
+              {view.rematchDeclinedBy === them && (
+                <p className="text-xs text-white/55">{t.versusRematchDeclined}</p>
+              )}
+            </>
           )}
 
           <ShareMatchButton view={view} modeName={modeName} t={t} />
@@ -1587,7 +2191,7 @@ function VersusSummary({
           panel: scoped to the panel's box it painted a hard-edged rectangle
           in the middle of the page, which reads as a rendering fault rather
           than as something asking to be answered. */}
-      {theyAsked && (
+      {!view.isPublic && theyAsked && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 px-6 backdrop-blur-sm">
           <div
             role="alertdialog"
@@ -1618,6 +2222,66 @@ function VersusSummary({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * What an online match did to this player's Chrono Rating.
+ *
+ * The change, signed and large, then the total it leaves — the change is the
+ * news and the total is the context. Both come from the match: the database
+ * writes the applied change onto it as it settles it (the same update that
+ * ends the match), so what is printed here is what the ledger holds, not a
+ * prediction from lib/game/chrono-rating.ts that could disagree with it.
+ *
+ * A guest has no rating to change, so they are told what signing in keeps
+ * instead — the one moment that sentence is about something that just
+ * happened. An account whose change has not arrived shows nothing rather than
+ * a guess; it is one read away (the change is not on the pushed row, so the
+ * game reads the view once more as the match ends).
+ */
+function RatingChange({ view, t }: { view: MatchView; t: Dict }) {
+  const rating = view.ratings[view.seat];
+  const delta = view.ratingDeltas[view.seat];
+
+  if (rating === null) {
+    return (
+      <p className="text-xs leading-snug text-white/60">
+        {t.versusGuestRatingHint}{" "}
+        <Link
+          href={signInHref("/versus")}
+          className="font-semibold text-ink underline underline-offset-4 transition hover:opacity-80"
+        >
+          {t.versusSignInForRating}
+        </Link>
+      </p>
+    );
+  }
+
+  if (delta === null) return null;
+
+  return (
+    <div className="border-t border-white/10 pt-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/45">
+        {t.versusRatingName}
+      </p>
+      <p
+        className="mt-1 font-display text-2xl font-semibold tabular-nums"
+        style={{
+          color:
+            delta > 0
+              ? "var(--color-good)"
+              : delta < 0
+                ? "var(--color-ink-dim)"
+                : "var(--color-ink)",
+        }}
+      >
+        {format(t.versusRatingChange, { delta: signedDelta(delta) })}
+      </p>
+      <p className="mt-0.5 text-xs tabular-nums text-white/60">
+        {format(t.versusRatingNow, { n: Math.max(0, rating + delta) })}
+      </p>
     </div>
   );
 }
@@ -1792,56 +2456,5 @@ function joinMessage(reason: string, t: Dict): string {
       return t.versusMatchNotFound;
     default:
       return t.versusCreateFailed;
-  }
-}
-
-/* -------------------------------------------------------------------------
-   The seat, kept in the tab
-   ------------------------------------------------------------------------- */
-
-interface StoredSeat {
-  matchId: string;
-  token: string;
-  seat: Seat;
-}
-
-function seatKey(code: string): string {
-  return `tempus:versus:${code}`;
-}
-
-function readSeat(code: string): StoredSeat | null {
-  try {
-    const raw = window.sessionStorage.getItem(seatKey(code));
-    if (!raw) return null;
-
-    const parsed: unknown = JSON.parse(raw);
-    if (typeof parsed !== "object" || parsed === null) return null;
-
-    const { matchId, token, seat } = parsed as Record<string, unknown>;
-    if (typeof matchId !== "string" || typeof token !== "string") return null;
-    if (seat !== 1 && seat !== 2) return null;
-
-    return { matchId, token, seat };
-  } catch {
-    // Private browsing can make sessionStorage throw outright. Treat it as an
-    // empty seat: the player joins fresh rather than meeting an error.
-    return null;
-  }
-}
-
-function writeSeat(code: string, seat: StoredSeat): void {
-  try {
-    window.sessionStorage.setItem(seatKey(code), JSON.stringify(seat));
-  } catch {
-    // Without storage the seat is lost on reload, which is worse than it
-    // sounds but better than refusing to play.
-  }
-}
-
-function clearSeat(code: string): void {
-  try {
-    window.sessionStorage.removeItem(seatKey(code));
-  } catch {
-    // Nothing to do.
   }
 }

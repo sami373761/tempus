@@ -172,6 +172,28 @@ export async function readUsername(
   return data?.username ?? null;
 }
 
+/**
+ * A player's Chrono Rating (KP), or null when there is no profile row.
+ *
+ * Null rather than 0 for the missing row, for the reason lib/game/chrono-rating.ts
+ * gives guests a null: a zero is a real standing (a new account at the bottom
+ * of the bottom league), and a profile that is somehow absent is not one.
+ * Read-only from here — the one writer is the settlement trigger.
+ */
+export async function readChronoRating(
+  client: DbClient,
+  userId: string,
+): Promise<number | null> {
+  const { data, error } = await client
+    .from("profile")
+    .select("chrono_rating")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) throw new Error(`readChronoRating: ${error.message}`);
+  return data?.chrono_rating ?? null;
+}
+
 /** The R2 key of a player's picture, or null for the default. */
 export async function readAvatarKey(
   client: DbClient,

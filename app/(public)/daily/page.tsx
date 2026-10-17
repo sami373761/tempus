@@ -13,6 +13,7 @@ import { createServerDbClient } from "@/lib/db/server";
 import { dailyPuzzleDate, type DailyAudience } from "@/lib/game/daily";
 import { maskEvent } from "@/lib/game/versus";
 import { readLocaleContext } from "@/lib/i18n/server";
+import { maskedImageUrl } from "@/lib/storage/masked-image";
 
 // The day's state is per-request and per-player: which audience is asking,
 // whether they have already played, and whether today's challenges have been
@@ -46,6 +47,16 @@ export async function generateMetadata(): Promise<Metadata> {
  * rather than a silent leak — and each year arrives in the reply to its own
  * locked-in guess. That is the head-to-head mode's rule, applied here for the
  * same reason: this is the first solo mode whose score is durable.
+ *
+ * **The date columns are not the only place a date lives**, which is why
+ * `maskEvent` makes the caller decide the rest. The photograph's key is
+ * `<era>/<slug>.<ext>`, so its plain URL says BCE or CE before the player has
+ * looked at the picture; it goes out as an opaque token instead. And a
+ * description is prose about the event that routinely names its year, so it is
+ * sent only for questions this member has already answered — every other note
+ * arrives with its year, in the reply to its guess. The real id and slug stay:
+ * the note panel's date challenge is filed against the event, and the name an
+ * id would look up is on screen anyway (see `MaskOptions`).
  */
 export default async function DailyPage() {
   const { locale, t } = await readLocaleContext();
@@ -68,6 +79,11 @@ export default async function DailyPage() {
       ? await readDailyAttempt(await createServerDbClient(), user.id, puzzleDate)
       : NO_DAILY_ATTEMPT;
 
+  // The questions whose prose may cross the wire: the ones that are already
+  // over. Always empty for a guest — their attempt is in their browser, and so
+  // are the notes their own reveals brought back (components/daily-game.tsx).
+  const answered = new Set(attempt.answers.map((answer) => answer.idx));
+
   return (
     // One screen, exactly, on the date-guessing page's pattern: `100dvh` less
     // the bar above, both sides of that sum reading the same token. The game
@@ -81,10 +97,23 @@ export default async function DailyPage() {
         <DailyGame
           puzzleDate={puzzleDate}
           audience={audience}
-          // `(event) => maskEvent(event)` rather than the bare
-          // reference: `maskEvent` takes an optional second argument
-          // (the film/series format) and `map` would hand it the index.
-          questions={questions.map((event) => maskEvent(event))}
+          questions={questions.map((event, idx) =>
+            maskEvent(event, {
+              // One context per question of the day, per audience: the URL
+              // is the same on every reload and every device — so the browser
+              // caches it and the photograph never flickers on a resume — and
+              // tells nobody which folder the object sits in.
+              imageUrl: event.image
+                ? maskedImageUrl(
+                    event.image.objectKey,
+                    `daily:${puzzleDate}:${audience}:${idx}`,
+                  )
+                : null,
+              description: answered.has(idx) ? event.description : null,
+              id: event.id,
+              slug: event.slug,
+            }),
+          )}
           answers={attempt.answers}
           bankedPoints={attempt.points}
           completed={attempt.completedAt !== null}

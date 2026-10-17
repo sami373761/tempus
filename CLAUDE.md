@@ -1,8 +1,9 @@
 # TEMPUS
 
 A historical date-guessing game. Playable: `/guess` (date guessing), `/compare`
-(comparison), `/versus` (head-to-head date guessing). Accounts, TP scoring,
-badges and the leaderboard are live. There is no admin UI yet.
+(comparison), `/versus` (head-to-head: friend rooms and online matchmaking).
+Accounts, TP scoring, badges, the leaderboard and Chrono Rating (KP, online
+only) are live. There is no admin UI yet.
 
 Stack: Next.js 15 (App Router) · TypeScript · Tailwind v4 · Supabase Postgres 17
 · Cloudflare R2 · targeted at Vercel.
@@ -26,6 +27,7 @@ npm run db:seed:events      # upsert events + translations (idempotent on slug)
 npm run db:migrate          # apply supabase/migrations/*.sql (supports -- --dry-run)
 
 npm run era:check           # SQL era rule == TS era rule; run after touching either
+npm run versus:bot:check    # bot tier mix, grid snap, era rules; run after touching the bot, BANDS or panes
 npm run image:attach -- …   # link one R2 object to an event
 npm run images:attach -- …  # link a whole R2 prefix, filename == event slug
 npm run backdrops:derive -- --prefix <folder>/          # rebuild -1440/-2560 widths
@@ -76,6 +78,9 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
   - `era_slug_for_year()` ↔ `eraForYear()` (verify with `npm run era:check`)
   - `normalize_username()` ↔ `normalizeUsername()` in `lib/db/accounts.ts`
   - TP bonus amounts in `lib/game/points.ts` ↔ `scoring.sql` functions/triggers
+  - `chrono_tier()` / `chrono_delta()` ↔ `chronoTier()` / `CHRONO_RATING_RULES`
+    in `lib/game/chrono-rating.ts`
+  - the column grant on `public.match` ↔ `MATCH_CLIENT_COLUMNS` in `lib/game/versus.ts`
 - **Eras:** `year <= 0` → `bce`, `1..2026` → `ce`, `> 2026` → `future`. Era
   category links are maintained by a trigger; never write them by hand.
 - **An event with no primary image is hidden from the site.** Queries in
@@ -87,8 +92,8 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
   numbers. Centuries store the midpoint (`14. yüzyıl` → 1350).
 - **Re-seeding reintroduces 3 duplicates** (source lines 380, 387, 449). Delete
   those lines or re-delete the `*-2` slugs after a re-seed.
-- `event_translation.description` is null everywhere; the UI shows Lorem Ipsum
-  as a deliberate placeholder until descriptions are seeded.
+- Most translations have a `description`; the UI shows Lorem Ipsum as a
+  deliberate placeholder only where one is missing.
 
 ## Database security
 
@@ -103,8 +108,11 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
   behind a validated Server Action.
   - `profile` → RLS, column-scoped grant on `username` only.
   - `event_date_challenge` → service role only (game is playable signed out).
-  - `user_badge_progress`, `score_entry`, `solo_set`, `solo_answer` → service
-    role only (players must not award themselves points or badges).
+  - `user_badge_progress`, `score_entry`, `solo_set`, `solo_answer`,
+    `chrono_rating_entry` → service role only (players must not award
+    themselves points, rating or badges).
+  - `reserved_username` (names bots have worn), `match_player`, `match_round`
+    → service role only.
 - Admin auth is `app_metadata.role = 'admin'`; `app/admin/layout.tsx` is the gate.
 - The `event_localized` view uses `security_invoker = true` (PG15+).
 - Migrations are append-only; never edit an applied one.
@@ -112,7 +120,9 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
 ## R2 and images
 
 - Postgres stores keys, never bytes. URL = `${NEXT_PUBLIC_R2_PUBLIC_BASE_URL}/${key}`,
-  read only through `publicImageUrl()`.
+  read only through `publicImageUrl()` — except masked rounds (versus, daily),
+  which use `maskedImageUrl()` (`/api/masked-image/<token>`) so the era folder
+  never reaches the client before the reveal.
 - Event image keys: `<era>/<slug>.<lowercase ext>`. The folder must match the
   event's era (watch BCE events that feel "AD": Confucius, Buddha, Ashoka, birth
   of Jesus = year -3).
@@ -143,7 +153,8 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
   one list. Pane → photo mapping lives only in that file.
 - **A new R2 prefix or extension must be added to the dev proxy**
   (`app/api/r2/[...key]/route.ts`, `ALLOWED_PREFIXES`/`ALLOWED_EXTENSIONS`), or
-  it fails exactly like a missing object.
+  it fails exactly like a missing object. A new event-image prefix also goes in
+  `EVENT_IMAGE_PREFIXES` in `lib/storage/masked-image.ts`.
 - **r2.dev is unreachable from the owner's network and from the sandbox.**
   Settled — do not re-raise or recommend fixes. Report "r2.dev is unreachable"
   and move on. Verify objects via the S3 API instead. When a custom domain
@@ -179,14 +190,31 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
 
 - **Postgres is the referee.** All match transitions happen in plpgsql under
   `select ... for update`; `versus_reconcile()` runs at every entry point.
-- **`public.match` is the only client-readable table** (Realtime pushes whole
-  rows). Never add a column there that would help the opponent mid-round.
-  `match_round.event_id` is the answer — clients only get a `MaskedEvent`.
+- **`public.match` is the only client-readable table**, through a column grant
+  (Realtime honours it): no invite `code`, names or ratings — those reach the
+  two seats only in their server-built `MatchView`. Never grant a column that
+  would help the opponent mid-round. `match_round.event_id` is the answer —
+  clients only get a `MaskedEvent` (no description or real image key).
 - The countdown is displayed, never kept. `serverNow` must come from
   `public.versus_db_now()` (Postgres clock), not `Date.now()`.
 - Deadline prompts retry (`PROMPT_RETRY_MS`); never latch a request before it is
   known to have succeeded.
-- A seat is a bearer token in `sessionStorage` (per tab). Presence is advisory.
+- A seat is a bearer token in `sessionStorage` (per tab). Presence is advisory,
+  and off in online matches.
+- **Online matches** (`is_public`): history mode only (`PUBLIC_VERSUS_MODE`),
+  no rematch and no TP — only KP. Accounts need a username; guests store
+  nothing and play the lower league.
+- **A bot is a seat with no browser.** `versus_seat_bot` stores its whole plan
+  (from `lib/game/versus-bot.ts`) on `match_round`; `versus_reconcile()`
+  commits each guess at `bot_commit_at`. No worker, cron or socket server: the
+  client heartbeat `app/api/versus/tick/route.ts` drives reconcile. It is a
+  Route Handler because Server Actions run one at a time per client.
+- **A bot must be indistinguishable from a person.** `match_player.bot_level` is
+  the only place a bot is named; nothing a client sees may differ between the
+  two. Bot guesses must sit on the timeline drag grid (`snapToRail`) and be
+  graded by `gradeGuess`.
+- The tick and `api/masked-image/` routes stay outside the middleware matcher;
+  they are authorised by tokens, not the session.
 - Invite URLs come from `window.location`; on localhost use
   `NEXT_PUBLIC_DEV_INVITE_ORIGIN` and add the LAN address to `allowedDevOrigins`.
   Recipe: `docs/VERSUS_IMPLEMENTATION_CHECKPOINT.md`.
@@ -194,7 +222,8 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
 
 ## Accounts
 
-- Supabase Auth (email/password + Google). `public.profile` holds only a username.
+- Supabase Auth (email/password + Google). `public.profile` holds the username;
+  its `chrono_rating` is written only by the match-settlement trigger.
 - **Every auth write is a Server Action**, never a browser Supabase call. Call
   `redirect()` outside the try/catch.
 - Failures are `AuthErrorCode`s translated via the dictionary, never Supabase's
@@ -260,6 +289,9 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
 9. `homepage/movies-1.jpg` and the coming-soon master are unlicensed film stills
    — settle rights before going public.
 10. The service-role key and R2 secret were exposed in a chat; rotate both.
+11. Solo deals still use `publicImageUrl()`, so the era folder shows in the
+    image URL; versus and daily are masked.
+12. `versus_sweep()` has no caller; ended matches pile up until it is run.
 
 ## Conventions
 

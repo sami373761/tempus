@@ -247,7 +247,7 @@ const en = {
     "Yes, there may be small mistakes among event photos. Tempus is a large library containing over 1,000 events, and some of them may contain errors.",
   faqQ7: "Can I play with a friend?",
   faqA7:
-    "Yes! In 1v1 mode, you can send your friend the game link and play together. An online version is currently in development, and online matches will be available in the future.",
+    "Yes! In 1v1 mode, you can send your friend the game link and play together. You can also press “Find opponent” to be matched online with a player at your level — sign in, and online matches earn you Chrono Rating.",
   faqQ8: "Do I need to create an account?",
   faqA8:
     "No, you can play the games without an account. However, you need to sign up to earn points, unlock badges, and appear on the leaderboard.",
@@ -295,17 +295,17 @@ const en = {
   versusTitle: "Head to head",
   versusBlurb: "Race a friend through ten dates.",
   versusPlayFriend: "Play a friend",
-  // The way in is two cards: the one that works, and the one being built
-  // (components/versus-start.tsx). `versusChooseMode` is the step between
-  // them — a match is ten questions from *one* pool (`match.mode`), so the
-  // game is picked before the code is minted rather than after. The modes
-  // name themselves from the board's own titles; only the general library
-  // needs a line of its own here.
+  // The way in is two cards: online matchmaking on top, a friend and a code
+  // under it (components/versus-start.tsx). `versusChooseMode` is the friend
+  // card's second step — a match is ten questions from *one* pool
+  // (`match.mode`), so the game is picked before the code is minted rather
+  // than after. The modes name themselves from the board's own titles; only
+  // the general library needs a line of its own here. `versusOnlineTitle` is
+  // the online card's kicker, not its headline (`versusFindTitle`).
   versusChooseMode: "Which game?",
   versusModeHistoryBlurb: "Ten dates from the whole of history.",
-  versusOnlineTitle: "Online 1v1",
-  versusOnlineBlurb:
-    "Matched against a stranger, with a ranking to climb. Being built — for now it is a friend and a link.",
+  versusOnlineTitle: "Online",
+  versusOnlineBlurb: "Matched in seconds with a player at your level. Ten dates, live.",
   versusInviteTitle: "Invite a friend",
   versusInviteBlurb: "Send the link or let them scan the code. The match starts when you are both ready.",
   versusCopyLink: "Copy link",
@@ -357,6 +357,39 @@ const en = {
   versusStatusHere: "Here",
   versusStatusAway: "Not here yet",
 
+  // Online play (components/versus-start.tsx, components/versus-search.tsx).
+  // Chrono Rating is the online ladder, separate from TP — see
+  // lib/game/chrono-rating.ts. `versusRatingValue`/`versusRatingChange` carry
+  // the unit, so Turkish can say KP where the others say CR. Nothing here may
+  // say *who* the opponent is beyond a name: a public match never tells a
+  // player whether the other seat is a person.
+  versusFindTitle: "Find an opponent",
+  versusFindButton: "Find opponent",
+  versusFindNew: "Find new opponent",
+  versusSearching: "Searching for an opponent",
+  versusSearchCancel: "Cancel",
+  versusSearchFailed: "Could not start the search. Try again.",
+  versusOpponentFound: "Opponent found",
+  versusMatchStartsIn: "Starting in {n}",
+  versusOpponentLocked: "Your opponent locked in",
+  versusGuestName: "Guest",
+  versusVs: "vs",
+  versusRatingName: "Chrono Rating",
+  versusRatingValue: "{n} CR",
+  versusRatingChange: "{delta} CR",
+  versusRatingNow: "Now {n} CR",
+  versusTierLower: "Lower league",
+  versusTierMiddle: "Middle league",
+  versusTierUpper: "Upper league",
+  versusGuestRatingHint: "Playing as a guest — sign in to earn Chrono Rating.",
+  versusSignInForRating: "Sign in",
+  versusYouLeft: "You left the match.",
+  versusYourLeague: "Your league: {league}",
+  // An account with no username yet plays online under none, so it is sent
+  // to choose one first (findVersusOpponent, `needs-username`).
+  versusNeedsUsername: "Online play needs a username.",
+  versusChooseUsername: "Choose one",
+
   // The top-right menu, which replaced the bare language pill. Only the
   // language picker inside it is wired up; the rest are named now and built
   // later, like the coming-soon tiles on the home page.
@@ -393,7 +426,7 @@ const en = {
   // screen already carries (`timelineBlurb`, `comparisonBlurb`) rather than
   // keeping a second copy of the same sentence in five languages.
   cardDailyBlurb: "One event a day, the same one for everybody.",
-  cardDuelBlurb: "Invite a friend and play the same ten rounds against them.",
+  cardDuelBlurb: "Play a friend by link, or get matched online at your level.",
   cardOtherBlurb: "Every other way to play, gathered in one place.",
   cardSurvivalBlurb: "Keep answering until the first guess that misses.",
   cardFootballBlurb:
@@ -793,7 +826,7 @@ const tr: Dict = {
     "Evet, olay fotoğraflarında küçük hatalar olabilir. Tempus, 1000’den fazla olay içeren büyük bir kütüphane ve bunların bazılarında hata bulunabilir.",
   faqQ7: "Bir arkadaşımla oynayabilir miyim?",
   faqA7:
-    "Evet! 1v1 modunda arkadaşına oyun bağlantısını gönderip birlikte oynayabilirsin. Çevrim içi sürüm şu anda geliştiriliyor; çevrim içi maçlar ileride kullanıma açılacak.",
+    "Evet! 1v1 modunda arkadaşına oyun bağlantısını gönderip birlikte oynayabilirsin. “Rakip Bul” düğmesine basarak çevrim içi olarak seviyene uygun bir oyuncuyla da eşleşebilirsin; giriş yaptıysan çevrim içi maçlar sana Kronos Puanı (KP) kazandırır.",
   faqQ8: "Hesap açmam gerekiyor mu?",
   faqA8:
     "Hayır, oyunları hesap açmadan oynayabilirsin. Ancak puan kazanmak, rozetlerin kilidini açmak ve liderlik tablosunda görünmek için kayıt olman gerekiyor.",
@@ -837,9 +870,8 @@ const tr: Dict = {
   versusPlayFriend: "Arkadaşınla oyna",
   versusChooseMode: "Hangi oyun?",
   versusModeHistoryBlurb: "Tarihin tamamından on tarih.",
-  versusOnlineTitle: "Çevrim içi 1v1",
-  versusOnlineBlurb:
-    "Rastgele bir rakip ve tırmanılacak bir sıralama. Henüz geliştiriliyor — şimdilik bir arkadaş ve bir bağlantı.",
+  versusOnlineTitle: "Çevrim içi",
+  versusOnlineBlurb: "Saniyeler içinde seviyene uygun bir oyuncuyla eşleş. On tarih, canlı.",
   versusInviteTitle: "Arkadaşını davet et",
   versusInviteBlurb: "Bağlantıyı gönder ya da kodu okutsun. İkiniz de hazır olunca maç başlar.",
   versusCopyLink: "Bağlantıyı kopyala",
@@ -890,6 +922,30 @@ const tr: Dict = {
   versusStatusReady: "Hazır",
   versusStatusHere: "Geldi",
   versusStatusAway: "Henüz yok",
+  versusFindTitle: "Rakip Bul",
+  versusFindButton: "Rakip Bul",
+  versusFindNew: "Yeni Rakip Bul",
+  versusSearching: "Rakip aranıyor",
+  versusSearchCancel: "Vazgeç",
+  versusSearchFailed: "Arama başlatılamadı. Tekrar dene.",
+  versusOpponentFound: "Rakip bulundu",
+  versusMatchStartsIn: "Başlıyor: {n}",
+  versusOpponentLocked: "Rakip tahminini kilitledi",
+  versusGuestName: "Misafir",
+  versusVs: "vs",
+  versusRatingName: "Kronos Puanı",
+  versusRatingValue: "{n} KP",
+  versusRatingChange: "{delta} KP",
+  versusRatingNow: "Yeni puanın: {n} KP",
+  versusTierLower: "Alt Küme",
+  versusTierMiddle: "Orta Küme",
+  versusTierUpper: "Üst Küme",
+  versusGuestRatingHint: "Misafir olarak oynuyorsun — Kronos Puanı kazanmak için giriş yap.",
+  versusSignInForRating: "Giriş yap",
+  versusYouLeft: "Maçtan ayrıldın.",
+  versusYourLeague: "Kümen: {league}",
+  versusNeedsUsername: "Çevrim içi oynamak için bir kullanıcı adı gerekiyor.",
+  versusChooseUsername: "Kullanıcı adı seç",
 
   // The top-right menu and the coming-soon tiles on the home page.
   menuOpen: "Menü",
@@ -918,7 +974,7 @@ const tr: Dict = {
   newGamesBlurb: "Yeni modlar yolda",
 
   cardDailyBlurb: "Günde bir olay, herkes için aynı olay.",
-  cardDuelBlurb: "Bir arkadaşını çağır, aynı on soruyu ona karşı oyna.",
+  cardDuelBlurb: "Arkadaşınla oyna ya da çevrim içi seviyene uygun bir rakip bul.",
   cardOtherBlurb: "Oynamanın diğer bütün yolları, tek bir yerde.",
   cardSurvivalBlurb: "İlk yanlış tahmine kadar cevaplamaya devam et.",
   cardFootballBlurb: "Aynı zaman çizelgesi oyunu, futbol tarihi üzerinden.",
@@ -1266,7 +1322,7 @@ const de: Dict = {
     "Ja, bei den Ereignisfotos können kleine Fehler vorkommen. Tempus ist eine große Bibliothek mit über 1.000 Ereignissen, und einzelne davon können fehlerhaft sein.",
   faqQ7: "Kann ich mit einem Freund spielen?",
   faqA7:
-    "Ja! Im 1v1-Modus schickst du den Link zur Partie weiter und ihr spielt gemeinsam. Eine Online-Version ist in Arbeit; Online-Partien kommen später dazu.",
+    "Ja! Im 1v1-Modus schickst du den Link zur Partie weiter und ihr spielt gemeinsam. Über „Gegenüber finden“ spielst du außerdem online gegen jemanden auf deinem Niveau — wenn du angemeldet bist, sammelst du dabei Chrono-Rating.",
   faqQ8: "Muss ich ein Konto anlegen?",
   faqA8:
     "Nein, die Spiele lassen sich ohne Konto spielen. Für Punkte, Abzeichen und einen Platz in der Rangliste ist eine Registrierung aber nötig.",
@@ -1305,14 +1361,17 @@ const de: Dict = {
   survivalGradeSolid: "Ein solider Lauf.",
   survivalGradeShort: "Der erste Fehler kam schnell.",
 
+  // The other player is "Gegenüber" in every string below, the seat label
+  // included: the "opponent found" card shows a heading and that label
+  // together, so a second word for the same role reads as a second person.
+  // Neutral, as "Gegner" is not, and still a person, as "Gegenseite" is not.
   versusTitle: "Duell",
   versusBlurb: "Zehn Daten im Wettlauf gegen eine Freundin oder einen Freund.",
   versusPlayFriend: "Gegen Freunde spielen",
   versusChooseMode: "Welches Spiel?",
   versusModeHistoryBlurb: "Zehn Daten aus der ganzen Geschichte.",
-  versusOnlineTitle: "Online 1v1",
-  versusOnlineBlurb:
-    "Gegen zufällige Gegner, mit einer Rangliste. Noch in Arbeit — bis dahin ein Freund und ein Link.",
+  versusOnlineTitle: "Online",
+  versusOnlineBlurb: "In Sekunden gegen jemanden auf deinem Niveau. Zehn Daten, live.",
   versusInviteTitle: "Lade jemanden ein",
   versusInviteBlurb: "Schick den Link oder lass den Code scannen. Das Duell startet, sobald ihr beide bereit seid.",
   versusCopyLink: "Link kopieren",
@@ -1321,15 +1380,15 @@ const de: Dict = {
   versusInviteMessage: "Spiel gegen mich bei Tempus — zehn Daten im Duell: {url}",
   versusScanHint: "Oder das hier scannen",
   versusMatchCode: "Spielcode",
-  versusWaitingForOpponent: "Warte auf deine Gegnerin oder deinen Gegner...",
+  versusWaitingForOpponent: "Warte auf dein Gegenüber...",
   versusWaitingToJoin: "Warte darauf, dass jemand beitritt...",
-  versusOpponentJoined: "Die Gegenseite ist da.",
+  versusOpponentJoined: "Dein Gegenüber ist da.",
   versusReady: "Ich bin bereit",
-  versusReadyWaiting: "Warte darauf, dass die Gegenseite bereit ist...",
+  versusReadyWaiting: "Warte darauf, dass dein Gegenüber bereit ist...",
   versusYouAreReady: "Du bist bereit",
   versusStarting: "Startet...",
   versusYou: "Du",
-  versusOpponent: "Gegenseite",
+  versusOpponent: "Gegenüber",
   versusYouLabel: "Du",
   versusThemLabel: "Sie",
   versusTimedOut: "Zeit abgelaufen",
@@ -1338,7 +1397,7 @@ const de: Dict = {
   versusAnswered: "Geantwortet",
   versusThinking: "Rät noch",
   versusNextRoundIn: "Nächste Runde in {n}",
-  versusOpponentOffline: "Die Verbindung der Gegenseite ist weg. Die Uhr läuft weiter.",
+  versusOpponentOffline: "Die Verbindung deines Gegenübers ist weg. Die Uhr läuft weiter.",
   versusReconnecting: "Verbinde neu...",
   versusYouWin: "Du gewinnst",
   versusYouLose: "Du verlierst",
@@ -1347,7 +1406,7 @@ const de: Dict = {
   versusRoundsWon: "Gewonnene Runden",
   versusRematch: "Nochmal spielen",
   versusRematchAsked: "Warte auf die Zusage...",
-  versusRematchOffer: "Die Gegenseite will eine Revanche.",
+  versusRematchOffer: "Dein Gegenüber will eine Revanche.",
   versusRematchAccept: "Annehmen",
   versusRematchDecline: "Ablehnen",
   versusRematchDeclined: "Die Revanche wurde abgelehnt.",
@@ -1356,13 +1415,37 @@ const de: Dict = {
   versusMatchNotFound: "Diese Einladung gilt nicht mehr.",
   versusMatchFull: "Dieses Spiel hat schon zwei Mitspielende.",
   versusMatchFinished: "Dieses Spiel ist bereits beendet.",
-  versusLeft: "Die Gegenseite hat das Spiel verlassen.",
+  versusLeft: "Dein Gegenüber hat das Spiel verlassen.",
   versusSeatLost: "Dieser Tab gehört nicht zu diesem Spiel.",
   versusCreateFailed: "Spiel konnte nicht gestartet werden. Versuch es nochmal.",
   versusJoining: "Trete bei...",
   versusStatusReady: "Bereit",
   versusStatusHere: "Da",
   versusStatusAway: "Noch nicht da",
+  versusFindTitle: "Ein Gegenüber finden",
+  versusFindButton: "Gegenüber finden",
+  versusFindNew: "Neues Gegenüber finden",
+  versusSearching: "Suche ein Gegenüber",
+  versusSearchCancel: "Abbrechen",
+  versusSearchFailed: "Die Suche konnte nicht gestartet werden. Versuch es nochmal.",
+  versusOpponentFound: "Gegenüber gefunden",
+  versusMatchStartsIn: "Start in {n}",
+  versusOpponentLocked: "Dein Gegenüber hat sich festgelegt",
+  versusGuestName: "Gast",
+  versusVs: "vs.",
+  versusRatingName: "Chrono-Rating",
+  versusRatingValue: "{n} CR",
+  versusRatingChange: "{delta} CR",
+  versusRatingNow: "Jetzt {n} CR",
+  versusTierLower: "Untere Liga",
+  versusTierMiddle: "Mittlere Liga",
+  versusTierUpper: "Obere Liga",
+  versusGuestRatingHint: "Du spielst als Gast — melde dich an, um Chrono-Rating zu sammeln.",
+  versusSignInForRating: "Anmelden",
+  versusYouLeft: "Du hast das Spiel verlassen.",
+  versusYourLeague: "Deine Liga: {league}",
+  versusNeedsUsername: "Für Online-Spiele brauchst du einen Benutzernamen.",
+  versusChooseUsername: "Jetzt wählen",
 
   // The top-right menu and the coming-soon tiles on the home page.
   menuOpen: "Menü",
@@ -1392,7 +1475,7 @@ const de: Dict = {
 
   cardDailyBlurb: "Ein Ereignis pro Tag, für alle dasselbe.",
   cardDuelBlurb:
-    "Lade jemanden ein und spielt die gleichen zehn Runden gegeneinander.",
+    "Per Link gegen Freunde oder online gegen jemanden auf deinem Niveau.",
   cardOtherBlurb: "Alle anderen Spielarten, an einem Ort versammelt.",
   cardSurvivalBlurb: "Antworte weiter, bis der erste Tipp daneben liegt.",
   cardFootballBlurb:
@@ -1742,7 +1825,7 @@ const fr: Dict = {
     "Oui, de petites erreurs sont possibles parmi les photos. Tempus est une grande bibliothèque de plus de 1 000 événements, et certaines fiches peuvent comporter des erreurs.",
   faqQ7: "Puis-je jouer avec un ami ?",
   faqA7:
-    "Oui ! En mode 1v1, il suffit d’envoyer le lien de la partie à votre ami pour jouer ensemble. Une version en ligne est en cours de développement et les parties en ligne arriveront plus tard.",
+    "Oui ! En mode 1v1, il suffit d’envoyer le lien de la partie à votre ami pour jouer ensemble. Avec « Trouver un adversaire », vous pouvez aussi affronter en ligne un joueur de votre niveau ; une fois connecté, vos parties en ligne vous rapportent de la Cote Chrono.",
   faqQ8: "Faut-il créer un compte ?",
   faqA8:
     "Non, les jeux se jouent sans compte. En revanche, l’inscription est nécessaire pour gagner des points, débloquer des badges et apparaître au classement.",
@@ -1786,9 +1869,8 @@ const fr: Dict = {
   versusPlayFriend: "Jouer contre un ami",
   versusChooseMode: "Quel jeu ?",
   versusModeHistoryBlurb: "Dix dates tirées de toute l'histoire.",
-  versusOnlineTitle: "1v1 en ligne",
-  versusOnlineBlurb:
-    "Contre un adversaire inconnu, avec un classement à gravir. En cours de création — pour l'instant, un ami et un lien.",
+  versusOnlineTitle: "En ligne",
+  versusOnlineBlurb: "Un adversaire de ton niveau en quelques secondes. Dix dates, en direct.",
   versusInviteTitle: "Invite un ami",
   versusInviteBlurb: "Envoie le lien ou fais scanner le code. Le duel commence quand vous êtes prêts tous les deux.",
   versusCopyLink: "Copier le lien",
@@ -1839,6 +1921,30 @@ const fr: Dict = {
   versusStatusReady: "Prêt",
   versusStatusHere: "Présent",
   versusStatusAway: "Pas encore là",
+  versusFindTitle: "Trouver un adversaire",
+  versusFindButton: "Trouver un adversaire",
+  versusFindNew: "Nouvel adversaire",
+  versusSearching: "Recherche d'un adversaire",
+  versusSearchCancel: "Annuler",
+  versusSearchFailed: "Impossible de lancer la recherche. Réessaie.",
+  versusOpponentFound: "Adversaire trouvé",
+  versusMatchStartsIn: "Début dans {n}",
+  versusOpponentLocked: "Ton adversaire a validé sa réponse",
+  versusGuestName: "Invité",
+  versusVs: "contre",
+  versusRatingName: "Cote Chrono",
+  versusRatingValue: "{n} CR",
+  versusRatingChange: "{delta} CR",
+  versusRatingNow: "Désormais {n} CR",
+  versusTierLower: "Ligue inférieure",
+  versusTierMiddle: "Ligue intermédiaire",
+  versusTierUpper: "Ligue supérieure",
+  versusGuestRatingHint: "Tu joues en invité — connecte-toi pour gagner de la Cote Chrono.",
+  versusSignInForRating: "Se connecter",
+  versusYouLeft: "Tu as quitté le duel.",
+  versusYourLeague: "Ta ligue : {league}",
+  versusNeedsUsername: "Il te faut un nom d’utilisateur pour jouer en ligne.",
+  versusChooseUsername: "En choisir un",
 
   // The top-right menu and the coming-soon tiles on the home page.
   menuOpen: "Menu",
@@ -1868,7 +1974,7 @@ const fr: Dict = {
 
   cardDailyBlurb: "Un événement par jour, le même pour tout le monde.",
   cardDuelBlurb:
-    "Invite quelqu'un et jouez les mêmes dix manches l'un contre l'autre.",
+    "Défie un ami par lien, ou un adversaire de ton niveau en ligne.",
   cardOtherBlurb: "Toutes les autres façons de jouer, réunies au même endroit.",
   cardSurvivalBlurb: "Continue de répondre jusqu'au premier mauvais placement.",
   cardFootballBlurb: "Le même jeu de frise, sur l'histoire du football.",
@@ -2216,7 +2322,7 @@ const es: Dict = {
     "Sí, puede haber pequeños errores entre las fotos. Tempus es una biblioteca grande, con más de 1000 acontecimientos, y en algunos puede haber fallos.",
   faqQ7: "¿Puedo jugar con un amigo?",
   faqA7:
-    "¡Sí! En el modo 1v1 puedes enviarle el enlace de la partida a tu amigo y jugar juntos. La versión en línea está en desarrollo y las partidas en línea llegarán más adelante.",
+    "¡Sí! En el modo 1v1 puedes enviarle el enlace de la partida a tu amigo y jugar juntos. Con «Buscar rival» también puedes enfrentarte en línea a alguien de tu nivel; si inicias sesión, ganas Puntuación Chrono con las partidas en línea.",
   faqQ8: "¿Hace falta crear una cuenta?",
   faqA8:
     "No, puedes jugar sin cuenta. Pero necesitas registrarte para ganar puntos, desbloquear insignias y aparecer en la clasificación.",
@@ -2260,9 +2366,8 @@ const es: Dict = {
   versusPlayFriend: "Jugar con un amigo",
   versusChooseMode: "¿Qué juego?",
   versusModeHistoryBlurb: "Diez fechas de toda la historia.",
-  versusOnlineTitle: "1v1 en línea",
-  versusOnlineBlurb:
-    "Contra un rival desconocido, con una clasificación que escalar. En construcción — por ahora, un amigo y un enlace.",
+  versusOnlineTitle: "En línea",
+  versusOnlineBlurb: "Emparejado en segundos con alguien de tu nivel. Diez fechas, en directo.",
   versusInviteTitle: "Invita a alguien",
   versusInviteBlurb: "Envía el enlace o deja que escaneen el código. El duelo empieza cuando los dos estéis listos.",
   versusCopyLink: "Copiar enlace",
@@ -2313,6 +2418,30 @@ const es: Dict = {
   versusStatusReady: "Listo",
   versusStatusHere: "Presente",
   versusStatusAway: "Aún no está",
+  versusFindTitle: "Buscar rival",
+  versusFindButton: "Buscar rival",
+  versusFindNew: "Buscar otro rival",
+  versusSearching: "Buscando rival",
+  versusSearchCancel: "Cancelar",
+  versusSearchFailed: "No se ha podido iniciar la búsqueda. Inténtalo otra vez.",
+  versusOpponentFound: "Rival encontrado",
+  versusMatchStartsIn: "Empieza en {n}",
+  versusOpponentLocked: "Tu rival ya ha fijado su respuesta",
+  versusGuestName: "Invitado",
+  versusVs: "vs",
+  versusRatingName: "Puntuación Chrono",
+  versusRatingValue: "{n} CR",
+  versusRatingChange: "{delta} CR",
+  versusRatingNow: "Ahora {n} CR",
+  versusTierLower: "Liga baja",
+  versusTierMiddle: "Liga media",
+  versusTierUpper: "Liga alta",
+  versusGuestRatingHint: "Juegas como invitado — inicia sesión para ganar Puntuación Chrono.",
+  versusSignInForRating: "Iniciar sesión",
+  versusYouLeft: "Has abandonado el duelo.",
+  versusYourLeague: "Tu liga: {league}",
+  versusNeedsUsername: "Para jugar en línea necesitas un nombre de usuario.",
+  versusChooseUsername: "Elegir uno",
 
   // The top-right menu and the coming-soon tiles on the home page.
   menuOpen: "Menú",
@@ -2342,7 +2471,7 @@ const es: Dict = {
 
   cardDailyBlurb: "Un evento al día, el mismo para todo el mundo.",
   cardDuelBlurb:
-    "Invita a alguien y juega las mismas diez rondas contra esa persona.",
+    "Reta a un amigo con un enlace o busca en línea un rival de tu nivel.",
   cardOtherBlurb: "Todas las demás formas de jugar, reunidas en un sitio.",
   cardSurvivalBlurb: "Sigue respondiendo hasta el primer fallo.",
   cardFootballBlurb:

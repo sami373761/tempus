@@ -8,6 +8,7 @@ import {
   recordDailyAnswer,
   type DailyChallenge,
 } from "@/lib/db/daily";
+import { eventsByIds } from "@/lib/db/queries";
 import { createServerDbClient } from "@/lib/db/server";
 import {
   dailyPuzzleDate,
@@ -18,6 +19,7 @@ import {
 } from "@/lib/game/daily";
 import { gradeGuess } from "@/lib/game/scoring";
 import { paneBounds, TIMELINE_PANES } from "@/lib/game/timeline";
+import { readLocale } from "@/lib/i18n/server";
 
 /**
  * Locking in one daily guess — the mode's entire write surface.
@@ -44,12 +46,25 @@ import { paneBounds, TIMELINE_PANES } from "@/lib/game/timeline";
  * the next index in sequence (see the migration), so an index that is a
  * duplicate, a skip-ahead or an answer to a finished day changes nothing and
  * reads back as the state the player already had.
+ *
+ * **The event's note comes back here too, beside its year.** The page masks
+ * the description of every question still to be answered (`maskEvent` in
+ * lib/game/versus.ts), because it is prose about the event that names its date
+ * as often as not — the answer, in a sentence. So it travels the way the year
+ * does: in the reply to a guess that has already been graded, when neither can
+ * change the grade.
  */
 
 export type DailyGuessResult =
   | {
       ok: true;
       answer: DailyAnswer;
+      /**
+       * The event's description in the caller's language, or null where it has
+       * none — which `NoteFlank` turns into the placeholder, exactly as an
+       * unmasked event's null does.
+       */
+      note: string | null;
       /** The attempt as the database now holds it; null for a guest. */
       banked: { points: number; hits: number; completed: boolean } | null;
     }
@@ -97,12 +112,15 @@ export async function submitDailyGuess(
     if (!eventId) return { ok: false, reason: "bad-input" };
 
     // The answer, read on the server and nowhere else. Only the year is taken
-    // from it: the rest of the event is already on the client, masked.
-    const { data, error } = await admin
-      .from("event")
-      .select("year")
-      .eq("id", eventId)
-      .single();
+    // from it: the rest of the event is already on the client, masked. The
+    // note is read alongside rather than after, so the reveal still waits on
+    // one round trip to a database in ap-southeast-2 rather than two — and it
+    // leaves this function only in a reply that also carries the year, which
+    // is the whole of the rule.
+    const [{ data, error }, note] = await Promise.all([
+      admin.from("event").select("year").eq("id", eventId).single(),
+      readNote(admin, eventId),
+    ]);
 
     if (error || !data) return { ok: false, reason: "failed" };
 
@@ -124,7 +142,7 @@ export async function submitDailyGuess(
       // there is none — but about not handing a signed-out visitor the answer
       // sheet to a challenge they could then replay signed in. The two
       // challenges are disjoint for the same reason.
-      return { ok: true, answer, banked: null };
+      return { ok: true, answer, note, banked: null };
     }
 
     const attempt = await recordDailyAnswer(admin, {
@@ -148,6 +166,7 @@ export async function submitDailyGuess(
     return {
       ok: true,
       answer,
+      note,
       banked: {
         points: attempt.points,
         hits: attempt.hits,
@@ -191,6 +210,33 @@ export async function fetchDailyAttempt(): Promise<{
       hits: attempt.hits,
       completed: attempt.completedAt !== null,
     };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * One event's description, in the language the caller is reading.
+ *
+ * Through `eventsByIds` rather than a query of its own, so the locale fallback
+ * is the one every page on the site uses (the caller's language, else
+ * English): the note a player reads after answering is then the very text the
+ * page would have sent had it not masked it, rather than a second opinion
+ * about which translation wins. The locale is the cookie, read here — like the
+ * audience, it is the request's and not an argument.
+ *
+ * **Best effort, by design.** A note that cannot be read comes back null, and
+ * the panel shows its placeholder; a guess that has been graded must not be
+ * reported as failed — nor, for a member, sent back to be retried against a
+ * row that has already banked it — over a paragraph of prose.
+ */
+async function readNote(
+  admin: ReturnType<typeof createAdminDbClient>,
+  eventId: string,
+): Promise<string | null> {
+  try {
+    const [event] = await eventsByIds(admin, [eventId], await readLocale());
+    return event?.description ?? null;
   } catch {
     return null;
   }

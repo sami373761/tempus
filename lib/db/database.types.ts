@@ -362,6 +362,21 @@ export type Database = {
           version: number;
           created_at: string;
           updated_at: string;
+          /** Online matchmaking match (history mode only). No rematch. */
+          is_public: boolean;
+          /** Matchmaking league of the host, set once the lobby is dealt. Not granted to clients. */
+          public_tier: number | null;
+          /** Display names; null is a guest. Public matches only. */
+          seat1_name: string | null;
+          seat2_name: string | null;
+          /** Chrono Rating snapshot at seating; null is a guest. */
+          seat1_rating: number | null;
+          seat2_rating: number | null;
+          /** Rating change applied when the match settled; null for a guest. */
+          seat1_rating_delta: number | null;
+          seat2_rating_delta: number | null;
+          /** The seat that forfeited a started public match, if any. */
+          forfeit_seat: number | null;
         };
         Insert: {
           id?: string;
@@ -389,6 +404,15 @@ export type Database = {
           version?: number;
           created_at?: string;
           updated_at?: string;
+          is_public?: boolean;
+          public_tier?: number | null;
+          seat1_name?: string | null;
+          seat2_name?: string | null;
+          seat1_rating?: number | null;
+          seat2_rating?: number | null;
+          seat1_rating_delta?: number | null;
+          seat2_rating_delta?: number | null;
+          forfeit_seat?: number | null;
         };
         Update: {
           mode?: string;
@@ -408,6 +432,12 @@ export type Database = {
           history?: Json;
           rematch_by?: number | null;
           rematch_declined_by?: number | null;
+          public_tier?: number | null;
+          seat1_name?: string | null;
+          seat2_name?: string | null;
+          seat1_rating?: number | null;
+          seat2_rating?: number | null;
+          forfeit_seat?: number | null;
         };
         Relationships: [];
       };
@@ -420,6 +450,14 @@ export type Database = {
           last_seen_at: string;
           /** The account that took the seat, if signed in. Read by the TP trigger. */
           user_id: string | null;
+          /** A bot's archetype (lib/game/versus-bot.ts); null for a person. Never client-readable. */
+          bot_archetype: string | null;
+          /** A bot's level, 1-3; null for a person. Never client-readable. */
+          bot_level: number | null;
+          /** A public lobby host's just-finished public match (the back-to-back rule). */
+          prev_match_id: string | null;
+          /** For the host of a lobby closed by a merge: the match it was moved into. */
+          moved_to: string | null;
         };
         Insert: {
           match_id: string;
@@ -428,11 +466,17 @@ export type Database = {
           created_at?: string;
           last_seen_at?: string;
           user_id?: string | null;
+          bot_archetype?: string | null;
+          bot_level?: number | null;
+          prev_match_id?: string | null;
+          moved_to?: string | null;
         };
         Update: {
           token_hash?: string;
           last_seen_at?: string;
           user_id?: string | null;
+          prev_match_id?: string | null;
+          moved_to?: string | null;
         };
         Relationships: [
           {
@@ -450,12 +494,25 @@ export type Database = {
           generation: number;
           idx: number;
           event_id: string;
+          /** The bot seat's planned answer for this round; null without a bot. */
+          bot_guess: number | null;
+          bot_verdict: string | null;
+          bot_points: number | null;
+          /** Milliseconds after round_started_at the bot locks in. */
+          bot_think_ms: number | null;
+          /** round_started_at + bot_think_ms, stamped when the round starts. */
+          bot_commit_at: string | null;
         };
         Insert: {
           match_id: string;
           generation: number;
           idx: number;
           event_id: string;
+          bot_guess?: number | null;
+          bot_verdict?: string | null;
+          bot_points?: number | null;
+          bot_think_ms?: number | null;
+          bot_commit_at?: string | null;
         };
         Update: {
           event_id?: string;
@@ -559,6 +616,8 @@ export type Database = {
           badge_off: boolean;
           /** R2 key under user_profile_pictures/, or null. Service role writes only. */
           avatar_key: string | null;
+          /** Online 1v1 Chrono Rating (KP), floor 0. Written only by versus_settle_rating(). */
+          chrono_rating: number;
           created_at: string;
           updated_at: string;
         };
@@ -568,6 +627,7 @@ export type Database = {
           worn_badge?: string | null;
           badge_off?: boolean;
           avatar_key?: string | null;
+          chrono_rating?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -749,6 +809,36 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      chrono_rating_entry: {
+        Row: {
+          user_id: string;
+          match_id: string;
+          /** The other account, or null for a guest or a bot. */
+          opponent_id: string | null;
+          /** The opponent was shown as a guest (a guest, or a bot posing as one). */
+          opponent_guest: boolean;
+          outcome: string;
+          /** The change actually applied (after the floor at 0). */
+          delta: number;
+          rating_before: number;
+          rating_after: number;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      reserved_username: {
+        Row: {
+          /** A name a bot has been seated under; no account may take it. */
+          username: string;
+          created_at: string;
+        };
+        /** Written only by versus_seat_bot(). */
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: {
       event_challenge_stats: {
@@ -909,6 +999,57 @@ export type Database = {
       };
       versus_sweep: {
         Args: { p_older_than?: string };
+        Returns: number;
+      };
+      chrono_tier: {
+        Args: { p_rating: number | null };
+        Returns: number;
+      };
+      chrono_delta: {
+        Args: { p_rating: number; p_outcome: string };
+        Returns: number;
+      };
+      versus_matchmake: {
+        Args: {
+          p_own_match: string | null;
+          p_user_id: string | null;
+          p_rating: number | null;
+          p_name: string | null;
+          p_token_hash: string;
+          p_intro_seconds: number;
+          p_fresh_seconds: number;
+          p_near_rating: number;
+          p_avoid_match: string | null;
+          p_host_seen_ms: number;
+        };
+        /** { status: 'joined', match_id, code } | { status: 'matched' | 'gone' | 'none' } */
+        Returns: Json;
+      };
+      versus_publish_lobby: {
+        Args: { p_match_id: string };
+        Returns: boolean;
+      };
+      versus_seat_bot: {
+        Args: {
+          p_match_id: string;
+          p_token_hash: string;
+          p_archetype: string;
+          p_level: number;
+          p_name: string | null;
+          p_rating: number | null;
+          p_moves: Json;
+          p_min_wait_ms: number;
+          p_intro_seconds: number;
+        };
+        /** 'seated' | 'matched' | 'early' | 'gone' */
+        Returns: string;
+      };
+      versus_abandon: {
+        Args: { p_match_id: string; p_seat: number };
+        Returns: Database["public"]["Tables"]["match"]["Row"];
+      };
+      versus_forfeit_user: {
+        Args: { p_user_id: string; p_except_match: string | null };
         Returns: number;
       };
     };

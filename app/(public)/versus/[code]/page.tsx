@@ -41,7 +41,11 @@ export default async function VersusMatchPage({
       <h1 className="sr-only">{t.versusTitle}</h1>
 
       {isInviteCode(code) ? (
-        <VersusGame code={code} t={t} locale={locale} />
+        // Keyed on the code so a search that is moved into another lobby
+        // (`pollVersusSearch` → `moved`, then a client-side replace to the new
+        // code) mounts a fresh game instead of carrying the old match's view,
+        // seat and channel into the new one.
+        <VersusGame key={code} code={code} t={t} locale={locale} />
       ) : (
         <p className="flex flex-1 items-center justify-center px-6 text-center text-ink-dim">
           {t.versusMatchNotFound}

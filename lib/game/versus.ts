@@ -61,6 +61,114 @@ export const ROUND_SECONDS = 20;
 export const REVEAL_SECONDS = 6;
 
 /* -------------------------------------------------------------------------
+   Online matchmaking
+   ------------------------------------------------------------------------- */
+
+/**
+ * The one mode online matchmaking plays. A public match is always the general
+ * library: a rating has to mean one thing, and a league that mixed football
+ * specialists with film buffs would rank neither. The database enforces it too
+ * (`match_public_is_history`).
+ */
+export const PUBLIC_VERSUS_MODE: VersusMode = "history";
+
+/**
+ * How long "Opponent found" stays on screen before question one.
+ *
+ * Not a phase: the first round's `round_started_at` is simply stamped this far
+ * in the future, and its deadline from there. So the twenty seconds a player
+ * gets are twenty seconds of question, the server refuses a guess that arrives
+ * early (`versus_submit` answers `early`), and a bot's thinking time is counted
+ * from the same instant a person's is.
+ */
+export const PUBLIC_MATCH_INTRO_SECONDS = 3;
+
+/**
+ * How long the searching screen waits for a person before a bot takes the
+ * other seat. The client picks a moment uniformly in this window; the server
+ * refuses to seat a bot before `SEARCH_FALLBACK_MIN_MS` has passed since the
+ * lobby opened, so a client cannot skip the wait to farm bots.
+ */
+export const SEARCH_FALLBACK_MIN_MS = 6000;
+export const SEARCH_FALLBACK_MAX_MS = 9000;
+
+/**
+ * How often a searching client asks again. Each ask also tries to merge into an
+ * older open lobby, which is what pairs two people who pressed the button in
+ * the same second and so both opened lobbies of their own.
+ */
+export const SEARCH_POLL_MS = 1500;
+
+/**
+ * A lobby older than this is presumed dead and is never matched into: its host
+ * would have been given a bot by `SEARCH_FALLBACK_MAX_MS`, so one still open
+ * this long is a tab that was closed mid-search.
+ */
+export const PUBLIC_LOBBY_FRESH_SECONDS = 12;
+
+/**
+ * How recently a lobby's host must have asked for anybody to be seated
+ * opposite them.
+ *
+ * Every searching poll stamps the host's seat (inside `versus_matchmake`, under
+ * the lobby's lock), so a host who has stopped asking — the tab closed, the
+ * page left without Cancel — stops being matchable this long after their last
+ * ask, instead of for the rest of `PUBLIC_LOBBY_FRESH_SECONDS`. Whoever would
+ * have been seated there otherwise plays ten rounds against nobody, and an
+ * absent account is rated the loss. Four polls' worth rather than two: a poll
+ * is scheduled only once the previous one has answered, and the answer comes
+ * from a database a continent away, so the gap between two stamps is a poll
+ * interval *plus* a slow round trip. Too tight and a host who is plainly there
+ * flickers out of matchmaking between asks.
+ */
+export const SEARCH_HOST_SEEN_MS = SEARCH_POLL_MS * 4;
+
+/**
+ * How far apart in KP two players may be and still meet across a league
+ * boundary. Inside one league anyone may meet anyone; this only lets a 290 meet
+ * a 320 rather than both waiting for their own league to fill.
+ */
+export const NEAR_RATING_WINDOW = 150;
+
+/**
+ * The heartbeat of a live public round.
+ *
+ * A bot has no browser to push its answer from, so its answer is applied by
+ * `versus_reconcile` the first time anyone touches the match after the bot's
+ * moment has passed. In a public round each client therefore prompts the
+ * server on this cadence (jittered) until the opponent has answered — which is
+ * also exactly what it does against a person, and the only way it learns that
+ * a person has answered too: a public match never pushes a first answer (see
+ * the migration's header), so "your opponent locked in" always arrives in the
+ * answer to a beat, whoever the opponent is.
+ *
+ * Sent to a Route Handler (`VERSUS_TICK_PATH`) with `fetch`, not as a Server
+ * Action. A page's Server Actions run one at a time — Next queues them on the
+ * router — so a beat in flight would hold back a lock-in pressed in the last
+ * second until the beat had answered, and `versus_submit` judges the deadline
+ * when the guess arrives, not when it was pressed.
+ */
+export const PUBLIC_TICK_MS = 1500;
+export const PUBLIC_TICK_JITTER_MS = 400;
+
+/** Where a beat is sent: app/api/versus/tick/route.ts. */
+export const VERSUS_TICK_PATH = "/api/versus/tick";
+
+/**
+ * How long a change has to have been on the row before a beat hands it over
+ * itself rather than leaving it to the push.
+ *
+ * A beat is a fallback for a socket that dropped a row, not a second way to
+ * deliver one. Answering every beat that lands after a change with the new view
+ * would deliver *some* reveals in a beat's answer — and in a bot match the
+ * reveal of a bot's second answer happens inside the beat that writes it, so
+ * that share would be every one of them rather than the few a person's submit
+ * happens to race a beat with. With the grace, a change a beat finds is left to
+ * the push unless it is old enough that the push has plainly been lost.
+ */
+export const TICK_PUSH_GRACE_MS = 2500;
+
+/* -------------------------------------------------------------------------
    Modes
    ------------------------------------------------------------------------- */
 
@@ -282,16 +390,82 @@ export type MaskedEvent = Omit<
   format?: ScreenFormat | null;
 };
 
+/**
+ * What a caller must decide before an event may cross the wire masked.
+ *
+ * Every field that can carry the answer *other than* the date columns, and
+ * each one is required rather than defaulted, so a new caller has to think
+ * about it instead of inheriting a leak:
+ *
+ *   * `imageUrl` — the picture's URL with nothing in it but an opaque token
+ *     (`maskedImageUrl` in lib/storage/masked-image.ts). An event photo's key
+ *     is `<era>/<slug>.<ext>` (CLAUDE.md), so the plain CDN URL names the era
+ *     folder — `bce/` or `ce/` — which halves the rail before the player has
+ *     looked at the picture. Null for an event with no photograph.
+ *   * `description` — null while the round is live. Descriptions are written
+ *     prose about the event and routinely name its date; pass the real one
+ *     only for a round that has already been answered.
+ *   * `id` / `slug` — the head-to-head passes an opaque per-round id, because
+ *     `public.event` is world-readable and an event id is one REST call from
+ *     its year. The daily keeps the real id (its "wrong date" report needs
+ *     it). Neither closes the name lookup — the name has to be shown — which
+ *     is why grading never trusts the client either way.
+ */
+export interface MaskOptions {
+  imageUrl: string | null;
+  description: string | null;
+  id: string;
+  slug: string;
+  format?: ScreenFormat | null;
+}
+
 export function maskEvent(
   event: LocalizedEvent,
-  format: ScreenFormat | null = null,
+  options: MaskOptions,
 ): MaskedEvent {
   // Destructured rather than spread-and-delete, so the discarded fields are
   // named here and a new date-bearing column on LocalizedEvent has to be
   // thought about rather than inherited into the payload.
-  const { year: _y, month: _m, day: _d, sortKey: _s, precision: _p, ...rest } =
-    event;
-  return { ...rest, format };
+  const {
+    year: _y,
+    month: _m,
+    day: _d,
+    sortKey: _s,
+    precision: _p,
+    image,
+    ...rest
+  } = event;
+
+  return {
+    ...rest,
+    id: options.id,
+    slug: options.slug,
+    description: options.description,
+    format: options.format ?? null,
+    // The key is replaced as well as the URL: `EventVisual` keys its crossfade
+    // on `objectKey`, and the real key is the same `<era>/` leak by another
+    // name. The opaque URL is stable per round, so it is a stable key too.
+    // Free-text attribution goes for the same reason — an author line or a
+    // caption ("NASA, 1969") is a date as often as not. Nothing on a live
+    // round renders it.
+    image:
+      image && options.imageUrl
+        ? {
+            objectKey: options.imageUrl,
+            url: options.imageUrl,
+            mimeType: image.mimeType,
+            width: image.width,
+            height: image.height,
+            attribution: {
+              sourceName: image.attribution.sourceName,
+              sourcePageUrl: null,
+              author: null,
+              licenseCode: image.attribution.licenseCode,
+              attributionText: null,
+            },
+          }
+        : null,
+  };
 }
 
 /** One seat's answer to one finished round. */
@@ -372,8 +546,40 @@ export interface MatchView {
    * screen.
    */
   yourGuess: number | null;
+  /**
+   * Whether the other seat has answered the live round — only that, never
+   * with what.
+   *
+   * Read from `match_answer` when the view is built rather than derived from
+   * `answeredCount`, because in a public match the count is never pushed: a
+   * first answer is found by the other seat's own next request, a person's
+   * and a bot's alike (see the migration's header). An invitation still pushes
+   * its count, and `applyMatchRow` keeps this in step from it.
+   */
+  theyAnswered: boolean;
   /** Monotonic; a view with a lower version than the one in hand is stale. */
   version: number;
+  /**
+   * An online (matchmade) match rather than an invitation. No rematch, no
+   * presence, names and ratings on screen — and nothing anywhere that says
+   * whether the other seat is a person.
+   */
+  isPublic: boolean;
+  /**
+   * Display names for a public match; null is a guest (or a private match).
+   *
+   * Like the two below, only ever from a server-built view: none of the three
+   * is granted to clients on the `match` row (see `MATCH_CLIENT_COLUMNS`), so
+   * a push carries the view's own values forward and `foldView` takes them
+   * from whichever fetched view last knew them.
+   */
+  names: Record<Seat, string | null>;
+  /** Chrono Rating at seating; null for a guest or a private match. */
+  ratings: Record<Seat, number | null>;
+  /** The settled change, once a public match is over; null otherwise. */
+  ratingDeltas: Record<Seat, number | null>;
+  /** The seat that left a started public match, if one did. */
+  forfeitSeat: Seat | null;
   /**
    * The server's clock when this was built. The client measures its own offset
    * against it so a wrong system clock cannot change how long a round lasts.
@@ -406,6 +612,27 @@ export function upcomingEvent(view: MatchView): MaskedEvent | null {
 export function revealedRound(view: MatchView): RoundResult | null {
   if (view.phase !== "revealed") return null;
   return view.history.find((round) => round.idx === view.currentIdx) ?? null;
+}
+
+/**
+ * Whether the other seat has locked in the live round. See `theyAnswered` for
+ * why that is a field of the view rather than arithmetic on the count.
+ */
+export function opponentAnswered(view: MatchView): boolean {
+  return view.phase === "playing" && view.theyAnswered;
+}
+
+/**
+ * Whether the first round of a public match is still in its intro — the
+ * "opponent found" moment before question one. `serverNow` is the client's
+ * corrected clock.
+ */
+export function inMatchIntro(view: MatchView, serverNow: number): boolean {
+  return (
+    view.phase === "playing" &&
+    view.roundStartedAt !== null &&
+    serverNow < view.roundStartedAt
+  );
 }
 
 export interface MatchOutcome {
@@ -447,14 +674,67 @@ export function matchOutcome(view: MatchView): MatchOutcome {
    ------------------------------------------------------------------------- */
 
 /**
- * The match row as Supabase Realtime delivers it.
+ * The whole `match` row — what the service role reads and writes on the
+ * server, never what a browser sees.
  *
- * Realtime pushes the table row, not the per-seat view: the same bytes go to
- * both players, which is only safe because every column on this table is
- * public by construction (see the migration's header). Turning that row back
- * into a `MatchView` is `applyMatchRow` below.
+ * It carries columns no client may read (the invite `code`, `public_tier`, the
+ * bookkeeping timestamps, the seats' names and ratings), so nothing
+ * client-side should be typed as it. The
+ * client's shape is `VersusMatchPush` below, the subset the column grant lets
+ * Realtime deliver; this type is only its base. The same push goes to both
+ * players rather than a per-seat view, which is safe because every *granted*
+ * column is public by construction (see the migration's header). Turning a
+ * push back into a `MatchView` is `applyMatchRow` below.
  */
 export type VersusMatchRow = Database["public"]["Tables"]["match"]["Row"];
+
+/**
+ * The columns of `match` a client may read — the column-level grant in
+ * supabase/migrations/20261017180000_versus_online.sql, written out.
+ *
+ * Realtime filters every pushed row through `has_column_privilege`, so what
+ * arrives on the socket is exactly this and not the whole row: no invite
+ * `code` (the old `using (true)` policy let anyone list open lobbies' codes),
+ * no `created_at`/`updated_at`, no `public_tier` — and nothing that names or
+ * rates a seat. The rows stay listable by anyone with the anon key, and a
+ * username on a listable row is every account's online record published, and
+ * a bot's name followed across matches it could not all be in. The two seats
+ * read names, ratings and deltas in their own views (`publicSeatFields`).
+ * Typing the push as this rather than as the row is what makes reading one of
+ * those a compile error instead of an `undefined` at runtime. Keep it in step
+ * with the grant.
+ */
+export const MATCH_CLIENT_COLUMNS = [
+  "id",
+  "mode",
+  "phase",
+  "generation",
+  "total_rounds",
+  "round_seconds",
+  "reveal_seconds",
+  "current_idx",
+  "round_started_at",
+  "round_deadline_at",
+  "reveal_until_at",
+  "answered_count",
+  "seat1_joined",
+  "seat2_joined",
+  "seat1_ready",
+  "seat2_ready",
+  "seat1_score",
+  "seat2_score",
+  "history",
+  "rematch_by",
+  "rematch_declined_by",
+  "version",
+  "is_public",
+  "forfeit_seat",
+] as const satisfies readonly (keyof VersusMatchRow)[];
+
+export type VersusMatchPush = Pick<
+  VersusMatchRow,
+  (typeof MATCH_CLIENT_COLUMNS)[number]
+>;
 
 /**
  * Read `match.history` back into typed rounds.
@@ -523,14 +803,16 @@ function parseSeatAnswer(value: unknown): SeatAnswer | null {
 /**
  * Fold a pushed row into the view already in hand.
  *
- * The row is the whole truth about the match but only part of what the screen
- * needs: it carries no masked events (the client fetches those), no seat (the
- * row is the same for both players) and no server clock reading that is usable
- * for timing — `updated_at` arrives one network hop late, and adopting it as
- * "now" would quietly shorten every countdown by the latency. So those three
- * are carried over from the existing view and everything else is replaced.
+ * The row is the whole truth about the match's state but only part of what
+ * the screen needs: it carries no masked events (the client fetches those), no
+ * seat (the row is the same for both players), no names, ratings or rating
+ * changes (not granted — see `MATCH_CLIENT_COLUMNS`) and no server clock
+ * reading that is usable for timing — `updated_at` arrives one network hop
+ * late, and adopting it as "now" would quietly shorten every countdown by the
+ * latency. So those are carried over from the existing view and everything
+ * else is replaced.
  *
- * Two derived rules, both of which are bugs if they are left out:
+ * Three derived rules, all of which are bugs if they are left out:
  *
  *   * **A row older than the one in hand is dropped.** A view fetched over
  *     HTTP can land after a row pushed over the socket; without the version
@@ -539,15 +821,20 @@ function parseSeatAnswer(value: unknown): SeatAnswer | null {
  *     row cannot carry — the match knows two people answered, not which of
  *     them is reading this screen — so a new round has to clear it or the
  *     player opens question four already locked out of it.
+ *   * **`theyAnswered` follows the count only in an invitation.** A public
+ *     match never pushes a first answer, so its count says nothing and the
+ *     view's own value stands until the round changes (see `theyAnswered`).
  */
 export function applyMatchRow(
   view: MatchView,
-  row: VersusMatchRow,
+  row: VersusMatchPush,
 ): MatchView {
   if (row.version <= view.version) return view;
 
   const newRound =
     row.current_idx !== view.currentIdx || row.generation !== view.generation;
+  const isPublic = row.is_public === true;
+  const youAnswered = newRound ? false : view.youAnswered;
 
   return {
     ...view,
@@ -584,10 +871,83 @@ export function applyMatchRow(
       row.rematch_declined_by === 1 || row.rematch_declined_by === 2
         ? row.rematch_declined_by
         : null,
-    youAnswered: newRound ? false : view.youAnswered,
+    youAnswered,
     yourGuess: newRound ? null : view.yourGuess,
+    theyAnswered: isPublic
+      ? newRound
+        ? false
+        : view.theyAnswered
+      : row.answered_count - (youAnswered ? 1 : 0) > 0,
     version: row.version,
+    isPublic,
+    forfeitSeat: toSeat(row.forfeit_seat),
   };
+}
+
+/**
+ * The public-match columns of the whole row, as the server reads them into a
+ * view. Server-side by type: names, ratings and deltas are not on the push.
+ */
+export function publicSeatFields(
+  row: VersusMatchRow,
+): Pick<
+  MatchView,
+  "isPublic" | "names" | "ratings" | "ratingDeltas" | "forfeitSeat"
+> {
+  return {
+    isPublic: row.is_public === true,
+    names: { 1: row.seat1_name ?? null, 2: row.seat2_name ?? null },
+    ratings: { 1: row.seat1_rating ?? null, 2: row.seat2_rating ?? null },
+    ratingDeltas: {
+      1: row.seat1_rating_delta ?? null,
+      2: row.seat2_rating_delta ?? null,
+    },
+    forfeitSeat: toSeat(row.forfeit_seat),
+  };
+}
+
+/**
+ * Fold a freshly fetched view into the one in hand.
+ *
+ * A fetch can land after a push that is newer — the socket and the HTTP
+ * request are two races against each other — so the version decides which
+ * one's *state* stands. But a fetched view is also the only source of what a
+ * push never carries, and those are taken from it even when it lost the race:
+ *
+ *   * the questions, merged, since each view carries only the live round's
+ *     and the next;
+ *   * the names and ratings, once the view saw both seats filled — they are
+ *     stamped when the match fills and never change, so any view from after
+ *     that is right about them, however old it is otherwise;
+ *   * the rating changes, once the view saw the match over — they are written
+ *     by the update that ends it, and nothing in a public match changes after.
+ */
+export function foldView(current: MatchView, next: MatchView): MatchView {
+  const events = { ...current.events, ...next.events };
+  if (next.version >= current.version) return { ...next, events };
+
+  const filled = next.seats[1].joined && next.seats[2].joined;
+  const over = next.phase === "complete" || next.phase === "abandoned";
+
+  return {
+    ...current,
+    events,
+    ...(filled ? { names: next.names, ratings: next.ratings } : {}),
+    ...(over ? { ratingDeltas: next.ratingDeltas } : {}),
+  };
+}
+
+/**
+ * What a beat answers (app/api/versus/tick/route.ts): a view when there is
+ * news this seat must hear from the beat itself, else null. Typed here rather
+ * than in the route because a route module may export only its handlers.
+ */
+export type TickResponse =
+  | { ok: true; view: MatchView | null }
+  | { ok: false; reason: string };
+
+function toSeat(value: number | null | undefined): Seat | null {
+  return value === 1 || value === 2 ? value : null;
 }
 
 function parseTimestamp(value: string | null): number | null {
