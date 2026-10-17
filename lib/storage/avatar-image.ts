@@ -28,7 +28,7 @@ export type AvatarFormat = "jpeg" | "png" | "webp" | "heic";
 export class UnsupportedAvatarFormat extends Error {}
 
 /**
- * A ceiling on decoded size. A 1 MB file can still declare enormous
+ * A ceiling on decoded size. A 4 MB file can still declare enormous
  * dimensions, and decoding is width × height × 4 bytes of memory before
  * anything is resized. 50 MP admits a 48 MP iPhone frame.
  */

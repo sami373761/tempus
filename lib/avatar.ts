@@ -13,8 +13,14 @@ import { publicImageUrl } from "./storage/images.ts";
  *  `profile.avatar_key`, so a change here needs a migration too. */
 export const AVATAR_PREFIX = "user_profile_pictures/";
 
-/** The largest *upload* accepted. The stored file is far smaller. */
-export const AVATAR_MAX_BYTES = 1024 * 1024;
+/**
+ * The largest *upload* accepted. The stored file is far smaller, so this only
+ * decides which phone photos can be picked as they are. 4 MB because Vercel
+ * refuses any function request body over 4.5 MB before our code runs — a
+ * higher limit here would fail there with no sentence of ours attached. Keep
+ * `bodySizeLimit` in next.config.ts just above it.
+ */
+export const AVATAR_MAX_BYTES = 4 * 1024 * 1024;
 
 /**
  * Edge of the stored square, in pixels. The largest place a picture is drawn

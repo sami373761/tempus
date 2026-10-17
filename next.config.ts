@@ -37,10 +37,11 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["heic-decode", "libheif-js"],
   experimental: {
     serverActions: {
-      /* Profile pictures may be up to 1 MB (`AVATAR_MAX_BYTES`), and Next's
-         default limit is 1 MB for the whole request — a file at the limit
-         would be refused before the action could say why. */
-      bodySizeLimit: "2mb",
+      /* Profile pictures may be up to 4 MB (`AVATAR_MAX_BYTES`), and Next's
+         default limit is 1 MB for the whole request — a larger file would be
+         refused before the action could say why. 4.5 MB is also Vercel's own
+         ceiling on a request body, so this cannot usefully go higher. */
+      bodySizeLimit: "4.5mb",
     },
   },
   images: {
