@@ -77,6 +77,18 @@ export const ROUND_QUEUE_TARGET = ROUND_QUEUE_DEPTH + 1;
 export const EXCLUDED_EVENT_LIMIT = 64;
 
 /**
+ * Seconds a solo round gives the player to lock in — every game but the
+ * head-to-head, which keeps its own (`ROUND_SECONDS` in lib/game/versus.ts)
+ * because it is stamped by the server per match.
+ *
+ * The limit exists to make looking the date up in another tab cost more than
+ * guessing, so the clock keeps running while the tab is hidden, and when it
+ * runs out the round is locked in from whatever is on the board — see
+ * `useSoloRoundClock` in components/round-timer.tsx.
+ */
+export const SOLO_ROUND_SECONDS = 30;
+
+/**
  * How long a round's photograph takes to dissolve into the next one's. Must
  * match the `.round-photo-in` rule in app/globals.css: the components use it to
  * decide when the outgoing layer can be unmounted, and unmounting it early

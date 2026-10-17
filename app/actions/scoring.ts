@@ -112,9 +112,16 @@ export async function revealDateRound(
   }
 }
 
+/**
+ * `section` is null when the round's clock ran out with the card dead centre,
+ * which commits to neither side (see `useSoloRoundClock`): the round is still
+ * graded and banked — a set needs all ten, and a run ends on it — as a miss
+ * worth nothing, which is what the head-to-head makes of a round nobody
+ * answered.
+ */
 export async function revealComparisonRound(
   token: string,
-  section: number,
+  section: number | null,
   setId: string | null,
 ): Promise<RevealResult> {
   const claims = verifyRound(token);
@@ -126,9 +133,10 @@ export async function revealComparisonRound(
     return { ok: false, reason: "bad-token" };
   }
   if (
-    !Number.isInteger(section) ||
-    section < 0 ||
-    section >= COMPARISON_SECTIONS
+    section !== null &&
+    (!Number.isInteger(section) ||
+      section < 0 ||
+      section >= COMPARISON_SECTIONS)
   ) {
     return { ok: false, reason: "bad-input" };
   }
@@ -154,8 +162,10 @@ export async function revealComparisonRound(
       right: { year: right.year },
     } as unknown as ComparisonRound;
 
-    const verdict = comparisonVerdict(round, section);
-    const correct = isComparisonCorrect(round, sectionSide(section));
+    const verdict: Verdict =
+      section === null ? "wayOff" : comparisonVerdict(round, section);
+    const correct =
+      section !== null && isComparisonCorrect(round, sectionSide(section));
     const tp = comparisonPoints(verdict, correct);
 
     const banked = await bankIfMember(admin, claims, user, setId, {

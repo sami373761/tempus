@@ -67,6 +67,7 @@ import {
   revealedRound,
   VERSUS_TICK_PATH,
   versusModeSpec,
+  viewAtRevealEnd,
   type MaskedEvent,
   type MatchView,
   type RoundResult,
@@ -199,7 +200,7 @@ export function VersusGame({
   // Server clock minus this browser's clock, measured NTP-style on a real
   // request (see `refresh`). Every deadline on screen is rendered through it,
   // so a player whose laptop clock is ten minutes out still sees the same
-  // twenty seconds as their opponent.
+  // twenty-five seconds as their opponent.
   const clockOffset = useRef(0);
 
   // The last prompt sent, as (generation, round, phase) and when. A stamp
@@ -345,6 +346,11 @@ export function VersusGame({
   }, [timed]);
 
   const serverNow = now + clockOffset.current;
+  // What is on screen: the view — or, once the reveal has ended on this clock
+  // and before the server has said so, the next round (`viewAtRevealEnd`).
+  // Everything that talks to the server keeps reading `view`; only drawing
+  // and answering read this.
+  const shown = view ? viewAtRevealEnd(view, serverNow) : null;
   const deadline =
     view?.phase === "playing"
       ? view.roundDeadlineAt
@@ -588,12 +594,12 @@ export function VersusGame({
    */
   const submit = useCallback(
     async (year: number): Promise<boolean> => {
-      if (!session || !view || view.phase !== "playing") return false;
+      if (!session || !shown || shown.phase !== "playing") return false;
 
       const result = await submitVersusGuess(
         session.matchId,
         session.token,
-        view.currentIdx,
+        shown.currentIdx,
         year,
       );
 
@@ -601,7 +607,7 @@ export function VersusGame({
       adopt(result.view);
       return result.outcome !== "early";
     },
-    [session, view, adopt],
+    [session, shown, adopt],
   );
 
   // A seat in another match, handed back by the search when it merged this
@@ -655,24 +661,30 @@ export function VersusGame({
   /* --- render ------------------------------------------------------------ */
 
   if (fatal) return <FatalNotice message={fatal} t={t} />;
-  if (!view) return <LoadingNotice label={t.versusJoining} />;
+  if (!view || !shown) return <LoadingNotice label={t.versusJoining} />;
 
-  const spec = versusModeSpec(view.mode);
-  const event = view.events[view.currentIdx] ?? null;
-  const revealed = revealedRound(view);
+  const spec = versusModeSpec(shown.mode);
+  const event = shown.events[shown.currentIdx] ?? null;
+  const revealed = revealedRound(shown);
 
   // Clamped to the round's own length. During an online match's intro the
-  // deadline is the intro *plus* the round away, and a ring that opened at 23
-  // of 20 seconds would be a clock that is wrong for its first three.
+  // deadline is the intro *plus* the round away, and a ring that opened at 28
+  // of 25 seconds would be a clock that is wrong for its first three.
+  const shownDeadline =
+    shown.phase === "playing"
+      ? shown.roundDeadlineAt
+      : shown.phase === "revealed"
+        ? shown.revealUntilAt
+        : null;
   const remainingMs =
-    deadline === null
+    shownDeadline === null
       ? 0
-      : view.phase === "playing"
-        ? Math.min(deadline - serverNow, view.roundSeconds * 1000)
-        : deadline - serverNow;
+      : shown.phase === "playing"
+        ? Math.min(shownDeadline - serverNow, shown.roundSeconds * 1000)
+        : shownDeadline - serverNow;
   const secondsLeft = Math.max(0, Math.ceil(remainingMs / 1000));
 
-  const searching = isSearchScreen(view);
+  const searching = isSearchScreen(shown);
 
   // Whether one of the two round bodies is what is on screen. A match in a
   // playing phase whose question has not arrived yet is *not* — the fetch for
@@ -681,11 +693,11 @@ export function VersusGame({
   // test left the "starting..." moment with none at all, i.e. a black page.
   const showRound =
     event !== null &&
-    view.phase !== "lobby" &&
-    view.phase !== "complete" &&
-    view.phase !== "abandoned";
+    shown.phase !== "lobby" &&
+    shown.phase !== "complete" &&
+    shown.phase !== "abandoned";
 
-  const round = { view, spec, event, revealed, remainingMs, secondsLeft, onSubmit: submit, t, locale };
+  const round = { view: shown, spec, event, revealed, remainingMs, secondsLeft, onSubmit: submit, t, locale };
 
   return (
     // The game's own container, not the page's: the two layouts want different
@@ -710,7 +722,7 @@ export function VersusGame({
       {searching ? (
         session ? (
           <VersusSearch
-            view={view}
+            view={shown}
             matchId={session.matchId}
             token={session.token}
             onAdopt={adopt}
@@ -720,11 +732,11 @@ export function VersusGame({
         ) : (
           <LoadingNotice label={t.versusJoining} />
         )
-      ) : view.phase === "lobby" ? (
-        <VersusLobby view={view} onReady={ready} busy={busy} t={t} />
-      ) : view.phase === "complete" || view.phase === "abandoned" ? (
+      ) : shown.phase === "lobby" ? (
+        <VersusLobby view={shown} onReady={ready} busy={busy} t={t} />
+      ) : shown.phase === "complete" || shown.phase === "abandoned" ? (
         <VersusSummary
-          view={view}
+          view={shown}
           seat={session}
           onRematch={askRematch}
           onAnswerRematch={answerRematch}
@@ -741,9 +753,9 @@ export function VersusGame({
         // rather than on a fade-in — but nothing in it can be reached early.
         <div className="contents" inert={intro}>
           {spec.layout === "poster" ? (
-            <PosterRound key={view.mode} {...round} event={event} />
+            <PosterRound key={shown.mode} {...round} event={event} />
           ) : (
-            <StageRound key={view.mode} {...round} event={event} />
+            <StageRound key={shown.mode} {...round} event={event} />
           )}
         </div>
       )}
@@ -756,7 +768,7 @@ export function VersusGame({
           view that brings the first question too. */}
       {intro && (
         <MatchIntro
-          view={view}
+          view={shown}
           serverNow={serverNow}
           known={event !== null}
           t={t}
@@ -768,7 +780,7 @@ export function VersusGame({
           whole subject and this would be saying it twice — and in every
           online match, which has no presence to report (see
           lib/realtime/match-channel.ts). */}
-      {!view.isPublic && view.phase !== "lobby" && !opponentOnline && (
+      {!shown.isPublic && shown.phase !== "lobby" && !opponentOnline && (
         <p className="pointer-events-none fixed inset-x-0 bottom-3 z-30 text-center text-[11px] text-white/45">
           {connected ? t.versusOpponentOffline : t.versusReconnecting}
         </p>
@@ -829,7 +841,7 @@ const RAIL_NAME_MAX = 12;
  *
  * Over the whole screen, like the rematch request, and opaque enough that the
  * question already mounted underneath is a blur rather than a head start —
- * the first twenty seconds are counted from the moment this lifts, for both
+ * the first twenty-five seconds are counted from the moment this lifts, for both
  * seats, so reading the picture through it would be time nobody else got.
  * The names are the point of the card: until now the player has only seen a
  * clock, and the first thing they want is who they are playing.

@@ -417,6 +417,7 @@ const en = {
   screenTitle: "Film & TV",
   inventionTitle: "Inventions",
   whenBornTitle: "Born When?",
+  gameLoading: "Getting the first round ready…",
   newGamesTitle: "New games",
   newGamesBlurb: "More modes on the way",
 
@@ -594,7 +595,7 @@ const en = {
   leaderboardTitle: "Leaderboard",
   leaderboardBlurb: "Players ranked by Tempus Points (TP).",
   leaderboardAllTime: "All time",
-  leaderboardWeek: "This week",
+  leaderboardMonth: "This month",
   leaderboardRank: "Rank",
   leaderboardPlayer: "Player",
   leaderboardTp: "TP",
@@ -602,6 +603,13 @@ const en = {
   leaderboardEmpty: "No points on this board yet. Sign in and play a set to be the first.",
   leaderboardFailed: "The leaderboard could not be loaded. Try again in a moment.",
   leaderboardYou: "You: #{rank} · {tp} TP",
+  // The Chrono Rating board (`?board=rating`). The tab itself reuses
+  // `versusRatingName`, so the ladder has one name across the site.
+  leaderboardRatingBlurb: "Players ranked by Chrono Rating (CR), earned only in online matches.",
+  leaderboardRatingUnit: "CR",
+  leaderboardWins: "Wins",
+  leaderboardRatingEmpty: "No one has finished an online match yet. Sign in and find an opponent to be the first.",
+  leaderboardRatingYou: "You: #{rank} · {n} CR",
 
   // --- the badges page ------------------------------------------------------
   badgesTitle: "Badges",
@@ -970,6 +978,7 @@ const tr: Dict = {
   screenTitle: "Film & Dizi",
   inventionTitle: "İcatlar",
   whenBornTitle: "Ne zaman doğdu?",
+  gameLoading: "İlk tur hazırlanıyor…",
   newGamesTitle: "Yeni oyunlar",
   newGamesBlurb: "Yeni modlar yolda",
 
@@ -1116,7 +1125,7 @@ const tr: Dict = {
   leaderboardTitle: "Liderlik tablosu",
   leaderboardBlurb: "Oyuncular Tempus Puanına (TP) göre sıralanır.",
   leaderboardAllTime: "Tüm zamanlar",
-  leaderboardWeek: "Bu hafta",
+  leaderboardMonth: "Bu ay",
   leaderboardRank: "Sıra",
   leaderboardPlayer: "Oyuncu",
   leaderboardTp: "TP",
@@ -1124,6 +1133,11 @@ const tr: Dict = {
   leaderboardEmpty: "Bu tabloda henüz puan yok. Giriş yap ve ilk olmak için bir set oyna.",
   leaderboardFailed: "Liderlik tablosu yüklenemedi. Birazdan tekrar dene.",
   leaderboardYou: "Sen: #{rank} · {tp} TP",
+  leaderboardRatingBlurb: "Oyuncular yalnızca çevrim içi maçlarda kazanılan Kronos Puanına (KP) göre sıralanır.",
+  leaderboardRatingUnit: "KP",
+  leaderboardWins: "Galibiyet",
+  leaderboardRatingEmpty: "Henüz kimse çevrim içi bir maçı bitirmedi. Giriş yap ve ilk olmak için bir rakip bul.",
+  leaderboardRatingYou: "Sen: #{rank} · {n} KP",
 
   badgesTitle: "Rozetler",
   badgesIntro:
@@ -1470,6 +1484,7 @@ const de: Dict = {
   screenTitle: "Film & Serien",
   inventionTitle: "Erfindungen",
   whenBornTitle: "Wann geboren?",
+  gameLoading: "Die erste Runde wird vorbereitet…",
   newGamesTitle: "Neue Spiele",
   newGamesBlurb: "Weitere Modi folgen",
 
@@ -1619,7 +1634,7 @@ const de: Dict = {
   leaderboardTitle: "Rangliste",
   leaderboardBlurb: "Spieler nach Tempus-Punkten (TP).",
   leaderboardAllTime: "Gesamt",
-  leaderboardWeek: "Diese Woche",
+  leaderboardMonth: "Diesen Monat",
   leaderboardRank: "Platz",
   leaderboardPlayer: "Spieler",
   leaderboardTp: "TP",
@@ -1627,6 +1642,11 @@ const de: Dict = {
   leaderboardEmpty: "Noch keine Punkte auf dieser Liste. Melde dich an und spiel eine Serie, um der Erste zu sein.",
   leaderboardFailed: "Die Rangliste konnte nicht geladen werden. Versuch es gleich noch einmal.",
   leaderboardYou: "Du: #{rank} · {tp} TP",
+  leaderboardRatingBlurb: "Spieler nach Chrono-Rating (CR), das es nur in Online-Partien gibt.",
+  leaderboardRatingUnit: "CR",
+  leaderboardWins: "Siege",
+  leaderboardRatingEmpty: "Noch hat niemand eine Online-Partie beendet. Melde dich an und such dir einen Gegner, um der Erste zu sein.",
+  leaderboardRatingYou: "Du: #{rank} · {n} CR",
 
   badgesTitle: "Abzeichen",
   badgesIntro:
@@ -1969,6 +1989,7 @@ const fr: Dict = {
   screenTitle: "Films & séries",
   inventionTitle: "Inventions",
   whenBornTitle: "Né quand ?",
+  gameLoading: "Préparation du premier tour…",
   newGamesTitle: "Nouveaux jeux",
   newGamesBlurb: "D'autres modes arrivent",
 
@@ -2117,7 +2138,7 @@ const fr: Dict = {
   leaderboardTitle: "Classement",
   leaderboardBlurb: "Les joueurs classés par points Tempus (TP).",
   leaderboardAllTime: "Depuis toujours",
-  leaderboardWeek: "Cette semaine",
+  leaderboardMonth: "Ce mois-ci",
   leaderboardRank: "Rang",
   leaderboardPlayer: "Joueur",
   leaderboardTp: "TP",
@@ -2125,6 +2146,11 @@ const fr: Dict = {
   leaderboardEmpty: "Aucun point sur ce classement pour l'instant. Connecte-toi et joue une série pour être le premier.",
   leaderboardFailed: "Le classement n'a pas pu être chargé. Réessaie dans un instant.",
   leaderboardYou: "Toi : #{rank} · {tp} TP",
+  leaderboardRatingBlurb: "Les joueurs classés par cote Chrono (CR), gagnée uniquement en match en ligne.",
+  leaderboardRatingUnit: "CR",
+  leaderboardWins: "Victoires",
+  leaderboardRatingEmpty: "Personne n'a encore terminé de match en ligne. Connecte-toi et trouve un adversaire pour être le premier.",
+  leaderboardRatingYou: "Toi : #{rank} · {n} CR",
 
   badgesTitle: "Badges",
   badgesIntro:
@@ -2466,6 +2492,7 @@ const es: Dict = {
   screenTitle: "Cine y series",
   inventionTitle: "Inventos",
   whenBornTitle: "¿Cuándo nació?",
+  gameLoading: "Preparando la primera ronda…",
   newGamesTitle: "Juegos nuevos",
   newGamesBlurb: "Llegan más modos",
 
@@ -2615,7 +2642,7 @@ const es: Dict = {
   leaderboardTitle: "Clasificación",
   leaderboardBlurb: "Jugadores ordenados por puntos Tempus (TP).",
   leaderboardAllTime: "Histórico",
-  leaderboardWeek: "Esta semana",
+  leaderboardMonth: "Este mes",
   leaderboardRank: "Puesto",
   leaderboardPlayer: "Jugador",
   leaderboardTp: "TP",
@@ -2623,6 +2650,11 @@ const es: Dict = {
   leaderboardEmpty: "Todavía no hay puntos en esta tabla. Inicia sesión y juega una serie para ser el primero.",
   leaderboardFailed: "No se pudo cargar la clasificación. Inténtalo de nuevo en un momento.",
   leaderboardYou: "Tú: #{rank} · {tp} TP",
+  leaderboardRatingBlurb: "Jugadores ordenados por puntuación Chrono (CR), que solo se gana en partidas en línea.",
+  leaderboardRatingUnit: "CR",
+  leaderboardWins: "Victorias",
+  leaderboardRatingEmpty: "Nadie ha terminado todavía una partida en línea. Inicia sesión y busca un rival para ser el primero.",
+  leaderboardRatingYou: "Tú: #{rank} · {n} CR",
 
   badgesTitle: "Insignias",
   badgesIntro:

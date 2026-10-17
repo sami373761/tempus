@@ -1073,13 +1073,19 @@ export type SubmitOutcome =
   | "duplicate"
   /**
    * The round has not started yet — an online match's "opponent found" intro
-   * is still on screen. Refused so the twenty seconds are twenty seconds of
+   * is still on screen. Refused so the round's seconds are all seconds of
    * question for both seats, and so nobody answers before a bot's clock starts.
    */
   | "early";
 
+/** What a lock-in comes back with: whether it counted, and the seat's view. */
+export interface LockInResult {
+  outcome: SubmitOutcome;
+  view: MatchView;
+}
+
 /**
- * Grade a guess and offer it to the round.
+ * Grade a guess and offer it to the round — in two round trips.
  *
  * The grading happens here because `gradeGuess` is the application's rule and
  * there should be exactly one copy of it; whether the graded answer *counts*
@@ -1087,45 +1093,84 @@ export type SubmitOutcome =
  * the guess was worth, hand it over, and accept the verdict on whether it
  * arrived in time.
  *
+ * **Two trips, because every trip is a continent.** This used to be eight in a
+ * row — seat, reconcile, round, year, submit, then a whole fresh view — and
+ * against a database in another hemisphere that was 3-4 seconds between the
+ * press and anything happening. Now:
+ *
+ *   1. side by side: the seat, the reconcile, the round's year under every
+ *      generation (the live one is only known once the reconcile answers), and
+ *      the database clock. Reconciling for a caller not yet known to hold a
+ *      seat is safe — it is what every entry point runs first anyway, and it
+ *      only ever applies deadlines that have passed — and nothing read here
+ *      leaves this function unless the seat checks out;
+ *   2. `versus_submit`, whose own `match_row` is the state the view is built
+ *      from.
+ *
+ * The view after an accepted answer needs no further read. The seat's own
+ * answer is the guess just written. Whether the opponent has answered follows
+ * from the phase: their answer being in would have made this one second, and a
+ * second answer reveals the round — so still `playing` means not yet. And the
+ * questions are the ones already on screen (an answer never moves the round
+ * on), so `events` is empty and `foldView` keeps the client's. Every other
+ * outcome is rare and falls back to a full `buildMatchView`.
+ *
  * `elapsedMs` is measured from the round's own `round_started_at`, never from
- * anything the client said. A client cannot report a faster answer than it
- * gave, and a client with a wrong clock does not record a nonsense time.
- * `versus_submit` takes that measurement itself, on the Postgres clock at the
- * insert — the clock a bot's answer is timed on — so `p_elapsed_ms` below is
- * only its fallback for a round with no recorded start.
+ * anything the client said. `versus_submit` takes that measurement itself, on
+ * the Postgres clock at the insert — the clock a bot's answer is timed on — so
+ * `p_elapsed_ms` below is only its fallback for a round with no recorded start.
+ *
+ * Null when the token holds no seat in this match.
  */
-export async function submitGuess(
+export async function lockInGuess(
   client: DbClient,
   {
     matchId,
-    seat,
+    token,
     roundIdx,
     guess,
-  }: { matchId: string; seat: Seat; roundIdx: number; guess: number },
-): Promise<SubmitOutcome> {
-  const match = await reconcile(client, matchId);
+    locale = DEFAULT_LOCALE,
+  }: {
+    matchId: string;
+    token: string;
+    roundIdx: number;
+    guess: number;
+    locale?: string;
+  },
+): Promise<LockInResult | null> {
+  const [seatRead, matchRead, roundsRead, serverNow] = await Promise.allSettled([
+    seatForToken(client, matchId, token),
+    reconcile(client, matchId),
+    client
+      .from("match_round")
+      .select("generation, event:event_id(year)")
+      .eq("match_id", matchId)
+      .eq("idx", roundIdx),
+    databaseNow(client),
+  ]);
 
-  if (match.phase !== "playing") return "closed";
-  if (match.current_idx !== roundIdx) return "stale";
+  // The seat first: a match that does not exist fails its reconcile, and the
+  // caller should hear "not yours", exactly as before, rather than an error.
+  if (seatRead.status === "rejected") throw seatRead.reason;
+  const seat = seatRead.value;
+  if (seat === null) return null;
+  if (matchRead.status === "rejected") throw matchRead.reason;
+  if (roundsRead.status === "rejected") throw roundsRead.reason;
+  if (roundsRead.value.error) throw roundsRead.value.error;
 
-  const { data: round, error: roundError } = await client
-    .from("match_round")
-    .select("event_id")
-    .eq("match_id", matchId)
-    .eq("generation", match.generation)
-    .eq("idx", roundIdx)
-    .maybeSingle();
+  const match = matchRead.value;
+  const slow = async (outcome: SubmitOutcome): Promise<LockInResult> => ({
+    outcome,
+    view: await buildMatchView(client, { matchId, seat, locale }),
+  });
 
-  if (roundError) throw roundError;
-  if (!round) return "stale";
+  if (match.phase !== "playing") return slow("closed");
+  if (match.current_idx !== roundIdx) return slow("stale");
 
-  const { data: event, error: eventError } = await client
-    .from("event")
-    .select("year")
-    .eq("id", round.event_id)
-    .single();
-
-  if (eventError) throw eventError;
+  const year = (roundsRead.value.data ?? []).find(
+    (round) => round.generation === match.generation,
+  )?.event?.year;
+  if (year === undefined || year === null) return slow("stale");
 
   // The mode's own tolerance ladder, not the general one. A football guess
   // nine years out is a bad answer and the same nine years on the formation of
@@ -1135,7 +1180,7 @@ export async function submitGuess(
   // is worth.
   const accuracy = gradeGuess(
     guess,
-    event.year,
+    year,
     versusModeSpec(asVersusMode(match.mode)).bands,
   );
   const startedAt = match.round_started_at
@@ -1154,8 +1199,24 @@ export async function submitGuess(
 
   if (error) throw error;
 
-  const result = (data as unknown as { result: SubmitOutcome }).result;
-  return result;
+  const submitted = data as unknown as {
+    result: SubmitOutcome;
+    match_row: MatchRow | null;
+  };
+  if (submitted.result !== "accepted" || !submitted.match_row) {
+    return slow(submitted.result);
+  }
+
+  const row = submitted.match_row;
+  return {
+    outcome: "accepted",
+    view: viewOf(row, seat, {
+      serverNow:
+        serverNow.status === "fulfilled" ? serverNow.value : Date.now(),
+      events: {},
+      answers: { own: guess, theirs: row.phase !== "playing" },
+    }),
+  };
 }
 
 export async function requestRematch(
@@ -1281,6 +1342,11 @@ export async function abandonMatch(
  * rather than as the last player to touch it left it. That is what makes a
  * reload or a reconnect self-healing: the client throws its state away, asks
  * again, and gets the truth.
+ *
+ * `row` is a reconcile the caller has already done in this request, so it is
+ * not paid for twice, and `now` the clock read beside it. Without `now` the
+ * clock is read beside the round reads instead — fine for the heartbeat,
+ * whose answer is never used to measure the client's clock offset.
  */
 export async function buildMatchView(
   client: DbClient,
@@ -1288,7 +1354,15 @@ export async function buildMatchView(
     matchId,
     seat,
     locale = DEFAULT_LOCALE,
-  }: { matchId: string; seat: Seat; locale?: string },
+    row,
+    now: knownNow,
+  }: {
+    matchId: string;
+    seat: Seat;
+    locale?: string;
+    row?: MatchRow;
+    now?: number;
+  },
 ): Promise<MatchView> {
   // The clock is read *alongside* the reconcile rather than after it, and the
   // difference is not cosmetic. The browser takes `serverNow` as the server's
@@ -1297,22 +1371,75 @@ export async function buildMatchView(
   // deadline really has, and the client prompts a server that correctly
   // declines to do anything. Sampling early biases it the other way, and a
   // countdown that ends late meets a server that has already moved on.
-  const [match, serverNow] = await Promise.all([
-    reconcile(client, matchId),
-    databaseNow(client),
-  ]);
+  const [match, serverNow] = row
+    ? [row, knownNow ?? databaseNow(client)]
+    : await Promise.all([reconcile(client, matchId), databaseNow(client)]);
 
   const mode = asVersusMode(match.mode);
 
-  const [events, answers] = await Promise.all([
+  const [events, answers, now] = await Promise.all([
     visibleEvents(client, match, locale, mode),
     liveAnswers(client, match, seat),
+    serverNow,
   ]);
 
+  return viewOf(match, seat, { serverNow: now, events, answers });
+}
+
+/**
+ * `buildMatchView` for a caller known only by a token: the seat check rides in
+ * the same trip as the reconcile and the clock (see `lockInGuess` for why the
+ * reconcile may run before the seat is known). Null when the token holds no
+ * seat in this match.
+ */
+export async function viewForToken(
+  client: DbClient,
+  {
+    matchId,
+    token,
+    locale = DEFAULT_LOCALE,
+  }: { matchId: string; token: string; locale?: string },
+): Promise<{ seat: Seat; view: MatchView } | null> {
+  const [seatRead, matchRead, now] = await Promise.allSettled([
+    seatForToken(client, matchId, token),
+    reconcile(client, matchId),
+    databaseNow(client),
+  ]);
+  if (seatRead.status === "rejected") throw seatRead.reason;
+  const seat = seatRead.value;
+  if (seat === null) return null;
+  if (matchRead.status === "rejected") throw matchRead.reason;
+
+  return {
+    seat,
+    view: await buildMatchView(client, {
+      matchId,
+      seat,
+      locale,
+      row: matchRead.value,
+      now: now.status === "fulfilled" ? now.value : Date.now(),
+    }),
+  };
+}
+
+/** A match row, as one seat may see it. Pure: every read is the caller's. */
+function viewOf(
+  match: MatchRow,
+  seat: Seat,
+  {
+    serverNow,
+    events,
+    answers,
+  }: {
+    serverNow: number;
+    events: Record<number, MaskedEvent>;
+    answers: { own: number | null; theirs: boolean };
+  },
+): MatchView {
   return {
     matchId: match.id,
     code: match.code,
-    mode,
+    mode: asVersusMode(match.mode),
     seat,
     phase: match.phase,
     generation: match.generation,
@@ -1405,22 +1532,37 @@ async function liveAnswers(
  * render, the cost of a withheld one is a client that never learns the round
  * moved. A private match answers null: its clients never beat (both seats are
  * browsers that push their own answers).
+ *
+ * The seat and the reconcile are one trip, side by side (see `lockInGuess` for
+ * why that is safe), and a view built here reuses that reconcile. Null when
+ * the token holds no seat in this match.
  */
 export async function tickMatch(
   client: DbClient,
   {
     matchId,
-    seat,
+    token,
     knownVersion,
     locale = DEFAULT_LOCALE,
-  }: { matchId: string; seat: Seat; knownVersion: number; locale?: string },
-): Promise<TickResponse> {
-  const row = await reconcile(client, matchId);
+  }: { matchId: string; token: string; knownVersion: number; locale?: string },
+): Promise<TickResponse | null> {
+  const [seatRead, rowRead] = await Promise.allSettled([
+    seatForToken(client, matchId, token),
+    reconcile(client, matchId),
+  ]);
+  if (seatRead.status === "rejected") throw seatRead.reason;
+  const seat = seatRead.value;
+  if (seat === null) return null;
+  if (rowRead.status === "rejected") throw rowRead.reason;
+  const row = rowRead.value;
+
+  void touchSeat(client, matchId, seat).catch(() => {});
+
   if (!row.is_public) return { ok: true, view: null };
 
   const view = async (): Promise<TickResponse> => ({
     ok: true,
-    view: await buildMatchView(client, { matchId, seat, locale }),
+    view: await buildMatchView(client, { matchId, seat, locale, row }),
   });
 
   if (row.phase === "playing") {

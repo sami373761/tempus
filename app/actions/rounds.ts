@@ -66,13 +66,16 @@ export async function dealTimelineEvents(
 
   const locale = await readLocale();
   const supabase = await createServerDbClient();
-  const events = await randomEvents(supabase, {
-    count: take,
-    locale,
-    exclude: sanitizeExclude(exclude),
-  });
+  const [events, userId] = await Promise.all([
+    randomEvents(supabase, {
+      count: take,
+      locale,
+      exclude: sanitizeExclude(exclude),
+    }),
+    dealtTo(),
+  ]);
 
-  return dealDated("history", shuffle(events));
+  return dealDated("history", shuffle(events), userId);
 }
 
 /**
@@ -97,14 +100,17 @@ export async function dealFootballEvents(
 
   const locale = await readLocale();
   const supabase = await createServerDbClient();
-  const events = await randomEvents(supabase, {
-    count: take,
-    locale,
-    topicSlug: FOOTBALL_TOPIC,
-    exclude: sanitizeExclude(exclude),
-  });
+  const [events, userId] = await Promise.all([
+    randomEvents(supabase, {
+      count: take,
+      locale,
+      topicSlug: FOOTBALL_TOPIC,
+      exclude: sanitizeExclude(exclude),
+    }),
+    dealtTo(),
+  ]);
 
-  return dealDated("football", shuffle(events));
+  return dealDated("football", shuffle(events), userId);
 }
 
 /**
@@ -127,14 +133,17 @@ export async function dealBasketballEvents(
 
   const locale = await readLocale();
   const supabase = await createServerDbClient();
-  const events = await randomEvents(supabase, {
-    count: take,
-    locale,
-    topicSlug: BASKETBALL_TOPIC,
-    exclude: sanitizeExclude(exclude),
-  });
+  const [events, userId] = await Promise.all([
+    randomEvents(supabase, {
+      count: take,
+      locale,
+      topicSlug: BASKETBALL_TOPIC,
+      exclude: sanitizeExclude(exclude),
+    }),
+    dealtTo(),
+  ]);
 
-  return dealDated("basketball", shuffle(events));
+  return dealDated("basketball", shuffle(events), userId);
 }
 
 /**
@@ -163,12 +172,15 @@ export async function dealScreenEvents(
 
   const locale = await readLocale();
   const supabase = await createServerDbClient();
-  const events = await randomEvents(supabase, {
-    count: take,
-    locale,
-    topicSlug: SCREEN_TOPIC,
-    exclude: sanitizeExclude(exclude),
-  });
+  const [events, userId] = await Promise.all([
+    randomEvents(supabase, {
+      count: take,
+      locale,
+      topicSlug: SCREEN_TOPIC,
+      exclude: sanitizeExclude(exclude),
+    }),
+    dealtTo(),
+  ]);
 
   const formats = await eventCategorySlugs(
     supabase,
@@ -184,6 +196,7 @@ export async function dealScreenEvents(
         format: screenFormatOf(formats.get(event.id)),
       })),
     ),
+    userId,
   );
 }
 
@@ -217,12 +230,15 @@ export async function dealWhenBornEvents(
 
   const locale = await readLocale();
   const supabase = await createServerDbClient();
-  const events = await randomEvents(supabase, {
-    count: take,
-    locale,
-    topicSlug: WHEN_BORN_TOPIC,
-    exclude: sanitizeExclude(exclude),
-  });
+  const [events, userId] = await Promise.all([
+    randomEvents(supabase, {
+      count: take,
+      locale,
+      topicSlug: WHEN_BORN_TOPIC,
+      exclude: sanitizeExclude(exclude),
+    }),
+    dealtTo(),
+  ]);
 
   const fields = await eventCategorySlugs(
     supabase,
@@ -238,6 +254,7 @@ export async function dealWhenBornEvents(
         field: personFieldOf(fields.get(event.id)),
       })),
     ),
+    userId,
   );
 }
 
@@ -288,13 +305,16 @@ async function dealComparisonFor(
 
   const locale = await readLocale();
   const supabase = await createServerDbClient();
-  const events = await randomEvents(supabase, {
-    count: take * EVENTS_PER_COMPARISON_ROUND,
-    locale,
-    fromYear: COMPARISON_MIN_YEAR,
-    distinctYears: true,
-    exclude: sanitizeExclude(exclude),
-  });
+  const [events, userId] = await Promise.all([
+    randomEvents(supabase, {
+      count: take * EVENTS_PER_COMPARISON_ROUND,
+      locale,
+      fromYear: COMPARISON_MIN_YEAR,
+      distinctYears: true,
+      exclude: sanitizeExclude(exclude),
+    }),
+    dealtTo(),
+  ]);
 
   const pool = shuffle(events);
   const rounds: ComparisonRound[] = [];
@@ -310,7 +330,6 @@ async function dealComparisonFor(
     if (round) rounds.push(round);
   }
 
-  const userId = await dealtTo();
   return rounds.map((round) => {
     const token = signRound({
       game,
@@ -333,6 +352,10 @@ async function dealComparisonFor(
  * session on this request — never an argument — and written into every
  * token, so a round dealt to a guest tab cannot be banked by an account and a
  * round dealt to one account cannot be banked by another.
+ *
+ * Every dealer reads it *beside* the draw (`Promise.all`), not after it: for a
+ * signed-in player it is a trip to Supabase Auth, as far away as the database,
+ * and the two answers do not depend on each other.
  */
 async function dealtTo(): Promise<string | null> {
   const user = await getCurrentUser();
@@ -343,11 +366,11 @@ async function dealtTo(): Promise<string | null> {
  * Masks and signs a batch of date rounds. **The year leaves the server only in
  * the reply to a guess** (app/actions/scoring.ts), never in a deal.
  */
-async function dealDated<E extends LocalizedEvent>(
+function dealDated<E extends LocalizedEvent>(
   game: SoloGame,
   events: readonly E[],
-): Promise<DealtEvent<E>[]> {
-  const userId = await dealtTo();
+  userId: string | null,
+): DealtEvent<E>[] {
   return events.map((event) =>
     maskForDeal(event, signRound({ game, userId, eventIds: [event.id] })),
   );

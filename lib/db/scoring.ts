@@ -264,7 +264,7 @@ export async function readShownBadge(
    Leaderboard
    ------------------------------------------------------------------------- */
 
-export const LEADERBOARD_PERIODS = ["all", "week"] as const;
+export const LEADERBOARD_PERIODS = ["all", "month"] as const;
 export type LeaderboardPeriod = (typeof LEADERBOARD_PERIODS)[number];
 
 export function isLeaderboardPeriod(value: string): value is LeaderboardPeriod {
@@ -272,21 +272,21 @@ export function isLeaderboardPeriod(value: string): value is LeaderboardPeriod {
 }
 
 /**
- * Where the weekly board starts: Monday 00:00 UTC. UTC for the daily's reason
- * — one boundary for everybody, so "this week" is the same week in every time
- * zone.
+ * Where the monthly board starts: the 1st of the month, 00:00 UTC. UTC for the
+ * daily's reason — one boundary for everybody, so "this month" is the same
+ * month in every time zone.
+ *
+ * Nothing is reset or deleted when a month ends. The board is the all-time
+ * ledger read from this lower bound, so on the 1st the bound moves and the
+ * board starts empty by itself — no cron, and last month's points still count
+ * towards the all-time board.
  */
-export function weekStart(now: Date = new Date()): Date {
-  const start = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-  );
-  const daysSinceMonday = (start.getUTCDay() + 6) % 7;
-  start.setUTCDate(start.getUTCDate() - daysSinceMonday);
-  return start;
+export function monthStart(now: Date = new Date()): Date {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
 }
 
 function sinceOf(period: LeaderboardPeriod): string | null {
-  return period === "week" ? weekStart().toISOString() : null;
+  return period === "month" ? monthStart().toISOString() : null;
 }
 
 export interface LeaderboardRow {
@@ -332,4 +332,54 @@ export async function readLeaderboardPosition(
   if (error) throw new Error(`readLeaderboardPosition: ${error.message}`);
   const row = data?.[0];
   return row ? { rank: Number(row.rank), tp: Number(row.tp) } : null;
+}
+
+/* -------------------------------------------------------------------------
+   Chrono Rating board
+   ------------------------------------------------------------------------- */
+
+export interface ChronoLeaderboardRow {
+  rank: number;
+  username: string;
+  badge: BadgeSlug | null;
+  avatarKey: string | null;
+  rating: number;
+  wins: number;
+  matches: number;
+}
+
+/**
+ * Players ranked by KP. Only accounts that have finished an online match are
+ * on it — see supabase/migrations/20261017200000_chrono_leaderboard.sql.
+ */
+export async function readChronoLeaderboard(
+  client: DbClient,
+  limit = 50,
+): Promise<ChronoLeaderboardRow[]> {
+  const { data, error } = await client.rpc("chrono_leaderboard", {
+    p_limit: limit,
+  });
+  if (error) throw new Error(`readChronoLeaderboard: ${error.message}`);
+
+  return (data ?? []).map((row) => ({
+    rank: Number(row.rank),
+    username: row.username,
+    badge: row.badge_slug && isBadgeSlug(row.badge_slug) ? row.badge_slug : null,
+    avatarKey: row.avatar_key ?? null,
+    rating: Number(row.rating),
+    wins: Number(row.wins),
+    matches: Number(row.matches),
+  }));
+}
+
+export async function readChronoLeaderboardPosition(
+  admin: DbClient,
+  userId: string,
+): Promise<{ rank: number; rating: number } | null> {
+  const { data, error } = await admin.rpc("chrono_leaderboard_position", {
+    p_user_id: userId,
+  });
+  if (error) throw new Error(`readChronoLeaderboardPosition: ${error.message}`);
+  const row = data?.[0];
+  return row ? { rank: Number(row.rank), rating: Number(row.rating) } : null;
 }

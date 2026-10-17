@@ -277,9 +277,16 @@ export function VerdictDeckRow({
   verdict,
   facts,
   tp = null,
+  label = null,
   t,
 }: {
   verdict: Verdict;
+  /**
+   * The head's word, when it is not the tier's: a round whose clock ran out
+   * with nothing picked is coloured as the miss it is graded as, but it says
+   * what happened rather than how far off a guess nobody made was.
+   */
+  label?: string | null;
   /** Labelled facts for the foot, left to right. Two fit; three is a squeeze. */
   facts: { label: string; value: string }[];
   /**
@@ -311,7 +318,7 @@ export function VerdictDeckRow({
             languages ("Loin du compte") does not fit this width on one, and a
             per-language size would be a measurement to keep. */}
         <p className="font-display text-[15px] font-semibold leading-[1.05] tracking-tight text-[#0a0a0a] sm:text-base">
-          {t[VERDICT_LABEL_KEYS[verdict]]}
+          {label ?? t[VERDICT_LABEL_KEYS[verdict]]}
         </p>
       </div>
 

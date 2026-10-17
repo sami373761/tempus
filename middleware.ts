@@ -94,7 +94,19 @@ export const config = {
        Supabase round trip in front of every image of a match for nothing — the
        route reads no session. The online match's heartbeat likewise: it is
        authorised by its seat token, never by a cookie, and it fires every
-       second and a half for most of a round. */
-    "/((?!_next/static|_next/image|favicon.ico|auth/callback|api/masked-image/|api/versus/tick|.*\\.(?:svg|png|jpg|jpeg|webp|avif|mp4|ico)$).*)",
+       second and a half for most of a round.
+
+       **Server Action calls are skipped too** (`missing: next-action`). For a
+       signed-in player the session check here is a round trip to Supabase
+       Auth, and it ran in front of every action — every lock-in, every
+       reveal — while the actions that need an account read it themselves
+       (`getCurrentUser`, which refreshes an expired session and can write the
+       cookie, since an action may), and the ones that do not, never did. The
+       gate is for page loads; an action is not one. */
+    {
+      source:
+        "/((?!_next/static|_next/image|favicon.ico|auth/callback|api/masked-image/|api/versus/tick|.*\\.(?:svg|png|jpg|jpeg|webp|avif|mp4|ico)$).*)",
+      missing: [{ type: "header", key: "next-action" }],
+    },
   ],
 };

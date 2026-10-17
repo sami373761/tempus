@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { dealTimelineEvents } from "@/app/actions/rounds";
 import { revealDateRound } from "@/app/actions/scoring";
 import {
   DateEntry,
@@ -17,6 +16,7 @@ import {
   VerdictFlank,
 } from "@/components/round-flank";
 import { RoundHead } from "@/components/round-head";
+import { SoloRoundTimer, useSoloRoundClock } from "@/components/round-timer";
 import { SetProgress, SetSummary } from "@/components/set-summary";
 import { useSoloSet } from "@/components/solo-points";
 import { TimelineBackdrop } from "@/components/timeline-backdrop";
@@ -34,6 +34,7 @@ import {
   TimelinePaneView,
 } from "@/components/timeline-stage";
 import type { SupportedLocale } from "@/lib/db/types";
+import { dealRounds, type TimelineDealGame } from "@/lib/game/deal";
 import {
   directYear,
   EMPTY_DATE_ENTRY,
@@ -130,7 +131,7 @@ export function TimelineGame({
   panes = TIMELINE_PANES,
   homePane = DEFAULT_PANE,
   bands = undefined,
-  deal = dealTimelineEvents,
+  game = "history",
   title,
   otherHref = "/compare",
   otherLabel,
@@ -160,18 +161,12 @@ export function TimelineGame({
    */
   bands?: BandSet;
   /**
-   * How the queue is topped up. A Server Action, passed in rather than chosen
-   * here, because the pool is the one thing that must not be decidable on the
-   * client: the football game and the date-guessing game differ in which
-   * action they call and in nothing else.
-   *
-   * The second argument is the events this game has already dealt — see the
-   * refill effect for why the draw has to be told.
+   * Which pool the queue is topped up from (lib/game/deal.ts): the football
+   * game and the date-guessing game differ in which dealer they reach and in
+   * nothing else. The dealer, not this component, decides what the pool is and
+   * which game its rounds are signed for.
    */
-  deal?: (
-    count: number,
-    exclude: readonly string[],
-  ) => Promise<DealtEvent[]>;
+  game?: TimelineDealGame;
   /** The set summary's heading. Defaults to the date-guessing game's. */
   title?: string;
   /** Where the summary's "try the other game" link goes. */
@@ -329,7 +324,7 @@ export function TimelineGame({
     // that is the end `EXCLUDED_EVENT_LIMIT` keeps.
     const dealt = [...played, ...queue.map((held) => held.id)];
 
-    deal(ROUND_QUEUE_DEPTH, dealt.slice(-EXCLUDED_EVENT_LIMIT))
+    dealRounds(game, ROUND_QUEUE_DEPTH, dealt.slice(-EXCLUDED_EVENT_LIMIT))
       .then((fresh) => {
         if (cancelled) return;
         setQueue((current) => {
@@ -357,14 +352,14 @@ export function TimelineGame({
       cancelled = true;
       if (retry !== null) window.clearTimeout(retry);
     };
-    // `deal` is a module-level Server Action reference at every call site, so
-    // it is stable; naming it keeps the dependency array honest. `queue` and
+    // `game` is a constant at every call site, so it is stable; naming it
+    // keeps the dependency array honest. `queue` and
     // `played` are read for the exclusion list but deliberately not depended
     // on: a draw already in flight has no reason to be restarted because the
     // player answered a question, and the length is what says a refill is
     // owed.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queue.length, refillAttempt, deal]);
+  }, [queue.length, refillAttempt, game]);
 
   // Pull the next round's photograph while the current one is being guessed, so
   // the dissolve has something to dissolve *to*. Decoding is the browser's; all
@@ -423,13 +418,21 @@ export function TimelineGame({
     setPane(nextPane);
   }
 
+  /** The button's lock-in. */
+  function submit() {
+    void lockIn(false);
+  }
+
   /**
    * Locking in always ends with the answer on screen. A guess in the common era
    * for something that happened four billion years ago is not wrong by a number
    * the player can picture — so the camera travels there, through every era in
    * between, and the answer is marked on the rail it belongs to.
+   *
+   * `timeUp` is the round's clock running out: whatever is on the board is
+   * locked in — the typed year if there is a valid one, otherwise the marker.
    */
-  async function submit() {
+  async function lockIn(timeUp: boolean) {
     if (locked || sending || !event) return;
 
     // Where the guess came from. Dragging has already put the camera and the
@@ -441,13 +444,13 @@ export function TimelineGame({
     let from = pane;
     let guessed = year;
 
-    if (direct) {
-      const typed = directYear(entry, entryRange);
-      if (typed === null) {
-        setInvalid(true);
-        return;
-      }
+    const typed = direct ? directYear(entry, entryRange) : null;
+    if (direct && typed === null && !timeUp) {
+      setInvalid(true);
+      return;
+    }
 
+    if (typed !== null) {
       guessed = typed;
       from = paneForYear(typed, panes);
 
@@ -603,6 +606,15 @@ export function TimelineGame({
   // the one name the markup below branches on.
   const subject = !railHeading;
 
+  // Thirty seconds a round. Not while the summary is up: the round under it
+  // has already advanced, and its clock starts when the summary goes.
+  const clock = useSoloRoundClock({
+    round: event?.token ?? null,
+    picture: event?.image?.url ?? null,
+    live: event !== null && !locked && !setComplete,
+    onExpire: () => void lockIn(true),
+  });
+
   if (!event) return null;
 
   return (
@@ -716,7 +728,9 @@ export function TimelineGame({
               // show one (see `badge`), and disputing an event's date must
               // not be something only a desktop can do.
               aside={
-                subject && answered ? (
+                !locked ? (
+                  <SoloRoundTimer clock={clock} t={t} />
+                ) : subject && answered ? (
                   <div className="min-[1120px]:hidden">
                     <DateChallenge eventId={event.id} t={t} />
                   </div>

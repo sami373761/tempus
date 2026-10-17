@@ -10,7 +10,7 @@ import {
   MarkerIcon,
   ScalesIcon,
 } from "@/components/game-board";
-import { BADGES, DEFAULT_AVATAR_SRC, type BadgeSlug } from "@/lib/badges";
+import { BADGES, type BadgeSlug } from "@/lib/badges";
 import type { Dict } from "@/lib/i18n/dictionary";
 import type { ExplorerArt, ExplorerImage } from "@/lib/storage/images";
 
@@ -937,10 +937,10 @@ function RoundButton({
    The stage
    --------------------------------------------------------------------------- */
 
-/** The ring never grows past this, however much stage there is: at 150 the
- *  tallest frame is 314px, which is already the largest a badge reads as one
- *  object rather than as wallpaper. */
-const MAX_STAGE_AVATAR = 150;
+/** The ring never grows past this, however much stage there is. With the hole
+ *  left empty the badge alone is the subject, and a touch under the old 150
+ *  keeps it reading as one object rather than as wallpaper. */
+const MAX_STAGE_AVATAR = 132;
 
 /** Height the badge's two lines of caption take out of the stage before the
  *  ring is fitted into what is left. */
@@ -1098,10 +1098,9 @@ function StageSubjects({
 /**
  * The chosen rank, worn.
  *
- * The gallery on `/achievements` shows the rings empty, because there the badge
- * itself is the subject. Here the question is what one looks like around a
- * picture, so the hole is filled with the stand-in avatar — the same pairing
- * the preview bench on that page makes.
+ * The ring is shown empty, as in the gallery on `/achievements`: the badge
+ * itself is the subject, and a stand-in face in the hole was the loudest thing
+ * on the stage.
  *
  * Keyed on the slug so the arrival replays on every swatch, and the class is
  * conditional on `active` so it replays again when the pill is reopened: a CSS
@@ -1177,11 +1176,7 @@ function StageBadge({
           key={rank}
           className={`flex flex-col items-center ${active ? "explorer-badge-in" : ""}`}
         >
-          <BadgeFrame
-            badge={badge}
-            avatar={avatar}
-            avatarSrc={DEFAULT_AVATAR_SRC}
-          />
+          <BadgeFrame badge={badge} avatar={avatar} />
 
           <p className="text-center font-display text-xl font-semibold text-ink">
             {t[badge.nameKey]}

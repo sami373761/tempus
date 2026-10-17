@@ -17,6 +17,7 @@ import {
   isSeatTokenShape,
   joinMatch,
   liveSeatForToken,
+  lockInGuess,
   matchmake,
   moveSeatToken,
   readMoveTarget,
@@ -25,10 +26,10 @@ import {
   seatBot,
   seatForToken,
   setReady,
-  submitGuess,
   touchSeat,
   type Searcher,
   type SubmitOutcome,
+  viewForToken,
 } from "@/lib/db/matches";
 import { paneBounds, TIMELINE_PANES } from "@/lib/game/timeline";
 import {
@@ -406,10 +407,12 @@ export async function fetchMatchView(
   matchId: string,
   token: string,
 ): Promise<ViewResult> {
-  return withSeat(matchId, token, async (admin, seat) => {
+  return withToken(matchId, token, async (admin) => {
     const locale = await readLocale();
-    void touchSeat(admin, matchId, seat).catch(() => {});
-    return { ok: true, view: await buildMatchView(admin, { matchId, seat, locale }) };
+    const read = await viewForToken(admin, { matchId, token, locale });
+    if (!read) return null;
+    void touchSeat(admin, matchId, read.seat).catch(() => {});
+    return { ok: true, view: read.view };
   });
 }
 
@@ -458,19 +461,18 @@ export async function submitVersusGuess(
     return { ok: false, reason: "bad-guess" };
   }
 
-  return withSeat(matchId, token, async (admin, seat) => {
-    const outcome = await submitGuess(admin, {
+  // No `withSeat`: the seat is checked inside `lockInGuess`, in the same round
+  // trip as everything else it needs — see there for why that matters.
+  return withToken(matchId, token, async (admin) => {
+    const locale = await readLocale();
+    const locked = await lockInGuess(admin, {
       matchId,
-      seat,
+      token,
       roundIdx: idx,
       guess: year,
+      locale,
     });
-    const locale = await readLocale();
-    return {
-      ok: true,
-      outcome,
-      view: await buildMatchView(admin, { matchId, seat, locale }),
-    };
+    return locked ? { ok: true, ...locked } : null;
   });
 }
 
@@ -578,6 +580,23 @@ async function withSeat<T extends { ok: true } | ActionFailure>(
     seat: Seat,
   ) => Promise<T>,
 ): Promise<T | ActionFailure> {
+  return withToken(matchId, token, async (admin) => {
+    const seat = await seatForToken(admin, matchId, token);
+    return seat === null ? null : run(admin, seat);
+  });
+}
+
+/**
+ * `withSeat` for the hot paths that look the seat up themselves, alongside
+ * the rest of their first round trip (`lockInGuess`, `viewForToken`): the same
+ * shape checks and the same error wall, and `null` from `run` is the seat
+ * check failing.
+ */
+async function withToken<T extends { ok: true } | ActionFailure>(
+  matchId: string,
+  token: string,
+  run: (admin: ReturnType<typeof createAdminDbClient>) => Promise<T | null>,
+): Promise<T | ActionFailure> {
   if (typeof matchId !== "string" || !UUID.test(matchId)) {
     return { ok: false, reason: "not-found" };
   }
@@ -588,9 +607,8 @@ async function withSeat<T extends { ok: true } | ActionFailure>(
   const admin = createAdminDbClient();
 
   try {
-    const seat = await seatForToken(admin, matchId, token);
-    if (seat === null) return { ok: false, reason: "forbidden" };
-    return await run(admin, seat);
+    const result = await run(admin);
+    return result ?? { ok: false, reason: "forbidden" };
   } catch (error) {
     console.error("versus action failed", { matchId, error });
     return { ok: false, reason: "server" };

@@ -9,6 +9,7 @@ import {
   RoundVerdict,
   VerdictFlank,
 } from "@/components/round-flank";
+import { SoloRoundTimer, useSoloRoundClock } from "@/components/round-timer";
 import { TimelineBackdrop } from "@/components/timeline-backdrop";
 import {
   openingFractions,
@@ -409,6 +410,18 @@ export function DailyGame({
      Render
      ---------------------------------------------------------------------- */
 
+  // Thirty seconds a question, kept across a reload: the day's ten questions
+  // are the same on every load, so a clock that restarted would be a reload's
+  // worth of time to look the answer up (see `useSoloRoundClock`).
+  const clockKey = `daily:${puzzleDate}:${shownIdx}`;
+  const clock = useSoloRoundClock({
+    round: clockKey,
+    picture: event?.image?.url ?? null,
+    live: hydrated && event !== null && !done && !answered && guess === null,
+    onExpire: () => void submit(),
+    persistKey: clockKey,
+  });
+
   // A guest before their store has been read. The backdrop is already mounted
   // behind it, so this is a held frame rather than a blank page — and it is
   // one tick in practice.
@@ -506,18 +519,23 @@ export function DailyGame({
               // kept, said once, where it cannot be missed and cannot be
               // mistaken for a score.
               aside={
-                member ? (
-                  <span className="rounded-full border border-white/20 bg-black/55 px-2.5 py-1 text-[11px] font-semibold text-white/80 backdrop-blur-md">
-                    <span className="tabular-nums text-ink">
-                      {points.toLocaleString(locale)}
-                    </span>{" "}
-                    {t.dailyPointsLabel}
-                  </span>
-                ) : (
-                  <span className="rounded-full border border-white/20 bg-black/55 px-2.5 py-1 text-[11px] font-semibold text-white/60 backdrop-blur-md">
-                    {t.dailyGuestScore}
-                  </span>
-                )
+                <span className="flex items-center gap-2">
+                  {member ? (
+                    <span className="rounded-full border border-white/20 bg-black/55 px-2.5 py-1 text-[11px] font-semibold text-white/80 backdrop-blur-md">
+                      <span className="tabular-nums text-ink">
+                        {points.toLocaleString(locale)}
+                      </span>{" "}
+                      {t.dailyPointsLabel}
+                    </span>
+                  ) : (
+                    <span className="rounded-full border border-white/20 bg-black/55 px-2.5 py-1 text-[11px] font-semibold text-white/60 backdrop-blur-md">
+                      {t.dailyGuestScore}
+                    </span>
+                  )}
+                  {!answered && guess === null && (
+                    <SoloRoundTimer clock={clock} t={t} />
+                  )}
+                </span>
               }
               badge={
                 accuracy && revealed ? (

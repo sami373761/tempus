@@ -48,7 +48,7 @@ export const ROUNDS_PER_MATCH = QUESTIONS_PER_SET;
  * flight keeps the limit it started with even across a deploy that changes
  * this number.
  */
-export const ROUND_SECONDS = 20;
+export const ROUND_SECONDS = 25;
 
 /**
  * How long both players look at the round result before the next question.
@@ -76,8 +76,8 @@ export const PUBLIC_VERSUS_MODE: VersusMode = "history";
  * How long "Opponent found" stays on screen before question one.
  *
  * Not a phase: the first round's `round_started_at` is simply stamped this far
- * in the future, and its deadline from there. So the twenty seconds a player
- * gets are twenty seconds of question, the server refuses a guess that arrives
+ * in the future, and its deadline from there. So the twenty-five seconds a player
+ * gets are twenty-five seconds of question, the server refuses a guess that arrives
  * early (`versus_submit` answers `early`), and a bot's thinking time is counted
  * from the same instant a person's is.
  */
@@ -612,6 +612,45 @@ export function upcomingEvent(view: MatchView): MaskedEvent | null {
 export function revealedRound(view: MatchView): RoundResult | null {
   if (view.phase !== "revealed") return null;
   return view.history.find((round) => round.idx === view.currentIdx) ?? null;
+}
+
+/**
+ * The view as it stands once the reveal is over, before the server has said
+ * so.
+ *
+ * `versus_reconcile` starts the next round at `reveal_until_at` itself
+ * (supabase/migrations/20261017210000_versus_round_starts_on_time.sql), an
+ * instant this client already has — as it has the next question, masked, and
+ * its picture, preloaded. So at that instant the next round can be drawn
+ * exactly as the server will describe it a round trip later, instead of the
+ * reveal sitting at zero for that trip. The request that makes it official is
+ * still sent (the deadline prompt in `VersusGame`); this only decides what is
+ * on screen while it is on its way.
+ *
+ * `version` is left alone on purpose: the server's own word on the new round
+ * (a push or a read) carries a higher one and replaces this wholesale. Not
+ * after the last round, whose end is the summary and needs the server's
+ * settlement, and not without the next question in hand.
+ */
+export function viewAtRevealEnd(view: MatchView, serverNow: number): MatchView {
+  if (view.phase !== "revealed" || view.revealUntilAt === null) return view;
+  if (serverNow < view.revealUntilAt) return view;
+
+  const next = view.currentIdx + 1;
+  if (next >= view.totalRounds || view.events[next] === undefined) return view;
+
+  return {
+    ...view,
+    phase: "playing",
+    currentIdx: next,
+    roundStartedAt: view.revealUntilAt,
+    roundDeadlineAt: view.revealUntilAt + view.roundSeconds * 1000,
+    revealUntilAt: null,
+    answeredCount: 0,
+    youAnswered: false,
+    yourGuess: null,
+    theyAnswered: false,
+  };
 }
 
 /**

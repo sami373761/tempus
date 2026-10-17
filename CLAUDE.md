@@ -81,6 +81,8 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
   - `chrono_tier()` / `chrono_delta()` ↔ `chronoTier()` / `CHRONO_RATING_RULES`
     in `lib/game/chrono-rating.ts`
   - the column grant on `public.match` ↔ `MATCH_CLIENT_COLUMNS` in `lib/game/versus.ts`
+  - the pool/draw rules in `random_events()` (every draw, one round trip) ↔
+    `poolRestriction()` and `RandomEventsOptions` in `lib/db/queries.ts`
 - **Eras:** `year <= 0` → `bce`, `1..2026` → `ce`, `> 2026` → `future`. Era
   category links are maintained by a trigger; never write them by hand.
 - **An event with no primary image is hidden from the site.** Queries in
@@ -177,6 +179,8 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
 - **Round queue:** refill to `ROUND_QUEUE_TARGET` (3), server deals
   `ROUND_QUEUE_DEPTH` (2). Keep them different — equal values reintroduce a
   dead "Next round" button on question 2.
+- Solo refills go through `POST /api/deal` (`lib/game/deal.ts`), never a Server
+  Action: actions run one at a time, and a reveal must not queue behind a deal.
 - **Advance buttons are never `disabled`**; a press with nothing queued is
   latched and played when a round arrives.
 - Refill effects key on queue length and need an explicit `refillAttempt`
@@ -244,6 +248,8 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
   Re-check 0px overflow after any type, spacing or chrome change.
   `--site-bar-h` is the only way to change the bar height; `--compare-chrome` is
   a hand-maintained sum that must be updated with any chrome change.
+- Each solo game route's `loading.tsx` repeats its `page.tsx` frame class
+  verbatim (`GameLoading`); change the two together.
 - **`<body>` must stay transparent** — the page colour lives on `html`, or
   `-z-10` backdrops are hidden.
 - **Font:** Inter only, via `next/font` with `latin-ext`. Keep the
@@ -278,8 +284,8 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
    bucket (old `ce/` copies, `bce/formation-ofthe-moon.jpeg`,
    `ce/ashoka-adopts-buddhism.jpeg`) are safe to delete — never attach them.
 3. Only era categories exist; no topic tags.
-4. Solo reveals are server actions, queued behind pending deals; latency is
-   high in dev because the DB is in ap-southeast-2.
+4. The DB is in ap-southeast-2, far from the players: every round trip shows.
+   Moving regions is deferred.
 5. No admin UI. `eventChallengeStats()` is ready for its first screen.
 6. Google sign-in needs the provider enabled in the Supabase dashboard; the
    Google-only "set a password" path is untested.

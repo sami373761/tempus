@@ -924,6 +924,22 @@ export type Database = {
         Args: { p_user_id: string; p_since?: string | null };
         Returns: { rank: number; tp: number }[];
       };
+      chrono_leaderboard: {
+        Args: { p_limit?: number };
+        Returns: {
+          rank: number;
+          username: string;
+          badge_slug: string | null;
+          avatar_key: string | null;
+          rating: number;
+          wins: number;
+          matches: number;
+        }[];
+      };
+      chrono_leaderboard_position: {
+        Args: { p_user_id: string };
+        Returns: { rank: number; rating: number }[];
+      };
       array_is_distinct: {
         Args: { ids: string[] };
         Returns: boolean;
@@ -957,6 +973,20 @@ export type Database = {
       historical_year_label: {
         Args: { p_year: number };
         Returns: string;
+      };
+      random_events: {
+        Args: {
+          p_count: number;
+          p_locales: string[];
+          p_from_year?: number | null;
+          p_to_year?: number | null;
+          p_distinct_years?: boolean;
+          p_require_image?: boolean;
+          p_topic_slug?: string | null;
+          p_all_pools?: boolean;
+          p_exclude?: string[] | null;
+        };
+        Returns: Database["public"]["Views"]["event_localized"]["Row"][];
       };
       versus_db_now: {
         Args: Record<string, never>;

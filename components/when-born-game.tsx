@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { dealWhenBornEvents } from "@/app/actions/rounds";
 import { revealDateRound } from "@/app/actions/scoring";
 import {
   DateEntry,
@@ -11,6 +10,7 @@ import {
 } from "@/components/date-entry";
 import { NoteDeck, RoundVerdict, VerdictDeck } from "@/components/round-flank";
 import { RoundHead } from "@/components/round-head";
+import { SoloRoundTimer, useSoloRoundClock } from "@/components/round-timer";
 import { SetProgress, SetSummary } from "@/components/set-summary";
 import { useSoloSet } from "@/components/solo-points";
 import { TimelineBackdrop } from "@/components/timeline-backdrop";
@@ -25,6 +25,7 @@ import {
   TimelinePaneView,
 } from "@/components/timeline-stage";
 import type { SupportedLocale } from "@/lib/db/types";
+import { dealRounds } from "@/lib/game/deal";
 import {
   directYear,
   EMPTY_DATE_ENTRY,
@@ -220,7 +221,7 @@ export function WhenBornGame({
     // that is the end `EXCLUDED_EVENT_LIMIT` keeps.
     const dealt = [...played, ...queue.map((held) => held.id)];
 
-    dealWhenBornEvents(ROUND_QUEUE_DEPTH, dealt.slice(-EXCLUDED_EVENT_LIMIT))
+    dealRounds("when-born", ROUND_QUEUE_DEPTH, dealt.slice(-EXCLUDED_EVENT_LIMIT))
       .then((fresh) => {
         if (cancelled) return;
         setQueue((current) => {
@@ -356,8 +357,18 @@ export function WhenBornGame({
     move(target, fractionAtYear(target, typed));
   }
 
-  /** Lock the guess in. The answer then lands on whichever rail it belongs to. */
-  async function submit() {
+  /** The button's lock-in. */
+  function submit() {
+    void lockIn(false);
+  }
+
+  /**
+   * Lock the guess in. The answer then lands on whichever rail it belongs to.
+   *
+   * `timeUp` is the round's clock running out: whatever is on the board is
+   * locked in — the typed year if there is a valid one, otherwise the marker.
+   */
+  async function lockIn(timeUp: boolean) {
     if (lockedIn || sending || !event) return;
 
     // Where the guess came from. Both ways of answering have already put the
@@ -367,12 +378,12 @@ export function WhenBornGame({
     let from = pane;
     let guessed = railYear;
 
-    if (direct) {
-      const typed = directYear(entry, entryRange);
-      if (typed === null) {
-        setInvalid(true);
-        return;
-      }
+    const typed = direct ? directYear(entry, entryRange) : null;
+    if (direct && typed === null && !timeUp) {
+      setInvalid(true);
+      return;
+    }
+    if (typed !== null) {
       guessed = typed;
       from = paneForYear(typed, WHEN_BORN_PANES);
     }
@@ -494,6 +505,15 @@ export function WhenBornGame({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingNext, upcoming, accuracy]);
 
+  // Thirty seconds a round. Not while the summary is up: the round under it
+  // has already advanced, and its clock starts when the summary goes.
+  const clock = useSoloRoundClock({
+    round: event?.token ?? null,
+    picture: event?.image?.url ?? null,
+    live: event !== null && !lockedIn && !setComplete,
+    onExpire: () => void lockIn(true),
+  });
+
   if (!event) return null;
 
   const answerPane = reveal ? paneForYear(reveal.date.year, WHEN_BORN_PANES) : null;
@@ -578,12 +598,13 @@ export function WhenBornGame({
             // carries it, and two copies of "3 of 10" on one screen read as
             // two different counts.
             counter={
-              <span className="min-[1120px]:hidden">
+              <span className="flex items-center gap-2 min-[1120px]:hidden">
                 <SetProgress
                   played={results.length}
                   total={QUESTIONS_PER_SET}
                   t={t}
                 />
+                {!lockedIn && <SoloRoundTimer clock={clock} t={t} />}
               </span>
             }
             // On the picture below 1120px for the reason every overlay on
@@ -652,13 +673,14 @@ export function WhenBornGame({
                   {t.whenBornYearAsked}
                 </p>
               </div>
-              <div className="shrink-0 pt-0.5">
+              <div className="flex shrink-0 items-center gap-3 pt-0.5">
                 <SetProgress
                   played={results.length}
                   total={QUESTIONS_PER_SET}
                   size="md"
                   t={t}
                 />
+                {!lockedIn && <SoloRoundTimer clock={clock} t={t} />}
               </div>
             </div>
 

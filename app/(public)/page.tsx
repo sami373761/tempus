@@ -187,9 +187,13 @@ export default async function HomePage() {
           wider at exactly the width with least room to spare. Reading the
           board's width instead tracks the thing that is moving, because the
           board's height *is* a function of its width (see `CARD_HEIGHT`): the
-          same two measurements now come out 301 and 330. `min()` with the old `26vh`
-          keeps the other end honest — on a tall window the hero is already
+          same two measurements now come out 301 and 330. `min()` with a `vh`
+          cap keeps the other end honest — on a tall window the hero is already
           leaving an enormous slack and the run-up should not add to it.
+
+          The factor was 0.2 (and the cap 26vh) until the heading was asked to
+          sit higher on wide screens; 0.12/15vh takes ~90px off the gap at
+          1680x844 and keeps the same shape.
 
           **Below `md` it is a flat 3rem**, down from `14vh`, asked for: on a
           phone the hero already fills the first screen outright, so there is no
@@ -198,7 +202,7 @@ export default async function HomePage() {
           block's own pills most of a second screen down. A fixed 48px rather
           than a smaller `vh` because the quantity that should set this gap is
           the type above and below it, not the height of the window. */}
-      <div className="mx-auto max-w-[calc(var(--board-w)+3rem)] px-6 pt-12 md:pt-[min(26vh,calc(min(var(--board-w),100vw_-_3rem)*0.2))]">
+      <div className="mx-auto max-w-[calc(var(--board-w)+3rem)] px-6 pt-12 md:pt-[min(15vh,calc(min(var(--board-w),100vw_-_3rem)*0.12))]">
         <ScrollReveal>
           {/* The block's name, outside the card rather than in a corner of it —
               the same arrangement the bento below has, so the two sections

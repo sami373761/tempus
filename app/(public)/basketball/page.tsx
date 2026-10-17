@@ -64,7 +64,7 @@ export default async function BasketballPage() {
           panes={BASKETBALL_PANES}
           homePane={BASKETBALL_DEFAULT_PANE}
           bands={BASKETBALL_BANDS}
-          deal={dealBasketballEvents}
+          game="basketball"
           title={t.basketballTitle}
           otherHref="/guess"
           otherLabel={t.timelineTitle}

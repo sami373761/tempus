@@ -59,7 +59,7 @@ export default async function FootballPage() {
           panes={FOOTBALL_PANES}
           homePane={FOOTBALL_DEFAULT_PANE}
           bands={FOOTBALL_BANDS}
-          deal={dealFootballEvents}
+          game="football"
           title={t.footballTitle}
           otherHref="/guess"
           otherLabel={t.timelineTitle}

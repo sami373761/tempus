@@ -20,7 +20,9 @@
  * applied here, where the pool is chosen, rather than in each of the five
  * places a round is dealt: a game that forgot to ask would otherwise deal
  * football events to a date-guessing player, and adding basketball later would
- * mean editing every existing draw. `restrictToPool()` is the whole of it.
+ * mean editing every existing draw. It is written twice, and the two must
+ * agree: `random_events()` in SQL for every draw (see `randomEvents`), and
+ * `poolRestriction()` below for the counts and listings.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -201,10 +203,14 @@ export interface RandomEventsOptions extends PoolOptions {
 /**
  * A random handful of published events for a game round.
  *
- * PostgREST cannot `order by random()`, so this draws ids first (one cheap
- * column over a few hundred rows) and then fetches only the chosen rows
- * localized. Shuffling client-side keeps the round uniform without a database
- * function, and the id list is small enough that the extra trip is free.
+ * **One round trip**: the whole draw — published, illustrated, in the pool,
+ * unseen first, one per year if asked, localized with fallback — is the SQL
+ * function `random_events()` (supabase/migrations/20261017220000_random_events.sql).
+ * It used to be four reads with the shuffle done here between them, and from a
+ * player in Turkey against a database in Sydney every read is ~400ms; the
+ * opening deal is awaited before a solo page sends any HTML, so the trips were
+ * the page load. The options above are still the description of the rules;
+ * the function is their only implementation for a draw.
  *
  * **This is where a game's pool is decided**, and every mode that deals a round
  * comes through here — the date-guessing game, the comparison game, survival,
@@ -223,51 +229,26 @@ export async function randomEvents(
     distinctYears = false,
     requireImage = true,
     topicSlug,
-    allPools,
+    allPools = false,
     exclude,
   } = options;
 
-  let idQuery = client.from("event").select("id, year").eq("status", "published");
-  if (fromYear !== undefined) idQuery = idQuery.gte("year", fromYear);
-  if (toYear !== undefined) idQuery = idQuery.lte("year", toYear);
-
-  const { data: candidates, error: idError } = await idQuery;
-  if (idError) throw idError;
-
-  // Both narrowings happen here rather than in the draw below, so the shuffle
-  // stays uniform over the events that can actually be dealt instead of
-  // discarding picks.
-  const illustrated = requireImage
-    ? await onlyWithPrimaryImage(client, candidates ?? [])
-    : (candidates ?? []);
-
-  const pool = applyPool(
-    illustrated,
-    await poolRestriction(client, { topicSlug, allPools }),
-  );
-
-  // Two tiers, best first: what the caller has not been dealt yet, then what
-  // it has. `pickRandom` exhausts one before touching the next, so an
-  // exclusion is honoured whenever the pool can afford it and ignored when it
-  // cannot — never at the cost of a short draw.
-  const picked = pickRandom(
-    tierByExclusion(pool, exclude),
-    count,
-    distinctYears,
-  );
-  if (picked.length === 0) return [];
-
-  const { data, error } = await client
-    .from("event_localized")
-    .select("*")
-    .in(
-      "event_id",
-      picked.map((row) => row.id),
-    )
-    .in("locale_code", localeChain(locale));
+  const { data, error } = await client.rpc("random_events", {
+    p_count: count,
+    p_locales: localeChain(locale),
+    p_from_year: fromYear ?? null,
+    p_to_year: toYear ?? null,
+    p_distinct_years: distinctYears,
+    p_require_image: requireImage,
+    p_topic_slug: topicSlug ?? null,
+    p_all_pools: allPools,
+    p_exclude: exclude && exclude.length > 0 ? [...exclude] : null,
+  });
 
   if (error) throw error;
 
+  // Already one row per event; this is the shared mapper, and it returns the
+  // batch in timeline order, which callers rely on and shuffle away.
   return pickPreferredLocale(data ?? [], locale);
 }
 
@@ -310,11 +291,10 @@ export async function eventsByIds(
 /**
  * Which categories of one `kind` each of the given events carries.
  *
- * A second trip rather than an embed on `event_localized`, for the same reason
- * `onlyWithPrimaryImage` and `poolRestriction` are: the view carries event
- * text and one image and nothing about categories, and widening it would mean
- * a migration plus a hand-edit of the generated types for a fact only one game
- * reads.
+ * A second trip rather than an embed on `event_localized`: the view carries
+ * event text and one image and nothing about categories, and widening it would
+ * mean a migration plus a hand-edit of the generated types for a fact only one
+ * game reads.
  *
  * The caller passes the ids it has already drawn, so this is a lookup over a
  * handful of rows rather than a scan: `dealScreenEvents` calls it with the two
@@ -411,9 +391,9 @@ export async function listCategories(
  *
  * One query either way, because `event_category` holds *every* topic link on
  * the site in a hundred-odd rows: the same read answers "which events are
- * football's?" and "which events are somebody's?". Read plainly rather than
- * folded into the candidate query as a PostgREST negated embed, for the same
- * reason `onlyWithPrimaryImage` is a second trip — the rule stays visible.
+ * football's?" and "which events are somebody's?". The draw does not come
+ * through here — `random_events()` applies the same rule inside its one
+ * statement — so a change to the pool rule is a change to both.
  */
 async function poolRestriction(
   client: DbClient,
@@ -445,43 +425,6 @@ async function poolRestriction(
 interface PoolRestriction {
   mode: "only" | "without";
   ids: string[];
-}
-
-function applyPool<T extends { id: string }>(
-  rows: readonly T[],
-  restriction: PoolRestriction | null,
-): T[] {
-  if (!restriction) return [...rows];
-
-  const ids = new Set(restriction.ids);
-  return restriction.mode === "only"
-    ? rows.filter((row) => ids.has(row.id))
-    : rows.filter((row) => !ids.has(row.id));
-}
-
-/**
- * Keeps only the rows whose event has a primary image.
- *
- * A second round trip rather than an embedded join: `image` carries its own RLS
- * policy (images of published events are readable), the id list is a few
- * hundred rows at most, and reading it plainly keeps the rule visible instead of
- * buried in PostgREST embedding syntax.
- */
-async function onlyWithPrimaryImage<T extends { id: string }>(
-  client: DbClient,
-  rows: readonly T[],
-): Promise<T[]> {
-  if (rows.length === 0) return [];
-
-  const { data, error } = await client
-    .from("image")
-    .select("event_id")
-    .eq("is_primary", true);
-
-  if (error) throw error;
-
-  const illustrated = new Set((data ?? []).map((row) => row.event_id));
-  return rows.filter((row) => illustrated.has(row.id));
 }
 
 /** Requested locale first, default locale as the fallback. */
@@ -517,64 +460,6 @@ function pickPreferredLocale(
   return [...byEvent.values()]
     .sort((a, b) => a.sort_key - b.sort_key)
     .map(toLocalizedEvent);
-}
-
-/**
- * Splits a pool into the rows the caller has *not* been dealt and the rows it
- * has, in that order. Neither half is shuffled here; `pickRandom` does that to
- * each tier it touches.
- */
-function tierByExclusion<T extends { id: string }>(
-  pool: readonly T[],
-  exclude: readonly string[] | undefined,
-): readonly (readonly T[])[] {
-  if (!exclude || exclude.length === 0) return [pool];
-
-  const dealt = new Set(exclude);
-  const unseen: T[] = [];
-  const repeats: T[] = [];
-
-  for (const row of pool) (dealt.has(row.id) ? repeats : unseen).push(row);
-
-  return [unseen, repeats];
-}
-
-/**
- * Fisher-Yates over a copy, stopping once `count` rows are taken. With
- * `distinctYears`, a candidate whose year is already taken is skipped rather
- * than retried, which is unbiased because the shuffle is already uniform.
- *
- * **Tiers are preferences in order**: each is drawn from uniformly and
- * exhausted before the next is touched. That is what lets `exclude` ask for
- * unseen events without ever shortening a draw — the caller gets them if the
- * pool has enough, and the rest from the tier it was trying to avoid if it
- * does not. `distinctYears` is tracked across tiers, since the whole draw is
- * one caller's round either way.
- */
-function pickRandom<T extends { year: number }>(
-  tiers: readonly (readonly T[])[],
-  count: number,
-  distinctYears: boolean,
-): T[] {
-  const taken: T[] = [];
-  const years = new Set<number>();
-
-  for (const tier of tiers) {
-    if (taken.length >= count) break;
-    const pool = [...tier];
-
-    for (let i = pool.length - 1; i >= 0 && taken.length < count; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      const row = pool[j]!;
-      pool[j] = pool[i]!;
-
-      if (distinctYears && years.has(row.year)) continue;
-      years.add(row.year);
-      taken.push(row);
-    }
-  }
-
-  return taken;
 }
 
 function toLocalizedEvent(row: LocalizedEventRow): LocalizedEvent {

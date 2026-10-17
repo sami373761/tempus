@@ -1,5 +1,5 @@
 import { createAdminDbClient } from "@/lib/db/admin";
-import { seatForToken, tickMatch, touchSeat } from "@/lib/db/matches";
+import { tickMatch } from "@/lib/db/matches";
 import type { TickResponse } from "@/lib/game/versus";
 import { readLocale } from "@/lib/i18n/server";
 
@@ -50,20 +50,15 @@ export async function POST(request: Request): Promise<Response> {
   const admin = createAdminDbClient();
 
   try {
-    const seat = await seatForToken(admin, matchId, token);
-    if (seat === null) return answer({ ok: false, reason: "forbidden" }, 403);
-
-    void touchSeat(admin, matchId, seat).catch(() => {});
-
     const locale = await readLocale();
-    return answer(
-      await tickMatch(admin, {
-        matchId,
-        seat,
-        knownVersion: Math.trunc(Number(knownVersion)),
-        locale,
-      }),
-    );
+    const beat = await tickMatch(admin, {
+      matchId,
+      token,
+      knownVersion: Math.trunc(Number(knownVersion)),
+      locale,
+    });
+    if (beat === null) return answer({ ok: false, reason: "forbidden" }, 403);
+    return answer(beat);
   } catch (error) {
     console.error("versus tick failed", { matchId, error });
     return answer({ ok: false, reason: "server" }, 500);

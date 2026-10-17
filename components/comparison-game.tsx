@@ -2,15 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { dealComparisonRounds, dealSurvivalRounds } from "@/app/actions/rounds";
 import { revealComparisonRound } from "@/app/actions/scoring";
 import { EventVisual } from "@/components/event-visual";
 import { VerdictDeckRow } from "@/components/round-flank";
 import { RoundHead } from "@/components/round-head";
+import { SoloRoundTimer, useSoloRoundClock } from "@/components/round-timer";
 import { SetSummary } from "@/components/set-summary";
 import { useSoloSet } from "@/components/solo-points";
 import { SurvivalSummary } from "@/components/survival-summary";
 import type { LocalizedEvent, SupportedLocale } from "@/lib/db/types";
+import { dealRounds } from "@/lib/game/deal";
 import {
   comparisonFractionAtYear,
   comparisonSection,
@@ -31,6 +32,7 @@ import {
   QUESTIONS_PER_SET,
   type SetResult,
 } from "@/lib/game/set";
+import type { Verdict } from "@/lib/game/scoring";
 import {
   completeComparisonRound,
   type DealtComparisonRound,
@@ -169,6 +171,9 @@ export function ComparisonGame({
   // re-read off `fraction`, because locking in slides the bubble onto the
   // truth: a moment later the rail no longer remembers where the guess was.
   const [picked, setPicked] = useState<number | null>(null);
+  // The round's clock ran out with the card dead centre: locked in with no
+  // pick, and graded as a miss (see `revealComparisonRound`).
+  const [timedOut, setTimedOut] = useState(false);
   // The round being played is the head of the queue; the one behind it is the
   // next round, held only so its pictures can be preloaded and swapped in.
   const [queue, setQueue] = useState<DealtComparisonRound[]>(rounds);
@@ -224,7 +229,7 @@ export function ComparisonGame({
   queueHead.current = round;
   // The pick made (input stops) and the pick graded (the reveal starts) are a
   // round trip apart; see components/timeline-game.tsx.
-  const lockedIn = picked !== null;
+  const lockedIn = picked !== null || timedOut;
   const answered = full !== null;
   const choice: ComparisonSide | null =
     picked === null ? null : sectionSide(picked);
@@ -256,8 +261,11 @@ export function ComparisonGame({
 
     // The deal is the mode's: a survival round is signed for survival, so it
     // cannot be banked as a comparison set or the other way round.
-    const deal = survival ? dealSurvivalRounds : dealComparisonRounds;
-    deal(ROUND_QUEUE_DEPTH, dealt.slice(-EXCLUDED_EVENT_LIMIT))
+    dealRounds(
+      survival ? "survival" : "compare",
+      ROUND_QUEUE_DEPTH,
+      dealt.slice(-EXCLUDED_EVENT_LIMIT),
+    )
       .then((fresh) => {
         if (cancelled) return;
         setQueue((current) => {
@@ -362,17 +370,28 @@ export function ComparisonGame({
     }
   }
 
-  async function submit() {
+  /** The button's lock-in. */
+  function submit() {
+    void lockIn(false);
+  }
+
+  /**
+   * Lock the card in where it stands. `timeUp` is the round's clock running
+   * out, which takes whatever is on the board — except dead centre, which is
+   * no answer at all, and is sent as one (a null section) rather than nudged.
+   */
+  async function lockIn(timeUp: boolean) {
     if (lockedIn || sending || !round) return;
     // Dead centre commits to neither side — the same reading `leaning` gives
     // the live highlight below.
-    if (fraction === 0.5) {
+    if (fraction === 0.5 && !timeUp) {
       setNudged(true);
       return;
     }
 
-    const section = comparisonSection(fraction);
-    setPicked(section);
+    const section = fraction === 0.5 ? null : comparisonSection(fraction);
+    if (section === null) setTimedOut(true);
+    else setPicked(section);
     setSending(true);
     setFailed(false);
 
@@ -394,6 +413,7 @@ export function ComparisonGame({
     } catch {
       // Handed back, never kept: an ungraded answer is not an answer.
       setPicked(null);
+      setTimedOut(false);
       setFailed(true);
     } finally {
       setSending(false);
@@ -411,7 +431,7 @@ export function ComparisonGame({
   function advance() {
     // `choice` is what makes this an answered round; without one there is no
     // result to bank and nothing to advance past.
-    if (!upcoming || round === null || full === null || picked === null) return;
+    if (!upcoming || round === null || full === null || !lockedIn) return;
 
     // Banked here rather than at `submit`, so `results.length` is always the
     // number of questions *left behind* — which makes it the index of the one
@@ -424,11 +444,15 @@ export function ComparisonGame({
     // player — because a run is the one screen with enough answers on it for
     // the distribution of those tiers to say something, and its results screen
     // is built out of them.
-    const correct = isComparisonCorrect(full, sectionSide(picked));
+    const correct =
+      picked !== null && isComparisonCorrect(full, sectionSide(picked));
     setResults((current) => [
       ...current,
       survival
-        ? survivalResult(correct, comparisonVerdict(full, picked))
+        ? survivalResult(
+            correct,
+            picked === null ? "wayOff" : comparisonVerdict(full, picked),
+          )
         : comparisonResult(correct),
     ]);
 
@@ -440,6 +464,7 @@ export function ComparisonGame({
     );
 
     setPicked(null);
+    setTimedOut(false);
     setFull(null);
     setRoundTp(null);
     setFailed(false);
@@ -486,15 +511,25 @@ export function ComparisonGame({
   // The round's grade on the date-guessing game's own five-rung ladder: the
   // half decides whether it is a win and the margin in sections decides which
   // rung. lib/game/rounds.ts owns that rule; this screen only draws it.
-  const verdict =
-    full !== null && picked !== null ? comparisonVerdict(full, picked) : null;
+  const verdict: Verdict | null =
+    full === null
+      ? null
+      : picked !== null
+        ? comparisonVerdict(full, picked)
+        : timedOut
+          ? "wayOff"
+          : null;
   // Whether this round was right, which in survival is also whether there is
   // another one. Read off the pick rather than off `verdict`, so the two can
   // never disagree — both are derived from the same section and the same half.
   const roundCorrect =
-    full !== null && picked !== null
-      ? isComparisonCorrect(full, sectionSide(picked))
-      : null;
+    full === null
+      ? null
+      : picked !== null
+        ? isComparisonCorrect(full, sectionSide(picked))
+        : timedOut
+          ? false
+          : null;
   // The second place the mode reaches: what ends the game.
   //
   // A set is full at ten. A run ends at the first miss, so it is over exactly
@@ -515,6 +550,16 @@ export function ComparisonGame({
   // toward. Dead centre commits to neither.
   const leaning: ComparisonSide | null =
     choice ?? (fraction === 0.5 ? null : fraction < 0.5 ? "left" : "right");
+
+  // Thirty seconds a round, on the picture of the event being placed. Not
+  // while a summary is up: the round underneath it has already advanced, and
+  // its clock starts when the summary goes.
+  const clock = useSoloRoundClock({
+    round: round?.token ?? null,
+    picture: round?.target.image?.url ?? null,
+    live: round !== null && !lockedIn && !over,
+    onExpire: () => void lockIn(true),
+  });
 
   if (!round) return null;
 
@@ -673,6 +718,9 @@ export function ComparisonGame({
             >
               <EventBubble
                 event={round.target}
+                corner={
+                  lockedIn ? null : <SoloRoundTimer clock={clock} t={t} />
+                }
                 tail="down"
                 caption={
                   full
@@ -830,7 +878,20 @@ export function ComparisonGame({
             is now empty until the verdict fills it, and it still has to be
             reserved for exactly the same reason. */}
           <div className="flex min-h-16 w-full max-w-[24rem] flex-col items-center justify-center">
-            {full !== null && picked !== null && verdict !== null ? (
+            {full !== null && timedOut && verdict !== null ? (
+              <VerdictDeckRow
+                verdict={verdict}
+                label={t.versusTimedOut}
+                tp={roundTp}
+                facts={[
+                  {
+                    label: t.actualDate,
+                    value: formatHistoricalDate(full.target, locale, labels),
+                  },
+                ]}
+                t={t}
+              />
+            ) : full !== null && picked !== null && verdict !== null ? (
               <VerdictDeckRow
                 verdict={verdict}
                 tp={roundTp}
@@ -922,9 +983,16 @@ function EventBubble({
   captionClassName = "text-ink-dim",
   highlighted = false,
   raised = false,
+  corner = null,
   t,
 }: {
   event: BubbleEvent;
+  /**
+   * Over the photograph's top-right corner: the round's clock, on the card
+   * being placed. An overlay rather than a row, because this screen's height
+   * is a hand-maintained sum (`--compare-chrome`) with nothing spare.
+   */
+  corner?: React.ReactNode;
   tail: "up" | "down";
   caption: string;
   captionClassName?: string;
@@ -982,6 +1050,12 @@ function EventBubble({
           >
             <EventVisual event={shown.active.event} t={t} />
           </div>
+          {corner && (
+            // A size down below `sm`, where the card is as narrow as 132px.
+            <div className="absolute right-2 top-2 z-10 origin-top-right scale-75 sm:scale-100">
+              {corner}
+            </div>
+          )}
         </div>
 
         {/* `var(--card-text)` less the 2px of border the lane's height also
