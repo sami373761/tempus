@@ -254,6 +254,23 @@ export function DailyGame({
   const done = answers.length >= QUESTIONS_PER_DAILY && shownIdx >= QUESTIONS_PER_DAILY;
   const lastQuestion = shownIdx === QUESTIONS_PER_DAILY - 1;
 
+  // Focus follows the button swap, so a keyboard player is not dropped to
+  // <body> when the pressed button turns `inert` — see the solo game's copy
+  // in components/timeline-game.tsx for the rule.
+  const lockButton = useRef<HTMLButtonElement>(null);
+  const nextButton = useRef<HTMLButtonElement>(null);
+  const wasAnswered = useRef(answered);
+  useEffect(() => {
+    if (wasAnswered.current === answered) return;
+    wasAnswered.current = answered;
+    const from = answered ? lockButton.current : nextButton.current;
+    const to = answered ? nextButton.current : lockButton.current;
+    const active = document.activeElement;
+    if (!active || active === document.body || active === from) {
+      to?.focus({ preventScroll: true });
+    }
+  }, [answered]);
+
   // Pull the next question's photograph while this one is being guessed, so
   // the dissolve has something to dissolve to.
   useEffect(() => {
@@ -463,11 +480,12 @@ export function DailyGame({
           // having just finished one — the line that says so is the whole of
           // what tells a revisit from an ending.
           revisit={resumedComplete}
+          locale={locale}
           t={t}
         />
       ) : (
         <>
-          <div className="relative flex min-h-0 w-full max-w-[25rem] flex-1 flex-col items-stretch sm:max-h-[26rem] sm:max-w-[32rem]">
+          <div className="relative flex min-h-[9.625rem] w-full max-w-[25rem] flex-1 flex-col items-stretch sm:max-h-[26rem] sm:max-w-[32rem]">
             {accuracy && revealed && (
               <>
                 <VerdictFlank
@@ -518,8 +536,12 @@ export function DailyGame({
               // showing live; for a guest it is the fact that nothing is being
               // kept, said once, where it cannot be missed and cannot be
               // mistaken for a score.
+              //
+              // Top-aligned rather than centred on the 40px timer: centred,
+              // the 27px chip would stand 7px lower than the counter chip
+              // opposite, and jump up when the timer goes at lock-in.
               aside={
-                <span className="flex items-center gap-2">
+                <span className="flex items-start gap-2">
                   {member ? (
                     <span className="rounded-full border border-white/20 bg-black/55 px-2.5 py-1 text-[11px] font-semibold text-white/80 backdrop-blur-md">
                       <span className="tabular-nums text-ink">
@@ -607,34 +629,51 @@ export function DailyGame({
               `inert` keeps whichever is hidden off the tab order while it is
               only holding the slot open. */}
           <div className="grid shrink-0 place-items-center">
+            {/* Staggered, not crossfaded, so the two labels are never on
+                screen on top of each other — see the solo game's. */}
             <div
-              className={`col-start-1 row-start-1 transition-opacity duration-300 ${
-                answered ? "opacity-0" : "opacity-100"
+              className={`col-start-1 row-start-1 transition-opacity ${
+                answered
+                  ? "opacity-0 duration-150"
+                  : "opacity-100 duration-200 delay-150"
               }`}
               inert={answered}
             >
               <button
+                ref={lockButton}
                 type="button"
                 onClick={submit}
                 // Never disabled, like every other advance button on the site:
                 // a press while the grade is in flight is already ignored by
                 // `submit`, and the busy state is what says so.
                 aria-busy={sending}
-                className={`${ROUND_BUTTON} bg-ink text-page hover:opacity-85 ${
+                className={`${ROUND_BUTTON} relative bg-ink text-page hover:opacity-85 ${
                   sending ? "cursor-progress opacity-60" : ""
                 }`}
               >
                 {t.submitGuess}
+                {/* The solo game's "Next round" trace, while the guess is
+                    graded. */}
+                {sending && (
+                  <span aria-hidden="true" className="round-trace">
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                )}
               </button>
             </div>
 
             <div
-              className={`col-start-1 row-start-1 transition-opacity duration-300 ${
-                answered ? "opacity-100" : "opacity-0"
+              className={`col-start-1 row-start-1 transition-opacity ${
+                answered
+                  ? "opacity-100 duration-200 delay-150"
+                  : "opacity-0 duration-150"
               }`}
               inert={!answered}
             >
               <button
+                ref={nextButton}
                 type="button"
                 onClick={advance}
                 className={`${ROUND_BUTTON} border border-white/45 bg-black/45 text-ink backdrop-blur-md hover:bg-black/65`}

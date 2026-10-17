@@ -219,6 +219,11 @@ export function ComparisonGame({
   }, [nudged, fraction]);
 
   const rail = useRef<HTMLDivElement>(null);
+  // The card being placed, which is the round's one focusable control — where
+  // focus goes back to when "Play again" takes the summary (and the button
+  // that was pressed) off the screen.
+  const slider = useRef<HTMLDivElement>(null);
+  const [refocus, setRefocus] = useState(false);
   // Distance between the pointer and the bubble's centre when the drag began.
   // Without it, grabbing a wide card by its edge would snap it under the cursor.
   const grab = useRef<{ pointerId: number; offset: number } | null>(null);
@@ -482,6 +487,7 @@ export function ComparisonGame({
     setResults([]);
     setPlayed([]);
     solo.reset();
+    setRefocus(true);
   }
 
   /**
@@ -548,8 +554,18 @@ export function ComparisonGame({
     : results.length === QUESTIONS_PER_SET - 1;
   // Which half the bubble is in, for the live highlight on the anchor it leans
   // toward. Dead centre commits to neither.
-  const leaning: ComparisonSide | null =
-    choice ?? (fraction === 0.5 ? null : fraction < 0.5 ? "left" : "right");
+  //
+  // Once locked in it is the pick and nothing else. Locking in slides the
+  // bubble onto the truth, so a round that timed out with no pick would
+  // otherwise light whichever anchor the *answer* sits nearer — a choice the
+  // player never made, highlighted as if they had.
+  const leaning: ComparisonSide | null = lockedIn
+    ? choice
+    : fraction === 0.5
+      ? null
+      : fraction < 0.5
+        ? "left"
+        : "right";
 
   // Thirty seconds a round, on the picture of the event being placed. Not
   // while a summary is up: the round underneath it has already advanced, and
@@ -560,6 +576,15 @@ export function ComparisonGame({
     live: round !== null && !lockedIn && !over,
     onExpire: () => void lockIn(true),
   });
+
+  // After "Play again", on the first render with the round back on screen:
+  // the summary unmounted with focus inside it, which drops a keyboard player
+  // on `<body>`. The summaries take focus on the way in for the same reason.
+  useEffect(() => {
+    if (!refocus || over) return;
+    slider.current?.focus({ preventScroll: true });
+    setRefocus(false);
+  }, [refocus, over]);
 
   if (!round) return null;
 
@@ -629,7 +654,16 @@ export function ComparisonGame({
         // floats in the gap between them (see the lower lane), so the gap has
         // to stay wider than that button and the cards go back to the share
         // of the lane they always had.
-        className="mx-auto flex w-full flex-1 flex-col items-center justify-center gap-5 [--bubble-cap:calc(50vw-30px)] md:[--bubble-cap:38vw]"
+        //
+        // `38vw` alone did not keep that promise below ~1200px: the gap it
+        // leaves is `24vw - 48px`, 136px at 768, against a button of 164-220px
+        // — so the button sat on both photographs at tablet widths. The second
+        // term is the same subtraction the phone cap makes, sized for the
+        // button: two cards of `50vw - 144px` in a lane of `100vw - 48px`
+        // leave 240px between them at every width, which holds "Schätzung
+        // bestätigen" with room either side. From 1200px `38vw` is the smaller
+        // of the two again and nothing changes there.
+        className="mx-auto flex w-full flex-1 flex-col items-center justify-center gap-5 [--bubble-cap:calc(50vw-30px)] md:[--bubble-cap:min(38vw,calc(50vw-144px))]"
         style={
           {
             // One knob for the whole scale: every bubble is this wide, and the
@@ -660,8 +694,17 @@ export function ComparisonGame({
             // margin: at 390px the cards go from 148px to 165px and the
             // photographs grow with them. It was `38vw`, which left 69px of
             // dead air down the middle of a phone that had none to spare.
+            //
+            // **The 104px floor is the card a 320x568 phone can hold.** A
+            // floor overrides the height term, so it has to sit at or under
+            // what the shortest phone can pay for: there the frame is 510px,
+            // and two 104px cards lay out at 507px — 117px of pictures on
+            // 390px of chrome as the markup sets it, which is
+            // `--compare-chrome` with its 22px of headroom spent.
+            // It was 132px, which was 29px of scroll on the same phone. Only
+            // phones shorter than ~600px ever reach it.
             "--bubble":
-              "clamp(132px, min(var(--bubble-cap), calc((100dvh - var(--site-bar-h) - var(--compare-chrome)) / 2 * 16 / 9)), 360px)",
+              "clamp(104px, min(var(--bubble-cap), calc((100dvh - var(--site-bar-h) - var(--compare-chrome)) / 2 * 16 / 9)), 360px)",
             // How tall a lane is: the picture, plus the caption block's reserved
             // two lines. See the lanes below for why it is fixed rather than
             // grown into.
@@ -677,10 +720,11 @@ export function ComparisonGame({
 
             The lane's height is fixed and the card hangs from its bottom edge,
             which is what pins the rail. A caption that needs a third line
-            grows the card *upward*, into the header's margin, instead of
-            pushing the rail and everything under it down the screen — and on a
-            screen budgeted to the pixel, that distinction is the difference
-            between a still rail and a scrollbar. */}
+            grows the card *upward*, into the headroom `--compare-chrome` keeps
+            for it above the column, instead of pushing the rail and everything
+            under it down the screen — and on a screen budgeted to the pixel,
+            that distinction is the difference between a still rail and a
+            scrollbar. */}
           {/* The lane is taller than the card hanging from its bottom edge, so
             the top of it is empty. The round counter used to be pinned up
             there; it is part of the masthead now (`RoundHead`), which is a
@@ -688,6 +732,7 @@ export function ComparisonGame({
             either way. */}
           <div className="relative flex h-[var(--lane)] items-end">
             <div
+              ref={slider}
               role="slider"
               tabIndex={lockedIn ? -1 : 0}
               aria-label={t.comparisonHint}
@@ -701,12 +746,21 @@ export function ComparisonGame({
               onKeyDown={onKeyDown}
               style={{
                 marginLeft: `calc(${fraction * 100}% - var(--bubble) / 2)`,
-                transition: dragging ? "none" : "margin-left 450ms ease-out",
               }}
               // `shrink-0` matters: the margin below grows with the fraction, so
               // near the right end margin + width overflows the row and flex
               // would otherwise squeeze the bubble narrower as it travels.
-              className={`no-drag-select w-[var(--bubble)] shrink-0 rounded-[28px] focus-visible:outline-2 focus-visible:outline-offset-[6px] focus-visible:outline-ink ${
+              //
+              // The glide is a class rather than an inline `transition` so
+              // `motion-reduce` can reach it: with reduced motion the card
+              // steps to the truth and back to the middle instead of sliding.
+              // `ease-[ease-out]` is the browser's curve it always had; the
+              // bare `ease-out` utility is Tailwind's steeper one.
+              className={`no-drag-select w-[var(--bubble)] shrink-0 rounded-[28px] focus-visible:outline-2 focus-visible:outline-offset-[6px] focus-visible:outline-accent ${
+                dragging
+                  ? ""
+                  : "transition-[margin-left] duration-[450ms] ease-[ease-out] motion-reduce:transition-none "
+              }${
                 nudged ? "compare-nudge " : ""
               }${
                 lockedIn
@@ -799,17 +853,29 @@ export function ComparisonGame({
           {/* Lower lane: the two anchors, each centred on the rail end it marks.
             Fixed height and anchored to the top for the same reason the upper
             lane is anchored to the bottom — a long name grows away from the
-            rail, never into it. */}
-          <div className="relative flex h-[var(--lane)] items-start justify-between -mx-[calc(var(--bubble)/2)]">
+            rail, never into it.
+
+            A grid rather than a flex row so the two cards share one row and
+            stretch to whichever is taller: two names that wrap differently
+            used to leave the pair ending at different heights. The action
+            overlay is absolutely positioned and takes no cell. */}
+          <div className="relative grid h-[var(--lane)] grid-cols-[var(--bubble)_var(--bubble)] content-start justify-between -mx-[calc(var(--bubble)/2)]">
             {/* The round's action sits in the gap the anchors leave — the player
               is already looking here, and it holds one spot across both states
               so the layout does not jump on answering.
 
               Only from `md` up: below that the gap is narrower than the button,
-              which would park it on top of both anchors. */}
-            <div className="pointer-events-none absolute inset-0 z-10 hidden items-center justify-center px-3 md:flex">
+              which would park it on top of both anchors.
+
+              Inset by a card's width on each side, so the button's widest is
+              the gap itself (240px at tablet widths, see `--bubble-cap`). The
+              labels that fit already are untouched; a longer one — the French
+              "Drag the card first", 280px on one line — wraps to two lines
+              instead of running onto both photographs. */}
+            <div className="pointer-events-none absolute inset-0 z-10 hidden items-center justify-center px-[var(--bubble)] md:flex">
               <ActionButton
                 answered={answered}
+                sending={sending}
                 pending={pendingNext}
                 final={finalRound}
                 nudged={nudged}
@@ -922,6 +988,7 @@ export function ComparisonGame({
           <div className="md:hidden">
             <ActionButton
               answered={answered}
+              sending={sending}
               pending={pendingNext}
               final={finalRound}
               nudged={nudged}
@@ -1009,9 +1076,19 @@ function EventBubble({
     active: BubbleContent;
     leaving: BubbleContent | null;
   }>(() => ({ active: live, leaving: null }));
+  // The outgoing caption is done long before the outgoing photograph: it has
+  // faded by 200ms, the picture is held until `ROUND_PHOTO_FADE_MS`. Both
+  // captions share one grid cell, so a leaving caption kept mounted until the
+  // picture goes holds the card at the *old* text's height until 520ms — after
+  // the new title has already faded in at 260ms, which reads as the card
+  // snapping under a caption that is already there. Dropping the old caption
+  // the moment its fade ends moves that resize into the 200-260ms window,
+  // while neither caption is visible.
+  const [textGone, setTextGone] = useState(false);
 
   if (shown.active.event.id !== event.id) {
     setShown({ active: live, leaving: shown.active });
+    setTextGone(false);
   } else if (
     shown.active.caption !== caption ||
     shown.active.captionClassName !== captionClassName
@@ -1029,10 +1106,19 @@ function EventBubble({
     return () => window.clearTimeout(timer);
   }, [shown.leaving, shown.active.event.id]);
 
+  // The anchors stand below the rail as a pair, and their text starts at the
+  // top of the caption block so the two date rows share a line however the
+  // names wrap. The card being placed has no partner and stays centred.
+  const top = tail === "up";
+
+  // `h-full` reaches the lower lane's row, which is as tall as the taller
+  // anchor; the caption block's `flex-1` takes up the difference, so the pair
+  // ends level. The card being placed hangs in a row of auto height, where
+  // `h-full` resolves to nothing and changes nothing.
   return (
-    <div className="relative">
+    <div className="relative h-full">
       <div
-        className={`overflow-hidden rounded-[28px] border bg-black/35 shadow-2xl shadow-black/70 backdrop-blur-2xl transition-colors duration-300 ${
+        className={`flex h-full flex-col overflow-hidden rounded-[28px] border bg-black/35 shadow-2xl shadow-black/70 backdrop-blur-2xl transition-colors duration-300 ${
           highlighted ? "border-white/55" : "border-white/12"
         } ${raised ? "shadow-black/80" : ""}`}
       >
@@ -1051,7 +1137,7 @@ function EventBubble({
             <EventVisual event={shown.active.event} t={t} />
           </div>
           {corner && (
-            // A size down below `sm`, where the card is as narrow as 132px.
+            // A size down below `sm`, where the card is as narrow as 104px.
             <div className="absolute right-2 top-2 z-10 origin-top-right scale-75 sm:scale-100">
               {corner}
             </div>
@@ -1059,16 +1145,24 @@ function EventBubble({
         </div>
 
         {/* `var(--card-text)` less the 2px of border the lane's height also
-            accounts for, so a two-line card is exactly one lane tall. */}
-        <div className="grid min-h-[calc(var(--card-text)-2px)] px-4 py-3 text-center">
-          {shown.leaving && (
+            accounts for, so a two-line card is exactly one lane tall. 10px a
+            side below `sm` rather than 16: on a phone card that is a fifth of
+            the measure back for the name. */}
+        <div className="grid min-h-[calc(var(--card-text)-2px)] flex-1 px-2.5 py-3 text-center sm:px-4">
+          {shown.leaving && !textGone && (
             <BubbleText
               key={`${shown.leaving.event.id}-leaving`}
               content={shown.leaving}
+              top={top}
               leaving
+              onLeft={() => setTextGone(true)}
             />
           )}
-          <BubbleText key={shown.active.event.id} content={shown.active} />
+          <BubbleText
+            key={shown.active.event.id}
+            content={shown.active}
+            top={top}
+          />
         </div>
       </div>
       <Tail direction={tail} highlighted={highlighted} />
@@ -1078,28 +1172,48 @@ function EventBubble({
 
 function BubbleText({
   content,
+  top = false,
   leaving = false,
+  onLeft,
 }: {
   content: BubbleContent;
+  /** Text from the top of the block rather than its middle (the anchors). */
+  top?: boolean;
   leaving?: boolean;
+  /** The leaving fade has finished; see `textGone` in `EventBubble`. */
+  onLeft?: () => void;
 }) {
   return (
     <div
-      className={`col-start-1 row-start-1 flex flex-col justify-center ${
-        leaving ? "round-title-out" : "round-title-in"
-      }`}
+      className={`col-start-1 row-start-1 flex flex-col ${
+        top ? "justify-start" : "justify-center"
+      } ${leaving ? "round-title-out" : "round-title-in"}`}
+      onAnimationEnd={
+        onLeft
+          ? (event) => {
+              if (event.target === event.currentTarget) onLeft();
+            }
+          : undefined
+      }
     >
       {/* The date stays small — it is a label on the card, and on the two
-          anchors it is the one thing the player has already been told. */}
+          anchors it is the one thing the player has already been told. Half
+          the tracking below `sm`, where a date like "1350 AP. J.-C." is most
+          of a phone card's measure and 0.16em was what tipped it onto a
+          second line; `text-balance` evens the two lines when one still has
+          to wrap, rather than stranding "J.-C." on its own. */}
       <p
-        className={`text-[11px] font-medium uppercase leading-4 tracking-[0.16em] ${content.captionClassName}`}
+        className={`text-balance text-[11px] font-medium uppercase leading-4 tracking-[0.08em] sm:tracking-[0.16em] ${content.captionClassName}`}
       >
         {content.caption}
       </p>
       {/* The name is what the round is actually about, so it grows with the
-          card. `text-sm` below `sm`, where the bubble is down to 132px and a
-          larger face would only wrap further. */}
-      <p className="mt-1 text-sm font-semibold leading-tight text-ink sm:text-base">
+          card. 13px below `sm`, where the bubble can be down to 104px and a
+          larger face would only wrap further, and capped at three lines there
+          — a fourth would leave the room the budget gave it. It hyphenates,
+          and breaks inside a word only when one is too long for the card at
+          all, so a long compound cannot push past the card's edge. */}
+      <p className="mt-1 line-clamp-3 text-[13px] font-semibold leading-tight text-ink hyphens-auto wrap-anywhere sm:line-clamp-none sm:text-base">
         {content.event.name}
       </p>
     </div>
@@ -1162,6 +1276,7 @@ function Tail({
 /** The round's primary action: lock in before answering, next round after. */
 function ActionButton({
   answered,
+  sending,
   pending,
   final,
   nudged,
@@ -1171,6 +1286,8 @@ function ActionButton({
   floating = false,
 }: {
   answered: boolean;
+  /** The pick is locked in and being graded. Never disables the button. */
+  sending: boolean;
   /** The press is latched and waiting on a draw. Never disables the button. */
   pending: boolean;
   /**
@@ -1195,7 +1312,7 @@ function ActionButton({
   // The line height is spelled out with the size: `text-sm` carried a 20px
   // line box of its own and a bare `text-[…]` falls back to `normal`, which
   // would have taken the box up 12% rather than 10%.
-  const base = `rounded-full bg-ink px-[1.925rem] py-[0.825rem] text-[0.9625rem]/[1.375rem] font-semibold text-page transition-opacity hover:opacity-85 disabled:opacity-50 ${
+  const base = `rounded-full bg-ink px-[1.925rem] py-[0.825rem] text-[0.9625rem]/[1.375rem] font-semibold text-page transition-opacity hover:opacity-85 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
     floating ? "pointer-events-auto shadow-xl shadow-black/50" : ""
   }`;
 
@@ -1227,9 +1344,24 @@ function ActionButton({
     </button>
   ) : (
     // `aria-live` so the relabel is announced: for a keyboard or screen-reader
-    // player the label is the whole prompt.
-    <button type="button" onClick={onSubmit} className={base} aria-live="polite">
+    // player the label is the whole prompt. While the pick is being graded it
+    // runs the same trace as a latched "Next round" — the reply takes about a
+    // second, and a press that changes nothing for that long reads as missed.
+    <button
+      type="button"
+      onClick={onSubmit}
+      aria-live="polite"
+      aria-busy={sending}
+      className={`${base} relative ${sending ? "cursor-progress opacity-70" : ""}`}
+    >
       {nudged ? t.comparisonMoveFirst : t.submitGuess}
+      {sending && (
+        <span aria-hidden="true" className="round-trace">
+          <i />
+          <i />
+          <i />
+        </span>
+      )}
     </button>
   );
 }

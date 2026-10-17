@@ -91,9 +91,15 @@ export function chronoStanding(rating: number): ChronoStanding {
 }
 
 /**
- * A change as it is printed: always signed, so "+5" and "-5" read as changes
- * rather than as amounts.
+ * A change as it is printed: always signed, so "+5" and "−5" read as changes
+ * rather than as amounts. The minus is the typographic one (U+2212), the
+ * width of the plus, rather than the hyphen `${delta}` would print. Display
+ * only — nothing parses this back.
  */
 export function signedDelta(delta: number): string {
-  return delta > 0 ? `+${delta}` : `${delta}`;
+  return delta > 0
+    ? `+${delta}`
+    : delta < 0
+      ? `−${Math.abs(delta)}`
+      : `${delta}`;
 }

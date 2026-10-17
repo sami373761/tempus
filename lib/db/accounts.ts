@@ -140,6 +140,7 @@ export function validateUsername(raw: string): UsernameCheck {
 export function accountFrom(
   user: { id: string; email?: string | null },
   username: string | null,
+  unseenBadges = 0,
 ): Account {
   const fallback = user.email?.split("@")[0] ?? null;
   return {
@@ -147,6 +148,7 @@ export function accountFrom(
     email: user.email ?? null,
     username,
     displayName: username ?? fallback ?? "Player",
+    unseenBadges,
   };
 }
 
@@ -170,6 +172,37 @@ export async function readUsername(
 
   if (error) throw new Error(`readUsername: ${error.message}`);
   return data?.username ?? null;
+}
+
+/**
+ * The two things the site's chrome reads off a profile: the name to greet
+ * them by, and whether there is a badge waiting to be looked at.
+ *
+ * One query rather than two because this runs in the layout, on every
+ * player-facing route — the username read was already there, and the count
+ * rides along in it for nothing. That is the whole reason the mark is a
+ * number on `profile` rather than a count over `user_badge_progress`: the
+ * database is a long way from the player (see the note in CLAUDE.md), and a
+ * nudge is not worth a round trip per page.
+ *
+ * Both fall back rather than throwing, for `readUsername`'s reason: a missing
+ * profile row should cost the greeting, not the site.
+ */
+export async function readProfileChrome(
+  client: DbClient,
+  userId: string,
+): Promise<{ username: string | null; unseenBadges: number }> {
+  const { data, error } = await client
+    .from("profile")
+    .select("username, unseen_badges")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) throw new Error(`readProfileChrome: ${error.message}`);
+  return {
+    username: data?.username ?? null,
+    unseenBadges: data?.unseen_badges ?? 0,
+  };
 }
 
 /**

@@ -74,8 +74,11 @@ export function FaqSection({ t }: { t: Dict }) {
             {/* `list-none` plus the WebKit pseudo-element: Safari draws the
                 disclosure triangle through its own marker, which the standard
                 property does not reach. The mark on the right is the only
-                affordance, and it has to be the same one in every browser. */}
-            <summary className="grid cursor-pointer list-none grid-cols-[2.25rem_1fr_auto] items-start gap-3 py-5 [&::-webkit-details-marker]:hidden">
+                affordance, and it has to be the same one in every browser.
+                The ring is the site's own rather than the browser's faint
+                default, and keyboard focus brightens the row the way the
+                pointer does, so the reader can see which question Enter opens. */}
+            <summary className="grid cursor-pointer list-none grid-cols-[2.25rem_1fr_auto] items-start gap-3 rounded-lg py-5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent [&::-webkit-details-marker]:hidden">
               <span
                 aria-hidden="true"
                 className="pt-1 text-[11px] font-semibold uppercase tabular-nums tracking-[0.1em] text-ink-dim"
@@ -83,7 +86,7 @@ export function FaqSection({ t }: { t: Dict }) {
                 {String(i + 1).padStart(2, "0")}
               </span>
 
-              <span className="font-display text-lg font-semibold leading-snug text-ink-dim transition-colors group-hover:text-ink group-open:text-ink">
+              <span className="font-display text-lg font-semibold leading-snug text-ink-dim transition-colors group-hover:text-ink group-open:text-ink group-has-[summary:focus-visible]:text-ink">
                 {question}
               </span>
 
@@ -94,7 +97,7 @@ export function FaqSection({ t }: { t: Dict }) {
                   opens". */}
               <span
                 aria-hidden="true"
-                className="faq-mark relative mt-1.5 h-3 w-3 shrink-0 text-ink-dim transition-colors group-hover:text-ink group-open:text-ink"
+                className="faq-mark relative mt-1.5 h-3 w-3 shrink-0 text-ink-dim transition-colors group-hover:text-ink group-open:text-ink group-has-[summary:focus-visible]:text-ink"
               >
                 <i />
                 <i />

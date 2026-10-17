@@ -153,15 +153,30 @@
      The parts, at the sizes the markup sets: 8px page padding-top, 50px rail
      lane (two tail heights plus the rail), 172px for the two cards' caption
      blocks and borders, 20px column gap, 64px reserved verdict block, 16px
-     page padding-bottom. 330px, rounded up to 332 for a cushion. Change any of
+     page padding-bottom. 330px, plus 22px of headroom: 352. Change any of
      those and change this.
+
+     The headroom is for a name that wants a third line. Both lanes are fixed
+     and a long caption grows away from the rail — the card being placed
+     upward, the anchors downward — so on a window short enough for the height
+     term to bind, that third line (20px at `sm:text-base`) needs somewhere to
+     go that is neither the top bar nor the verdict. The game's column centres
+     its contents, so the 22px lands as 11px at each end. It only costs the
+     photographs anything on a height-bound window; at 1680x844 the cards are
+     still on their 360px cap.
+
+     Below `md` there is one more row: the round's action button, which only
+     floats between the anchors from `md` up and otherwise stands under the
+     verdict — a 12px gap and a 48px button (`ActionButton`, 13.2px padding
+     either side of a 22px line). Those 60px are the phone override after this
+     block; leaving them out is what put "Lock in" below the fold.
 
      The round's masthead used to be the 84px row at the top of that list. It
      is `fixed` in the top bar's own row since 2026-10-08 (`RoundHead` in
      components/round-head.tsx), so it costs this budget nothing and the
      84px went to the photographs — which is what puts the cards on their
      360px cap at a 1680x844 window. */
-  --compare-chrome: 20.75rem;
+  --compare-chrome: 22rem;
 
   /* The round masthead pill: its own closed height, which both the row's
      centre line and its corner radius are read off (`RoundHead` in
@@ -174,6 +189,16 @@
      which is why the component moved out of that game and why this token's
      name is now a historical spelling rather than a scope. */
   --compare-head: 2.875rem;
+}
+
+/* The comparison budget below `md`: the 352px above plus the action row that
+   only exists there (12px gap + 48px button). Spelled as Tailwind spells `md`
+   (`48rem`) because the row is `md:hidden` — the two breakpoints have to be
+   the same one, fractional widths included. */
+@media (width < 48rem) {
+  :root {
+    --compare-chrome: 25.75rem;
+  }
 }
 
 /* The bar's row, on a phone.
@@ -476,10 +501,16 @@ html {
    than holding that room open all the time. The leaving view overhangs the
    shorter cell while it fades, so it must not catch a tap meant for what is
    now underneath it. Above `md` the views are the same height and the cell
-   keeps its own. */
+   keeps its own.
+
+   Only a swap animates the height (`data-swapping`, set by the board for the
+   length of it). The same height is rewritten on a resize or a rotation, and
+   eased over 560ms that let the next section slide up over the cards. */
 @media (width < 48rem) {
   .board-cell[data-measured] {
     height: var(--board-cell-h);
+  }
+  .board-cell[data-measured][data-swapping] {
     transition: height 560ms cubic-bezier(0.65, 0, 0.35, 1);
   }
   .board-view[data-active="false"] {
@@ -622,7 +653,7 @@ html {
   .board-view {
     transition-duration: 1ms;
   }
-  .board-cell[data-measured] {
+  .board-cell[data-measured][data-swapping] {
     transition-duration: 1ms;
   }
   [data-swapped] .board-card {
@@ -1839,24 +1870,29 @@ details[open] .faq-answer {
 
    `/signin` is a column: a heading, the two-mode switch, the Google button, a
    rule, and then one field per thing the server needs. In sign-up mode that is
-   three fields and two hints — 719px of card — and the page centres it under
-   the site bar with 56px of air above and below. On a 1680x844 laptop, where
-   the browser's own chrome leaves about 784px of viewport, the sum came to
-   905px and the one control the page exists for, the button that creates the
-   account, sat 65px *below* the fold with nothing on screen to say so.
+   three fields and two hints — 766px of card from `sm` up — and the page
+   centres it under the 74px site bar with 56px of air above and below: 952px
+   in all. On a 1680x844 laptop, where the browser's own chrome leaves about
+   784px of viewport, the one control the page exists for, the button that
+   creates the account, sat well *below* the fold with nothing on screen to say
+   so.
 
    Nothing is removed here and no breakpoint is involved: the rule is keyed on
    the viewport's **height**, which is the thing that is actually scarce, and
    it steps the vertical rhythm down — page padding, card padding, the gaps
-   between the three blocks, and the gap between fields. That is 132px, which
-   brings the whole page inside 784px while leaving the layout, the type and
-   the hit targets exactly as they are. A window shorter still (a 768px screen,
-   say) scrolls, and scrolls by much less than it did.
+   between the three blocks, and the gap between fields. That takes the
+   sign-up page from 952px to 795px (the card to 673, its hints wrapping
+   shorter in the wider column) and leaves the layout, the type and the hit
+   targets exactly as they are.
+
+   It starts at 960px, just above those 952: a step that began any lower would
+   leave every window between the two — 1440x900, a 932px phone — up to 52px
+   short, with the button at the fold.
 
    The classes are hooks rather than Tailwind arbitrary variants so the whole
    rule is one block that can be read and re-measured in one place; the
    un-prefixed values stay in the markup, where they belong. */
-@media (max-height: 880px) {
+@media (max-height: 960px) {
   .auth-screen {
     padding-top: 1.5rem;
     padding-bottom: 1.5rem;
@@ -1882,31 +1918,36 @@ details[open] .faq-answer {
   }
 }
 
-/* A second step, for the 1280x800-class window whose viewport lands near 700px.
-   One step gets the sign-up button to the bottom edge there rather than past
-   it; this takes the rhythm down a further notch and finishes the job. There is
-   no third step: below about 660px the card is taller than the window whatever
-   the spacing, and the honest answer at that point is a short scroll rather
+/* A second step, for the windows the first one does not cover: the first
+   brings the sign-up page to 795px, so anything under that — a 768px laptop,
+   1680x784, a 1280x720 window — would still have the button up to 75px past
+   the fold. This takes the rhythm down a further notch, 76px more, which puts
+   the page at 719px (the card at 629) and inside a 720px window. It starts at
+   820px rather than at those 795 because a phone's column is narrower: the
+   hints wrap to more lines, the card is 713px and the page under the 58px bar
+   is 819 — a 375x812 phone would otherwise be 7px short. There is no
+   third step: below that the form is taller than the window whatever the
+   spacing, and the honest answer at that point is a short scroll rather
    than type and hit targets shrunk until the form is unpleasant to fill in. */
-@media (max-height: 760px) {
+@media (max-height: 820px) {
   .auth-screen {
-    padding-top: 1rem;
-    padding-bottom: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
   }
 
   .auth-card {
-    padding: 1.25rem;
+    padding: 1rem;
   }
 
   .auth-card .auth-step {
-    margin-top: 0.875rem;
+    margin-top: 0.75rem;
   }
 
   .auth-card .auth-rule {
-    margin-block: 0.875rem;
+    margin-block: 0.75rem;
   }
 
   .auth-card .auth-fields {
-    gap: 0.625rem;
+    gap: 0.5rem;
   }
 }

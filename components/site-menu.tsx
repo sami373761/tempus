@@ -11,7 +11,7 @@ import { isTransparentRoute } from "@/components/site-header";
 import { ACCOUNT_PATH, signInHref, SIGN_IN_PATH } from "@/lib/auth/paths";
 import { contactHref } from "@/lib/contact";
 import type { Account, SupportedLocale } from "@/lib/db/types";
-import type { Dict } from "@/lib/i18n/dictionary";
+import { format, type Dict } from "@/lib/i18n/dictionary";
 import { UI_LOCALES } from "@/lib/i18n/locales";
 
 /**
@@ -117,6 +117,7 @@ export function SiteMenu({
   const busy = pending || signingOut;
   const router = useRouter();
   const container = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
   const panelId = useId();
   // Over a full-bleed photograph the button borrows the game's glass pill
   // rather than the card surface, so the only control on those screens does not
@@ -124,23 +125,56 @@ export function SiteMenu({
   const pathname = usePathname();
   const onPhoto = isTransparentRoute(pathname);
   const home = pathname === "/";
+  /* Zero while signed out, and zero on the badges page itself: that page
+     clears the count as it renders, and the layout above this menu is not
+     re-rendered by a client-side navigation — so without this the mark would
+     sit there over the very screen that just answered it. */
+  const unseen =
+    account && pathname !== "/achievements" ? account.unseenBadges : 0;
 
-  // Click-away and Escape, so the panel never strands itself open over a game.
+  /* The panel turns `inert` the moment it closes, and a focused row inside an
+     inert subtree is blurred to `<body>` — a keyboard reader who closed the menu
+     would have to tab in again from the top of the page. Handing focus back to
+     the button first keeps them where they were. Only when focus is inside the
+     panel: a pointer close leaves focus wherever the click put it. */
+  function returnFocus() {
+    const active = document.activeElement;
+    if (container.current?.contains(active) && active !== toggleRef.current) {
+      toggleRef.current?.focus({ preventScroll: true });
+    }
+  }
+
+  // Click-away, Escape and tabbing out, so the panel never strands itself open
+  // over a game.
   useEffect(() => {
     if (!open) return;
+    const root = container.current;
 
     function onPointerDown(event: PointerEvent) {
       if (!container.current?.contains(event.target as Node)) setOpen(false);
     }
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        returnFocus();
+        setOpen(false);
+      }
+    }
+    /* Tab past the last chip (or Shift+Tab past the button) and focus is on the
+       page again while the panel still covers it. A null `relatedTarget` is a
+       click on nothing focusable or the window losing focus — the pointer
+       handler owns the first, and the second should not close anything. */
+    function onFocusOut(event: FocusEvent) {
+      const next = event.relatedTarget as Node | null;
+      if (next && !container.current?.contains(next)) setOpen(false);
     }
 
     document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
+    root?.addEventListener("focusout", onFocusOut);
     return () => {
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
+      root?.removeEventListener("focusout", onFocusOut);
     };
   }, [open]);
 
@@ -164,6 +198,7 @@ export function SiteMenu({
   }
 
   function choose(next: SupportedLocale) {
+    returnFocus();
     setOpen(false);
     if (next === locale) return;
 
@@ -183,6 +218,7 @@ export function SiteMenu({
   const button = (
     <div ref={container} className="pointer-events-auto relative">
       <button
+        ref={toggleRef}
         type="button"
         onClick={toggle}
         aria-label={open ? t.menuClose : t.menuOpen}
@@ -193,7 +229,7 @@ export function SiteMenu({
            box, so it tracks `--menu-btn` rather than carrying a size of its
            own. The box itself reads that token too, because the fixed track
            below solves this button's `top` from it. */
-        className={`relative flex h-[var(--menu-btn)] w-[var(--menu-btn)] items-center justify-center rounded-full text-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+        className={`relative flex h-[var(--menu-btn)] w-[var(--menu-btn)] cursor-pointer items-center justify-center rounded-full text-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
           onPhoto
             ? "border border-white/15 bg-white/10 backdrop-blur-xl hover:bg-white/20"
             : "border border-hairline bg-card/80 backdrop-blur hover:bg-card-raised"
@@ -204,6 +240,24 @@ export function SiteMenu({
             navigation that resolves in under the fade never shows at all —
             which is the right answer for one that fast. */}
         <span className="pending-ring" data-busy={busy} aria-hidden="true" />
+
+        {/* A badge is waiting behind this button, so the button says so.
+            The count itself is on the row it belongs to — here it is a dot,
+            because this is the only control on a game screen and a number
+            over the bars would be a second thing to read on a photograph.
+
+            Hidden while the panel is open: the row below is showing the
+            count by then, and a mark on the button that opened it is a
+            notification about something already on screen. `aria-hidden`
+            with no label of its own for the same reason it is a dot — the
+            row inside carries the words, and announcing "new badge" twice is
+            worse than announcing it once. */}
+        {unseen > 0 && !open && (
+          <span
+            aria-hidden="true"
+            className="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-full border-2 border-page bg-tier-perfect"
+          />
+        )}
 
         <span className="menu-bars" data-open={open} aria-hidden="true">
           <span className="menu-bar">
@@ -225,12 +279,33 @@ export function SiteMenu({
               would still leave six focusable rows behind the page.
 
               The 24px radius is repeated in the `round` of the clip path; the two
-              have to agree or the corners read as chipped at full size. */}
+              have to agree or the corners read as chipped at full size.
+
+              Off home the panel hangs from the fixed track, so scrolling the page
+              never brings its lower rows into view: on a landscape phone the
+              language chips sat ~130px below the screen. It scrolls inside
+              itself instead, capped at what the viewport has left under the bar.
+              `overflow-x-hidden` because the rows' skewed entrance would
+              otherwise raise a horizontal scrollbar for a frame. On home it is
+              in flow and the page scrolls to it.
+
+              Only under 34.5rem of height. The panel is 452px at its longest
+              (signed in) and the cap is the viewport less 98px (74px bar, 24px
+              margin), so it starts to bind at 550px — a taller window never
+              needs it, and a phone's shorter bar leaves it more room still. A
+              scroll box there cost something: each row enters 14px low, the
+              last one overhangs the 8px padding by 6px for the length of its
+              entrance, and wherever scrollbars take up room that flashed one on
+              every open — so the cap must not apply where the panel fits. */}
       <div
         id={panelId}
         data-open={open}
         inert={!open || undefined}
         className={`menu-panel absolute right-0 top-[calc(100%+12px)] z-50 w-[min(19rem,calc(100vw-3rem))] rounded-[24px] p-2 shadow-2xl shadow-black/70 ${
+          inline
+            ? ""
+            : "[@media(max-height:34.5rem)]:max-h-[calc(100dvh-var(--site-bar-h)-1.5rem)] [@media(max-height:34.5rem)]:overflow-x-hidden [@media(max-height:34.5rem)]:overflow-y-auto [@media(max-height:34.5rem)]:overscroll-contain [@media(max-height:34.5rem)]:[scrollbar-width:thin]"
+        } ${
           onPhoto
             ? "border border-white/15 bg-black/55 backdrop-blur-2xl"
             : "border border-hairline bg-card/95 backdrop-blur-2xl"
@@ -273,6 +348,13 @@ export function SiteMenu({
               onNavigate={go}
               label={t.achievementsTitle}
               icon={<MedalIcon />}
+              /* The nudge. A badge is earned at the end of a set or by a
+                 head-to-head trigger, and the summary that announces it is
+                 gone a press later — this is what outlives that moment. It
+                 is cleared by the page it points at, so it cannot outlive
+                 being looked at either. */
+              mark={unseen}
+              markLabel={format(t.badgesNew, { n: unseen })}
             />
             <MenuRow
               index={3}
@@ -365,7 +447,7 @@ export function SiteMenu({
                     disabled={pending}
                     onClick={() => choose(option.code)}
                     title={option.native}
-                    className={`rounded-full px-3 py-1.5 text-xs font-semibold tabular-nums transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+                    className={`cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold tabular-nums transition-colors disabled:cursor-default focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
                       selected
                         ? "bg-ink text-page"
                         : "bg-card-raised/70 text-ink-dim hover:bg-card-raised hover:text-ink"
@@ -417,7 +499,7 @@ export function SiteMenu({
  * on 2026-10-07.
  */
 const ROW_SHAPE =
-  "menu-item-in flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-[15px] font-semibold text-ink/85 transition-colors hover:bg-card-raised hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent";
+  "menu-item-in flex w-full cursor-pointer items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-[15px] font-semibold text-ink/85 transition-colors hover:bg-card-raised hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent";
 
 function MenuRow({
   index,
@@ -425,6 +507,8 @@ function MenuRow({
   icon,
   href,
   detail,
+  mark = 0,
+  markLabel,
   onNavigate,
 }: {
   index: number;
@@ -434,6 +518,13 @@ function MenuRow({
   href?: string;
   /** A second, quieter line — the signed-in player's name on the account row. */
   detail?: string;
+  /**
+   * How many of something are waiting behind this row — badges, so far. 0 is
+   * "nothing to say" and draws no pill at all.
+   */
+  mark?: number;
+  /** What the pill means, in words, for a reader who cannot see a pill. */
+  markLabel?: string;
   /** Closes the panel and drives the button's ring for as long as the
    *  destination takes to arrive. Given the `href` because it does the pushing
    *  itself — see `go` in `SiteMenu`. */
@@ -456,6 +547,21 @@ function MenuRow({
           </span>
         ) : null}
       </span>
+      {/* At the row's far end, opposite the icon. A filled pill rather than a
+          tinted one: this is the one thing in the panel that is asking to be
+          pressed rather than merely listed, and the blue is the palette's
+          only accent — the focus ring and the `perfect` tier — which is
+          exactly the register a "you earned something" mark wants.
+
+          `tabular-nums` and a minimum width, so 1 and 2 are the same circle
+          rather than two pills of different widths on consecutive visits.
+          The words are the screen reader's; the number is the eye's. */}
+      {mark > 0 && (
+        <span className="flex min-w-[1.25rem] shrink-0 items-center justify-center rounded-full bg-tier-perfect px-1.5 py-0.5 text-[11px] font-semibold leading-none tabular-nums text-page">
+          <span aria-hidden="true">{mark}</span>
+          <span className="sr-only">{markLabel ?? mark}</span>
+        </span>
+      )}
     </>
   );
 

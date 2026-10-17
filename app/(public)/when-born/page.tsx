@@ -1,9 +1,16 @@
+import type { Metadata } from "next";
+
 import { dealWhenBornEvents } from "@/app/actions/rounds";
 import { WhenBornGame } from "@/components/when-born-game";
 import { ROUND_QUEUE_DEPTH } from "@/lib/game/rounds";
 import { readLocaleContext } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await readLocaleContext();
+  return { title: `${t.whenBornTitle} · Tempus` };
+}
 
 /**
  * The "Born When?" game.

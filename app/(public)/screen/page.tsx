@@ -1,9 +1,16 @@
+import type { Metadata } from "next";
+
 import { dealScreenEvents } from "@/app/actions/rounds";
 import { ScreenGame } from "@/components/screen-game";
 import { ROUND_QUEUE_DEPTH } from "@/lib/game/rounds";
 import { readLocaleContext } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await readLocaleContext();
+  return { title: `${t.screenTitle} · Tempus` };
+}
 
 /**
  * The film & television game.

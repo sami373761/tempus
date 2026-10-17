@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { EventVisual } from "@/components/event-visual";
 import type { LocalizedEvent, SupportedLocale } from "@/lib/db/types";
@@ -92,7 +92,7 @@ export const PAN_MS = 750;
  * the call sites.
  */
 export const ROUND_BUTTON =
-  "rounded-full border px-7 py-3 text-sm font-semibold transition";
+  "rounded-full border px-7 py-3 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
 /**
  * The same pill, one size up.
@@ -109,7 +109,7 @@ export const ROUND_BUTTON =
  * with the room wants.
  */
 export const ROUND_BUTTON_LG =
-  "rounded-full border px-8 py-3.5 text-[15px] font-semibold transition";
+  "rounded-full border px-8 py-3.5 text-[15px] font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
 /**
  * How long the rail takes to fold away when the player chooses to type the
@@ -143,11 +143,19 @@ export const RAIL_FOLD_MS = 460;
  * the ruler's type changes.** A few pixels out shows as the button stepping
  * during the fold, not as a scrollbar; on a screen too short for either cap to
  * bind, nothing moves either way.
+ *
+ * The compact one is the same sum for the subject games' rail, which has no
+ * heading and the short band (`compact`: `pt-12`, so 48 + 6 + 56 = 110px):
+ * `32.875rem` is `26rem` plus 110px. Giving those games the full band's cap
+ * grew the picture 84px past what their rail gives up, and the button went
+ * down the page by exactly that when the entry opened.
  */
 export const CARD_BOX =
   "w-full max-w-[25rem] sm:max-h-[26rem] sm:max-w-[32rem]";
 export const CARD_BOX_WIDE =
   "w-full max-w-[25rem] sm:max-h-[38.125rem] sm:max-w-[36rem]";
+export const CARD_BOX_WIDE_COMPACT =
+  "w-full max-w-[25rem] sm:max-h-[32.875rem] sm:max-w-[36rem]";
 
 /**
  * Crossing several eras at once is a longer journey, so it takes longer — but
@@ -307,6 +315,7 @@ export function RoundCard({
   counter,
   aside = null,
   wide = false,
+  compact = false,
   t,
 }: {
   event: StageEvent;
@@ -327,6 +336,12 @@ export function RoundCard({
    * answer a round.
    */
   wide?: boolean;
+  /**
+   * Whether the rail that folds away is the short, headingless one the
+   * subject games use — which gives up less room, so `wide` may take less.
+   * See `CARD_BOX_WIDE_COMPACT`.
+   */
+  compact?: boolean;
   /**
    * Only so the photograph's sensitive-content gate can be labelled. The card
    * itself prints nothing from the dictionary — every string on it arrives
@@ -360,16 +375,28 @@ export function RoundCard({
     // and the footer leave, capped so the picture cannot become a billboard on
     // a tall screen and floored so it is still a picture on a short one.
     //
+    // The floor is the card's own, not only the photograph's: `9.625rem` is
+    // the photo's `5rem` plus the caption's `4.5rem` plus the 2px border.
+    // With `min-h-0` here the card could give its whole height away on a
+    // landscape phone — 4px of border with the photo's floor clipped inside
+    // it — and the page frame's `overflow-y-auto`, which exists for exactly
+    // that window, never had anything to scroll. Callers that wrap the card
+    // in a box of the same caps carry the same floor.
+    //
     // `.card-caps` is the transition between the two caps, and it exists as a
     // class rather than as utilities so `prefers-reduced-motion` can reach it:
     // the growth has to stay in step with the rail's own fold, which is timed
     // in CSS as well.
     <div
-      className={`card-caps flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-white/12 bg-black/35 shadow-2xl shadow-black/70 backdrop-blur-2xl ${
-        wide ? CARD_BOX_WIDE : CARD_BOX
+      className={`card-caps flex min-h-[9.625rem] flex-1 flex-col overflow-hidden rounded-3xl border border-white/12 bg-black/35 shadow-2xl shadow-black/70 backdrop-blur-2xl ${
+        wide ? (compact ? CARD_BOX_WIDE_COMPACT : CARD_BOX_WIDE) : CARD_BOX
       }`}
     >
-      <div className="relative min-h-[5rem] w-full flex-1">
+      {/* A size container, so a result painted over a short photograph can
+          tighten itself and the corner chips can step aside for it (see
+          `RoundVerdict`). Every child is absolute, so containing its size
+          changes nothing about how it is laid out. */}
+      <div className="group/photo relative min-h-[5rem] w-full flex-1 [container-type:size]">
         {shown.leaving && (
           <div className="absolute inset-0">
             <EventVisual event={shown.leaving} t={t} />
@@ -383,12 +410,26 @@ export function RoundCard({
 
         {/* Top-left, clear of the verdict that lands in the middle of the same
             picture. Outside the keyed layer above, so changing round does not
-            restart its animation or blink the count. */}
-        <div className="absolute left-3 top-3 z-10 flex flex-col items-start gap-1.5">
+            restart its animation or blink the count.
+
+            Both corners step aside while a result covers a photograph under
+            10rem: there the result needs the picture's whole height, and a
+            chip left on top of it printed through the tier's own word.
+
+            Bounded on the right by the corner `aside` holds — the versus
+            countdown, a 40px ring inset 12px, plus an 8px gap and this
+            column's own 12px inset = 4.5rem — so a long opponent name in the
+            score pill truncates short of the ring instead of running under
+            it. */}
+        <div className="absolute left-3 top-3 z-10 flex max-w-[calc(100%-4.5rem)] flex-col items-start gap-1.5 transition-opacity duration-300 [@container(max-height:10rem)]:group-has-[[data-photo-overlay]]/photo:opacity-0">
           {counter}
         </div>
 
-        {aside && <div className="absolute right-3 top-3 z-10">{aside}</div>}
+        {aside && (
+          <div className="absolute right-3 top-3 z-10 transition-opacity duration-300 [@container(max-height:10rem)]:group-has-[[data-photo-overlay]]/photo:opacity-0">
+            {aside}
+          </div>
+        )}
 
         {/* Last, so it sits over both photo layers and survives the dissolve
             underneath it. */}
@@ -399,11 +440,13 @@ export function RoundCard({
           here as well reads as two different reveals. */}
       <div className="relative h-[4.5rem] shrink-0">
         {shown.leaving && (
-          <RoundTitle key={`${shown.leaving.id}-leaving`} leaving>
+          <RoundTitle key={`${shown.leaving.id}-leaving`} leaving roomy>
             {shown.leaving.name}
           </RoundTitle>
         )}
-        <RoundTitle key={shown.active.id}>{shown.active.name}</RoundTitle>
+        <RoundTitle key={shown.active.id} roomy>
+          {shown.active.name}
+        </RoundTitle>
       </div>
     </div>
   );
@@ -411,18 +454,39 @@ export function RoundCard({
 
 export function RoundTitle({
   leaving = false,
+  roomy = false,
   children,
 }: {
   leaving?: boolean;
+  /**
+   * The caption under a stage photograph, whose 72px box has room for a third
+   * line on a phone: at `text-lg` and `leading-tight` three lines are 67.5px.
+   * Long names were clamped to two lines with an ellipsis there — over half
+   * of the longest English ones at 320px. The poster's title box is `h-16`
+   * and holds two, so it keeps the default.
+   */
+  roomy?: boolean;
   children: React.ReactNode;
 }) {
+  // `text-balance` on both: a greedy wrap left a single word on the second
+  // line of a title that had plenty of room to split evenly.
   return (
     <h2
-      className={`absolute inset-0 flex items-center justify-center px-6 text-center font-display text-xl font-semibold leading-tight tracking-tight text-ink sm:text-2xl ${
-        leaving ? "round-title-out" : "round-title-in"
-      }`}
+      className={`absolute inset-0 flex items-center justify-center text-center font-display font-semibold leading-tight tracking-tight text-ink ${
+        roomy
+          ? "px-4 text-lg sm:px-6 sm:text-2xl"
+          : "px-6 text-xl sm:text-2xl"
+      } ${leaving ? "round-title-out" : "round-title-in"}`}
     >
-      <span className="line-clamp-2">{children}</span>
+      <span
+        className={
+          roomy
+            ? "line-clamp-3 text-balance sm:line-clamp-2"
+            : "line-clamp-2 text-balance"
+        }
+      >
+        {children}
+      </span>
     </h2>
   );
 }
@@ -545,6 +609,33 @@ export function TimelinePaneView({
    */
   const [paneWidth, setPaneWidth] = useState(0);
   const [bubbleWidth, setBubbleWidth] = useState(0);
+  /**
+   * The opponent's pill, measured for the same two sums as the bubble: its
+   * clamp at the rail's ends, and whether it lands on the bubble.
+   *
+   * Measured by a callback ref, the moment the pill is attached, rather than
+   * from the effect below: it mounts with the reveal, and an observer that
+   * only reported on a later frame left the pill on the bubble for the whole
+   * of a reveal whose frames were throttled. Read in the commit, the width is
+   * there before the first paint; the observer then follows the language.
+   */
+  const [oppWidth, setOppWidth] = useState(0);
+  const oppObserver = useRef<ResizeObserver | null>(null);
+  const oppLabel = useCallback((node: HTMLSpanElement | null) => {
+    oppObserver.current?.disconnect();
+    oppObserver.current = null;
+    if (!node) return;
+    setOppWidth(node.offsetWidth);
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry)
+        setOppWidth(
+          entry.borderBoxSize?.[0]?.inlineSize ?? entry.contentRect.width,
+        );
+    });
+    observer.observe(node);
+    oppObserver.current = observer;
+  }, []);
+  const oppShown = opponentYear !== null && answered && Boolean(opponentLabel);
   // How this language writes a year — the era's abbreviation and its place
   // beside the number. Every date drawn on the rail goes through it.
   const labels = dateLabels(t);
@@ -602,6 +693,49 @@ export function TimelinePaneView({
     paneWidth,
     bubbleWidth,
   });
+
+  // The opponent's pill gets the bubble's own edge clamp, and moves out of
+  // the way when it would land on the bubble: both sit in the same band over
+  // the rail, and the bubble (z-30, the thing the player is holding) won, so
+  // two close guesses hid the opponent's year under the player's own.
+  // Unmeasured widths read as no collision, so the first frame is the plain
+  // layout.
+  //
+  // Out of the way is up a row on the full band, whose 96px were kept for
+  // exactly this kind of stacking. The compact band is 48px and the bubble
+  // already fills it, so a pill lifted there stood on the line of text over
+  // the rail; there it steps sideways instead, beside the bubble on the side
+  // that has the room.
+  const oppFraction =
+    opponentYear === null ? 0 : fractionAtYear(pane, opponentYear);
+  const oppShift = bubbleEdgeShift({
+    fraction: oppFraction,
+    railWidth,
+    paneWidth,
+    bubbleWidth: oppWidth,
+  });
+  const oppAt = oppFraction * railWidth + oppShift;
+  const bubbleAt = fraction * railWidth + bubbleShift;
+  const oppClearance = (oppWidth + bubbleWidth) / 2 + 6;
+  const oppCollides =
+    oppShown &&
+    showGuess &&
+    oppWidth > 0 &&
+    bubbleWidth > 0 &&
+    Math.abs(oppAt - bubbleAt) < oppClearance;
+  const oppLifted = oppCollides && !compact;
+  let oppNudge = 0;
+  if (oppCollides && compact) {
+    const slack = Math.max(0, (paneWidth - railWidth) / 2);
+    const right = bubbleAt + oppClearance;
+    const left = bubbleAt - oppClearance;
+    const fitsRight = right + oppWidth / 2 <= railWidth + slack;
+    const fitsLeft = left - oppWidth / 2 >= -slack;
+    const toRight =
+      oppAt > bubbleAt || (oppAt === bubbleAt && bubbleAt < railWidth / 2);
+    oppNudge =
+      ((toRight && fitsRight) || !fitsLeft ? right : left) - oppAt;
+  }
 
   function fractionFromClientX(clientX: number): number {
     const box = rail.current?.getBoundingClientRect();
@@ -670,10 +804,19 @@ export function TimelinePaneView({
             era and the future never did, so the row of panes read as a
             heading on two of them and a small essay on the other three.
             Removed on request — the rail under it is what says what the era
-            holds. */}
+            holds.
+
+            A step smaller below 375px. The column is the window less 112px
+            (208px at 320), and at `text-2xl` "Humans & Evolution" and "Après
+            Jésus-Christ" wrapped at 320 and "Zeitalter der Zivilisation"
+            (261px) at anything under 375 — and the panes share one row, so
+            one heading's second line stretched every pane and took 32px from
+            the photograph. At `text-xl` every name fits from 330px up; below
+            that only the German one still wraps, and `text-balance` splits it
+            evenly. */}
         {heading && (
           <div className="on-photo text-center">
-            <h3 className="font-display text-2xl font-semibold tracking-[-0.02em] text-ink sm:text-3xl">
+            <h3 className="text-balance font-display text-2xl font-semibold tracking-[-0.02em] text-ink max-[375px]:text-xl sm:text-3xl">
               {paneLabel(pane, t)}
             </h3>
           </div>
@@ -811,7 +954,13 @@ export function TimelinePaneView({
                       common-era ticks ran 1000/1250/1500 into one another at
                       390px. See `tickLabelsShown`. */}
                   {labelled[index] ? (
-                    <span className="on-photo absolute left-1/2 top-3 -translate-x-1/2 whitespace-nowrap text-[13px] tabular-nums text-white/80">
+                    <span
+                      className={`on-photo absolute left-1/2 top-3 -translate-x-1/2 whitespace-nowrap text-[13px] tabular-nums text-white/80 ${
+                        railWidth <= 0 && index !== 0 && index !== ticks.length - 1
+                          ? "max-sm:invisible"
+                          : ""
+                      }`}
+                    >
                       {tickLabels[index]}
                     </span>
                   ) : null}
@@ -840,9 +989,20 @@ export function TimelinePaneView({
               >
                 <div className="answer-label h-5 w-5 rounded-full border-2 border-ink-dim bg-page/70" />
                 {opponentLabel && (
+                  // One `transform`, not a translate class plus an offset —
+                  // see the bubble's note below. `bottom-14` is the lifted
+                  // row on the full band: the bubble's top is 42px over the
+                  // rail's centre and this pill's foot lands at 46px. On the
+                  // compact band `oppNudge` moves it sideways instead.
                   <span
-                    className="answer-label on-photo absolute bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/20 bg-black/70 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-ink-dim"
-                    style={{ animationDelay: `${answerDelayMs + 180}ms` }}
+                    ref={oppLabel}
+                    className={`answer-label on-photo absolute left-1/2 whitespace-nowrap rounded-full border border-white/20 bg-black/70 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-ink-dim ${
+                      oppLifted ? "bottom-14" : "bottom-6"
+                    }`}
+                    style={{
+                      animationDelay: `${answerDelayMs + 180}ms`,
+                      transform: `translateX(calc(-50% + ${oppShift + oppNudge}px))`,
+                    }}
                   >
                     {opponentLabel} {formatYear(opponentYear, labels)}
                   </span>
@@ -864,18 +1024,21 @@ export function TimelinePaneView({
                 animation would override a Tailwind translate class and the
                 marker would land half its own width to the right).
 
-                `top-7` is measured, not chosen. The band below the rail is
-                `pb-14` — 56px — and the ruler's own numerals occupy the first
-                27px of it, so the marker starts where they end and its 49px
-                still fit inside the pane. Grow either piece and re-check that
-                sum: the stage viewport clips, so the overflow would simply
-                take the bottom off the block. */}
+                `top-8` is measured, not chosen. It is counted from the rail's
+                own top edge: the ruler's numerals stand 15px below it in a
+                19.5px line, so their baseline is at ~29.5px, and the marker
+                starts at 32px — clear of a numeral it lands under, where
+                `top-7` had the pointer's tip touching the digits. Its 27px
+                end at 59px, inside the 62px the rail (6px) and its `pb-14`
+                band (56px) give it. Grow either piece and re-check that sum:
+                the stage viewport clips, so the overflow would simply take
+                the bottom off the block. */}
             {answerYear !== null && answered && (
               <div
                 // Held back until the camera has finished travelling, so the
                 // answer lands in front of the player rather than having been
                 // sitting there through a pan they were not watching.
-                className="answer-marker absolute top-7 z-20 flex flex-col items-center"
+                className="answer-marker absolute top-8 z-20 flex flex-col items-center"
                 style={{
                   left: `${fractionAtYear(pane, answerYear) * 100}%`,
                   animationDelay: `${answerDelayMs}ms`,
@@ -902,11 +1065,18 @@ export function TimelinePaneView({
                 // ring (`z-10`), which are both painted on this rail and both
                 // land near it at the reveal. It is the one thing on the rail
                 // the player is holding, so nothing is allowed over it.
-                className="absolute top-1/2 z-30 -translate-x-1/2 -translate-y-1/2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
-                style={{
-                  left: `${fraction * 100}%`,
-                  transition: dragging ? "none" : "left 220ms ease-out",
-                }}
+                //
+                // The glide to a key press or a tap is a class rather than an
+                // inline `transition`, so `motion-reduce` can reach it; a drag
+                // has none, or the marker would trail the finger.
+                // `ease-[ease-out]` keeps the browser's curve the inline
+                // style had; Tailwind's own `ease-out` is a steeper one.
+                className={`absolute top-1/2 z-30 -translate-x-1/2 -translate-y-1/2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent ${
+                  dragging
+                    ? ""
+                    : "transition-[left] duration-[220ms] ease-[ease-out] motion-reduce:transition-none"
+                }`}
+                style={{ left: `${fraction * 100}%` }}
               >
                 {/* A notch smaller on a phone. At 24px the handle's own
                     radius is nearly as wide as the room the pane's padding
@@ -931,7 +1101,11 @@ export function TimelinePaneView({
                     one that leans. */}
                 <span
                   ref={bubble}
-                  className="absolute bottom-7 left-1/2 whitespace-nowrap rounded-full bg-ink px-2.5 py-1 text-[11px] font-semibold tabular-nums text-page sm:px-3 sm:text-xs"
+                  className={`absolute bottom-7 left-1/2 whitespace-nowrap rounded-full bg-ink px-2.5 py-1 text-[11px] font-semibold tabular-nums text-page sm:px-3 sm:text-xs ${
+                    dragging
+                      ? ""
+                      : "transition-transform duration-[220ms] ease-[ease-out] motion-reduce:transition-none"
+                  }`}
                   style={{
                     // Written as one `transform` rather than as a
                     // `-translate-x-1/2` class plus an offset: Tailwind v4
@@ -940,7 +1114,6 @@ export function TimelinePaneView({
                     // a reader would have to know that to predict where this
                     // lands.
                     transform: `translateX(calc(-50% + ${bubbleShift}px))`,
-                    transition: dragging ? "none" : "transform 220ms ease-out",
                   }}
                 >
                   {formatYear(year, labels)}
@@ -1029,8 +1202,10 @@ export function EdgeButton({
     <button
       type="button"
       onClick={onClick}
-      tabIndex={visible ? 0 : -1}
-      aria-hidden={!visible}
+      // `inert` rather than `tabIndex` and `aria-hidden`: a door that closes
+      // while it has focus must give the focus up, not keep it on a button
+      // nobody can see.
+      inert={!visible}
       aria-label={label}
       title={label}
       className={`absolute top-0 z-10 flex h-[var(--menu-btn)] w-[var(--menu-btn)] items-center justify-center rounded-full border border-white/15 bg-white/10 text-ink backdrop-blur-xl transition-all duration-500 ease-out hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
@@ -1117,13 +1292,18 @@ export function doorLabel(pane: TimelinePane, t: Dict): string {
  * An estimate rather than a measurement, deliberately: measuring would mean
  * laying out every label of every pane to decide which of them to draw, which
  * is a layout pass per round to save a few numerals. Inter at 13px runs about
- * 7px to the character with `tabular-nums` holding the digits to one advance,
- * and the estimate is rounded *up* — the cost of guessing wide is one label
- * dropped a few pixels early, and of guessing narrow is the collision this
- * exists to prevent.
+ * 7px to the character for letters and spaces, but `tabular-nums` sets every
+ * digit to one advance of ~8.4px — and a ruler's labels are mostly digits, so
+ * a flat 7.2 had "1750" four pixels narrower than it prints and phone rails
+ * standing labels ~5px apart. Each estimate is rounded *up* — the cost of
+ * guessing wide is one label dropped a few pixels early, and of guessing
+ * narrow is the collision this exists to prevent.
  */
 function tickLabelWidth(text: string): number {
-  return text.length * 7.2;
+  return [...text].reduce(
+    (width, char) => width + (char >= "0" && char <= "9" ? 8.5 : 7.2),
+    0,
+  );
 }
 
 /** The clear air a ruler needs between two numbers before they read as two. */
@@ -1157,7 +1337,12 @@ const TICK_LABEL_GAP = 10;
  *
  * Width 0 is the render before the `ResizeObserver` has reported, and the
  * server's: it prints every label, which is what this component did at every
- * width until now, so the markup React hydrates against is unchanged.
+ * width until now, so the markup React hydrates against is unchanged. Below
+ * `sm` the tick render hides all but the two ends on that pass
+ * (`max-sm:invisible`), because a phone's rail cannot hold the common era's
+ * nine numerals and the first paint showed them run together. It is a class
+ * rather than a different answer here, so the server and the first client
+ * render still agree; a desktop rail, which mostly fits them, sees no pop-in.
  */
 function tickLabelsShown(
   pane: TimelinePane,
@@ -1345,7 +1530,13 @@ export function PosterCard({
     // whatever height the rail and the controls leave, and in the split one it
     // is the height of the row — which above 1120px *is* the card's 2:3, set
     // from the column's width by the split itself. See the note there.
-    <div className="flex min-h-0 flex-1 justify-center min-[1120px]:block">
+    //
+    // Floored at the card's own `12rem` in the stacked layout: with
+    // `min-h-0` this box could give its whole height away on a small phone
+    // while the card inside kept its floor and spilled out over the rows
+    // under it. Floored, a window too short for both is the page frame's
+    // `overflow-y-auto` to scroll, which is what that box exists for.
+    <div className="flex min-h-[12rem] flex-1 justify-center min-[1120px]:block min-[1120px]:min-h-0">
       {/* One frame for every round, filled edge to edge by whatever the poster
           is. A card cut to each picture's own ratio would be a card that
           changes height between rounds, which moves the bottom edge the result

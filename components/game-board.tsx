@@ -110,6 +110,19 @@ export function GameBoard({
   // at the top). Null until measured: the first paint keeps the stacked
   // cell's own height, so nothing animates on load.
   const [cellHeight, setCellHeight] = useState<number | null>(null);
+  // True for the length of a swap's height animation and no longer. The cell's
+  // transition is keyed on it (`.board-cell[data-swapping]`) so that only a
+  // swap animates: the observer below also rewrites the height on a resize or
+  // a rotation, and easing *that* over 560ms let the section under the board
+  // ride up over the cards until it caught up.
+  const [swapping, setSwapping] = useState(false);
+  const swapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (swapTimer.current) clearTimeout(swapTimer.current);
+    },
+    [],
+  );
 
   // A layout effect so the first measurement lands before the first paint,
   // rather than as a visible jump from the stacked height. Observed rather
@@ -136,6 +149,10 @@ export function GameBoard({
     takeFocus.current = event.detail === 0;
     setView(next);
     setSwaps((n) => n + 1);
+    // A little past the 560ms transition in app/globals.css.
+    setSwapping(true);
+    if (swapTimer.current) clearTimeout(swapTimer.current);
+    swapTimer.current = setTimeout(() => setSwapping(false), 600);
   }
 
   /**
@@ -169,6 +186,7 @@ export function GameBoard({
     <div
       ref={board}
       data-measured={cellHeight !== null || undefined}
+      data-swapping={swapping || undefined}
       style={
         cellHeight === null
           ? undefined
@@ -623,7 +641,7 @@ function CoverCard({
             two lines of `text-xs` in it, which is a line more than the card
             has. Unchanged from `sm` up. */}
         {kicker ? (
-          <span className={`mb-1 block text-[10px] uppercase leading-[1.35] tracking-[0.08em] text-white/85 sm:text-xs sm:leading-4 sm:tracking-[0.1em] ${ON_PHOTO_SHADOW}`}>
+          <span className={`mb-1 block text-balance text-[10px] uppercase leading-[1.35] tracking-[0.08em] text-white/85 sm:text-xs sm:leading-4 sm:tracking-[0.1em] ${ON_PHOTO_SHADOW}`}>
             {kicker}
           </span>
         ) : null}
@@ -816,9 +834,12 @@ function BoardCard({
              label. French is where that bites — "Bientôt disponible" wraps at
              every size this card ever is — and the fix that keeps the label
              legible is the mark that is carrying the least. From `sm` the card
-             is twice as tall and the chip comes back. */
+             is twice as tall and the chip comes back — except from `md` to 960,
+             where the games view is four across and a card is 165-210px
+             again: the banner sat on top of the chip at 768 in every language,
+             and French's two lines still did at 900. */
           className={`h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors sm:h-10 sm:w-10 ${
-            veil ? "hidden sm:flex" : "flex"
+            veil ? "hidden sm:max-md:flex min-[960px]:flex" : "flex"
           } ${
             photo
               ? "border border-white/15 bg-white/10 text-white/80 backdrop-blur-md group-hover:text-white"
@@ -854,7 +875,7 @@ function BoardCard({
             line. */}
         {kicker ? (
           <span
-            className={`mb-0.5 block text-[10px] uppercase leading-[1.35] tracking-[0.08em] sm:text-xs sm:leading-4 sm:tracking-[0.1em] ${
+            className={`mb-0.5 block text-balance text-[10px] uppercase leading-[1.35] tracking-[0.08em] sm:text-xs sm:leading-4 sm:tracking-[0.1em] ${
               photo ? `text-white/85 ${ON_PHOTO_SHADOW}` : "text-ink-dim"
             }`}
           >
@@ -872,9 +893,17 @@ function BoardCard({
             card carrying a two-line kicker *and* a two-line title, and at
             `text-xl` it ran 1px past its own lower edge. The covers stay at
             `text-xl` there, so the hierarchy the step was asked for survives
-            at every width. */}
+            at every width.
+
+            Two more bands step down the same way: under 360, where a card is
+            ~115px, and from `md` to 900, where the games view is four across
+            and a card is ~165px — "Coming Soon" did not fit in either.
+            `wrap-anywhere` because a title that is one long word
+            ("Karşılaştırma", "Comparaison") cannot wrap at a space and was
+            cut off at the card's edge instead; `hyphens-auto` makes that break
+            fall between syllables, since `<html lang>` follows the locale. */}
         <span
-          className={`block text-lg font-semibold leading-tight sm:text-2xl ${
+          className={`block text-lg font-semibold leading-tight hyphens-auto wrap-anywhere max-[360px]:text-base sm:text-2xl md:max-[900px]:text-xl ${
             photo
               ? "text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)]"
               : "text-ink"
@@ -905,7 +934,7 @@ function BoardCard({
 
   /* `relative` and `overflow-hidden` only matter with a photograph, but they
      cost a card without one nothing and keep the class list one string. */
-  const shape = `board-card group relative flex ${CARD_HEIGHT} flex-col justify-between overflow-hidden rounded-2xl p-3.5 text-left sm:p-4 ${surface} ${width ?? ""}`;
+  const shape = `board-card group relative flex ${CARD_HEIGHT} flex-col justify-between overflow-hidden rounded-2xl p-3.5 text-left max-[360px]:p-2.5 sm:p-4 md:max-[900px]:p-3 ${surface} ${width ?? ""}`;
 
   if (onClick) {
     return (
@@ -916,7 +945,7 @@ function BoardCard({
            `GameBoard`. */
         data-board-swap
         style={cardOrder(index)}
-        className={`${shape} transition-colors hover:border-ink/25 hover:bg-card-raised/60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent`}
+        className={`${shape} cursor-pointer transition-colors hover:border-ink/25 hover:bg-card-raised/60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent`}
       >
         {inner}
       </button>

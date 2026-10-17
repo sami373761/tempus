@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { dealBasketballEvents } from "@/app/actions/rounds";
 import { TimelineGame } from "@/components/timeline-game";
 import { ROUND_QUEUE_DEPTH } from "@/lib/game/rounds";
@@ -9,6 +11,11 @@ import {
 import { readLocaleContext } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await readLocaleContext();
+  return { title: `${t.basketballTitle} · Tempus` };
+}
 
 /**
  * The basketball game: the date-guessing screen, played over basketball's own

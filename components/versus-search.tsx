@@ -248,13 +248,19 @@ export function VersusSearch({
         {/* The headline is the status line: it is the one sentence on the
             screen, and a screen reader is told it once rather than being
             read a clock every second. */}
+        {/* A block rather than a flex row, with the dots inline after the
+            last word: as a flex item they stood beside the whole wrapped
+            heading, a column's width away from where the sentence ends. */}
         <h2
           role="status"
           aria-live="polite"
-          className="mt-1 flex items-center justify-center gap-2 font-display text-xl font-semibold text-ink"
+          className="mt-1 text-balance font-display text-xl font-semibold text-ink"
         >
           {t.versusSearching}
-          <span aria-hidden="true" className="flex items-center gap-1 pt-1">
+          <span
+            aria-hidden="true"
+            className="ml-2 inline-flex items-center gap-1 align-middle"
+          >
             {[0, 1, 2].map((dot) => (
               <span
                 key={dot}
@@ -292,7 +298,7 @@ export function VersusSearch({
           {rating !== null && (
             <>
               <span className="px-1.5 text-white/30">·</span>
-              <span className="font-semibold tabular-nums text-ink">
+              <span className="whitespace-nowrap font-semibold tabular-nums text-ink">
                 {format(t.versusRatingValue, { n: rating })}
               </span>
             </>
@@ -306,11 +312,20 @@ export function VersusSearch({
           // second press, and a disabled button drops keyboard focus to the
           // document just as the screen may be about to change under it.
           aria-busy={cancelling}
-          className={`${SUMMARY_BUTTON} mt-6 border-white/25 bg-transparent text-white/80 hover:border-white/45 hover:text-ink ${
+          className={`${SUMMARY_BUTTON} relative mt-6 border-white/25 bg-transparent text-white/80 hover:border-white/45 hover:text-ink ${
             cancelling ? "cursor-progress opacity-60" : ""
           }`}
         >
           {t.versusSearchCancel}
+          {/* The same trace as the start page's buttons: a cancel is a round
+              trip too, and dimming alone read as a button that had died. */}
+          {cancelling && (
+            <span aria-hidden="true" className="round-trace">
+              <i />
+              <i />
+              <i />
+            </span>
+          )}
         </button>
       </div>
     </div>

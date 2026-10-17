@@ -275,7 +275,19 @@ export function HomeExplorer({
             which is the same arrangement the site menu's panel uses. */}
         <RoundButton
           label={t.explorerClose}
-          onClick={() => setOpen(null)}
+          /* The button turns `inert` as it fades, which blurs it to `<body>`
+             if it held focus; the pill that was open is where a keyboard
+             reader was before, so focus goes back there first. */
+          onClick={() => {
+            if (open) {
+              document
+                .querySelector<HTMLButtonElement>(
+                  `[aria-controls="explorer-stage-${open}"]`,
+                )
+                ?.focus({ preventScroll: true });
+            }
+            setOpen(null);
+          }}
           shown={open !== null}
           className="shrink-0"
         >
@@ -349,7 +361,7 @@ export function HomeExplorer({
             From `md` it is the column it was: centred in a box of fixed height
             and clipped, so a longer body pushes the pills apart around the
             middle instead of growing the block. */}
-        <ul className="grid grid-cols-3 gap-2 md:flex md:flex-col md:justify-center md:gap-3 md:overflow-hidden">
+        <ul className="grid grid-cols-3 gap-2 max-[360px]:gap-1.5 md:flex md:flex-col md:justify-center md:gap-3 md:overflow-hidden">
           {ITEMS.map((item) => (
             <Pill
               key={item.id}
@@ -488,9 +500,15 @@ const PILL_HEAD = "flex items-center gap-3 text-base font-semibold text-ink";
  *  words and 40px of padding on one line — so the chip goes above the label and
  *  the label is allowed to wrap. `break-words` is for the one case that still
  *  does not fit at 10px: German's "Ereignisbibliothek", which has no space in
- *  it to break at. The type comes up a step at `sm`, where a cell is nearly
- *  200px and a 10px label in the middle of one reads as a caption that has
- *  lost its picture.
+ *  it to break at. `hyphens-auto` on the label makes those breaks fall between
+ *  syllables with a hyphen rather than one letter from the end: at 320 a 64px
+ *  label box split "Achievements" before its last letter. Under 360 the grid's
+ *  gap also gives back 2px, the room "Comparaison" and "Comparación" need to
+ *  stay whole. The padding does not come down with it: "Achievements" on one
+ *  line is 69px of a 75px cell, which puts its first and last letters under
+ *  the shell's 30px corners, and the shell clips them. The type comes up a
+ *  step at `sm`, where a cell is nearly 200px and a 10px label in the middle of
+ *  one reads as a caption that has lost its picture.
  *
  *  **It is what a pill wears whether or not it is open**, which is new: the
  *  open pill used to switch to the `md` row layout at every width, so on a
@@ -542,20 +560,31 @@ function Pill({
        fractional — 117.05px for "Survival" here — and `offsetWidth` rounds it
        down, which leaves the label five hundredths of a pixel short of what it
        needs; `truncate` answers that by eating four characters. Overshooting by
-       a pixel is invisible and cannot do it. */
-    const measure = () =>
-      setClosedWidth(Math.ceil(node.getBoundingClientRect().width) + 1);
+       a pixel is invisible and cannot do it.
 
-    /* Watched rather than measured once. Lato arrives after the first paint and
+       The observer's border box rather than `getBoundingClientRect()`, because
+       the latter is the *transformed* size: a page that loads with the explorer
+       in view measures it mid-way through the scroll reveal's `scale(.985)`,
+       came out a couple of pixels short, and the labels stayed truncated —
+       nothing re-measures when an animation ends, since a transform is not a
+       resize. The layout box is the same at every frame of it.
+
+       Watched rather than measured once. Lato arrives after the first paint and
        the twin gets wider when it does, and `document.fonts.ready` is no help:
        it resolves against whatever is pending *at the moment it is read*, so on
        a warm cache it had already resolved and the pills kept the fallback
        face's width — four characters short, with an ellipsis where the rest of
        the word should be. An observer catches the swap, a page zoom and a new
-       locale with one mechanism. */
-    const observer = new ResizeObserver(measure);
+       locale with one mechanism, and its first entry arrives before the first
+       paint, so it needs no synchronous measurement beside it. */
+    // `borderBoxSize` is missing before Safari 15.4, where indexing it would
+    // throw; there the transformed rect is the best there is.
+    const observer = new ResizeObserver(([entry]) => {
+      const box = entry?.borderBoxSize?.[0];
+      const width = box ? box.inlineSize : node.getBoundingClientRect().width;
+      setClosedWidth(Math.ceil(width) + 1);
+    });
     observer.observe(node);
-    measure();
     return () => observer.disconnect();
   }, [title]);
 
@@ -571,17 +600,19 @@ function Pill({
 
      Measured off the row rather than the shell, because the shell is the thing
      in motion. The row is the grid column's full width; the shell is 100% of it
-     in `border-box`, so the content box is that less its two borders. */
+     in `border-box`, so the content box is that less its two borders. The
+     observer's border box, not the transformed rect, for the reason the twin
+     above gives. */
   useEffect(() => {
     const node = row.current;
     if (!node) return;
 
-    const measure = () =>
-      setOpenWidth(Math.floor(node.getBoundingClientRect().width) - PILL_BORDER);
-
-    const observer = new ResizeObserver(measure);
+    const observer = new ResizeObserver(([entry]) => {
+      const box = entry?.borderBoxSize?.[0];
+      const width = box ? box.inlineSize : node.getBoundingClientRect().width;
+      setOpenWidth(Math.floor(width) - PILL_BORDER);
+    });
     observer.observe(node);
-    measure();
     return () => observer.disconnect();
   }, []);
 
@@ -608,7 +639,12 @@ function Pill({
            it. The number travels as a custom property rather than as `width`
            itself, because an inline style cannot be made to stop at a
            breakpoint and a Tailwind class can. */
-        className={`explorer-motion h-full w-full max-w-full overflow-hidden ${PILL_SHELL} transition-[width] md:h-auto md:w-[var(--pill-w)]`}
+        /* The focus ring is the shell's, drawn inward. The button fills this
+           box exactly and the box is `overflow-hidden`, so a ring on the button
+           was clipped away whole — and outside the shell it would be clipped by
+           the `md` list instead. `>button` so that a control inside `extra`
+           does not light the whole pill. */
+        className={`explorer-motion h-full w-full max-w-full overflow-hidden ${PILL_SHELL} transition-[width] has-[>button:focus-visible]:outline-2 has-[>button:focus-visible]:-outline-offset-2 has-[>button:focus-visible]:outline-accent md:h-auto md:w-[var(--pill-w)]`}
         style={
           {
             // `max-content` only before the twin has been measured, and on the
@@ -641,7 +677,7 @@ function Pill({
              pill's body is zero-height, so the button *is* the whole of what
              you see. There is deliberately no scale: the reference's pill does
              not move, measured identical to the pixel across a hover. */
-          className={`w-full transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${PILL_HEAD_COMPACT} ${
+          className={`w-full cursor-pointer transition-colors duration-200 focus-visible:outline-none ${PILL_HEAD_COMPACT} ${
             open
               ? /* The fill is the only thing that marks the open pill on a
                    phone, now that it no longer changes shape or place: the
@@ -658,7 +694,7 @@ function Pill({
               line to grow into and nothing below it to push — and truncation
               is the row's, where a long name in one of five languages would
               otherwise set the closed pill's width. */}
-          <span className="w-full break-words md:w-auto md:truncate">
+          <span className="w-full break-words hyphens-auto md:w-auto md:truncate">
             {title}
           </span>
         </button>
@@ -920,7 +956,7 @@ function RoundButton({
       aria-label={label}
       title={label}
       inert={!shown}
-      className={`explorer-motion grid h-9 w-9 place-items-center rounded-full border border-hairline bg-card-raised text-ink transition-[opacity,transform] hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${className}`}
+      className={`explorer-motion grid h-9 w-9 cursor-pointer place-items-center rounded-full border border-hairline bg-card-raised text-ink transition-[opacity,transform] hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${className}`}
       style={{
         opacity: shown ? 1 : 0,
         transform: shown ? "none" : "scale(0.8)",
@@ -1245,20 +1281,29 @@ function StageLibrary({
           rather than edge-weighted for the numerals to hold. */}
       <div aria-hidden className="absolute inset-0 bg-black/62" />
 
-      <div className="absolute inset-0 grid place-items-center p-3 sm:p-8">
+      {/* The `sm` sizes assume the stage is the card's full width, which it is
+          until `md` — then it is the right-hand column, and a tile is 91px at
+          768 and only reaches the 132px "4.54bn" needs at 26px (inside 20px of
+          padding a side) at ~930. That band, to 960 for a margin, and phones
+          under 360 (a ~70px tile), take a step down in padding and type;
+          everywhere else is unchanged. */}
+      <div className="absolute inset-0 grid place-items-center p-3 max-[360px]:p-2 sm:p-8">
         {/* Value over label rather than beside it. Side by side, the three
             labels start at three different x positions — the number's width is
             the whole of the difference, and "4,54 milyar" against "5" is as far
             apart as that gets. Stacked, they line up in every language without
             a width being reserved for the widest number any of them has. */}
-        <dl className="grid w-full max-w-xl grid-cols-3 gap-2 sm:gap-3">
+        <dl className="grid w-full max-w-xl grid-cols-3 gap-2 max-[360px]:gap-1.5 sm:gap-3">
           {tiles.map((tile, i) => (
             <div
               key={tile.label}
               /* `flex-col-reverse` so the term can stay before its definition
                  in the markup, which is the order a `dl` requires, while the
-                 number is the line on top. */
-              className={`flex flex-col-reverse gap-1.5 rounded-xl border border-white/15 bg-black/35 px-2.5 py-3 backdrop-blur-xl sm:gap-2 sm:rounded-2xl sm:px-5 sm:py-4 ${
+                 number is the line on top. `justify-end` is the top of a
+                 reversed column: the grid stretches the three tiles to the
+                 tallest, and packed from the bottom the numerals sat at three
+                 heights whenever the labels wrapped to different line counts. */
+              className={`flex flex-col-reverse justify-end gap-1.5 rounded-xl border border-white/15 bg-black/35 px-2.5 py-3 backdrop-blur-xl max-[360px]:px-1.5 sm:gap-2 sm:rounded-2xl sm:px-5 sm:py-4 md:max-[960px]:px-2 ${
                 active ? "explorer-tile-in" : ""
               }`}
               style={{ "--tile-i": i } as React.CSSProperties}
@@ -1269,7 +1314,7 @@ function StageLibrary({
               {/* `leading-tight` rather than `leading-none` below `sm`: a
                   third of a phone's panel is ~67px of text column, and
                   "4,54 milyar" takes two lines in it. */}
-              <dd className="font-display text-[17px] font-semibold leading-tight text-white sm:text-[26px] sm:leading-none">
+              <dd className="font-display text-[17px] font-semibold leading-tight text-white max-[360px]:text-[14px] sm:text-[26px] sm:leading-none md:max-[960px]:text-[18px]">
                 {tile.value}
               </dd>
             </div>

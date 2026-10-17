@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { dealComparisonRounds } from "@/app/actions/rounds";
 import { ComparisonBackdrop } from "@/components/comparison-backdrop";
 import { ComparisonGame } from "@/components/comparison-game";
@@ -7,6 +9,11 @@ import { readLocaleContext } from "@/lib/i18n/server";
 // Every visit deals a fresh queue; "next round" after that is a state change in
 // the client, not a route refresh.
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await readLocaleContext();
+  return { title: `${t.comparisonTitle} · Tempus` };
+}
 
 export default async function ComparePage() {
   const { locale, t } = await readLocaleContext();

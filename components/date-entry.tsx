@@ -170,7 +170,12 @@ export function DateEntry({
       className={`relative shrink-0 rounded-full border backdrop-blur-md transition-colors ${
         invalid
           ? "border-bad/70 bg-bad/10"
-          : "border-white/45 bg-black/45 hover:border-white/60"
+          : // The field itself draws no outline (it is a borderless slot in
+            // this pill), so the pill's own edge is what says it has focus.
+            // Hover only lifts an unfocused pill: Tailwind emits `hover`
+            // after `focus-within`, so a plain hover would dim a focused
+            // field's edge back to /60 under the pointer.
+            "border-white/45 bg-black/45 hover:not-focus-within:border-white/60 focus-within:border-white/80"
       }`}
       style={{ width: eraHidden ? BARE_PILL_W : PILL_W, height: ENTRY_H }}
     >

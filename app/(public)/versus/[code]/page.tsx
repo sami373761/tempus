@@ -1,8 +1,15 @@
-import { VersusGame } from "@/components/versus-game";
+import type { Metadata } from "next";
+
+import { FatalNotice, VersusGame } from "@/components/versus-game";
 import { isInviteCode, normalizeInviteCode } from "@/lib/game/versus";
 import { readLocaleContext } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await readLocaleContext();
+  return { title: `${t.versusTitle} · Tempus` };
+}
 
 /**
  * One match.
@@ -13,8 +20,8 @@ export const dynamic = "force-dynamic";
  * fetch would be stale before it painted. It hands the code to the client and
  * gets out of the way.
  *
- * The code is validated here anyway, so a mistyped URL is a sentence rather
- * than a round trip that fails.
+ * The code is validated here anyway, so a mistyped URL is answered at once
+ * rather than after a round trip that fails.
  */
 export default async function VersusMatchPage({
   params,
@@ -47,9 +54,9 @@ export default async function VersusMatchPage({
         // seat and channel into the new one.
         <VersusGame key={code} code={code} t={t} locale={locale} />
       ) : (
-        <p className="flex flex-1 items-center justify-center px-6 text-center text-ink-dim">
-          {t.versusMatchNotFound}
-        </p>
+        // The same card a code the server does not know gets, with its way
+        // back to the start page, rather than a grey sentence on a bare page.
+        <FatalNotice message={t.versusMatchNotFound} t={t} />
       )}
     </div>
   );

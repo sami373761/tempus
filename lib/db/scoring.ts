@@ -210,7 +210,55 @@ export async function refreshBadges(
   });
 
   await writeBadgeProgress(admin, writes);
+
+  // The mark on the menu's Achievements row. Guarded on purpose: this runs
+  // after every banked payout, and a nudge that failed to be written must not
+  // cost the player the badge it was about. A count that is a little behind
+  // is a missed notification; a throw here would be a lost unlock.
+  if (newlyEarned.length > 0) {
+    try {
+      await noteBadgesEarned(admin, userId, newlyEarned.length);
+    } catch (error) {
+      console.error("noteBadgesEarned failed", error);
+    }
+  }
+
   return { stats, badges, newlyEarned };
+}
+
+/**
+ * Add newly unlocked badges to the count the menu marks.
+ *
+ * A delta rather than a total, because that is what a refresh knows: it
+ * compares today's ladder against the rows already written and can report
+ * only what changed. The ceiling is applied in SQL (`note_badges_earned`), so
+ * a runaway caller cannot write a number the pill has no room for.
+ */
+export async function noteBadgesEarned(
+  admin: DbClient,
+  userId: string,
+  count: number,
+): Promise<void> {
+  const { error } = await admin.rpc("note_badges_earned", {
+    p_user_id: userId,
+    p_count: count,
+  });
+  if (error) throw new Error(`noteBadgesEarned: ${error.message}`);
+}
+
+/**
+ * Take the mark off: the player is on the badges page.
+ *
+ * Opening that page is the whole definition of "seen" — there is no second
+ * condition worth checking, and a mark that outlived the page it points at
+ * would be a mark people learn to ignore.
+ */
+export async function markBadgesSeen(
+  admin: DbClient,
+  userId: string,
+): Promise<void> {
+  const { error } = await admin.rpc("mark_badges_seen", { p_user_id: userId });
+  if (error) throw new Error(`markBadgesSeen: ${error.message}`);
 }
 
 /**

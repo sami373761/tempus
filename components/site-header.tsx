@@ -65,6 +65,9 @@ export const TRANSPARENT_ROUTES = [
   // photograph was the one thing in that row not made of the same material.
   "/screen",
   "/when-born",
+  // The daily game paints a full-bleed `TimelineBackdrop` behind its play and
+  // summary screens (components/daily-game.tsx), the same as the rails above.
+  "/daily",
 ];
 
 /**

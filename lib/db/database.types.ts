@@ -618,6 +618,12 @@ export type Database = {
           avatar_key: string | null;
           /** Online 1v1 Chrono Rating (KP), floor 0. Written only by versus_settle_rating(). */
           chrono_rating: number;
+          /**
+           * Badges earned but not looked at yet, for the mark on the menu's
+           * Achievements row. 0-99. Written only by note_badges_earned() and
+           * mark_badges_seen().
+           */
+          unseen_badges: number;
           created_at: string;
           updated_at: string;
         };
@@ -628,6 +634,7 @@ export type Database = {
           badge_off?: boolean;
           avatar_key?: string | null;
           chrono_rating?: number;
+          unseen_badges?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -640,6 +647,7 @@ export type Database = {
           worn_badge?: string | null;
           badge_off?: boolean;
           avatar_key?: string | null;
+          unseen_badges?: number;
         };
         Relationships: [];
       };
@@ -908,6 +916,16 @@ export type Database = {
       shown_badge: {
         Args: { p_user_id: string };
         Returns: string | null;
+      };
+      /** Add newly earned badges to the unseen count; returns the new total. */
+      note_badges_earned: {
+        Args: { p_user_id: string; p_count: number };
+        Returns: number;
+      };
+      /** Clear the unseen-badge count — the player is looking at them. */
+      mark_badges_seen: {
+        Args: { p_user_id: string };
+        Returns: undefined;
       };
       leaderboard: {
         Args: { p_since?: string | null; p_limit?: number };

@@ -270,6 +270,23 @@ export function WhenBornGame({
   // are a round trip apart; see components/timeline-game.tsx.
   const lockedIn = guess !== null;
   const answered = reveal !== null;
+
+  // Focus follows the button swap, so a keyboard player is not dropped to
+  // <body> when the pressed button turns `inert` — see the solo game's copy
+  // in components/timeline-game.tsx for the rule.
+  const lockButton = useRef<HTMLButtonElement>(null);
+  const nextButton = useRef<HTMLButtonElement>(null);
+  const wasAnswered = useRef(answered);
+  useEffect(() => {
+    if (wasAnswered.current === answered) return;
+    wasAnswered.current = answered;
+    const from = answered ? lockButton.current : nextButton.current;
+    const to = answered ? nextButton.current : lockButton.current;
+    const active = document.activeElement;
+    if (!active || active === document.body || active === from) {
+      to?.focus({ preventScroll: true });
+    }
+  }, [answered]);
   const queueHead = useRef<DealtEvent<WhenBornEvent> | null>(null);
   queueHead.current = queue[0] ?? null;
 
@@ -314,6 +331,18 @@ export function WhenBornGame({
       : null;
   const setComplete = results.length >= QUESTIONS_PER_SET;
   const lastQuestion = results.length === QUESTIONS_PER_SET - 1;
+
+  // "Play again" unmounts with its own press, so the new set's first control
+  // takes the focus it was holding.
+  const refocusLock = useRef(false);
+  useEffect(() => {
+    if (setComplete || !refocusLock.current) return;
+    refocusLock.current = false;
+    const active = document.activeElement;
+    if (!active || active === document.body) {
+      lockButton.current?.focus({ preventScroll: true });
+    }
+  }, [setComplete]);
 
   const move = useCallback((nextPane: TimelinePane, next: number) => {
     setFractions((current) => ({ ...current, [nextPane]: next }));
@@ -383,6 +412,8 @@ export function WhenBornGame({
       setInvalid(true);
       return;
     }
+    // Any lock-in that goes through answers the refusal, the clock's included.
+    setInvalid(false);
     if (typed !== null) {
       guessed = typed;
       from = paneForYear(typed, WHEN_BORN_PANES);
@@ -562,6 +593,7 @@ export function WhenBornGame({
           // long session would end up asking the draw to avoid the whole pool.
           points={solo.points}
           onPlayAgain={() => {
+            refocusLock.current = true;
             solo.reset();
             setResults([]);
             setPlayed([]);
@@ -604,7 +636,11 @@ export function WhenBornGame({
                   total={QUESTIONS_PER_SET}
                   t={t}
                 />
-                {!lockedIn && <SoloRoundTimer clock={clock} t={t} />}
+                {/* Hidden in place rather than unmounted once the guess is
+                    in, so the counter beside it does not jump sideways. */}
+                <span className={lockedIn ? "invisible" : undefined}>
+                  <SoloRoundTimer clock={clock} t={t} />
+                </span>
               </span>
             }
             // On the picture below 1120px for the reason every overlay on
@@ -659,7 +695,7 @@ export function WhenBornGame({
                 the bar's own row (`RoundHead` above), the counter into the
                 portrait's top-right corner, and the card takes what they
                 leave. */}
-            <div className="on-photo hidden shrink-0 items-start justify-between gap-4 px-8 pt-1 sm:px-12 min-[1120px]:flex">
+            <div className="on-photo hidden shrink-0 items-start justify-between gap-4 px-8 pt-1 sm:px-12 min-[1120px]:flex [@media(max-height:640px)]:pt-0">
               <div className="min-w-0">
                 <h2 className="font-display text-xl font-semibold tracking-tight text-ink sm:text-2xl">
                   {t.whenBornTitle}
@@ -669,7 +705,7 @@ export function WhenBornGame({
                     death, so the one thing the player has to be told is which
                     date is wanted. The film game's line does the mirror-image
                     job — see `whenBornYearAsked` in the dictionary. */}
-                <p className="mt-1 text-sm leading-snug text-white/80">
+                <p className="mt-1 text-sm leading-snug text-white/80 [@media(max-height:640px)]:mt-0">
                   {t.whenBornYearAsked}
                 </p>
               </div>
@@ -680,7 +716,10 @@ export function WhenBornGame({
                   size="md"
                   t={t}
                 />
-                {!lockedIn && <SoloRoundTimer clock={clock} t={t} />}
+                {/* Hidden in place, not unmounted: see the portrait corner. */}
+                <span className={lockedIn ? "invisible" : undefined}>
+                  <SoloRoundTimer clock={clock} t={t} />
+                </span>
               </div>
             </div>
 
@@ -831,32 +870,48 @@ export function WhenBornGame({
                   cell with the same padding, so they share a centre and "Next
                   round" appears exactly where "Lock in guess" was — under the
                   pointer that just pressed it. Only the colour changes. */}
+              {/* Staggered, not crossfaded, so the two labels are never on
+                  screen on top of each other — see the solo game's. */}
               <div className="grid place-items-center">
                 <div
-                  className={`col-start-1 row-start-1 transition-opacity duration-300 ${
-                    answered ? "opacity-0" : "opacity-100"
+                  className={`col-start-1 row-start-1 transition-opacity ${
+                    answered
+                      ? "opacity-0 duration-150"
+                      : "opacity-100 duration-200 delay-150"
                   }`}
                   inert={answered}
                 >
                   <button
+                    ref={lockButton}
                     type="button"
                     onClick={submit}
                     aria-busy={sending}
-                    className={`${ROUND_BUTTON_LG} bg-ink text-page hover:opacity-85 ${
+                    className={`${ROUND_BUTTON_LG} relative bg-ink text-page hover:opacity-85 ${
                       sending ? "cursor-progress opacity-70" : ""
                     }`}
                   >
                     {t.submitGuess}
+                    {/* The "Next round" trace, while the guess is graded. */}
+                    {sending && (
+                      <span aria-hidden="true" className="round-trace">
+                        <i />
+                        <i />
+                        <i />
+                      </span>
+                    )}
                   </button>
                 </div>
 
                 <div
-                  className={`col-start-1 row-start-1 transition-opacity duration-300 ${
-                    answered ? "opacity-100" : "opacity-0"
+                  className={`col-start-1 row-start-1 transition-opacity ${
+                    answered
+                      ? "opacity-100 duration-200 delay-150"
+                      : "opacity-0 duration-150"
                   }`}
                   inert={!answered}
                 >
                   <button
+                    ref={nextButton}
                     type="button"
                     onClick={requestNextRound}
                     // Never disabled. A press with nothing queued is latched
@@ -914,7 +969,11 @@ export function WhenBornGame({
                   // `translate` property and the keyframe animates
                   // `transform`, so the two would compose and pull it a whole
                   // width left. Both keyframes carry the -50% instead.
-                  className="entry-warning on-photo absolute left-1/2 top-full mt-1 whitespace-nowrap text-[12px] font-medium text-bad"
+                  //
+                  // A 16px line under `mt-1` is 20px, inside the frame's
+                  // `pb-5`; the inherited 18px line box would hang past it
+                  // and give a page built not to scroll a scrollbar.
+                  className="entry-warning on-photo absolute left-1/2 top-full mt-1 whitespace-nowrap text-[12px] leading-4 font-medium text-bad"
                 >
                   {t.invalidDate}
                 </p>
@@ -930,7 +989,13 @@ export function WhenBornGame({
                 Hidden below 1120px, where the verdict is painted on the picture
                 instead (`RoundVerdict`, which hides itself at the same width,
                 so the two are never on screen together). */}
-            <div className="hidden h-[var(--result-h)] min-h-56 gap-4 px-8 pt-4 sm:px-12 min-[1120px]:flex">
+            {/* On a window 640px tall or less the row gives back 8px of its
+                top padding (and its floor the same 8px), and the head and its
+                line of prose their own few: the portrait is shorter there
+                than the head, rail, button and a 14rem row add up to, and the
+                cards hung ~16px below its foot. The card itself stays 208px,
+                which is what the 42% head share is measured on. */}
+            <div className="hidden h-[var(--result-h)] min-h-56 gap-4 px-8 pt-4 sm:px-12 min-[1120px]:flex [@media(max-height:640px)]:min-h-[13.5rem] [@media(max-height:640px)]:pt-2">
               {accuracy && guess !== null ? (
                 <>
                   <VerdictDeck
@@ -939,8 +1004,10 @@ export function WhenBornGame({
                     locale={locale}
                     tp={reveal?.tp ?? null}
                     t={t}
-                    // The film game's measured share — see the note there.
+                    // The film game's measured share, and its TP in the
+                    // kicker — see the note there.
                     headShare="42%"
+                    tpInKicker
                     className="round-flank-left flex w-60 shrink-0 flex-col overflow-hidden rounded-3xl border text-center shadow-2xl shadow-black/60 backdrop-blur-2xl"
                   />
                   {/* The challenge rides with the description, not with the

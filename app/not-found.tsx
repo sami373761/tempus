@@ -31,7 +31,9 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await readLocaleContext();
-  return { title: `${t.notFoundTitle} · Tempus` };
+  // The heading is a sentence and keeps its full stop; a tab title is a name,
+  // and "here. · Tempus" read as a typo.
+  return { title: `${t.notFoundTitle.replace(/[.!。]+$/u, "")} · Tempus` };
 }
 
 export default async function NotFound() {
@@ -48,7 +50,9 @@ export default async function NotFound() {
       <SiteHeader />
       <SiteMenu locale={locale} t={t} account={account} />
 
-      <main className="flex flex-1 items-center justify-center px-6 py-16">
+      {/* `py-10` on a phone: at 320x568 the full 128px of padding was what
+          pushed this one screen 10px past the viewport. */}
+      <main className="flex flex-1 items-center justify-center px-6 py-10 sm:py-16">
         <div className="w-full max-w-[34rem] text-center">
           {/* The number, large and quiet. It is the one thing on the page that
               is the same in every language, so it carries the identification
@@ -61,20 +65,21 @@ export default async function NotFound() {
             {t.notFoundCode}
           </p>
 
-          <h1 className="mt-4 font-display text-3xl font-semibold tracking-[-0.02em] sm:text-4xl">
+          <h1 className="mt-4 text-balance font-display text-3xl font-semibold tracking-[-0.02em] sm:text-4xl">
             {t.notFoundTitle}
           </h1>
-          <p className="mx-auto mt-3 max-w-[44ch] text-[15px] leading-relaxed text-ink-dim sm:text-base">
+          <p className="mx-auto mt-3 max-w-[44ch] text-pretty text-[15px] leading-relaxed text-ink-dim sm:text-base">
             {t.notFoundBlurb}
           </p>
 
           {/* Two ways out rather than one. The board is the answer to "where
               was I going"; a round is the answer to "I am here now", and it is
-              the thing this site is for. */}
+              the thing this site is for. The transparent border is the
+              secondary's 1px, so the two stand the same height side by side. */}
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
               href="/"
-              className="w-full rounded-full bg-ink px-7 py-3 text-[15px] font-semibold text-page transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto"
+              className="w-full rounded-full border border-transparent bg-ink px-7 py-3 text-[15px] font-semibold text-page transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto"
             >
               {t.notFoundHome}
             </Link>

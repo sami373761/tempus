@@ -324,14 +324,14 @@ export function dailyShareText({
   squares: string;
   hits: number;
   total: number;
-  /** Null for a guest, who has no score to quote. */
-  points: number | null;
+  /** The score as the reader's language prints it, unit included ("1.234
+   *  Pkt."), formatted by the caller, which has the locale and the
+   *  dictionary. Null for a guest, who has no score to quote. */
+  points: string | null;
   url: string;
 }): string {
   const score =
-    points === null
-      ? `${hits}/${total}`
-      : `${hits}/${total} · ${points.toLocaleString("en-US")} pts`;
+    points === null ? `${hits}/${total}` : `${hits}/${total} · ${points}`;
 
   return [`TEMPUS · ${title} · ${puzzleDate}`, score, "", squares, "", url].join(
     "\n",

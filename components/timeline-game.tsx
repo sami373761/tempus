@@ -23,6 +23,7 @@ import { TimelineBackdrop } from "@/components/timeline-backdrop";
 import {
   CARD_BOX,
   CARD_BOX_WIDE,
+  CARD_BOX_WIDE_COMPACT,
   openingFractions,
   panDuration,
   PAN_MS,
@@ -254,6 +255,10 @@ export function TimelineGame({
   const direct = directWanted && keyboardEntry;
   const travelTimer = useRef<number | null>(null);
   const resetTimer = useRef<number | null>(null);
+  // The two stacked round buttons, for handing focus across the swap — see
+  // the effect next to `answered` below.
+  const lockButton = useRef<HTMLButtonElement>(null);
+  const nextButton = useRef<HTMLButtonElement>(null);
 
   useEffect(
     () => () => {
@@ -381,6 +386,25 @@ export function TimelineGame({
   const locked = guess !== null;
   const answered = reveal !== null;
 
+  // Focus follows the swap. The two round buttons share one grid cell and the
+  // hidden one is `inert`, so the button just pressed is blurred the moment it
+  // is swapped out, and a keyboard player is dropped to <body> — Tab would
+  // restart from the top of the page. Moved only if focus really was dropped
+  // or is still on the outgoing button: a typed field focusing itself for the
+  // next round is left alone. A programmatic focus after a mouse press does
+  // not match `:focus-visible`, so a pointer player sees no ring.
+  const wasAnswered = useRef(answered);
+  useEffect(() => {
+    if (wasAnswered.current === answered) return;
+    wasAnswered.current = answered;
+    const from = answered ? lockButton.current : nextButton.current;
+    const to = answered ? nextButton.current : lockButton.current;
+    const active = document.activeElement;
+    if (!active || active === document.body || active === from) {
+      to?.focus({ preventScroll: true });
+    }
+  }, [answered]);
+
   // What a typed date may name: the two ends of the rails this game actually
   // shows. On the general timeline that is the whole ruler, which is what the
   // entry already allowed; on a one-pane subject game it is that pane, so a
@@ -449,6 +473,10 @@ export function TimelineGame({
       setInvalid(true);
       return;
     }
+    // Any lock-in that goes through answers the refusal, including the clock's
+    // own: a warning and a red field left up through the reveal would be
+    // complaining about a press the round has already moved past.
+    setInvalid(false);
 
     if (typed !== null) {
       guessed = typed;
@@ -577,6 +605,18 @@ export function TimelineGame({
   const setComplete = results.length >= QUESTIONS_PER_SET;
   const lastQuestion = results.length === QUESTIONS_PER_SET - 1;
 
+  // "Play again" unmounts with its own press, so the new set's first control
+  // takes the focus it was holding — the same rule as the swap above.
+  const refocusLock = useRef(false);
+  useEffect(() => {
+    if (setComplete || !refocusLock.current) return;
+    refocusLock.current = false;
+    const active = document.activeElement;
+    if (!active || active === document.body) {
+      lockButton.current?.focus({ preventScroll: true });
+    }
+  }, [setComplete]);
+
   // `advance` is deliberately not a dependency: it is re-created every render
   // and would restart this effect forever. The effect only runs on the render
   // where `upcoming` has just arrived, so the `advance` it closes over is that
@@ -638,6 +678,7 @@ export function TimelineGame({
           // events count as repeats, or a long session would eventually be
           // asking the draw to avoid the whole pool.
           onPlayAgain={() => {
+            refocusLock.current = true;
             setResults([]);
             setPlayed([]);
             solo.reset();
@@ -681,8 +722,12 @@ export function TimelineGame({
               the same constants rather than repeating a class list, which is
               what keeps them identical now that there are two sizes of card. */}
           <div
-            className={`card-caps relative flex min-h-0 flex-1 flex-col items-stretch ${
-              folded ? CARD_BOX_WIDE : CARD_BOX
+            className={`card-caps relative flex min-h-[9.625rem] flex-1 flex-col items-stretch ${
+              folded
+                ? subject
+                  ? CARD_BOX_WIDE_COMPACT
+                  : CARD_BOX_WIDE
+                : CARD_BOX
             }`}
           >
             {accuracy && guess !== null && (
@@ -707,6 +752,8 @@ export function TimelineGame({
               // it away leaves no hole in the column and the button below does
               // not move.
               wide={folded}
+              // A subject game's rail is the short band, so it gives up less.
+              compact={subject}
               // On the photograph for the same reason the verdict was: this
               // screen is a height budget with nothing spare, and a counter in
               // the flow would be another row between the rail and the button.
@@ -732,7 +779,7 @@ export function TimelineGame({
                   <SoloRoundTimer clock={clock} t={t} />
                 ) : subject && answered ? (
                   <div className="min-[1120px]:hidden">
-                    <DateChallenge eventId={event.id} t={t} />
+                    <DateChallenge eventId={event.id} onPhoto t={t} />
                   </div>
                 ) : null
               }
@@ -794,13 +841,16 @@ export function TimelineGame({
                       value:
                         accuracy.distance === 0
                           ? t.correct
-                          : format(t.yearsOff, {
-                              n: formatYearCount(
-                                accuracy.distance,
-                                locale,
-                                dateLabels(t),
-                              ),
-                            }),
+                          : format(
+                              accuracy.distance === 1 ? t.yearOff : t.yearsOff,
+                              {
+                                n: formatYearCount(
+                                  accuracy.distance,
+                                  locale,
+                                  dateLabels(t),
+                                ),
+                              },
+                            ),
                     },
                     {
                       label: t.yourGuess,
@@ -999,34 +1049,54 @@ export function TimelineGame({
                 out of the accessibility tree while it is only holding the slot
                 open. */}
             <div className="flex items-center justify-center gap-3 md:contents">
+              {/* The swap is staggered rather than a crossfade: the outgoing
+                  button is gone (150ms) before the incoming one starts
+                  (150ms delay), so the two labels are never on screen on top
+                  of each other. */}
               <div className="grid place-items-center">
                 <div
-                  className={`col-start-1 row-start-1 transition-opacity duration-300 ${
-                    answered ? "opacity-0" : "opacity-100"
+                  className={`col-start-1 row-start-1 transition-opacity ${
+                    answered
+                      ? "opacity-0 duration-150"
+                      : "opacity-100 duration-200 delay-150"
                   }`}
                   inert={answered}
                 >
                   <button
+                    ref={lockButton}
                     type="button"
                     onClick={submit}
                     // Never disabled, like the advance button: a press while a
                     // guess is in flight is simply ignored by `submit`.
                     aria-busy={sending}
-                    className={`${ROUND_BUTTON} bg-ink text-page hover:opacity-85 ${
+                    className={`${ROUND_BUTTON} relative bg-ink text-page hover:opacity-85 ${
                       sending ? "cursor-progress opacity-70" : ""
                     }`}
                   >
                     {t.submitGuess}
+                    {/* The same trace as "Next round" below, for the second or
+                        so the guess spends being graded: a dim alone did not
+                        read as anything happening. */}
+                    {sending && (
+                      <span aria-hidden="true" className="round-trace">
+                        <i />
+                        <i />
+                        <i />
+                      </span>
+                    )}
                   </button>
                 </div>
 
                 <div
-                  className={`col-start-1 row-start-1 transition-opacity duration-300 ${
-                    answered ? "opacity-100" : "opacity-0"
+                  className={`col-start-1 row-start-1 transition-opacity ${
+                    answered
+                      ? "opacity-100 duration-200 delay-150"
+                      : "opacity-0 duration-150"
                   }`}
                   inert={!answered}
                 >
                   <button
+                    ref={nextButton}
                     type="button"
                     onClick={requestNextRound}
                     // Never disabled. A press with nothing queued is latched and
@@ -1087,7 +1157,12 @@ export function TimelineGame({
                 // `transform`, so the two would compose and pull it a whole
                 // width left. Both of its keyframes carry the -50% instead,
                 // the way the answer marker's do.
-                className="entry-warning on-photo absolute left-1/2 top-full mt-2 whitespace-nowrap text-[12px] font-medium text-bad"
+                //
+                // `mt-1` and a 16px line are 20px under the row, inside the
+                // frame's `pb-6`: the row can end on that padding, and
+                // anything taller hangs past the frame's foot and gives a
+                // page built not to scroll a scrollbar.
+                className="entry-warning on-photo absolute left-1/2 top-full mt-1 whitespace-nowrap text-[12px] leading-4 font-medium text-bad"
               >
                 {t.invalidDate}
               </p>

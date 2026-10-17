@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { wearBadge } from "@/app/actions/scoring";
 import { BadgeFrame } from "@/components/badge-frame";
 import { BADGES, RING_BOX, type Badge, type BadgeSlug } from "@/lib/badges";
+import type { SupportedLocale } from "@/lib/db/types";
 import { format, type Dict } from "@/lib/i18n/dictionary";
 
 /**
@@ -28,9 +29,11 @@ export interface BadgeView {
   unlocked: boolean;
 }
 
-/** Thousands grouped, the way the daily's score is printed. */
-function count(n: number): string {
-  return n.toLocaleString("en-US");
+/** Thousands grouped the reader's way, which is how the dictionary's own rule
+ *  lines print them ("10.000 TP" in German) — a fixed "en-US" had the
+ *  checklist under a German rule line reading "10,000". */
+function count(n: number, locale: SupportedLocale): string {
+  return n.toLocaleString(locale);
 }
 
 /**
@@ -122,11 +125,14 @@ const PAGE_SETTLE_MS = 700;
 
 export function BadgeShowcase({
   t,
+  locale,
   badges,
   totalTp,
   shown,
 }: {
   t: Dict;
+  /** For grouping the numbers; see `count`. */
+  locale: SupportedLocale;
   /** One entry per badge, in the badges' own order. */
   badges: readonly BadgeView[];
   /** Career TP, for the line under the heading. */
@@ -167,7 +173,7 @@ export function BadgeShowcase({
           {t.badgesTitle}
         </h1>
         <p className="mt-3 text-[15px] font-semibold tabular-nums text-ink-dim">
-          {format(t.badgesTotalTp, { n: count(totalTp) })}
+          {format(t.badgesTotalTp, { n: count(totalTp, locale) })}
         </p>
       </div>
 
@@ -179,6 +185,7 @@ export function BadgeShowcase({
             <BadgeCard
               key={badge.slug}
               t={t}
+              locale={locale}
               badge={badge}
               view={row}
               worn={worn === badge.slug}
@@ -340,15 +347,18 @@ function Rail({
   }
 
   return (
-    <div className="mt-10 sm:mt-12">
+    <div className="mt-10">
       {/* `tabIndex` because a scrollable region has to be reachable without a
-          pointer — a keyboard user needs somewhere to press the arrow keys. */}
+          pointer — a keyboard user needs somewhere to press the arrow keys.
+          Its focus ring is drawn inside the box (`-outline-offset-2`): the
+          scroller is the full width of the window, so a ring outside it lost
+          both of its sides off the screen and showed as two stray lines. */}
       <div
         ref={scroller}
         tabIndex={0}
         role="group"
         aria-label={label}
-        className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 pl-[max(1.5rem,calc((100%_-_(var(--board-w)_+_3rem))_/_2_+_1.5rem))] pr-6 scroll-pl-[max(1.5rem,calc((100%_-_(var(--board-w)_+_3rem))_/_2_+_1.5rem))] [scrollbar-width:none] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent motion-reduce:scroll-auto [&::-webkit-scrollbar]:hidden"
+        className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 pl-[max(1.5rem,calc((100%_-_(var(--board-w)_+_3rem))_/_2_+_1.5rem))] pr-6 scroll-pl-[max(1.5rem,calc((100%_-_(var(--board-w)_+_3rem))_/_2_+_1.5rem))] [scrollbar-width:none] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent motion-reduce:scroll-auto [&::-webkit-scrollbar]:hidden"
       >
         {children}
       </div>
@@ -358,7 +368,7 @@ function Rail({
           went with it would have nothing to align to and would sit jammed
           against the window's edge, so these stay on the page's own right
           margin with the heading above them. */}
-      <div className="mx-auto mt-6 hidden max-w-[calc(var(--board-w)+3rem)] justify-end gap-2 px-6 sm:flex">
+      <div className="mx-auto mt-4 hidden max-w-[calc(var(--board-w)+3rem)] justify-end gap-2 px-6 sm:flex">
         <RailArrow
           label={t.explorerPrev}
           disabled={ends.start}
@@ -387,13 +397,19 @@ function RailArrow({
   onClick: () => void;
   direction: "prev" | "next";
 }) {
+  /* `aria-disabled`, not `disabled`: the press that reaches the end of the
+     rail is the one that switches its own arrow off, and a `disabled` button
+     drops the keyboard focus that is on it to <body>. This one keeps focus,
+     says it is unavailable, and ignores the press. */
   return (
     <button
       type="button"
-      onClick={onClick}
-      disabled={disabled}
+      onClick={() => {
+        if (!disabled) onClick();
+      }}
+      aria-disabled={disabled || undefined}
       aria-label={label}
-      className="flex h-9 w-9 items-center justify-center rounded-full bg-card-raised text-ink transition-opacity duration-300 hover:bg-hairline disabled:pointer-events-none disabled:opacity-35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+      className="flex h-9 w-9 items-center justify-center rounded-full bg-card-raised text-ink transition-opacity duration-300 hover:bg-hairline aria-disabled:pointer-events-none aria-disabled:opacity-35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
     >
       <svg
         aria-hidden="true"
@@ -424,20 +440,24 @@ function RailArrow({
  * there.
  *
  * **The height is a floor read off the viewport, and that is what keeps the
- * page off a scrollbar.** `min-h-[min(30.5rem, 100dvh - 20rem)]`. The first
+ * page off a scrollbar.** `min-h-[min(30.5rem, 100dvh - 21rem)]`. The first
  * term is the fifth the card was asked to grow by — it measured 407px, and
- * 30.5rem is that plus 20%. The second is what is actually left: 20rem is
- * everything on the page that is *not* the card, summed — the top bar, the
- * page's two paddings, the heading, the gap above the rail, and the arrows
- * under it with theirs. **A hand-maintained sum, like `--compare-chrome`**:
- * every row the page gains above or below the rail is a row this has to gain
- * too, or the page it was built not to scroll scrolls. Without it a 488px card
- * is 488px on a laptop with 600px of window; giving up height instead is what
- * makes the whole page fit one screen wherever there is room for it to.
+ * 30.5rem is that plus 20%. The second is what is actually left: 21rem is
+ * everything on the page that is *not* the card, summed — the 74px top bar,
+ * the page's 40px and 32px paddings, the 83px heading, the rail's 40px gap
+ * above it, and under it the scroller's 8px, the arrows' 16px gap and their
+ * 36px: 329px, rounded up to 336 for a cushion. **A hand-maintained sum, like
+ * `--compare-chrome`**: every row the page gains above or below the rail is a
+ * row this has to gain too, or the page it was built not to scroll scrolls.
+ * Without it a 488px card is 488px on a laptop with 600px of window; giving up
+ * height instead is what makes the whole page fit one screen wherever there is
+ * room for it to. The card's own spacing is in the same budget from the other
+ * side: the tallest card (three quests, in English) is 503px of content at
+ * the 1.8rem padding, and 503 + 329 is what fits a 1680x844 window.
  *
  * It is a **`min-height`**, never a height, and that is the valve. A card
  * shorter than its own paragraph would clip it, and the five languages do not
- * agree on how long that paragraph is — so below about a 770px window the text
+ * agree on how long that paragraph is — so below about an 832px window the text
  * wins, the page scrolls, and nothing is lost. `/compare`'s budget keeps the
  * same escape for the same reason. Equal heights across the six are free
  * either way, the cards being flex items on a stretching row.
@@ -448,12 +468,14 @@ function RailArrow({
  */
 function BadgeCard({
   t,
+  locale,
   badge,
   view,
   worn,
   onToggleWear,
 }: {
   t: Dict;
+  locale: SupportedLocale;
   badge: Badge;
   view: BadgeView;
   /** Whether this is the badge shown beside the player's name. */
@@ -490,7 +512,7 @@ function BadgeCard({
   return (
     <article
       data-badge-card
-      className="flex w-[min(86vw,26.4rem)] min-h-[min(30.5rem,calc(100dvh_-_20rem))] shrink-0 snap-start flex-col rounded-[34px] bg-card-raised p-[1.8rem] sm:p-[2.1rem] md:w-[25.2rem] lg:w-[25.8rem]"
+      className="flex w-[min(86vw,26.4rem)] min-h-[min(30.5rem,calc(100dvh_-_21rem))] shrink-0 snap-start flex-col rounded-[34px] bg-card-raised p-[1.8rem] md:w-[25.2rem] lg:w-[25.8rem]"
     >
       {/* Top left. Two layers rather than one filtered image: a crossfade
           between two opaque pictures is clean, where interpolating
@@ -529,29 +551,34 @@ function BadgeCard({
       {/* The middle: what the badge is, what it takes, and how it is earned.
           `flex-1` is what pushes the foot to the card's lower edge whatever
           this runs to, so all six feet sit on one line. */}
-      <div className="mt-[2.1rem] flex-1">
+      <div className="mt-6 flex-1">
         <h2 className="font-display text-2xl font-semibold tracking-[-0.02em] text-ink">
           {t[badge.nameKey]}
         </h2>
 
         {/* The countable half of the sentence below, pulled out so a glance is
-            enough — "8 of 10" before the paragraph that explains it. */}
-        <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-dim">
+            enough — "8 of 10" before the paragraph that explains it.
+            The card's greys are `text-ink/60` rather than `text-ink-dim`:
+            that token is tuned against the black page and only makes 4.3:1 on
+            the card's raised grey, where this makes about 5.4:1. */}
+        <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/60">
           {t[badge.ruleKey]}
         </p>
 
-        <p className="mt-4 text-[15px] leading-relaxed text-ink-dim">
+        <p className="mt-3 text-[15px] leading-relaxed text-ink/60">
           {t[badge.howKey]}
         </p>
 
         {/* The requirements, each with its own count: the TP threshold first,
             then the quests. A tick, not a colour, says which are done — the
             palette's chroma belongs to the verdict ladder. */}
-        <ul className="mt-5 flex flex-col gap-2 text-[13px]">
+        <ul className="mt-4 flex flex-col gap-2 text-[13px]">
           <Requirement
             done={view.tp >= view.tpTarget}
-            label={format(t.badgeTpRequirement, { n: count(view.tpTarget) })}
-            progress={`${count(view.tp)} / ${count(view.tpTarget)}`}
+            label={format(t.badgeTpRequirement, {
+              n: count(view.tpTarget, locale),
+            })}
+            progress={`${count(view.tp, locale)} / ${count(view.tpTarget, locale)}`}
           />
           {view.quests.map((quest) => (
             <Requirement
@@ -570,7 +597,7 @@ function BadgeCard({
           button's lower edge and the digits read a clear 8px below the glyph
           beside them. Centred, the two share a middle, which is what a row of
           two reads as. */}
-      <div className="mt-[2.4rem] flex items-center justify-between gap-4">
+      <div className="mt-6 flex items-center justify-between gap-4">
         <p
           role="progressbar"
           aria-label={format(t.badgesProgressTo, { badge: t[badge.nameKey] })}
@@ -607,13 +634,13 @@ function Requirement({
 }) {
   return (
     <li className="flex items-baseline justify-between gap-3">
-      <span className={`flex min-w-0 items-baseline gap-2 ${done ? "text-ink" : "text-ink-dim"}`}>
+      <span className={`flex min-w-0 items-baseline gap-2 ${done ? "text-ink" : "text-ink/60"}`}>
         <span aria-hidden="true" className="w-3 shrink-0 text-center">
           {done ? "✓" : "·"}
         </span>
         <span>{label}</span>
       </span>
-      <span className="shrink-0 tabular-nums text-ink-dim">{progress}</span>
+      <span className="shrink-0 tabular-nums text-ink/60">{progress}</span>
     </li>
   );
 }

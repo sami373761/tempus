@@ -75,8 +75,11 @@ export function SetSummary({
   // of the document and tells a screen reader nothing. The panel takes it
   // rather than a button: landing on "Play again" would make Enter restart a
   // set the player has not been told the result of yet.
+  // `preventScroll` because the focus lands mid-entrance, while the panel is
+  // still translated: on a frame too short for it, the browser would scroll to
+  // that moving box and open the screen with the panel's top under the bar.
   useEffect(() => {
-    panel.current?.focus();
+    panel.current?.focus({ preventScroll: true });
   }, []);
 
   return (
@@ -86,7 +89,14 @@ export function SetSummary({
         tabIndex={-1}
         role="group"
         aria-label={`${t.setComplete} — ${title}`}
-        className="set-summary-in my-auto flex w-full max-w-md flex-col gap-5 rounded-3xl border border-white/12 bg-black/45 px-7 py-7 text-center shadow-2xl shadow-black/70 backdrop-blur-2xl focus:outline-none"
+        /* One step tighter on a short window — gaps 20→12px, padding 28→20px
+           and the headline 60→48px, about 84px with all eight rows. A set with
+           a five-tier breakdown measured 733px, which overran a 1366x768
+           frame (room for 670px) and put the last link below the fold; it is
+           649px with the step. One step only: Tailwind orders arbitrary media
+           variants by their text, so a second, shorter one would not cascade
+           over this one. The page-scroll fallback above still covers the rest. */
+        className="set-summary-in my-auto flex w-full max-w-md flex-col gap-5 rounded-3xl border border-white/12 bg-black/45 px-7 py-7 text-center shadow-2xl shadow-black/70 backdrop-blur-2xl focus:outline-none [@media(max-height:820px)]:gap-3 [@media(max-height:820px)]:py-5"
       >
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
@@ -101,7 +111,7 @@ export function SetSummary({
             a two- and three-digit percentage on replay. */}
         <div>
           <p
-            className="font-display text-6xl font-semibold leading-none tracking-tight tabular-nums"
+            className="font-display text-6xl font-semibold leading-none tracking-tight tabular-nums [@media(max-height:820px)]:text-5xl"
             style={{ color: GRADE_COLOR[grade] }}
           >
             {summary.percent}%
@@ -170,12 +180,12 @@ export function SetSummary({
           </Link>
         </div>
 
-        <a
-          href={otherHref}
-          className="text-xs text-white/55 underline-offset-4 transition hover:text-ink hover:underline"
-        >
+        {/* `self-center` so the hit box hugs the words instead of spanning the
+            panel, and padded to a 28px target with the padding handed back in
+            negative margin, so the panel is no taller for it. */}
+        <Link href={otherHref} className={SUMMARY_LINK}>
           {otherLabel}
-        </a>
+        </Link>
       </div>
     </div>
   );
@@ -189,7 +199,14 @@ export function SetSummary({
  * is a second place for them to drift.
  */
 export const SUMMARY_BUTTON =
-  "w-full rounded-full border px-6 py-2.5 text-sm font-semibold transition";
+  "w-full rounded-full border px-6 py-2.5 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
+
+/**
+ * The quiet "try the other game" link under the buttons, shared for the same
+ * reason as `SUMMARY_BUTTON` — the daily and the survival run end on it too.
+ */
+export const SUMMARY_LINK =
+  "-my-1.5 self-center rounded-full px-2 py-1.5 text-xs text-white/55 underline-offset-4 transition hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
 /**
  * The headline colour tracks the grade, but stops short of red.
@@ -405,6 +422,9 @@ export function ShareButton({
     <button
       type="button"
       onClick={share}
+      // `aria-live` so the "Copied" relabel is announced: the label is the
+      // only feedback the press gets.
+      aria-live="polite"
       className={`${SUMMARY_BUTTON} border-white/45 bg-black/45 text-ink backdrop-blur-md hover:bg-black/65`}
     >
       {label}

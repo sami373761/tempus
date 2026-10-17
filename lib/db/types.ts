@@ -114,6 +114,13 @@ export interface Account {
   username: string | null;
   /** Username if there is one, else the email's local part, else "Player". */
   displayName: string;
+  /**
+   * Badges earned but not looked at yet — the number on the menu's
+   * Achievements row, and 0 for "nothing to announce". Here rather than in a
+   * read of its own because the chrome is the only thing that shows it and
+   * the chrome already reads this profile (`readProfileChrome`).
+   */
+  unseenBadges: number;
 }
 
 /**

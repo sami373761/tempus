@@ -258,6 +258,20 @@ function PhotoRow({
   const [refusal, setRefusal] = useState<AuthErrorCode | null>(null);
   const form = useRef<HTMLFormElement>(null);
 
+  /* A removal that lands takes the Remove button away with the picture, and a
+     keyboard user with it to <body>. The upload control is what is left, so
+     focus goes there — only if it was actually dropped. */
+  const picker = useRef<HTMLInputElement>(null);
+  const hadAvatar = useRef(hasAvatar);
+  useEffect(() => {
+    const dropped =
+      !document.activeElement || document.activeElement === document.body;
+    if (hadAvatar.current && !hasAvatar && dropped) {
+      picker.current?.focus({ preventScroll: true });
+    }
+    hadAvatar.current = hasAvatar;
+  }, [hasAvatar]);
+
   function picked(event: React.ChangeEvent<HTMLInputElement>) {
     const input = event.currentTarget;
     const file = input.files?.[0];
@@ -296,9 +310,11 @@ function PhotoRow({
                 a native file button cannot be styled, and hiding it with
                 `sr-only` keeps it focusable — the ring is drawn on the label
                 while the input inside it has focus. */}
+            {/* `border-transparent` so it is the same height as Remove beside
+                it, which has a hairline border. */}
             <label
               aria-busy={uploading}
-              className={`inline-block cursor-pointer rounded-full bg-ink px-5 py-2.5 text-[14px] font-semibold text-page transition-opacity hover:opacity-90 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent ${
+              className={`inline-block cursor-pointer rounded-full border border-transparent bg-ink px-5 py-2.5 text-[14px] font-semibold text-page transition-opacity hover:opacity-90 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent ${
                 busy ? "pointer-events-none opacity-60" : ""
               }`}
             >
@@ -308,6 +324,7 @@ function PhotoRow({
                   ? t.accountPhotoChange
                   : t.accountPhotoUpload}
               <input
+                ref={picker}
                 type="file"
                 name="photo"
                 accept={AVATAR_ACCEPT}
@@ -442,6 +459,22 @@ function Editor({
     wasPending.current = pending;
   }, [pending, done]);
 
+  /* Closing — Cancel, or a save — unmounts whatever had focus, which drops a
+     keyboard user to <body>. The button that opened the editor is back in its
+     place, so focus goes back to it. Only on a close, and only when focus was
+     actually dropped: the first render, an open (where the field's `autoFocus`
+     takes it) and a save that lands after focus has moved on are left alone. */
+  const opener = useRef<HTMLButtonElement>(null);
+  const wasEditing = useRef(false);
+  useEffect(() => {
+    const dropped =
+      !document.activeElement || document.activeElement === document.body;
+    if (wasEditing.current && !editing && dropped) {
+      opener.current?.focus({ preventScroll: true });
+    }
+    wasEditing.current = editing;
+  }, [editing]);
+
   function start() {
     setReported(false);
     setEditing(true);
@@ -466,6 +499,7 @@ function Editor({
             {summary}
           </p>
           <button
+            ref={opener}
             type="button"
             onClick={start}
             className="shrink-0 rounded-full border border-hairline bg-card-raised/70 px-5 py-2.5 text-[14px] font-semibold text-ink transition-colors hover:bg-card-raised focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"

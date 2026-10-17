@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { submitDateChallenge } from "@/app/actions/challenges";
 import type { ChallengeDirection } from "@/lib/db/challenges";
@@ -65,8 +65,15 @@ import { dateLabels, format, type Dict } from "@/lib/i18n/dictionary";
  * `overflow-hidden` is what rounds the head's top corners — it has a square
  * box of its own and is clipped by the card, which is also why the card's
  * radius is the only place that radius is written.
+ *
+ * Exported because the head-to-head screen hangs the same pair off its own
+ * card — this player's result on the left, the opponent's on the right — and
+ * the breakpoint at which a screen is judged to have sides has to be decided
+ * once. A second copy of it would be a width to keep in step with
+ * `RoundVerdict`, which hides itself at exactly this one so the overlay and
+ * the panels are never on screen together.
  */
-const FLANK =
+export const FLANK_BOX =
   "absolute inset-y-0 z-20 hidden w-60 flex-col overflow-hidden rounded-3xl border text-center shadow-2xl shadow-black/60 backdrop-blur-2xl min-[1120px]:flex";
 
 /**
@@ -118,7 +125,7 @@ export function VerdictFlank({
       locale={locale}
       tp={tp}
       t={t}
-      className={`round-flank-left right-full mr-4 ${FLANK}`}
+      className={`round-flank-left right-full mr-4 ${FLANK_BOX}`}
     />
   );
 }
@@ -151,13 +158,55 @@ export function VerdictDeck({
   className = "",
   headShare = "46%",
   tp = null,
+  tpInKicker = false,
+  kicker = null,
+  label = null,
+  scoreLabel = null,
+  guessLabel = null,
   t,
 }: {
-  accuracy: GuessAccuracy;
-  guess: number;
+  /**
+   * The grade and the gap. Narrower than `GuessAccuracy` on purpose: a
+   * head-to-head seat knows its tier and can subtract its own guess from the
+   * answer, but has no `depth` or `relativeError` to hand — those are
+   * `gradeGuess`'s working, and this card has never printed them.
+   */
+  accuracy: { verdict: Verdict; distance: number | null };
+  /** The year guessed, or null for a round whose clock ran out first. */
+  guess: number | null;
   locale: SupportedLocale;
   /** What the round was worth, printed under the tier; null hides it. */
   tp?: number | null;
+  /**
+   * The head's small line, where it is not "Your result" — the opponent's
+   * name, on the card that reports their round. See `label`: the three
+   * overrides are one set, and they are what lets the two players' results be
+   * the same card rather than two that happen to look alike.
+   */
+  kicker?: string | null;
+  /**
+   * The head's word, when it is not the tier's — a round whose clock ran out
+   * is coloured as the miss it is graded as, but says what happened rather
+   * than how far off a guess nobody made was. `VerdictDeckRow` takes the same
+   * prop for the same reason.
+   */
+  label?: string | null;
+  /** The small number line, where the round pays something other than TP —
+   *  head-to-head rounds pay points. Overrides `tp`. */
+  scoreLabel?: string | null;
+  /** The second fact's label, where it is not the player's own guess. */
+  guessLabel?: string | null;
+  /**
+   * Print the TP in the kicker ("Your result · +5 TP") rather than as a line
+   * of its own under the word. For the short cards in a reserved row, whose
+   * head is 87px at the 14rem floor: kicker, word and TP line stacked came to
+   * ~88px there with a one-line word, and a word that wraps — "Weit daneben",
+   * "Loin du compte" — pushed the kicker onto the head's top edge and the TP
+   * onto the perforation. Two rows (11px + an 8px gap + a two-line word at
+   * 64.6px) are 84px at worst. The comparison card's `VerdictDeckRow` already
+   * carries its TP this way, for the same lack of room.
+   */
+  tpInKicker?: boolean;
   /** The box: position, size, and whatever entrance it arrives with. */
   className?: string;
   /** How much of the card's height the coloured head takes. */
@@ -165,6 +214,7 @@ export function VerdictDeck({
   t: Dict;
 }) {
   const { verdict } = accuracy;
+  const score = scoreLabel ?? (tp === null ? null : tpLabel(tp));
 
   return (
     <aside
@@ -175,39 +225,61 @@ export function VerdictDeck({
         background: verdictDeckFoot(),
       }}
     >
+      {/* The three-row head gives back 4px a gap on a short window, like the
+          foot below: on a 560px-tall `/guess` it is 80px, and kicker, word
+          and TP line (11 + 32 + 13) at the ordinary 10px gaps were 76px —
+          the kicker on the card's top edge and the TP on the perforation.
+          At 6px they are 68px. */}
       <div
-        className="verdict-deck-head flex shrink-0 flex-col items-center justify-center gap-2.5 px-4"
+        className={`verdict-deck-head flex shrink-0 flex-col items-center justify-center px-4 ${
+          tpInKicker ? "gap-2" : "gap-2.5 [@media(max-height:620px)]:gap-1.5"
+        }`}
         style={{ height: headShare, backgroundImage: verdictDeckHead(verdict) }}
       >
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-black/55">
-          {t.resultTitle}
+        {/* Truncated rather than wrapped: this line is a label everywhere
+            but the head-to-head card, where it is an opponent's username and
+            a long one must not push the tier's own word off the head. */}
+        <p className="max-w-full truncate text-[11px] font-semibold uppercase leading-none tracking-[0.14em] text-black/55">
+          {kicker ?? t.resultTitle}
+          {tpInKicker && score !== null && (
+            <span className="whitespace-nowrap"> · {score}</span>
+          )}
         </p>
         <p className="font-display text-[34px] font-semibold leading-[0.95] tracking-tight text-[#0a0a0a]">
-          {t[VERDICT_LABEL_KEYS[verdict]]}
+          {label ?? t[VERDICT_LABEL_KEYS[verdict]]}
         </p>
-        {tp !== null && (
-          <p className="text-[13px] font-semibold tabular-nums text-black/60">
-            {tpLabel(tp)}
+        {!tpInKicker && score !== null && (
+          <p className="text-[13px] font-semibold leading-none tabular-nums text-black/60">
+            {score}
           </p>
         )}
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col justify-center gap-3.5 px-5 py-4">
+      {/* Tightened on a short window only (here and in `DeckRow`): on a
+          560px-tall `/guess` the flank is 174px and its foot 93px, and the two
+          rows alone come to 109px at the ordinary spacing, which runs past
+          the card's lower edge. Tightened, they are 85px. */}
+      <div className="flex min-h-0 flex-1 flex-col justify-center gap-3.5 px-5 py-4 [@media(max-height:620px)]:gap-2">
+        {/* An em dash where there is no guess to measure: a seat whose clock
+            ran out has no distance, and a zero there would read as an exact
+            answer rather than as no answer at all. */}
         <DeckRow label={t.distanceTitle} ruled>
           <span className="text-ink">
-            {accuracy.distance === 0
-              ? t.correct
-              : format(t.yearsOff, {
-                  n: formatYearCount(accuracy.distance, locale, dateLabels(t)),
-                })}
+            {accuracy.distance === null
+              ? "—"
+              : accuracy.distance === 0
+                ? t.correct
+                : format(accuracy.distance === 1 ? t.yearOff : t.yearsOff, {
+                    n: formatYearCount(accuracy.distance, locale, dateLabels(t)),
+                  })}
           </span>
         </DeckRow>
 
         {/* The one number on the card the player chose themselves, and the only
             thing below the head that takes the tier's colour. */}
-        <DeckRow label={t.yourGuess}>
+        <DeckRow label={guessLabel ?? t.yourGuess}>
           <span style={{ color: VERDICT_COLORS[verdict] }}>
-            {formatYear(guess, dateLabels(t))}
+            {guess === null ? "—" : formatYear(guess, dateLabels(t))}
           </span>
         </DeckRow>
       </div>
@@ -234,13 +306,18 @@ function DeckRow({
   return (
     <div
       className={`flex flex-col gap-1 ${
-        ruled ? "border-b border-white/10 pb-3" : ""
+        ruled
+          ? "border-b border-white/10 pb-3 [@media(max-height:620px)]:pb-2"
+          : ""
       }`}
     >
-      <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/40">
+      {/* White/55 rather than /40: on the card's near-black foot /40 is ~3.7:1,
+          short of what 10px caps need. The values stay full ink, so the
+          label is still the quieter of the two. */}
+      <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/55 [@media(max-height:620px)]:leading-none">
         {label}
       </span>
-      <span className="text-base font-semibold leading-snug tabular-nums">
+      <span className="text-base font-semibold leading-snug tabular-nums [@media(max-height:620px)]:leading-tight">
         {children}
       </span>
     </div>
@@ -310,9 +387,19 @@ export function VerdictDeckRow({
         className="verdict-deck-head-row flex w-[7.5rem] shrink-0 flex-col justify-center gap-1 px-3.5 sm:w-[8.75rem]"
         style={{ backgroundImage: verdictDeckHead(verdict) }}
       >
-        <p className="whitespace-nowrap text-[9px] font-semibold uppercase leading-none tracking-[0.14em] text-black/55">
-          {t.resultTitle}
-          {tp !== null && <> · {tpLabel(tp)}</>}
+        {/* Two unbreakable pieces with one break between them, so a head too
+            narrow for the whole line ("Dein Ergebnis · +12 TP" in 92px) puts
+            the points on a line of their own instead of the notch mask
+            clipping them off: two 9px lines and a two-line word still fit
+            the 64px card. */}
+        <p className="text-[9px] font-semibold uppercase leading-[1.15] tracking-[0.14em] text-black/55">
+          <span className="whitespace-nowrap">{t.resultTitle}</span>
+          {tp !== null && (
+            <>
+              {" "}
+              <span className="whitespace-nowrap">· {tpLabel(tp)}</span>
+            </>
+          )}
         </p>
         {/* Wraps to two lines rather than shrinking: the longest of the five
             languages ("Loin du compte") does not fit this width on one, and a
@@ -324,16 +411,21 @@ export function VerdictDeckRow({
 
       {/* The first fact is a short count and keeps its natural width; whatever
           follows takes the rest and truncates, because a long date must not be
-          what squeezes the number beside it. */}
-      <div className="flex min-w-0 flex-1 items-center gap-4 px-4">
+          what squeezes the number beside it.
+
+          Below `sm` they stack instead. A phone's foot is 150-250px, and side
+          by side the count left the date 11-48px — an ellipsis, not a date.
+          Stacked, each gets the whole foot: two 24px facts and a 6px gap are
+          54px of the card's 64. */}
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 px-3 sm:flex-row sm:items-center sm:gap-4 sm:px-4">
         {facts.map((fact, index) => (
           <div
             key={fact.label}
-            className={`flex flex-col gap-1 ${
-              index === 0 ? "shrink-0" : "min-w-0 flex-1"
+            className={`flex min-w-0 max-w-full flex-col gap-0.5 sm:gap-1 ${
+              index === 0 ? "sm:shrink-0" : "sm:flex-1"
             }`}
           >
-            <span className="truncate text-[9px] font-semibold uppercase leading-none tracking-[0.12em] text-white/40">
+            <span className="truncate text-[9px] font-semibold uppercase leading-none tracking-[0.12em] text-white/55">
               {fact.label}
             </span>
             <span className="truncate text-[13px] font-semibold leading-none tabular-nums text-ink">
@@ -389,7 +481,7 @@ export function NoteFlank({
       eventId={eventId}
       t={t}
       // The same near-black the result card's foot is mixed from, at 80% —
-      className={`round-flank-right left-full ml-4 ${FLANK}`}
+      className={`round-flank-right left-full ml-4 ${FLANK_BOX}`}
     />
   );
 }
@@ -497,35 +589,73 @@ const PLACEHOLDER_NOTE =
  */
 export function DateChallenge({
   eventId,
+  onPhoto = false,
   t,
 }: {
   eventId: string;
+  /**
+   * Standing straight on a photograph, with no panel or scrim of its own
+   * under it — the subject games' narrow layout, where it rides in the
+   * picture's corner. A bright sky or a white kit there put `white/80` text
+   * on `white/10` glass over near-white, so it brings its own dark glass.
+   */
+  onPhoto?: boolean;
   t: Dict;
 }) {
   const [stage, setStage] = useState<
     "idle" | "ask" | "choose" | "sending" | "done" | "failed"
   >("idle");
+  const root = useRef<HTMLDivElement>(null);
+  // Set by a press that is about to unmount the button it came from. Every
+  // stage is a different set of buttons, so a keyboard player's focus would
+  // otherwise fall to <body> at each step and Tab would restart from the top
+  // of the page. Only after a press of ours, and only if focus really was
+  // dropped: nothing is pulled out of another control.
+  const refocus = useRef(false);
+
+  useEffect(() => {
+    if (!refocus.current) return;
+    refocus.current = false;
+    const active = document.activeElement;
+    if (active && active !== document.body) return;
+    root.current?.querySelector("button")?.focus({ preventScroll: true });
+  }, [stage]);
+
+  function goTo(next: typeof stage) {
+    refocus.current = true;
+    setStage(next);
+  }
 
   async function send(direction: ChallengeDirection) {
     setStage("sending");
     try {
       const result = await submitDateChallenge(eventId, direction);
-      setStage(result.ok ? "done" : "failed");
+      // A failure offers the two answers again, so focus goes back to them.
+      if (result.ok) setStage("done");
+      else goTo("failed");
     } catch {
-      setStage("failed");
+      goTo("failed");
     }
   }
 
   if (stage === "idle") {
     return (
-      <div className="pointer-events-auto">
+      <div ref={root} className="pointer-events-auto">
         <button
           type="button"
-          onClick={() => setStage("ask")}
+          onClick={() => goTo("ask")}
           // Was a bare "?" in a 32px circle, which said nothing about what
           // pressing it would do. The question mark is still here, as the
           // badge beside the words rather than instead of them.
-          className="flex w-full items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-2 text-xs font-semibold text-white/80 transition hover:border-white/40 hover:bg-white/20 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          //
+          // A 20px radius rather than `rounded-full`: one line is still a
+          // pill, but a label that wraps (French and Spanish do, in a 15rem
+          // flank) becomes a rounded box instead of a lozenge.
+          className={`flex w-full items-center justify-center gap-2 rounded-[1.25rem] border border-white/25 px-3 py-2 text-xs font-semibold transition hover:border-white/40 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+            onPhoto
+              ? "bg-black/55 text-white/90 backdrop-blur-md hover:bg-black/70"
+              : "bg-white/10 text-white/80 hover:bg-white/20"
+          }`}
         >
           <span
             aria-hidden="true"
@@ -533,29 +663,36 @@ export function DateChallenge({
           >
             ?
           </span>
-          {t.challengeOpen}
+          <span className="text-balance leading-tight">{t.challengeOpen}</span>
         </button>
       </div>
     );
   }
 
   return (
-    <div className="challenge-in pointer-events-auto space-y-2.5 rounded-2xl border border-white/15 bg-black/45 p-3">
+    <div
+      ref={root}
+      className={`challenge-in pointer-events-auto space-y-2.5 rounded-2xl border border-white/15 p-3 ${
+        onPhoto ? "bg-black/60 backdrop-blur-md" : "bg-black/45"
+      }`}
+    >
       {stage === "ask" && (
         <>
           <p className="on-photo text-xs text-white/75">{t.challengeAsk}</p>
           <div className="flex flex-col items-center gap-2">
             <button
               type="button"
-              onClick={() => setStage("choose")}
+              onClick={() => goTo("choose")}
               className={`w-full ${CHALLENGE_BUTTON}`}
             >
               {t.challengeAction}
             </button>
+            {/* Padded so the link is a target rather than a 16px line of
+                text, and at white/70 so it reads as a control at all. */}
             <button
               type="button"
-              onClick={() => setStage("idle")}
-              className="text-xs text-white/45 underline-offset-2 transition hover:text-white/75 hover:underline"
+              onClick={() => goTo("idle")}
+              className="px-2 py-1 text-xs text-white/70 underline-offset-2 transition hover:text-white hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
               {t.challengeDismiss}
             </button>
@@ -599,7 +736,7 @@ export function DateChallenge({
 }
 
 const CHALLENGE_BUTTON =
-  "rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
+  "rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
 /**
  * The round's result, painted over the foot of the photograph.
@@ -647,12 +784,24 @@ export function RoundVerdict({
   t: Dict;
 }) {
   return (
+    // `data-photo-overlay` and the `@container` steps are for a photograph
+    // under 10rem (a 320px phone, a landscape one), where this block — 180px
+    // at its ordinary spacing — is taller than the picture it is painted on:
+    // the card clipped the tier's own word off the top and the corner chips
+    // printed through what was left. There it packs to 78px with the facts
+    // on one line (20px word, 16px facts, the 38px challenge button and 4px
+    // under it) — inside the photo's own 5rem floor, which is what a
+    // landscape phone gets — and 94px with them on two (320px), and
+    // `RoundCard` fades the chips while it is up; the scrim is darkened to
+    // the top, since the block now reaches it. Only the stage photo is a size
+    // container, so a poster is untouched.
     <div
       role="status"
-      className="round-verdict-in pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center gap-1 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-4 pb-3 pt-14 text-center min-[1120px]:hidden"
+      data-photo-overlay
+      className="round-verdict-in pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center gap-1 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-4 pb-3 pt-14 text-center min-[1120px]:hidden [@container(max-height:10rem)]:gap-0 [@container(max-height:10rem)]:to-black/40 [@container(max-height:10rem)]:pb-1 [@container(max-height:10rem)]:pt-0"
     >
       <p
-        className="on-photo font-display text-3xl font-semibold leading-none tracking-tight sm:text-4xl"
+        className="on-photo font-display text-3xl font-semibold leading-none tracking-tight sm:text-4xl [@container(max-height:10rem)]:text-xl"
         style={{
           // The same gradient the wide-screen panel paints the word in, so a
           // phone and a desktop report a tier in the same colour.
@@ -664,23 +813,34 @@ export function RoundVerdict({
       >
         {t[VERDICT_LABEL_KEYS[accuracy.verdict]]}
       </p>
-      <p className="on-photo text-xs text-white/80 sm:text-sm">
-        {accuracy.distance === 0
-          ? t.correct
-          : format(t.yearsOff, {
-              n: formatYearCount(accuracy.distance, locale, dateLabels(t)),
-            })}
-        <span className="px-1.5 text-white/40">·</span>
-        {t.yourGuess}: {formatYear(guess, dateLabels(t))}
+      {/* Each fact is one unbreakable box with its separator riding at its
+          end, so a narrow line breaks only after a dot — never inside "1013
+          CE" or "+0 TP". Inline-blocks rather than `nowrap`: a fact wider
+          than a whole line (a billion-year guess in German) still wraps
+          inside its own box instead of running off the picture. */}
+      <p className="on-photo text-xs text-white/80 sm:text-sm [@container(max-height:10rem)]:text-xs">
+        <span className="inline-block">
+          {accuracy.distance === 0
+            ? t.correct
+            : format(accuracy.distance === 1 ? t.yearOff : t.yearsOff, {
+                n: formatYearCount(accuracy.distance, locale, dateLabels(t)),
+              })}
+          <span className="px-1.5 text-white/40">·</span>
+        </span>
+        <wbr />
+        <span className="inline-block">
+          {t.yourGuess}: {formatYear(guess, dateLabels(t))}
+          {tp !== null && <span className="px-1.5 text-white/40">·</span>}
+        </span>
         {tp !== null && (
           <>
-            <span className="px-1.5 text-white/40">·</span>
-            {tpLabel(tp)}
+            <wbr />
+            <span className="inline-block">{tpLabel(tp)}</span>
           </>
         )}
       </p>
 
-      <div className="mt-1 flex justify-center">
+      <div className="mt-1 flex justify-center [@container(max-height:10rem)]:mt-0">
         <DateChallenge eventId={eventId} t={t} />
       </div>
     </div>

@@ -125,7 +125,11 @@ export function RoundHead({
       <div
         ref={pill}
         data-open={open}
-        className="group w-full max-w-[21rem] overflow-hidden rounded-[calc(var(--compare-head)/2)] border border-white/15 bg-black/45 shadow-xl shadow-black/60 backdrop-blur-xl sm:w-[21rem]"
+        // The focus ring is drawn here, for the button inside: the button
+        // fills the pill's padding box, so a ring of its own would be cut
+        // off by this `overflow-hidden`. An element's outline is never
+        // clipped by its own overflow, and nothing above this clips.
+        className="group w-full max-w-[21rem] overflow-hidden rounded-[calc(var(--compare-head)/2)] border border-white/15 bg-black/45 shadow-xl shadow-black/60 backdrop-blur-xl sm:w-[21rem] has-[>button:focus-visible]:outline-2 has-[>button:focus-visible]:outline-offset-2 has-[>button:focus-visible]:outline-accent"
       >
         {/* A button only when there is something to open. A pill that is a
             control and does nothing when pressed is worse than a pill that
@@ -198,7 +202,8 @@ function HeadRow({
       type="button"
       onClick={onPress}
       aria-expanded={open}
-      className={`${box} text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent`}
+      // Its ring is the pill's (`has-[>button:focus-visible]` above).
+      className={`${box} text-left focus-visible:outline-none`}
     >
       {children}
     </button>

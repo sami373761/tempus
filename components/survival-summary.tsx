@@ -3,7 +3,11 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 
-import { ShareButton, SUMMARY_BUTTON } from "@/components/set-summary";
+import {
+  ShareButton,
+  SUMMARY_BUTTON,
+  SUMMARY_LINK,
+} from "@/components/set-summary";
 import { PointsLine, type SetPoints } from "@/components/solo-points";
 import { VERDICTS, type Verdict } from "@/lib/game/scoring";
 import type { SetResult } from "@/lib/game/set";
@@ -70,9 +74,11 @@ export function SurvivalSummary({
   // dropped back to the top of the document with nothing announced. The panel
   // takes it rather than "Play again", which would make Enter start a new run
   // before the player has been told how the last one went. Same reasoning as
-  // the set summary's.
+  // the set summary's, and `preventScroll` for its reason too: focus lands
+  // mid-entrance, and scrolling to the still-moving panel would open a long
+  // run's screen with its top under the bar.
   useEffect(() => {
-    panel.current?.focus();
+    panel.current?.focus({ preventScroll: true });
   }, []);
 
   return (
@@ -90,7 +96,12 @@ export function SurvivalSummary({
         // summary's rule, and this is the screen that most needs it: a long
         // run's sequence block is two hundred dots and no cap on this panel's
         // height would have held it anyway.
-        className="set-summary-in my-auto flex w-full max-w-lg flex-col gap-5 rounded-3xl border border-white/12 bg-black/45 px-7 py-7 text-center shadow-2xl shadow-black/70 backdrop-blur-2xl focus:outline-none"
+        //
+        // The daily summary's rhythm: 24px of padding and 16px between blocks,
+        // 28px a side from `sm`. A run's panel is the tallest of the summaries
+        // and at a 1680x844 window the looser 20/28 put even a short run past
+        // the fold.
+        className="set-summary-in my-auto flex w-full max-w-lg flex-col gap-4 rounded-3xl border border-white/12 bg-black/45 px-6 py-6 text-center shadow-2xl shadow-black/70 backdrop-blur-2xl focus:outline-none sm:px-7"
       >
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
@@ -172,12 +183,9 @@ export function SurvivalSummary({
           </Link>
         </div>
 
-        <a
-          href="/compare"
-          className="text-xs text-white/55 underline-offset-4 transition hover:text-ink hover:underline"
-        >
+        <Link href="/compare" className={SUMMARY_LINK}>
           {t.tryComparison}
-        </a>
+        </Link>
       </div>
     </div>
   );
@@ -253,7 +261,7 @@ function Breakdown({ summary, t }: { summary: Summary; t: Dict }) {
   if (rows.length === 0) return null;
 
   return (
-    <div className="border-t border-white/10 pt-4">
+    <div className="border-t border-white/10 pt-3">
       <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-white/45">
         {t.setBreakdown}
       </p>
@@ -358,7 +366,7 @@ function Sequence({
   const full = cols * size + (cols - 1) * gap;
 
   return (
-    <div className="border-t border-white/10 pt-4">
+    <div className="@container border-t border-white/10 pt-3">
       <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-white/45">
         {t.survivalSequence}
       </p>
@@ -370,13 +378,22 @@ function Sequence({
           width* rather than a length. Dots and gaps therefore shrink by the
           same factor and the block never collapses into stripes. Measured in a
           327px column at the densest tier: 5.0px dots, 1.9px gaps, still a
-          legible grid. */}
+          legible grid.
+
+          **Only the column gap can be a percentage.** A percentage row gap
+          resolves against the grid's *height*, which is indefinite here, and
+          collapsed to under 1.5px — the rows touched. The row gap is written
+          against the column instead (`@container` on the block above): `cqi`
+          is a hundredth of the column's width, and the grid is the column's
+          width until it reaches `full`, where the `min()` hands back the plain
+          `gap`. So the two gaps are equal at every width. */}
       <div
         aria-hidden="true"
         className="mx-auto grid w-full"
         style={{
           gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-          gap: `${((gap / full) * 100).toFixed(3)}%`,
+          columnGap: `${((gap / full) * 100).toFixed(3)}%`,
+          rowGap: `min(${gap}px, ${((gap / full) * 100).toFixed(3)}cqi)`,
           maxWidth: full,
         }}
       >

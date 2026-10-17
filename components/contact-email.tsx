@@ -14,9 +14,12 @@ import { CONTACT_EMAIL } from "@/lib/contact";
  * throwing — and one that repeats it gets the link twice rather than silently
  * losing the tail.
  *
- * `break-all` is on the link alone, never on the paragraph: the address is the
- * one word in the sentence with no spaces to wrap at, and the same rule on the
- * whole paragraph would hyphenate ordinary words too.
+ * `wrap-anywhere` is on the link alone, never on the paragraph: the address is
+ * the one word in the sentence with no spaces to wrap at, and the same rule on
+ * the whole paragraph would break ordinary words too. `overflow-wrap` rather
+ * than `break-all`, which split the address wherever the sentence happened to
+ * leave it even when the whole of it fitted on the next line; this moves it
+ * down whole and breaks it only when it is wider than the column.
  *
  * **It is styled as prose, not as a link.** It wore the amber underline the
  * section's rules are drawn in and a `text-ink` weight above the paragraph's
@@ -36,7 +39,7 @@ export function ContactEmailText({ text }: { text: string }) {
               <a
                 key={index}
                 href={`mailto:${CONTACT_EMAIL}`}
-                className="break-all text-inherit no-underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+                className="wrap-anywhere text-inherit no-underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
               >
                 {CONTACT_EMAIL}
               </a>,

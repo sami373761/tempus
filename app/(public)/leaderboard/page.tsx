@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
-import { BadgeFrame } from "@/components/badge-frame";
+import {
+  LeaderboardBoards,
+  type Board,
+  type BoardData,
+} from "@/components/leaderboard-boards";
 import { getCurrentUser } from "@/lib/auth/server";
-import { avatarSrc } from "@/lib/avatar";
-import { BADGE_BY_SLUG, RING_BOX, type BadgeSlug } from "@/lib/badges";
 import { createAdminDbClient } from "@/lib/db/admin";
 import {
   isLeaderboardPeriod,
@@ -44,101 +45,112 @@ export async function generateMetadata(): Promise<Metadata> {
  * month", and it is read from its own function (`chrono_leaderboard()`). It is
  * `?board=rating` rather than a period for the same reason.
  *
- * The board is a query parameter rather than a client-side tab, so each board
- * is a link that can be shared and a server render that needs no JavaScript.
+ * **All three are read here, in one parallel pass**, and the pills that switch
+ * between them are a state change rather than a navigation
+ * (`LeaderboardBoards`). Each board was its own server render until then, and
+ * with the database in ap-southeast-2 that made every press a second or two of
+ * a page that looked unpressed. Three reads cost one round trip between them
+ * because they are issued together, and the query parameter still decides
+ * which one opens — so a shared link lands where it says it does.
  *
  * Plain rows on a hairline, like the FAQ, rather than cards: this is a list
  * of text and a list of text is what it should look like.
  */
 
-/** The picture's diameter in a row, which sizes the ring around it. Small
- *  enough that a row stays close to one line of text, large enough that the
- *  six rungs are tellable apart and the face in the middle is a face. */
-const ROW_RING = 32;
-
-type Board = "all" | "month" | "rating";
-
-/** What a row shows, whichever board it is on: the main number and the lesser
- *  one that drops out under `sm`. */
-interface BoardRow {
-  rank: number;
-  username: string;
-  badge: BadgeSlug | null;
-  avatarKey: string | null;
-  score: number;
-  secondary: number;
-}
+/** An empty board, for the one read that failed — so the other two still show. */
+const BOARD_FAILED: BoardData = { rows: [], mine: null, failed: true };
 
 export default async function LeaderboardPage({
   searchParams,
 }: {
   searchParams: Promise<{ period?: string; board?: string }>;
 }) {
-  const { t } = await readLocaleContext();
+  const { locale, t } = await readLocaleContext();
   const params = await searchParams;
   const requested = params.period ?? "all";
-  const board: Board =
+  const initial: Board =
     params.board === "rating"
       ? "rating"
       : isLeaderboardPeriod(requested)
         ? requested
         : "all";
-  const rating = board === "rating";
 
-  let rows: BoardRow[] = [];
-  let failed = false;
-  try {
-    const client = await createServerDbClient();
-    rows = rating
-      ? (await readChronoLeaderboard(client)).map((row) => ({
-          ...row,
-          score: row.rating,
-          secondary: row.wins,
-        }))
-      : (await readLeaderboard(client, board)).map((row) => ({
-          ...row,
-          score: row.tp,
-          secondary: row.perfects,
-        }));
-  } catch (error) {
-    console.error("leaderboard read failed", error);
-    failed = true;
-  }
+  const client = await createServerDbClient();
 
-  // The signed-in player's own standing, for when they are not on the board
-  // shown. Guarded: it is a nicety, and must not cost anyone the board.
-  let mine: string | null = null;
-  try {
-    const user = await getCurrentUser();
-    if (user) {
-      const admin = createAdminDbClient();
-      if (rating) {
-        const position = await readChronoLeaderboardPosition(admin, user.id);
-        mine = position
-          ? format(t.leaderboardRatingYou, {
-              rank: position.rank,
-              n: position.rating.toLocaleString("en-US"),
-            })
-          : null;
-      } else {
-        const position = await readLeaderboardPosition(admin, user.id, board);
-        mine = position
-          ? format(t.leaderboardYou, {
-              rank: position.rank,
-              tp: position.tp.toLocaleString("en-US"),
-            })
-          : null;
-      }
+  // The signed-in player's own standing on each board, for when they are not
+  // on the one shown. Guarded: it is a nicety, and must not cost anyone the
+  // board — so a failed `getCurrentUser` leaves all three lines off rather
+  // than taking the page down.
+  const user = await getCurrentUser().catch(() => null);
+  const admin = user ? createAdminDbClient() : null;
+
+  // Every read in flight at once. The six are independent, and issued
+  // together they cost the one trip to the database's region that a single
+  // board used to.
+  const [all, month, rating, allMine, monthMine, ratingMine] =
+    await Promise.allSettled([
+      readLeaderboard(client, "all"),
+      readLeaderboard(client, "month"),
+      readChronoLeaderboard(client),
+      admin && user ? readLeaderboardPosition(admin, user.id, "all") : null,
+      admin && user ? readLeaderboardPosition(admin, user.id, "month") : null,
+      admin && user ? readChronoLeaderboardPosition(admin, user.id) : null,
+    ]);
+
+  function tpBoard(
+    read: PromiseSettledResult<Awaited<ReturnType<typeof readLeaderboard>>>,
+    position: PromiseSettledResult<{ rank: number; tp: number } | null>,
+  ): BoardData {
+    if (read.status === "rejected") {
+      console.error("leaderboard read failed", read.reason);
+      return BOARD_FAILED;
     }
-  } catch {
-    mine = null;
+    const standing =
+      position.status === "fulfilled" && position.value
+        ? format(t.leaderboardYou, {
+            rank: position.value.rank,
+            tp: position.value.tp.toLocaleString(locale),
+          })
+        : null;
+    return {
+      rows: read.value.map((row) => ({
+        ...row,
+        score: row.tp,
+        secondary: row.perfects,
+      })),
+      mine: standing,
+      failed: false,
+    };
   }
 
-  const tabs: { board: Board; label: string; href: string }[] = [
-    { board: "all", label: t.leaderboardAllTime, href: "/leaderboard" },
-    { board: "month", label: t.leaderboardMonth, href: "/leaderboard?period=month" },
-    { board: "rating", label: t.versusRatingName, href: "/leaderboard?board=rating" },
-  ];
+  function ratingBoard(): BoardData {
+    if (rating.status === "rejected") {
+      console.error("leaderboard read failed", rating.reason);
+      return BOARD_FAILED;
+    }
+    const standing =
+      ratingMine.status === "fulfilled" && ratingMine.value
+        ? format(t.leaderboardRatingYou, {
+            rank: ratingMine.value.rank,
+            n: ratingMine.value.rating.toLocaleString(locale),
+          })
+        : null;
+    return {
+      rows: rating.value.map((row) => ({
+        ...row,
+        score: row.rating,
+        secondary: row.wins,
+      })),
+      mine: standing,
+      failed: false,
+    };
+  }
+
+  const boards: Record<Board, BoardData> = {
+    all: tpBoard(all, allMine),
+    month: tpBoard(month, monthMine),
+    rating: ratingBoard(),
+  };
 
   return (
     <div className="mx-auto max-w-[calc(var(--board-w)+3rem)] px-6 pb-32 pt-12 sm:pt-16">
@@ -146,141 +158,14 @@ export default async function LeaderboardPage({
         <h1 className="font-display text-4xl font-semibold tracking-[-0.03em] sm:text-5xl">
           {t.leaderboardTitle}
         </h1>
-        <p className="mt-3 max-w-[52ch] text-[17px] leading-relaxed text-ink-dim">
-          {rating ? t.leaderboardRatingBlurb : t.leaderboardBlurb}
-        </p>
 
-        <nav aria-label={t.leaderboardTitle} className="mt-7 flex flex-wrap gap-2">
-          {tabs.map((tab) => (
-            <Link
-              key={tab.board}
-              href={tab.href}
-              aria-current={tab.board === board ? "page" : undefined}
-              className={`rounded-full border px-4 py-2 text-[13px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
-                tab.board === board
-                  ? "border-ink bg-ink text-page"
-                  : "border-hairline text-ink hover:bg-card"
-              }`}
-            >
-              {tab.label}
-            </Link>
-          ))}
-        </nav>
+        <LeaderboardBoards
+          boards={boards}
+          initial={initial}
+          locale={locale}
+          t={t}
+        />
       </header>
-
-      {/* One grid for the head and every row, so the columns cannot drift: the
-          template is written once here and inherited by both. The second number
-          (perfects, or wins on the rating board) is the column that goes under
-          `sm` — it is the lesser of the two and a phone has room for rank, name
-          and score.
-
-          `pr-12` under `sm` is clearance, not decoration. The menu button is
-          `fixed` on every route but home and the bar under it hides on a
-          downward scroll, so on a phone — where the button's track and this
-          column are both `100vw - 3rem` and therefore end at the same pixel —
-          the button scrolls over whichever row's score is 28px down the
-          viewport. 48px is the button's 42 plus a margin; above `sm` the column
-          is narrower than the track and there is nothing to clear. */}
-      <div className="mt-10 pr-12 sm:pr-0">
-        <div
-          aria-hidden="true"
-          className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-4 border-b border-hairline pb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-dim sm:grid-cols-[2.5rem_1fr_6rem_5rem]"
-        >
-          <span>{t.leaderboardRank}</span>
-          <span>{t.leaderboardPlayer}</span>
-          <span className="text-right">
-            {rating ? t.leaderboardRatingUnit : t.leaderboardTp}
-          </span>
-          <span className="hidden text-right sm:block">
-            {rating ? t.leaderboardWins : t.leaderboardPerfects}
-          </span>
-        </div>
-
-        {rows.length === 0 ? (
-          <p className="border-b border-hairline py-6 text-[15px] text-ink-dim">
-            {failed
-              ? t.leaderboardFailed
-              : rating
-                ? t.leaderboardRatingEmpty
-                : t.leaderboardEmpty}
-          </p>
-        ) : (
-          <ol>
-            {rows.map((row) => {
-              const badge = row.badge ? BADGE_BY_SLUG[row.badge] : null;
-              const picture = avatarSrc(row.avatarKey);
-              return (
-                <li
-                  key={row.username}
-                  className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-4 border-b border-hairline py-3 sm:grid-cols-[2.5rem_1fr_6rem_5rem]"
-                >
-                  <span className="text-[15px] font-semibold tabular-nums text-ink-dim">
-                    {row.rank}
-                  </span>
-
-                  <span className="flex min-w-0 items-center gap-3">
-                    {/* The badge is decoration beside the name rather than a
-                        column of its own: it is the name's own, and a column
-                        would imply it can be sorted on. Its name is on the
-                        element so the picture is not a silent cell.
-
-                        `align="ring"` is what makes a column of these look
-                        aligned: each file has its ring in a different place,
-                        so centred on the ring every badge occupies the same
-                        box and the names all start at the same x. A player
-                        with no badge yet gets that same box with their
-                        picture at its centre, for the same reason. */}
-                    {badge ? (
-                      <span title={t[badge.nameKey]} className="shrink-0">
-                        <BadgeFrame
-                          badge={badge}
-                          avatar={ROW_RING}
-                          align="ring"
-                          avatarSrc={picture}
-                        />
-                      </span>
-                    ) : (
-                      <span
-                        aria-hidden="true"
-                        className="flex shrink-0 items-center justify-center"
-                        style={{
-                          width: Math.round(RING_BOX.w * ROW_RING),
-                          height: Math.round(RING_BOX.h * ROW_RING),
-                        }}
-                      >
-                        <img
-                          src={picture}
-                          alt=""
-                          loading="lazy"
-                          className="rounded-full border border-hairline object-cover"
-                          style={{ width: ROW_RING, height: ROW_RING }}
-                        />
-                      </span>
-                    )}
-                    <span className="truncate text-[15px] font-semibold text-ink">
-                      {row.username}
-                    </span>
-                  </span>
-
-                  <span className="text-right text-[15px] font-semibold tabular-nums text-ink">
-                    {row.score.toLocaleString("en-US")}
-                  </span>
-
-                  <span className="hidden text-right text-[15px] tabular-nums text-ink-dim sm:block">
-                    {row.secondary}
-                  </span>
-                </li>
-              );
-            })}
-          </ol>
-        )}
-
-        {mine && (
-          <p className="mt-6 text-[13px] font-semibold tabular-nums text-ink-dim">
-            {mine}
-          </p>
-        )}
-      </div>
     </div>
   );
 }

@@ -249,6 +249,23 @@ export function ScreenGame({
   // are a round trip apart now; see components/timeline-game.tsx.
   const lockedIn = guess !== null;
   const answered = reveal !== null;
+
+  // Focus follows the button swap, so a keyboard player is not dropped to
+  // <body> when the pressed button turns `inert` — see the solo game's copy
+  // in components/timeline-game.tsx for the rule.
+  const lockButton = useRef<HTMLButtonElement>(null);
+  const nextButton = useRef<HTMLButtonElement>(null);
+  const wasAnswered = useRef(answered);
+  useEffect(() => {
+    if (wasAnswered.current === answered) return;
+    wasAnswered.current = answered;
+    const from = answered ? lockButton.current : nextButton.current;
+    const to = answered ? nextButton.current : lockButton.current;
+    const active = document.activeElement;
+    if (!active || active === document.body || active === from) {
+      to?.focus({ preventScroll: true });
+    }
+  }, [answered]);
   // While a year is being typed the marker follows it, which is what makes
   // keeping the rail on screen worth doing. It falls back to wherever the
   // marker was left as soon as the field is empty or holds a year off the
@@ -268,6 +285,18 @@ export function ScreenGame({
       : null;
   const setComplete = results.length >= QUESTIONS_PER_SET;
   const lastQuestion = results.length === QUESTIONS_PER_SET - 1;
+
+  // "Play again" unmounts with its own press, so the new set's first control
+  // takes the focus it was holding.
+  const refocusLock = useRef(false);
+  useEffect(() => {
+    if (setComplete || !refocusLock.current) return;
+    refocusLock.current = false;
+    const active = document.activeElement;
+    if (!active || active === document.body) {
+      lockButton.current?.focus({ preventScroll: true });
+    }
+  }, [setComplete]);
 
   const move = useCallback((next: number) => setFraction(next), []);
 
@@ -290,6 +319,8 @@ export function ScreenGame({
       setInvalid(true);
       return;
     }
+    // Any lock-in that goes through answers the refusal, the clock's included.
+    setInvalid(false);
     if (typed !== null) {
       // The marker is already standing on the typed year — it has been
       // tracking the field — so this only makes that position the one the
@@ -418,6 +449,7 @@ export function ScreenGame({
           // A new set starts over on which events count as repeats too, or a
           // long session would end up asking the draw to avoid the whole pool.
           onPlayAgain={() => {
+            refocusLock.current = true;
             setResults([]);
             setPlayed([]);
             solo.reset();
@@ -497,7 +529,11 @@ export function ScreenGame({
                   total={QUESTIONS_PER_SET}
                   t={t}
                 />
-                {!lockedIn && <SoloRoundTimer clock={clock} t={t} />}
+                {/* Hidden in place rather than unmounted once the guess is
+                    in, so the counter beside it does not jump sideways. */}
+                <span className={lockedIn ? "invisible" : undefined}>
+                  <SoloRoundTimer clock={clock} t={t} />
+                </span>
               </span>
             }
             // On the poster below 1120px for the reason every overlay on these
@@ -580,7 +616,10 @@ export function ScreenGame({
                   size="md"
                   t={t}
                 />
-                {!lockedIn && <SoloRoundTimer clock={clock} t={t} />}
+                {/* Hidden in place, not unmounted: see the poster corner. */}
+                <span className={lockedIn ? "invisible" : undefined}>
+                  <SoloRoundTimer clock={clock} t={t} />
+                </span>
               </div>
             </div>
 
@@ -703,32 +742,48 @@ export function ScreenGame({
                   cell with the same padding, so they share a centre and "Next
                   round" appears exactly where "Lock in guess" was — under the
                   pointer that just pressed it. Only the colour changes. */}
+              {/* Staggered, not crossfaded, so the two labels are never on
+                  screen on top of each other — see the solo game's. */}
               <div className="grid place-items-center">
                 <div
-                  className={`col-start-1 row-start-1 transition-opacity duration-300 ${
-                    answered ? "opacity-0" : "opacity-100"
+                  className={`col-start-1 row-start-1 transition-opacity ${
+                    answered
+                      ? "opacity-0 duration-150"
+                      : "opacity-100 duration-200 delay-150"
                   }`}
                   inert={answered}
                 >
                   <button
+                    ref={lockButton}
                     type="button"
                     onClick={submit}
                     aria-busy={sending}
-                    className={`${ROUND_BUTTON_LG} bg-ink text-page hover:opacity-85 ${
+                    className={`${ROUND_BUTTON_LG} relative bg-ink text-page hover:opacity-85 ${
                       sending ? "cursor-progress opacity-70" : ""
                     }`}
                   >
                     {t.submitGuess}
+                    {/* The "Next round" trace, while the guess is graded. */}
+                    {sending && (
+                      <span aria-hidden="true" className="round-trace">
+                        <i />
+                        <i />
+                        <i />
+                      </span>
+                    )}
                   </button>
                 </div>
 
                 <div
-                  className={`col-start-1 row-start-1 transition-opacity duration-300 ${
-                    answered ? "opacity-100" : "opacity-0"
+                  className={`col-start-1 row-start-1 transition-opacity ${
+                    answered
+                      ? "opacity-100 duration-200 delay-150"
+                      : "opacity-0 duration-150"
                   }`}
                   inert={!answered}
                 >
                   <button
+                    ref={nextButton}
                     type="button"
                     onClick={requestNextRound}
                     // Never disabled. A press with nothing queued is latched
@@ -788,7 +843,11 @@ export function ScreenGame({
                   // `translate` property and the keyframe animates
                   // `transform`, so the two would compose and pull it a whole
                   // width left. Both keyframes carry the -50% instead.
-                  className="entry-warning on-photo absolute left-1/2 top-full mt-1 whitespace-nowrap text-[12px] font-medium text-bad"
+                  //
+                  // A 16px line under `mt-1` is 20px, inside the frame's
+                  // `pb-5`; the inherited 18px line box would hang past it
+                  // and give a page built not to scroll a scrollbar.
+                  className="entry-warning on-photo absolute left-1/2 top-full mt-1 whitespace-nowrap text-[12px] leading-4 font-medium text-bad"
                 >
                   {t.invalidDate}
                 </p>
@@ -821,13 +880,16 @@ export function ScreenGame({
                     // the foot at the short end, where there is least to go
                     // round. The foot needs 122px for its two labelled rows
                     // and its own padding; 42% of the shortest card leaves it
-                    // 121 and gives the head 87, against the 56 its own
-                    // content needs (an 11px kicker over a 34px word). Any
-                    // larger and the foot's second row is clipped, because the
-                    // card clips rather than growing — the row it stands in is
-                    // reserved, and a card that grew would push the button
-                    // above it.
+                    // 121 and gives the head 87. The head's content is two
+                    // rows — an 11px kicker carrying the TP (`tpInKicker`)
+                    // over the 34px word, 8px apart — which is 51px, and 84px
+                    // when the word wraps in German or French; a third line
+                    // for the TP would not fit. Any larger share and the
+                    // foot's second row is clipped, because the card clips
+                    // rather than growing — the row it stands in is reserved,
+                    // and a card that grew would push the button above it.
                     headShare="42%"
+                    tpInKicker
                     className="round-flank-left flex w-60 shrink-0 flex-col overflow-hidden rounded-3xl border text-center shadow-2xl shadow-black/60 backdrop-blur-2xl"
                   />
                   {/* The challenge rides with the description, not with the

@@ -10,8 +10,10 @@ import {
   Pips,
   ShareButton,
   SUMMARY_BUTTON,
+  SUMMARY_LINK,
 } from "@/components/set-summary";
 import { signInHref } from "@/lib/auth/paths";
+import type { SupportedLocale } from "@/lib/db/types";
 import {
   dailyResults,
   dailyShareText,
@@ -59,6 +61,7 @@ export function DailySummary({
   audience,
   points,
   revisit,
+  locale,
   t,
 }: {
   answers: readonly DailyAnswer[];
@@ -68,6 +71,9 @@ export function DailySummary({
   points: number;
   /** True when the page was opened into a finished day rather than just finishing one. */
   revisit: boolean;
+  /** For grouping the score the way the in-game tally beside it already
+   *  does — the two must not print one number two ways. */
+  locale: SupportedLocale;
   t: Dict;
 }) {
   const member = audience === "member";
@@ -79,16 +85,23 @@ export function DailySummary({
   // Read after mount, not during render: a server render and the first client
   // render would disagree about the clock and React would report it as a
   // hydration error. Null until then, which is also why the countdown line is
-  // conditional rather than showing a placeholder.
+  // conditional rather than showing a placeholder. Re-read every half minute
+  // after that, so a result left open still counts down; the line shows whole
+  // minutes, and a 30s tick is never more than half of one behind.
   const [now, setNow] = useState<number | null>(null);
-  useEffect(() => setNow(Date.now()), []);
+  useEffect(() => {
+    setNow(Date.now());
+    const id = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   // The day ending is a change of screen and the button that was pressed is
   // gone, so focus has to move or a keyboard user is dropped back to the top
   // of the document with nothing announced. The panel takes it rather than a
-  // control — the same reasoning as the set and the run.
+  // control — the same reasoning as the set and the run, `preventScroll`
+  // included (focus lands mid-entrance; see `SetSummary`).
   useEffect(() => {
-    panel.current?.focus();
+    panel.current?.focus({ preventScroll: true });
   }, []);
 
   const minutes = now === null ? null : minutesUntilReset(puzzleDate, now);
@@ -106,8 +119,10 @@ export function DailySummary({
            the one the tighter padding was written for.
            It grows rather than scrolling inside itself, and `my-auto` centres
            it; see the note on `SetSummary` for why that trade went the way it
-           did. */
-        className="set-summary-in my-auto flex w-full max-w-md flex-col gap-4 rounded-3xl border border-white/12 bg-black/45 px-6 py-6 text-center shadow-2xl shadow-black/70 backdrop-blur-2xl focus:outline-none sm:gap-5 sm:px-7 sm:py-7"
+           did. It takes the set's short-window step too (gaps 12px, padding
+           20px, a 48px headline): a member's panel measured 679px against the
+           646px a 1280x720 frame leaves it. */
+        className="set-summary-in my-auto flex w-full max-w-md flex-col gap-4 rounded-3xl border border-white/12 bg-black/45 px-6 py-6 text-center shadow-2xl shadow-black/70 backdrop-blur-2xl focus:outline-none sm:gap-5 sm:px-7 sm:py-7 [@media(max-height:820px)]:gap-3 [@media(max-height:820px)]:py-5"
       >
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
@@ -129,16 +144,16 @@ export function DailySummary({
             shift the block against three. */}
         <div>
           <p
-            className="font-display text-6xl font-semibold leading-none tracking-tight tabular-nums"
+            className="font-display text-6xl font-semibold leading-none tracking-tight tabular-nums [@media(max-height:820px)]:text-5xl"
             style={{ color: GRADE_COLOR[grade] }}
           >
-            {member ? points.toLocaleString("en-US") : `${summary.percent}%`}
+            {member ? points.toLocaleString(locale) : `${summary.percent}%`}
           </p>
           <p className="mt-2 text-sm text-white/75">
             {member
               ? `${t.dailyPointsLabel} · ${format(t.dailyPointsOf, {
-                  n: points.toLocaleString("en-US"),
-                  max: MAX_DAILY_POINTS.toLocaleString("en-US"),
+                  n: points.toLocaleString(locale),
+                  max: MAX_DAILY_POINTS.toLocaleString(locale),
                 })}`
               : format(t.setScore, {
                   hits: summary.hits,
@@ -188,40 +203,46 @@ export function DailySummary({
         {/* One button, not two. A daily has no replay, so sharing is the only
             thing this screen can offer to press — and the way on to the
             unlimited game is the quiet link the set summary uses for the same
-            job, not a second full-width control competing with it. */}
-        <ShareButton
-          buildText={() =>
-            dailyShareText({
-              title: t.dailyTitle,
-              puzzleDate,
-              squares: setSquares(results),
-              hits: summary.hits,
-              total: QUESTIONS_PER_DAILY,
-              // A guest quotes no score, because there is none to quote —
-              // the grid and the hit count are what their result is.
-              points: member ? points : null,
-              url: window.location.href,
-            })
-          }
-          t={t}
-        />
+            job, not a second full-width control competing with it.
+            Stacked in their own column at the set summary's 10px, not the
+            panel's gap, so the two read as one group like the other screens'. */}
+        <div className="flex flex-col gap-2.5">
+          <ShareButton
+            buildText={() =>
+              dailyShareText({
+                title: t.dailyTitle,
+                puzzleDate,
+                squares: setSquares(results),
+                hits: summary.hits,
+                total: QUESTIONS_PER_DAILY,
+                // A guest quotes no score, because there is none to quote —
+                // the grid and the hit count are what their result is. The
+                // unit is the dictionary's ("Pkt.", "puan"), not a fixed "pts".
+                points: member
+                  ? format(t.versusRoundPoints, {
+                      n: points.toLocaleString(locale),
+                    })
+                  : null,
+                url: window.location.href,
+              })
+            }
+            t={t}
+          />
 
-        {/* The way home, under the one button this screen has. A daily has no
-            replay, so the stack is share-then-leave rather than the set
-            summary's three — but the leaving half is the same control in the
-            same place, because a phone has no other way off a page that does
-            not scroll. */}
-        <Link
-          href="/"
-          className={`${SUMMARY_BUTTON} inline-flex items-center justify-center border-white/25 bg-transparent text-white/80 hover:border-white/45 hover:text-ink`}
-        >
-          {t.backHome}
-        </Link>
+          {/* The way home, under the one button this screen has. A daily has
+              no replay, so the stack is share-then-leave rather than the set
+              summary's three — but the leaving half is the same control in
+              the same place, because a phone has no other way off a page
+              that does not scroll. */}
+          <Link
+            href="/"
+            className={`${SUMMARY_BUTTON} inline-flex items-center justify-center border-white/25 bg-transparent text-white/80 hover:border-white/45 hover:text-ink`}
+          >
+            {t.backHome}
+          </Link>
+        </div>
 
-        <Link
-          href="/guess"
-          className="text-xs text-white/55 underline-offset-4 transition hover:text-ink hover:underline"
-        >
+        <Link href="/guess" className={SUMMARY_LINK}>
           {t.tryTimeline}
         </Link>
 

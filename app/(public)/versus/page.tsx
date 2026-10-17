@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { VersusStart } from "@/components/versus-start";
 import { getCurrentUser } from "@/lib/auth/server";
 import { readChronoRating } from "@/lib/db/accounts";
@@ -11,6 +13,11 @@ import {
 } from "@/lib/storage/images";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await readLocaleContext();
+  return { title: `${t.versusTitle} · Tempus` };
+}
 
 /**
  * The way in to head-to-head.

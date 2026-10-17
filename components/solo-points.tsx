@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import Link from "next/link";
 
+import { RefreshChrome } from "@/components/refresh-chrome";
 import { BADGE_BY_SLUG, type BadgeSlug } from "@/lib/badges";
 import type { RevealResult } from "@/lib/game/solo";
 import { format, type Dict } from "@/lib/i18n/dictionary";
@@ -73,6 +74,12 @@ export function useSoloSet() {
 export function PointsLine({ points, t }: { points: SetPoints; t: Dict }) {
   return (
     <div className="flex flex-col items-center gap-1.5">
+      {/* A badge earned in this set is also a mark on the menu's Achievements
+          row, and that mark is read in the layout — see `RefreshChrome`. The
+          summary is the one moment it is safe to ask for one: the set is
+          over, no round is in flight, and the player is reading rather than
+          watching a clock. */}
+      <RefreshChrome when={points.newBadges.length > 0} />
       <p className="text-sm font-semibold tabular-nums text-ink">
         {format(points.banked ? t.pointsEarned : t.pointsWouldHave, {
           n: points.tp,

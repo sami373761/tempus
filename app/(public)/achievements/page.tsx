@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
 
 import { BadgeShowcase, type BadgeView } from "@/components/badge-showcase";
+import { RefreshChrome } from "@/components/refresh-chrome";
 import { requireAccount } from "@/lib/auth/server";
 import type { BadgeSlug } from "@/lib/badges";
 import { createAdminDbClient } from "@/lib/db/admin";
-import { readShownBadge, refreshBadges } from "@/lib/db/scoring";
+import {
+  markBadgesSeen,
+  readShownBadge,
+  refreshBadges,
+} from "@/lib/db/scoring";
 import { EMPTY_STATS, evaluateBadges } from "@/lib/game/badge-rules";
 import { readLocaleContext } from "@/lib/i18n/server";
 
@@ -48,9 +53,23 @@ export async function generateMetadata(): Promise<Metadata> {
  * badge earned by a path with no hook of its own — a head-to-head win, banked
  * by a trigger — land here the next time the player looks. The writes go
  * through the service role, the only role that may award a badge.
+ *
+ * **Opening it is what "seen" means**, so it takes the mark off the menu's
+ * Achievements row (`markBadgesSeen`) — after the refresh above, so a badge
+ * this very visit discovered is cleared along with the rest rather than
+ * being announced on the screen that is already showing it. A write during a
+ * render is not something to make a habit of, but it is the habit this page
+ * already has, and what it replaces — an effect that calls an action — would
+ * be a round trip to say something the render already knew.
+ *
+ * Two things then have to agree with the database: `SiteMenu` hides the mark
+ * on this route by path, which covers the visit itself, and `RefreshChrome`
+ * re-renders the layout once, which covers leaving. Neither alone is enough
+ * — a client-side navigation reuses layouts, so the menu above is still
+ * holding the count it was rendered with.
  */
 export default async function AchievementsPage() {
-  const { t } = await readLocaleContext();
+  const { locale, t } = await readLocaleContext();
   const account = await requireAccount("/achievements");
 
   /* Guarded like the home page's event count, and for the same reason: a
@@ -67,13 +86,27 @@ export default async function AchievementsPage() {
     badges = toViews(state.badges);
     totalTp = state.stats.tp;
     shown = await readShownBadge(admin, account.id);
+    await markBadgesSeen(admin, account.id);
   } catch (error) {
     console.error("achievements: badge refresh failed", error);
   }
 
   return (
-    <div className="pb-8 pt-12">
-      <BadgeShowcase t={t} badges={badges} totalTp={totalTp} shown={shown} />
+    <div className="pb-8 pt-10">
+      {/* The mark is off in the database now, but the menu showing it lives
+          in a layout this navigation reused — so it is still holding the
+          count it rendered with, and would put the mark back the moment the
+          player leaves this page. One re-render settles it, and only when
+          there was something to settle. */}
+      <RefreshChrome when={account.unseenBadges > 0} />
+
+      <BadgeShowcase
+        t={t}
+        locale={locale}
+        badges={badges}
+        totalTp={totalTp}
+        shown={shown}
+      />
     </div>
   );
 }

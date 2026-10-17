@@ -18,10 +18,13 @@ import {
   InputModeToggle,
   useKeyboardEntry,
 } from "@/components/date-entry";
+import { FLANK_BOX, VerdictDeck } from "@/components/round-flank";
 import { RoundTimer } from "@/components/round-timer";
 import { SetProgress, SUMMARY_BUTTON } from "@/components/set-summary";
 import { TimelineBackdrop } from "@/components/timeline-backdrop";
 import {
+  CARD_BOX,
+  CARD_BOX_WIDE,
   openingFractions,
   panDuration,
   PAN_MS,
@@ -77,6 +80,7 @@ import {
   type VersusModeSpec,
 } from "@/lib/game/versus";
 import {
+  DEFAULT_PANE,
   entryFraction,
   fractionAtYear,
   paneBounds,
@@ -226,7 +230,16 @@ export function VersusGame({
   const refresh = useCallback(
     async (seat: StoredSeat) => {
       const sent = Date.now();
-      const result = await fetchMatchView(seat.matchId, seat.token);
+      // A request that throws (the network gone, a dev server mid-rebuild) is
+      // reported as a reason like any refusal, so every caller's failure path
+      // runs: uncaught, it escaped as an unhandled rejection and left the tab
+      // on "Joining…" for good.
+      let result: Awaited<ReturnType<typeof fetchMatchView>>;
+      try {
+        result = await fetchMatchView(seat.matchId, seat.token);
+      } catch {
+        return "network" as const;
+      }
       const received = Date.now();
       if (!result.ok) return result.reason;
 
@@ -267,7 +280,13 @@ export function VersusGame({
         }
       }
 
-      const joined = await joinVersusMatch(code);
+      let joined: Awaited<ReturnType<typeof joinVersusMatch>>;
+      try {
+        joined = await joinVersusMatch(code);
+      } catch {
+        if (!cancelled) setFatal(t.versusCreateFailed);
+        return;
+      }
       if (cancelled) return;
 
       if (!joined.ok) {
@@ -630,38 +649,57 @@ export function VersusGame({
     [router],
   );
 
+  // A request that throws is treated like one refused: the button comes back
+  // for another press. Uncaught, it left the button busy — and its loading
+  // trace running — for good.
   async function ready() {
     if (!session || busy) return;
     setBusy(true);
-    const result = await setMatchReady(session.matchId, session.token, true);
-    if (result.ok) adopt(result.view);
+    try {
+      const result = await setMatchReady(session.matchId, session.token, true);
+      if (result.ok) adopt(result.view);
+    } catch {}
     setBusy(false);
   }
 
   async function askRematch() {
     if (!session || busy) return;
     setBusy(true);
-    const result = await requestVersusRematch(session.matchId, session.token);
-    if (result.ok) adopt(result.view);
+    try {
+      const result = await requestVersusRematch(session.matchId, session.token);
+      if (result.ok) adopt(result.view);
+    } catch {}
     setBusy(false);
   }
 
   async function answerRematch(accept: boolean) {
     if (!session || busy) return;
     setBusy(true);
-    const result = await answerVersusRematch(
-      session.matchId,
-      session.token,
-      accept,
-    );
-    if (result.ok) adopt(result.view);
+    try {
+      const result = await answerVersusRematch(
+        session.matchId,
+        session.token,
+        accept,
+      );
+      if (result.ok) adopt(result.view);
+    } catch {}
     setBusy(false);
   }
 
   /* --- render ------------------------------------------------------------ */
 
+  // Both before the container below, which is what draws the backdrop — so
+  // each brings its own rather than sitting on a bare black page. The mode
+  // (and so its home era) is not known yet; the default pane is the start
+  // page's own.
   if (fatal) return <FatalNotice message={fatal} t={t} />;
-  if (!view || !shown) return <LoadingNotice label={t.versusJoining} />;
+  if (!view || !shown)
+    return (
+      <>
+        <TimelineBackdrop pane={DEFAULT_PANE} />
+        <LoadingNotice label={t.versusJoining} />
+      </>
+    );
 
   const spec = versusModeSpec(shown.mode);
   const event = shown.events[shown.currentIdx] ?? null;
@@ -781,7 +819,12 @@ export function VersusGame({
           online match, which has no presence to report (see
           lib/realtime/match-channel.ts). */}
       {!shown.isPublic && shown.phase !== "lobby" && !opponentOnline && (
-        <p className="pointer-events-none fixed inset-x-0 bottom-3 z-30 text-center text-[11px] text-white/45">
+        // `bottom-1`: the round's button stands in the container's 24px
+        // foot, and at `bottom-3` this line rose into it on a phone. The foot
+        // holds one line, so the inset is only `px-2`: the English sentence
+        // is ~295px, and `px-4` wrapped it at 320 with its first line back
+        // across the button.
+        <p className="pointer-events-none fixed inset-x-0 bottom-1 z-30 px-2 text-center text-[11px] text-white/45">
           {connected ? t.versusOpponentOffline : t.versusReconnecting}
         </p>
       )}
@@ -856,8 +899,9 @@ function MatchIntro({
   serverNow: number;
   /**
    * Whether the view in hand has been read since the match filled. Until then
-   * its names are the lobby's — the opponent's still empty — and printing them
-   * would flash "Guest" before the real name, so both seats wait together.
+   * its names are the lobby's — the opponent's still empty — and reading an
+   * empty name as "Guest" would flash it before the real one, so a seat with
+   * no name yet waits for this.
    */
   known: boolean;
   t: Dict;
@@ -891,10 +935,19 @@ function MatchIntro({
         </h2>
 
         <div className="mt-6 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
+          {/* Each seat on its own data: a name shows the moment any view
+              carries it (this player's own is usually already in the
+              lobby's), and only "Guest" — which is the absence of a name —
+              waits for the read after the fill, so it is never flashed
+              before the real one. */}
           <IntroSeat
             label={t.versusYouLabel}
-            name={known ? (view.names[view.seat] ?? t.versusGuestName) : null}
-            rating={known ? view.ratings[view.seat] : null}
+            name={
+              known || view.names[view.seat] !== null
+                ? (view.names[view.seat] ?? t.versusGuestName)
+                : null
+            }
+            rating={view.ratings[view.seat]}
             t={t}
           />
           <span className="text-xs font-semibold uppercase tracking-[0.18em] text-white/40">
@@ -902,8 +955,12 @@ function MatchIntro({
           </span>
           <IntroSeat
             label={t.versusOpponent}
-            name={known ? (view.names[them] ?? t.versusGuestName) : null}
-            rating={known ? view.ratings[them] : null}
+            name={
+              known || view.names[them] !== null
+                ? (view.names[them] ?? t.versusGuestName)
+                : null
+            }
+            rating={view.ratings[them]}
             t={t}
           />
         </div>
@@ -1162,6 +1219,30 @@ function StageRound({
   // clock with nothing typed, where an empty folded rail would hide the answer
   // about to be marked on it.
   const folded = direct && !answered && view.phase === "playing";
+  // The rail's own idea of "answered" is "the round is over for this
+  // player": that is what marks the answer and the opponent's guess on it and
+  // freezes it. A round the clock took has no guess, so `answered` alone left
+  // the reveal on a live rail with neither marker on it.
+  const closed = answered || revealed !== null;
+
+  // Locking in takes the button it was pressed with out of reach (its cell
+  // turns `inert`), so a keyboard player's focus falls to the document and
+  // nothing hands it back when the next round opens. So when the round is
+  // live again and focus is nowhere, it goes to the rail's handle — the
+  // control a round starts on. An effect on the live render rather than a
+  // timer in the round-change effect, because the handle only becomes
+  // tabbable once the reset there has rendered. A typed round's entry keeps
+  // its own delayed focus: a folded rail is `inert` and cannot take it.
+  const railBox = useRef<HTMLDivElement>(null);
+  const live = !answered && view.phase === "playing";
+  useEffect(() => {
+    if (!live) return;
+    const current = document.activeElement;
+    if (current && current !== document.body) return;
+    railBox.current
+      ?.querySelector<HTMLElement>('[role="slider"][tabindex="0"]')
+      ?.focus({ preventScroll: true });
+  }, [live, generation, currentIdx]);
 
   // What a typed date may name: the two ends of the rails this mode shows.
   const entryRange = {
@@ -1217,54 +1298,121 @@ function StageRound({
       : REVEAL_HOLD_MS + panDuration(guessPane, answerPane, panes);
 
   const them = otherSeat(view.seat);
+  // Once both are in, the wait is for the server to close the round, not for
+  // the opponent — saying "waiting for your opponent" then is untrue.
+  const waitLabel = opponentAnswered(view)
+    ? t.versusOpponentLocked
+    : t.versusWaitingForOpponent;
 
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-4 sm:gap-5">
       <TimelineBackdrop pane={pane} panes={panes} />
 
-      <RoundCard
-        event={event}
-        t={t}
-        // The picture grows into the room the rail gives up, so folding it
-        // away leaves no hole in the column and the button below does not
-        // move.
-        wide={folded}
-        counter={<MatchCounters view={view} t={t} />}
-        aside={
-          view.phase === "playing" ? (
-            <RoundTimer
-              remainingMs={remainingMs}
-              totalMs={view.roundSeconds * 1000}
-              label={format(t.versusSecondsLeft, { n: secondsLeft })}
-            />
-          ) : null
-        }
-        badge={
-          revealed ? (
-            <RoundOutcome
-              round={revealed}
-              you={view.seat}
-              theirName={opponentName(view, t)}
+      {/* The card and the two result panels that flank it.
+
+          The wrapper is the solo game's (components/timeline-game.tsx): the
+          panels are `absolute` against it at `right-full` and `left-full`, so
+          a round being answered does not move the photograph by a pixel, and
+          it carries the card's own caps because the panels are `inset-y-0` —
+          a wrapper taller than the card would hang them past its corners. */}
+      <div
+        className={`card-caps relative flex min-h-[9.625rem] flex-1 flex-col items-stretch ${
+          folded ? CARD_BOX_WIDE : CARD_BOX
+        }`}
+      >
+        {/* Both players' results, as the pair of cards `/guess` ends a round
+            on — this seat's on the left where the solo verdict goes, the
+            opponent's on the right where the solo game puts the note about
+            the event. A match has no note to put there (its description
+            never leaves the server; the client is handed a `MaskedEvent`),
+            and the question a player has the instant a round closes is "did I
+            beat them" — so the opposite flank answers it in the same object,
+            at the same size, with the tier's own colour on both.
+
+            Only where there are sides to hang them off: below 1120px
+            `FLANK_BOX` keeps them hidden and `RoundOutcome` paints the same
+            two answers across the foot of the picture instead, exactly as the
+            solo game falls back to `RoundVerdict`. The two are never on
+            screen together.
+
+            The answer's year is on neither card, which is the solo rule: it
+            is marked on the rail the camera has just flown to, and printing
+            it here as well would be two reveals of one answer. The narrow
+            overlay still carries it, because there the rail is the only other
+            place it appears and a phone's rail is small. */}
+        {revealed && (
+          <>
+            <SeatFlank
+              side="left"
+              answer={revealed.seats[view.seat]}
+              year={revealed.year}
+              kicker={t.resultTitle}
               locale={locale}
               t={t}
             />
-          ) : answered ? (
-            <WaitingBadge label={t.versusWaitingForOpponent} />
-          ) : opponentAnswered(view) ? (
-            <OpponentLockedBadge
-              label={t.versusOpponentLocked}
-              placement="bottom"
+            <SeatFlank
+              side="right"
+              answer={revealed.seats[them]}
+              year={revealed.year}
+              kicker={opponentName(view, t)}
+              guessLabel={t.guessTitle}
+              locale={locale}
+              t={t}
             />
-          ) : null
-        }
-      />
+          </>
+        )}
+
+        <RoundCard
+          event={event}
+          t={t}
+          // The picture grows into the room the rail gives up, so folding it
+          // away leaves no hole in the column and the button below does not
+          // move.
+          wide={folded}
+          counter={<MatchCounters view={view} t={t} />}
+          aside={
+            view.phase === "playing" ? (
+              <RoundTimer
+                remainingMs={remainingMs}
+                totalMs={view.roundSeconds * 1000}
+                label={format(t.versusSecondsLeft, { n: secondsLeft })}
+              />
+            ) : null
+          }
+          badge={
+            revealed ? (
+              <RoundOutcome
+                round={revealed}
+                you={view.seat}
+                theirName={opponentName(view, t)}
+                locale={locale}
+                // The flanks take over from 1120px — see the note above them.
+                wideHidden
+                t={t}
+              />
+            ) : answered ? (
+              <WaitingBadge label={waitLabel} />
+            ) : opponentAnswered(view) ? (
+              <OpponentLockedBadge
+                label={t.versusOpponentLocked}
+                placement="bottom"
+              />
+            ) : null
+          }
+        />
+      </div>
 
       {/* The rail, and the fold that takes it away when the player would
           rather type the date — the same three boxes `/guess` uses, and the
           same `.rail-fold` rule in app/globals.css. `inert` rather than a
           conditional render, so the band has a closing frame to animate and a
           folded rail's slider and era doors are off the tab order. */}
-      <div className="rail-fold w-full shrink-0" data-folded={folded} inert={folded}>
+      <div
+        ref={railBox}
+        className="rail-fold w-full shrink-0"
+        data-folded={folded}
+        inert={folded}
+      >
         <div>
           <div className="rail-fold-inner w-full overflow-hidden">
             <div
@@ -1282,8 +1430,8 @@ function StageRound({
                   active={candidate === pane}
                   fraction={fractions[candidate]}
                   onFractionChange={(next) => move(candidate, next)}
-                  answered={answered}
-                  showGuess={!answered || guessPane === candidate}
+                  answered={closed}
+                  showGuess={!closed || guessPane === candidate}
                   // A typed date is exact, and the year this rail reads back at
                   // that position is snapped to the pane's grid — so the bubble
                   // is told the player's own number.
@@ -1339,6 +1487,8 @@ function StageRound({
       <RoundControls
         phase={view.phase}
         answered={answered}
+        waitLabel={waitLabel}
+        last={view.currentIdx + 1 >= view.totalRounds}
         secondsLeft={secondsLeft}
         direct={direct}
         onDirect={() => {
@@ -1437,6 +1587,20 @@ function PosterRound({
   const answered = guess !== null || view.youAnswered;
   const typed = direct ? directYear(entry, bounds) : null;
 
+  // Focus back onto the rail's handle when the round is live again and the
+  // lock-in press left it nowhere — see the stage round. A locked rail (a
+  // year being typed) has no tabbable handle, so the entry keeps its own.
+  const railBox = useRef<HTMLDivElement>(null);
+  const live = !answered && view.phase === "playing";
+  useEffect(() => {
+    if (!live) return;
+    const current = document.activeElement;
+    if (current && current !== document.body) return;
+    railBox.current
+      ?.querySelector<HTMLElement>('[role="slider"][tabindex="0"]')
+      ?.focus({ preventScroll: true });
+  }, [live, generation, currentIdx]);
+
   // While a year is being typed the marker follows it, which is what makes
   // keeping the rail on screen worth doing. It falls back to wherever the
   // marker was left as soon as the field is empty or holds a year off the
@@ -1469,6 +1633,10 @@ function PosterRound({
 
   const them = otherSeat(view.seat);
   const overlay = revealed !== null || answered;
+  // See the stage round.
+  const waitLabel = opponentAnswered(view)
+    ? t.versusOpponentLocked
+    : t.versusWaitingForOpponent;
 
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col">
@@ -1505,7 +1673,7 @@ function PosterRound({
                 t={t}
               />
             ) : answered ? (
-              <WaitingBadge label={t.versusWaitingForOpponent} />
+              <WaitingBadge label={waitLabel} />
             ) : opponentAnswered(view) ? (
               // At the top on a poster: its foot is the title, which this
               // must not cover while the round is still being answered.
@@ -1519,7 +1687,12 @@ function PosterRound({
         />
 
         <div className="mx-auto flex w-full min-h-0 max-w-5xl flex-col">
-          <div className="flex shrink-0 items-start justify-between gap-4 px-8 pt-1 sm:px-12">
+          {/* Stacked below `sm`, the counters over the title: beside it, the
+              ~155px of counters and clock left the title and the sentence
+              under it a 37px column on a 320px phone. Reversed rather than
+              reordered so `sm` and up — where the title comes first and
+              the counters stand to its right — is unchanged. */}
+          <div className="flex shrink-0 flex-col-reverse gap-2 px-8 pt-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:px-12">
             <div className="min-w-0">
               <h2 className="font-display text-xl font-semibold tracking-tight text-ink sm:text-2xl">
                 {t[spec.titleKey]}
@@ -1537,7 +1710,7 @@ function PosterRound({
                 the progress counter: the counter, the score, and the clock.
                 The timer is last and largest, which is the order it is read
                 in once the round is running. */}
-            <div className="flex shrink-0 items-center gap-2.5 pt-0.5">
+            <div className="flex shrink-0 items-center gap-2.5 self-end pt-0.5 sm:self-auto">
               <div className="flex flex-col items-end gap-1.5">
                 <SetProgress
                   played={view.currentIdx}
@@ -1545,7 +1718,7 @@ function PosterRound({
                   size="md"
                   t={t}
                 />
-                <ScorePill view={view} t={t} />
+                <ScorePill view={view} size="md" t={t} />
               </div>
               <div
                 className={`transition-opacity duration-300 ${
@@ -1565,7 +1738,7 @@ function PosterRound({
               than centred in it: the button under it is the answer to the rail,
               and half the slack standing between the two reads as a gap between
               two unrelated rows. See `ScreenGame` for the rest of the note. */}
-          <div className="flex min-h-fit flex-1 items-end">
+          <div ref={railBox} className="flex min-h-fit flex-1 items-end">
             <TimelinePaneView
               pane={pane}
               panes={panes}
@@ -1574,7 +1747,9 @@ function PosterRound({
               heading={false}
               fraction={railFraction}
               onFractionChange={setFraction}
-              answered={answered}
+              // Closed by the reveal as well as by a lock-in — see `closed` in
+              // the stage round.
+              answered={answered || revealed !== null}
               // Shown but not draggable while a year is being typed: the marker
               // is the readout of the field, so it must not also be something
               // the pointer can move.
@@ -1617,6 +1792,8 @@ function PosterRound({
           <RoundControls
             phase={view.phase}
             answered={answered}
+            waitLabel={waitLabel}
+            last={view.currentIdx + 1 >= view.totalRounds}
             secondsLeft={secondsLeft}
             direct={direct}
             onDirect={() => {
@@ -1665,6 +1842,8 @@ function PosterRound({
 function RoundControls({
   phase,
   answered,
+  waitLabel,
+  last,
   secondsLeft,
   direct,
   onDirect,
@@ -1680,6 +1859,10 @@ function RoundControls({
 }: {
   phase: MatchView["phase"];
   answered: boolean;
+  /** What the wait says — the round's badge says the same, and is the one announced. */
+  waitLabel: string;
+  /** The match's final round, whose reveal leads to the result, not a round. */
+  last: boolean;
   secondsLeft: number;
   direct: boolean;
   onDirect: () => void;
@@ -1763,7 +1946,7 @@ function RoundControls({
             <div
               className={`${button} border-white/30 bg-black/45 text-ink backdrop-blur-md`}
             >
-              <Waiting label={t.versusWaitingForOpponent} />
+              <Waiting label={waitLabel} live={false} />
             </div>
           </div>
 
@@ -1776,7 +1959,9 @@ function RoundControls({
             <div
               className={`${button} border-white/30 bg-black/45 text-ink backdrop-blur-md`}
             >
-              {format(t.versusNextRoundIn, { n: secondsLeft })}
+              {format(last ? t.versusResultsIn : t.versusNextRoundIn, {
+                n: secondsLeft,
+              })}
             </div>
           </div>
         </div>
@@ -1805,7 +1990,12 @@ function RoundControls({
           // property and the keyframe animates `transform`, so the two would
           // compose and pull it a whole width left. Both keyframes carry the
           // -50% instead.
-          className="entry-warning on-photo absolute left-1/2 top-full mt-2 whitespace-nowrap text-[12px] font-medium text-bad"
+          //
+          // `mt-1` and a 16px line are 20px under the row, inside the frame's
+          // bottom padding (`pb-6`, or `pb-5` in a subject match); the
+          // inherited 18px line box under `mt-2` would hang past the frame's
+          // foot and give the page a scrollbar.
+          className="entry-warning on-photo absolute left-1/2 top-full mt-1 whitespace-nowrap text-[12px] leading-4 font-medium text-bad"
         >
           {t.invalidDate}
         </p>
@@ -1831,11 +2021,26 @@ function MatchCounters({ view, t }: { view: MatchView; t: Dict }) {
  * part of the pill that can be long; it truncates on its own rather than
  * pushing the pill into the timer opposite.
  */
-function ScorePill({ view, t }: { view: MatchView; t: Dict }) {
+function ScorePill({
+  view,
+  size = "sm",
+  t,
+}: {
+  view: MatchView;
+  /** Matched to the `SetProgress` it is stacked under — see that prop. */
+  size?: "sm" | "md";
+  t: Dict;
+}) {
   const them = otherSeat(view.seat);
 
+  // `min(15rem, 100%)`: on a card under ~300px wide the counter column has
+  // less than 15rem left of the timer, and a pill allowed 15rem ran under it.
   return (
-    <span className="flex max-w-[15rem] items-center whitespace-nowrap rounded-full border border-white/20 bg-black/55 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-white/80 backdrop-blur-md">
+    <span
+      className={`flex max-w-[min(15rem,100%)] items-center whitespace-nowrap rounded-full border border-white/20 bg-black/55 font-semibold tabular-nums text-white/80 backdrop-blur-md ${
+        size === "md" ? "px-3 py-1.5 text-[13px]" : "px-2.5 py-1 text-[11px]"
+      }`}
+    >
       {t.versusYouLabel} {view.seats[view.seat].score}
       <span className="px-1 text-white/35">·</span>
       {view.seats[them].score}
@@ -1867,6 +2072,7 @@ function RoundOutcome({
   you,
   theirName,
   locale,
+  wideHidden = false,
   t,
 }: {
   round: RoundResult;
@@ -1874,6 +2080,17 @@ function RoundOutcome({
   /** "Them", or an online opponent's name — see `opponentName`. */
   theirName: string;
   locale: SupportedLocale;
+  /**
+   * Step aside from 1120px, where the stage round hangs both results off the
+   * card as flanks instead (`SeatFlank`) — the width `RoundVerdict` hides
+   * itself at, so the overlay and the panels are never on screen together.
+   *
+   * Off by default, and the poster round leaves it off: that layout is
+   * already a two-column grid at exactly this width, with the picture down
+   * one side and the rail down the other, so there is no flank to hang
+   * anything on and the strip on the poster is the only result it has.
+   */
+  wideHidden?: boolean;
   t: Dict;
 }) {
   const them = otherSeat(you);
@@ -1881,9 +2098,17 @@ function RoundOutcome({
   const theirs = round.seats[them];
 
   return (
+    // Packs itself into a photograph under 10rem, where it was taller than
+    // the picture and lost its top to the clip; `RoundCard` fades the corner
+    // chips while it is up (see `RoundVerdict`, which does the same). Packed,
+    // it is ~77px, so it fits the photo's 5rem floor — a landscape phone's —
+    // with the year still on it.
     <div
       role="status"
-      className="versus-overlay-in pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-1.5 bg-gradient-to-t from-black/92 via-black/65 to-transparent px-4 pb-3 pt-12 text-center"
+      data-photo-overlay
+      className={`versus-overlay-in pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-1.5 bg-gradient-to-t from-black/92 via-black/65 to-transparent px-4 pb-3 pt-12 text-center [@container(max-height:10rem)]:gap-0.5 [@container(max-height:10rem)]:to-black/40 [@container(max-height:10rem)]:pb-1 [@container(max-height:10rem)]:pt-0 ${
+        wideHidden ? "min-[1120px]:hidden" : ""
+      }`}
     >
       <p className="on-photo text-[11px] font-semibold uppercase tracking-[0.16em] text-white/60">
         {/* Formatted here rather than taken from `round.yearLabel`, which is
@@ -1899,6 +2124,71 @@ function RoundOutcome({
         <SeatOutcome label={theirName} answer={theirs} locale={locale} t={t} />
       </div>
     </div>
+  );
+}
+
+/**
+ * One player's round, as the card `/guess` ends a round on.
+ *
+ * The same `VerdictDeck` the solo game hangs beside its photograph, told who
+ * it is about: this seat's card is kicked "Your result" like the solo one,
+ * and the opponent's wears their name and labels its second row "Guess"
+ * rather than "Your guess". Nothing else differs — the tier's own colour as a
+ * block, the word in near-black on it, the notches, and two labelled facts on
+ * a near-black foot — because the two results have to be comparable at a
+ * glance, and two cards that merely resembled each other would be a second
+ * place every one of those decisions has to be kept.
+ *
+ * A round the clock took has no guess and so no distance: both facts read as
+ * an em dash, and the head says "Out of time" in the colour of the miss it is
+ * graded as (`label`), which is the same substitution `VerdictDeckRow` makes.
+ *
+ * The points are the round's own payout, not TP: an online match pays KP at
+ * the end and nothing per round, so what a round is worth here is the number
+ * that decides who wins it.
+ */
+function SeatFlank({
+  side,
+  answer,
+  year,
+  kicker,
+  guessLabel,
+  locale,
+  t,
+}: {
+  /** Which flank: this seat's on the left, the opponent's on the right. */
+  side: "left" | "right";
+  answer: SeatAnswer;
+  /** The round's answer, which is what the guess is measured against. */
+  year: number;
+  /** The head's small line — "Your result", or the opponent's name. */
+  kicker: string;
+  guessLabel?: string;
+  locale: SupportedLocale;
+  t: Dict;
+}) {
+  return (
+    <VerdictDeck
+      accuracy={{
+        verdict: answer.verdict,
+        // Subtracted here rather than taken from the server: the plain gap is
+        // what the card prints, and astronomical year numbering makes it a
+        // subtraction with no era to branch on.
+        distance: answer.guess === null ? null : Math.abs(answer.guess - year),
+      }}
+      guess={answer.guess}
+      kicker={kicker}
+      label={answer.timedOut ? t.versusTimedOut : null}
+      scoreLabel={format(t.versusRoundPoints, { n: answer.points })}
+      guessLabel={guessLabel}
+      locale={locale}
+      t={t}
+      className={
+        side === "left"
+          ? `round-flank-left right-full mr-4 ${FLANK_BOX}`
+          : `round-flank-right left-full ml-4 ${FLANK_BOX}`
+      }
+    />
   );
 }
 
@@ -1918,7 +2208,7 @@ function SeatOutcome({
         {label}
       </p>
       <p
-        className="on-photo font-display text-xl font-semibold leading-tight tracking-tight sm:text-2xl"
+        className="on-photo font-display text-xl font-semibold leading-tight tracking-tight sm:text-2xl [@container(max-height:10rem)]:text-lg"
         style={{ color: VERDICT_COLORS[answer.verdict] }}
       >
         {answer.timedOut
@@ -1966,16 +2256,25 @@ function OpponentLockedBadge({
    */
   placement: "top" | "bottom";
 }) {
+  // On a stage photograph under 10rem the centred pill stood across the
+  // counters' column, so there it is the padlock alone, in the bottom-right
+  // corner clear of both the counters and the clock. The words stay for
+  // screen readers. Under 5.5rem it drops to `bottom-1` and a 22px chip: the
+  // clock's ring ends ~50px down the picture, and at `bottom-3` the 26px
+  // chip on the photo's 80px floor started at 42px, across it; now it starts
+  // at 54px.
   return (
     <div
       className={`versus-overlay-in pointer-events-none absolute inset-x-0 z-20 flex justify-center px-4 ${
-        placement === "top" ? "top-3" : "bottom-3"
+        placement === "top"
+          ? "top-3"
+          : "bottom-3 [@container(max-height:10rem)]:justify-end [@container(max-height:5.5rem)]:bottom-1"
       }`}
     >
       <p
         role="status"
         aria-live="polite"
-        className="on-photo flex max-w-full items-center gap-2 rounded-full border border-white/20 bg-black/65 px-3 py-1.5 text-[11px] font-semibold text-ink backdrop-blur-md"
+        className="on-photo flex max-w-full items-center gap-2 rounded-full border border-white/20 bg-black/65 px-3 py-1.5 text-[11px] font-semibold text-ink backdrop-blur-md [@container(max-height:10rem)]:px-2 [@container(max-height:5.5rem)]:py-1"
       >
         <svg
           viewBox="0 0 16 16"
@@ -1990,7 +2289,9 @@ function OpponentLockedBadge({
           <rect x="3" y="7" width="10" height="7" rx="1.5" />
           <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
         </svg>
-        <span className="truncate">{label}</span>
+        <span className="truncate [@container(max-height:10rem)]:sr-only">
+          {label}
+        </span>
       </p>
     </div>
   );
@@ -2043,8 +2344,10 @@ function VersusSummary({
   // gone, so focus has to be moved or a keyboard user is dropped at the top of
   // the document. The panel takes it rather than a button — landing on "Play
   // again" would make Enter start a rematch before the result had been read.
+  // `preventScroll` because focus lands mid-entrance: scrolling to the
+  // still-moving panel would open the result with its top under the bar.
   useEffect(() => {
-    panel.current?.focus();
+    panel.current?.focus({ preventScroll: true });
   }, []);
 
   const youWon = outcome.winner === view.seat;
@@ -2057,6 +2360,41 @@ function VersusSummary({
 
   const theyAsked = view.rematchBy === them;
   const youAsked = view.rematchBy === view.seat;
+  const rematchClosed = busy || youAsked || view.phase === "abandoned";
+
+  // The opponent's rematch offer, which is modal while it is up.
+  const offer = !view.isPublic && theyAsked;
+  const accept = useRef<HTMLButtonElement>(null);
+  // Which answer is in flight, so only the pressed button shows the wait.
+  // Cleared once the request is back.
+  const [answering, setAnswering] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!busy) setAnswering(null);
+  }, [busy]);
+
+  function answer(yes: boolean) {
+    if (busy) return;
+    setAnswering(yes);
+    onAnswerRematch(yes);
+  }
+
+  // A dialog that opens over the screen takes focus, or a keyboard user is
+  // left on a panel they can no longer reach (it is `inert` under the
+  // dialog). Accept rather than the panel, because answering is all there
+  // is to do. When it closes and its button goes with it, focus comes back
+  // to the panel rather than being dropped on the document.
+  const offerWas = useRef(offer);
+  useEffect(() => {
+    if (offer) {
+      accept.current?.focus({ preventScroll: true });
+    } else if (
+      offerWas.current &&
+      (!document.activeElement || document.activeElement === document.body)
+    ) {
+      panel.current?.focus({ preventScroll: true });
+    }
+    offerWas.current = offer;
+  }, [offer]);
 
   // What the heading says, and in which colour. An invitation keeps its one
   // word for a match that ended early; online, a walk-out is a result — the
@@ -2090,6 +2428,9 @@ function VersusSummary({
         ref={panel}
         tabIndex={-1}
         role="group"
+        // Out of reach while the rematch offer is up over it: the dialog is
+        // modal, and Tab must not walk out of it into buttons behind a blur.
+        inert={offer}
         aria-label={`${t.versusTitle} — ${view.isPublic ? title : headline}`}
         // It grows rather than scrolling inside itself, centred by `my-auto`:
         // the solo summary's rule (see `SetSummary`), and this panel is the
@@ -2103,8 +2444,14 @@ function VersusSummary({
               is the one place the whole of it is being read. */}
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
             {t.versusTitle}
-            <span className="px-1.5 text-white/30">·</span>
-            {view.isPublic ? t.versusOnlineTitle : modeName}
+            {/* One unbreakable run, so the line breaks before the dot rather
+                than inside the game's name — at the `wbr`, without which the
+                title's last word was glued to the run. */}
+            <wbr />
+            <span className="whitespace-nowrap">
+              <span className="px-1.5 text-white/30">·</span>
+              {view.isPublic ? t.versusOnlineTitle : modeName}
+            </span>
           </p>
           <h2
             className="mt-1 font-display text-3xl font-semibold leading-none tracking-tight"
@@ -2115,7 +2462,10 @@ function VersusSummary({
         </div>
 
         <div>
-          <p className="font-display text-5xl font-semibold leading-none tracking-tight tabular-nums text-ink">
+          {/* Never wrapped — a score broken over two lines is two numbers —
+              and a step smaller below 400px, where four digits at `text-5xl`
+              are wider than the panel's 214px column. */}
+          <p className="font-display whitespace-nowrap text-4xl font-semibold leading-none tracking-tight tabular-nums text-ink min-[400px]:text-5xl">
             {format(t.versusFinalScore, {
               you: view.seats[view.seat].score,
               them: view.seats[them].score,
@@ -2165,16 +2515,31 @@ function VersusSummary({
             <>
               <button
                 type="button"
-                onClick={onRematch}
-                disabled={busy || youAsked || view.phase === "abandoned"}
-                aria-busy={busy}
-                className={`w-full rounded-full border border-transparent px-6 py-2.5 text-sm font-semibold transition ${
+                // `aria-disabled` and a guarded handler rather than `disabled`:
+                // a button disabled by its own press drops keyboard focus to
+                // the document.
+                onClick={() => {
+                  if (!rematchClosed) onRematch();
+                }}
+                aria-disabled={rematchClosed || undefined}
+                aria-busy={busy && answering === null}
+                className={`relative w-full rounded-full border border-transparent px-6 py-2.5 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
                   youAsked
                     ? "cursor-default border-white/20 bg-transparent text-white/50"
                     : "bg-ink text-page hover:opacity-85"
-                }`}
+                } ${busy && answering === null ? "cursor-progress" : ""}`}
               >
                 {t.versusRematch}
+                {/* The board's loading trace: asking is a round trip. Not
+                    while the rematch dialog is the one waiting — that
+                    press's trace is on the button in the dialog. */}
+                {busy && answering === null && (
+                  <span aria-hidden="true" className="round-trace">
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                )}
               </button>
 
               {youAsked && <Waiting label={t.versusRematchAsked} />}
@@ -2203,10 +2568,11 @@ function VersusSummary({
           panel: scoped to the panel's box it painted a hard-edged rectangle
           in the middle of the page, which reads as a rendering fault rather
           than as something asking to be answered. */}
-      {!view.isPublic && theyAsked && (
+      {offer && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 px-6 backdrop-blur-sm">
           <div
             role="alertdialog"
+            aria-modal="true"
             aria-label={t.versusRematchOffer}
             className="versus-modal-in w-full max-w-xs rounded-3xl border border-white/15 bg-black/80 px-6 py-6 text-center shadow-2xl shadow-black/70"
           >
@@ -2214,21 +2580,48 @@ function VersusSummary({
               {t.versusRematchOffer}
             </p>
             <div className="mt-5 flex flex-col gap-2.5">
+              {/* A transparent border on Accept, so the two buttons are the
+                  same height — Decline's border is its whole outline. */}
               <button
+                ref={accept}
                 type="button"
-                onClick={() => onAnswerRematch(true)}
-                disabled={busy}
-                className="w-full rounded-full bg-ink px-6 py-2.5 text-sm font-semibold text-page transition hover:opacity-85"
+                onClick={() => answer(true)}
+                // `aria-disabled`, not `disabled`, for the rematch button's
+                // reason: a disabled button drops focus to the document, and
+                // here that strands it outside a modal whose panel is inert.
+                // `answer` already ignores a press while one is in flight.
+                aria-disabled={busy || undefined}
+                aria-busy={busy && answering === true}
+                className={`relative w-full rounded-full border border-transparent bg-ink px-6 py-2.5 text-sm font-semibold text-page transition hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+                  busy && answering === true ? "cursor-progress" : ""
+                }`}
               >
                 {t.versusRematchAccept}
+                {busy && answering === true && (
+                  <span aria-hidden="true" className="round-trace">
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                )}
               </button>
               <button
                 type="button"
-                onClick={() => onAnswerRematch(false)}
-                disabled={busy}
-                className="w-full rounded-full border border-white/35 bg-transparent px-6 py-2.5 text-sm font-semibold text-ink transition hover:bg-white/10"
+                onClick={() => answer(false)}
+                aria-disabled={busy || undefined}
+                aria-busy={busy && answering === false}
+                className={`relative w-full rounded-full border border-white/35 bg-transparent px-6 py-2.5 text-sm font-semibold text-ink transition hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+                  busy && answering === false ? "cursor-progress" : ""
+                }`}
               >
                 {t.versusRematchDecline}
+                {busy && answering === false && (
+                  <span aria-hidden="true" className="round-trace">
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                )}
               </button>
             </div>
           </div>
@@ -2249,7 +2642,7 @@ function VersusSummary({
  *
  * A guest has no rating to change, so they are told what signing in keeps
  * instead — the one moment that sentence is about something that just
- * happened. An account whose change has not arrived shows nothing rather than
+ * happened. An account whose change has not arrived shows a wait rather than
  * a guess; it is one read away (the change is not on the pushed row, so the
  * game reads the view once more as the match ends).
  */
@@ -2271,7 +2664,31 @@ function RatingChange({ view, t }: { view: MatchView; t: Dict }) {
     );
   }
 
-  if (delta === null) return null;
+  // Not arrived yet: the block's own frame, the same height as the one it
+  // becomes, with the wait where the number will be — so the buttons under
+  // it do not jump down when the change lands a moment after the panel.
+  if (delta === null) {
+    return (
+      <div className="border-t border-white/10 pt-4">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/45">
+          {t.versusRatingName}
+        </p>
+        <p
+          aria-hidden="true"
+          className="mt-1 flex h-8 items-center justify-center gap-1 text-white/60"
+        >
+          {[0, 1, 2].map((dot) => (
+            <span
+              key={dot}
+              className="versus-dot h-1 w-1 rounded-full bg-current"
+              style={{ animationDelay: `${dot * 160}ms` }}
+            />
+          ))}
+        </p>
+        <p className="mt-0.5 h-4" />
+      </div>
+    );
+  }
 
   return (
     <div className="border-t border-white/10 pt-4">
@@ -2423,7 +2840,9 @@ function ShareMatchButton({
     <button
       type="button"
       onClick={share}
-      className="w-full rounded-full border border-white/45 bg-black/45 px-6 py-2.5 text-sm font-semibold text-ink backdrop-blur-md transition hover:bg-black/65"
+      // Announced, so the "Copied" relabel reaches a screen reader too.
+      aria-live="polite"
+      className="w-full rounded-full border border-white/45 bg-black/45 px-6 py-2.5 text-sm font-semibold text-ink backdrop-blur-md transition hover:bg-black/65 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
     >
       {state === "copied"
         ? t.shareCopied
@@ -2442,14 +2861,21 @@ function LoadingNotice({ label }: { label: string }) {
   );
 }
 
-function FatalNotice({ message, t }: { message: string; t: Dict }) {
+/**
+ * A match that cannot be shown, with the way back to the start page.
+ *
+ * Only ever drawn outside the game's container (here, and by the page for a
+ * malformed code), so it brings the backdrop that container would have drawn.
+ */
+export function FatalNotice({ message, t }: { message: string; t: Dict }) {
   return (
     <div className="flex min-h-0 w-full flex-1 items-center justify-center px-6">
+      <TimelineBackdrop pane={DEFAULT_PANE} />
       <div className="w-full max-w-sm rounded-3xl border border-white/12 bg-black/45 px-7 py-7 text-center shadow-2xl shadow-black/70 backdrop-blur-2xl">
         <p className="text-sm text-ink">{message}</p>
         <Link
           href="/versus"
-          className="mt-5 inline-block rounded-full bg-ink px-6 py-2.5 text-sm font-semibold text-page transition hover:opacity-85"
+          className="mt-5 inline-block rounded-full bg-ink px-6 py-2.5 text-sm font-semibold text-page transition hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
           {t.versusPlayFriend}
         </Link>

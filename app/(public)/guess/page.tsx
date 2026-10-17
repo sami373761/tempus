@@ -1,9 +1,16 @@
+import type { Metadata } from "next";
+
 import { TimelineGame } from "@/components/timeline-game";
 import { dealTimelineEvents } from "@/app/actions/rounds";
 import { ROUND_QUEUE_DEPTH } from "@/lib/game/rounds";
 import { readLocaleContext } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await readLocaleContext();
+  return { title: `${t.timelineTitle} · Tempus` };
+}
 
 export default async function GuessPage() {
   const { locale, t } = await readLocaleContext();

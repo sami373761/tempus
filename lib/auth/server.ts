@@ -3,7 +3,7 @@ import "server-only";
 import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 
-import { accountFrom, readUsername } from "../db/accounts.ts";
+import { accountFrom, readProfileChrome } from "../db/accounts.ts";
 import { signInHref } from "./paths.ts";
 import { createServerDbClient } from "../db/server.ts";
 import type { Account } from "../db/types.ts";
@@ -63,14 +63,17 @@ export async function getCurrentAccount(): Promise<Account | null> {
   const user = await getCurrentUser();
   if (!user) return null;
 
-  let username: string | null = null;
+  // The name to greet them by and the badge count the menu marks, in the one
+  // read — see `readProfileChrome`. A failed read costs both and nothing
+  // else: the site has to stay usable with no name and no mark.
+  let profile = { username: null as string | null, unseenBadges: 0 };
   try {
-    username = await readUsername(await createServerDbClient(), user.id);
+    profile = await readProfileChrome(await createServerDbClient(), user.id);
   } catch {
-    username = null;
+    profile = { username: null, unseenBadges: 0 };
   }
 
-  return accountFrom(user, username);
+  return accountFrom(user, profile.username, profile.unseenBadges);
 }
 
 /**

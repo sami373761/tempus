@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -106,13 +106,39 @@ export function VersusStart({
   const [busy, setBusy] = useState<VersusMode | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // "Play a friend" and "Back" each unmount on their own press, which drops a
+  // keyboard user's focus to the document. So focus follows the swap: onto
+  // the first mode card when the board opens, back onto "Play a friend" when
+  // it closes. Only on a change, never on mount — arriving at the page is not
+  // a press (and a "skip the first run" flag would not survive StrictMode's
+  // second mount pass in development).
+  const grid = useRef<HTMLDivElement>(null);
+  const playFriend = useRef<HTMLButtonElement>(null);
+  const pickingWas = useRef(picking);
+  useEffect(() => {
+    if (pickingWas.current === picking) return;
+    pickingWas.current = picking;
+    const target = picking
+      ? grid.current?.querySelector<HTMLElement>("button")
+      : playFriend.current;
+    target?.focus({ preventScroll: true });
+  }, [picking]);
+
   async function start(mode: VersusMode) {
     if (busy) return;
     setBusy(mode);
     setError(null);
 
-    const result = await createVersusMatch(mode);
-    if (!result.ok) {
+    // A thrown request (the network dropped, the dev server mid-rebuild) is
+    // the same failure as a refused one; uncaught, it left the pressed card
+    // spinning forever with nothing on screen to say so.
+    let result: Awaited<ReturnType<typeof createVersusMatch>> | null;
+    try {
+      result = await createVersusMatch(mode);
+    } catch {
+      result = null;
+    }
+    if (!result || !result.ok) {
       setError(t.versusCreateFailed);
       setBusy(null);
       return;
@@ -160,7 +186,7 @@ export function VersusStart({
                   photograph at that width, and four up once the card is the
                   page's full column — two up there made each photograph a
                   third of the window tall and pushed the board off it. */}
-              <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+              <div ref={grid} className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
                 {PICKER.map((entry, index) => (
                   <ModeCard
                     key={entry.key}
@@ -189,22 +215,26 @@ export function VersusStart({
 
               {/* Out of the way rather than prominent: the subject board is
                   what the player came here to read, and the way back is only
-                  needed by someone who opened it by accident. */}
+                  needed by someone who opened it by accident. Quiet is not
+                  tiny, though: the padding makes it a thumb-sized target, and
+                  `mt-3` plus `-mb-2` hand the same 8px back so the line sits
+                  exactly where the bare 16px text did. */}
               <button
                 type="button"
                 onClick={() => setPicking(false)}
-                className="mx-auto mt-5 text-xs text-white/55 underline-offset-4 transition hover:text-ink hover:underline"
+                className="mx-auto -mb-2 mt-3 px-3 py-2 text-xs text-white/55 underline-offset-4 transition hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               >
                 {t.backTitle}
               </button>
             </>
           ) : (
             <button
+              ref={playFriend}
               type="button"
               onClick={() => setPicking(true)}
               // The column is the page's width now; a button that spanned it
               // would be a bar, not a button.
-              className="mx-auto mt-6 w-full max-w-sm rounded-full border border-white/45 bg-black/45 px-6 py-2.5 text-sm font-semibold text-ink backdrop-blur-md transition hover:bg-black/65"
+              className="mx-auto mt-6 w-full max-w-sm rounded-full border border-white/45 bg-black/45 px-6 py-2.5 text-sm font-semibold text-ink backdrop-blur-md transition hover:bg-black/65 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
               {t.versusPlayFriend}
             </button>
@@ -214,7 +244,7 @@ export function VersusStart({
 
           <Link
             href="/guess"
-            className="mx-auto mt-5 inline-block text-xs text-white/55 underline-offset-4 transition hover:text-ink hover:underline"
+            className="mx-auto -mb-2 mt-3 inline-block px-3 py-2 text-xs text-white/55 underline-offset-4 transition hover:text-ink hover:underline"
           >
             {t.tryTimeline}
           </Link>
@@ -283,8 +313,12 @@ function OnlineCard({
               <span className="font-semibold tabular-nums text-ink">
                 {format(t.versusRatingValue, { n: standing.rating })}
               </span>
-              <span className="text-white/30">·</span>
-              <span>{t[CHRONO_TIER_LABEL_KEYS[standing.tier]]}</span>
+              {/* The dot rides with the league: as separate items a wrap
+                  could leave it dangling at the end of the first line. */}
+              <span className="whitespace-nowrap">
+                <span className="pr-1.5 text-white/30">·</span>
+                {t[CHRONO_TIER_LABEL_KEYS[standing.tier]]}
+              </span>
             </p>
           ) : !signedIn ? (
             <p className="mt-4 text-sm text-white/65">
@@ -306,7 +340,10 @@ function OnlineCard({
             aria-busy={busy}
             // Never `disabled` while busy: the hook already refuses a second
             // press, and a disabled button drops focus to the document.
-            className={`relative w-full rounded-full border border-transparent bg-ink px-8 py-3 text-sm font-semibold text-page transition hover:opacity-85 md:w-auto md:min-w-[14rem] ${
+            // Capped below `md` like "Play a friend": stacked, the column is
+            // the page's width, and between 640 and 767px a full-width button
+            // was a bar rather than a button.
+            className={`relative w-full max-w-sm rounded-full border border-transparent bg-ink px-8 py-3 text-sm font-semibold text-page transition hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:w-auto md:min-w-[14rem] md:max-w-none ${
               busy ? "cursor-progress" : ""
             }`}
           >
@@ -416,8 +453,18 @@ function ModeCard({
     </>
   );
 
+  // The floor is under the 3:2, not instead of it: a card is 3:2 wherever 3:2
+  // is tall enough for its column, and only grows where it is not. That is
+  // two narrow widths — the two-up board below ~390px, and the four-up one
+  // at 768px — where 3:2 left the blurb less than its one line and
+  // `overflow-hidden` sliced it through the glyphs. The floors are the
+  // column's own height: padding 28 + chip 18 + gap 4 + title 20 + gap 2 +
+  // blurb 15 (one line) = 87px, or + 15 for the second line from `md` = 102px.
+  // `w-full` holds the width to the grid column: left to the ratio, the floor
+  // carried through it into a minimum width (92px tall made a 138px card in a
+  // 101px column at 320) and the two cards of a row ran over each other.
   const shell =
-    "group versus-mode-in relative aspect-[3/2] overflow-hidden rounded-2xl border border-white/12";
+    "group versus-mode-in relative aspect-[3/2] min-h-[5.75rem] w-full overflow-hidden rounded-2xl border border-white/12 md:min-h-[6.75rem]";
 
   return onPick === null ? (
     <div

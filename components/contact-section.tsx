@@ -63,8 +63,10 @@ import type { Dict } from "@/lib/i18n/dictionary";
  */
 const HEADLINE_ROW =
   "flex min-h-[1.2em] items-center gap-3 text-[clamp(22px,3.2vw,36px)] sm:gap-4";
+// Balanced because a headline that wraps left one word on its own line in
+// German ("Spendier mir einen / Kaffee") at every width from a phone up.
 const HEADLINE =
-  "contact-sweep font-display font-semibold leading-[1.05] tracking-[-0.03em]";
+  "contact-sweep text-balance font-display font-semibold leading-[1.05] tracking-[-0.03em]";
 
 export function ContactSection({ t }: { t: Dict }) {
   return (

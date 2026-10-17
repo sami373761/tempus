@@ -67,8 +67,10 @@ import { readLocaleContext } from "@/lib/i18n/server";
  *  out of that sum. */
 const HEADLINE_ROW =
   "flex min-h-[1.2em] items-center gap-3 text-[clamp(26px,3.6vw,42px)] sm:gap-4";
+// Balanced for the contact block's reason: a wrapped title left one word on
+// its own line ("Spendier mir einen / Kaffee").
 const HEADLINE =
-  "contact-sweep font-display font-semibold leading-[1.05] tracking-[-0.03em]";
+  "contact-sweep text-balance font-display font-semibold leading-[1.05] tracking-[-0.03em]";
 
 /** Next hands both of these the same promised query. */
 type PageProps = {

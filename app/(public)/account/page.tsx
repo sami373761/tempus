@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { AccountPanel } from "@/components/account-panel";
 import { BadgeFrame } from "@/components/badge-frame";
+import { LinkPending } from "@/components/link-pending";
 import {
   getCurrentUser,
   hasPasswordIdentity,
@@ -51,7 +52,7 @@ export async function generateMetadata(): Promise<Metadata> {
  * same thing rather than a borrowed bronze.
  */
 export default async function AccountPage() {
-  const { t } = await readLocaleContext();
+  const { locale, t } = await readLocaleContext();
   const account = await requireAccount("/account");
 
   /* The user record as well as the account, for one fact the profile row does
@@ -135,7 +136,7 @@ export default async function AccountPage() {
           </p>
 
           <p className="mt-6 font-display text-2xl font-semibold tabular-nums text-ink">
-            {format(t.badgesTotalTp, { n: totalTp.toLocaleString("en-US") })}
+            {format(t.badgesTotalTp, { n: totalTp.toLocaleString(locale) })}
           </p>
           {rank !== null && (
             <p className="mt-1 text-[13px] text-ink-dim">
@@ -152,7 +153,7 @@ export default async function AccountPage() {
             href="/achievements"
             className="mt-3 inline-block rounded-full border border-hairline bg-card-raised/70 px-4 py-2 text-[13px] font-semibold text-ink transition-colors hover:bg-card-raised focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
-            {t.accountSeeBadges}
+            <LinkPending>{t.accountSeeBadges}</LinkPending>
           </Link>
         </section>
 
