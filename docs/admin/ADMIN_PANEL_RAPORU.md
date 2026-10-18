@@ -11,6 +11,14 @@ ve `LOKAL_KURULUM.md`'nin "Varsayımlar" bölümüne yaz.
 CLAUDE.md'deki tüm kurallar geçerlidir. Bu belge onlara eklenir; çelişki olursa §12'ye
 bak (CLAUDE.md'de değişecek maddeler). **CLAUDE.md'yi düzenleme.**
 
+> **Commit ve PR kuralı — istisnasız:** Hiçbir commit mesajında, PR başlığında veya
+> açıklamasında, kod yorumunda ya da GitHub'a giden herhangi bir şeyde Claude veya
+> Anthropic geçmez. `Co-Authored-By: Claude …` satırı yok, "Generated with Claude Code"
+> yok, Claude yazar/katkıcı olarak yok. Commit atmadan önce:
+> `git config user.name "SamiYıldız"` ve `git config user.email "samiylz83@gmail.com"`.
+> Push'tan önce `git log --format='%an <%ae>%n%b' origin/main..HEAD` ile kontrol et;
+> "Claude" geçen tek satır varsa commit'i düzelt.
+
 ---
 
 ## İçindekiler
