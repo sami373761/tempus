@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
+import { after } from "next/server";
 
 import { BadgeShowcase, type BadgeView } from "@/components/badge-showcase";
 import { RefreshChrome } from "@/components/refresh-chrome";
-import { requireAccount } from "@/lib/auth/server";
+import { getCurrentUser, requireAccount } from "@/lib/auth/server";
 import type { BadgeSlug } from "@/lib/badges";
 import { createAdminDbClient } from "@/lib/db/admin";
 import {
   markBadgesSeen,
+  measureBadges,
   readShownBadge,
-  refreshBadges,
+  saveBadges,
 } from "@/lib/db/scoring";
 import { EMPTY_STATS, evaluateBadges } from "@/lib/game/badge-rules";
 import { readLocaleContext } from "@/lib/i18n/server";
@@ -49,15 +51,17 @@ export async function generateMetadata(): Promise<Metadata> {
  * *one* badge while six were on screen; a card now carries its own badge's
  * answer. See `components/badge-showcase.tsx`.
  *
- * **It re-measures on every visit** (`refreshBadges`), which is what makes a
+ * **It re-measures on every visit** (`measureBadges`, saved after the
+ * response), which is what makes a
  * badge earned by a path with no hook of its own — a head-to-head win, banked
  * by a trigger — land here the next time the player looks. The writes go
  * through the service role, the only role that may award a badge.
  *
  * **Opening it is what "seen" means**, so it takes the mark off the menu's
- * Achievements row (`markBadgesSeen`) — after the refresh above, so a badge
- * this very visit discovered is cleared along with the rest rather than
- * being announced on the screen that is already showing it. A write during a
+ * Achievements row (`markBadgesSeen`) — and again after the deferred save
+ * when that save unlocked something, so a badge this very visit discovered is
+ * cleared along with the rest rather than being announced on the screen that
+ * is already showing it. A write during a
  * render is not something to make a habit of, but it is the habit this page
  * already has, and what it replaces — an effect that calls an action — would
  * be a round trip to say something the render already knew.
@@ -70,6 +74,17 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function AchievementsPage() {
   const { locale, t } = await readLocaleContext();
+  // Started on the token's id, beside the chrome's profile read — see the
+  // account page.
+  const session = await getCurrentUser();
+  const admin = createAdminDbClient();
+  const reads = session
+    ? Promise.allSettled([
+        measureBadges(admin, session.id),
+        readShownBadge(admin, session.id),
+        markBadgesSeen(admin, session.id),
+      ])
+    : null;
   const account = await requireAccount("/achievements");
 
   /* Guarded like the home page's event count, and for the same reason: a
@@ -80,15 +95,39 @@ export default async function AchievementsPage() {
   let badges: BadgeView[] = toViews(evaluateBadges(EMPTY_STATS));
   let totalTp = 0;
   let shown: BadgeSlug | null = null;
-  try {
-    const admin = createAdminDbClient();
-    const state = await refreshBadges(admin, account.id);
+  /* Measured, shown and marked seen in one wave rather than four trips in a
+     row; the write (when anything changed) follows the response. A badge this
+     visit discovers is written after the mark came off, so it would put the
+     mark straight back — it is cleared again once the write lands, since the
+     player is looking at it. */
+  const [measured, worn, seen] = await (reads ??
+    Promise.allSettled([
+      measureBadges(admin, account.id),
+      readShownBadge(admin, account.id),
+      markBadgesSeen(admin, account.id),
+    ]));
+  if (measured.status === "fulfilled") {
+    const state = measured.value;
     badges = toViews(state.badges);
     totalTp = state.stats.tp;
-    shown = await readShownBadge(admin, account.id);
-    await markBadgesSeen(admin, account.id);
-  } catch (error) {
-    console.error("achievements: badge refresh failed", error);
+    if (state.writes.length > 0) {
+      after(async () => {
+        try {
+          await saveBadges(admin, account.id, state);
+          if (state.newlyEarned.length > 0) {
+            await markBadgesSeen(admin, account.id);
+          }
+        } catch (error) {
+          console.error("achievements: badge save failed", error);
+        }
+      });
+    }
+  } else {
+    console.error("achievements: badge measure failed", measured.reason);
+  }
+  if (worn.status === "fulfilled") shown = worn.value;
+  if (seen.status === "rejected") {
+    console.error("achievements: mark seen failed", seen.reason);
   }
 
   return (
@@ -112,7 +151,7 @@ export default async function AchievementsPage() {
 }
 
 function toViews(
-  evaluations: ReturnType<typeof evaluateBadges> | Awaited<ReturnType<typeof refreshBadges>>["badges"],
+  evaluations: ReturnType<typeof evaluateBadges> | Awaited<ReturnType<typeof measureBadges>>["badges"],
 ): BadgeView[] {
   return evaluations.map((evaluation) => ({
     slug: evaluation.slug,

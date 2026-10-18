@@ -138,21 +138,27 @@ export interface BadgeState {
   newlyEarned: BadgeSlug[];
 }
 
+/** A measurement not yet written: what `refreshBadges` would save. */
+export interface BadgeMeasurement extends BadgeState {
+  writes: BadgeProgressWrite[];
+}
+
 /**
- * Re-measure every badge for one player and write what changed.
+ * Re-measure every badge for one player, without writing anything.
  *
- * Called after every banked payout and on the pages that show badges, so a
- * badge earned by a path that has no hook of its own — a head-to-head match,
- * banked by a trigger — still lands the next time the player looks.
+ * The read half of `refreshBadges`, split out for the pages that show badges:
+ * they need the numbers to render but not the write, which can follow the
+ * response (`saveBadges` inside `after()`) instead of costing the page a third
+ * round trip before its first byte.
  *
  * **An unlock is never undone.** The existing `unlocked_at` is carried through
  * every write, and an earned badge counts as earned for the rung above it
  * whatever today's rule would say (`evaluateBadges`).
  */
-export async function refreshBadges(
+export async function measureBadges(
   admin: DbClient,
   userId: string,
-): Promise<BadgeState> {
+): Promise<BadgeMeasurement> {
   const [stats, current] = await Promise.all([
     readPlayerStats(admin, userId),
     readBadgeProgress(admin, userId),
@@ -209,20 +215,47 @@ export async function refreshBadges(
     return { ...evaluation, unlockedAt: nowUnlocked };
   });
 
-  await writeBadgeProgress(admin, writes);
+  return { stats, badges, newlyEarned, writes };
+}
+
+/**
+ * Write a measurement. A no-op when nothing changed, which is the usual case
+ * on a page view — badges move when rounds are banked, and banking refreshes.
+ */
+export async function saveBadges(
+  admin: DbClient,
+  userId: string,
+  measured: BadgeMeasurement,
+): Promise<void> {
+  await writeBadgeProgress(admin, measured.writes);
 
   // The mark on the menu's Achievements row. Guarded on purpose: this runs
   // after every banked payout, and a nudge that failed to be written must not
   // cost the player the badge it was about. A count that is a little behind
   // is a missed notification; a throw here would be a lost unlock.
-  if (newlyEarned.length > 0) {
+  if (measured.newlyEarned.length > 0) {
     try {
-      await noteBadgesEarned(admin, userId, newlyEarned.length);
+      await noteBadgesEarned(admin, userId, measured.newlyEarned.length);
     } catch (error) {
       console.error("noteBadgesEarned failed", error);
     }
   }
+}
 
+/**
+ * Re-measure every badge for one player and write what changed.
+ *
+ * Called after every banked payout, so a badge earned by a path that has no
+ * hook of its own — a head-to-head match, banked by a trigger — still lands the
+ * next time the player looks (the badge pages measure and save too).
+ */
+export async function refreshBadges(
+  admin: DbClient,
+  userId: string,
+): Promise<BadgeState> {
+  const measured = await measureBadges(admin, userId);
+  await saveBadges(admin, userId, measured);
+  const { stats, badges, newlyEarned } = measured;
   return { stats, badges, newlyEarned };
 }
 

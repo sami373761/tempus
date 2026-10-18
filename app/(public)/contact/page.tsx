@@ -4,7 +4,9 @@ import { ContactEmailText } from "@/components/contact-email";
 import { SiteMark } from "@/components/site-header";
 import {
   contactView,
+  CONTACT_EMAIL,
   CONTACT_VIEW_PARAM,
+  SUPPORT_URL,
   type ContactView,
 } from "@/lib/contact";
 import type { Dict } from "@/lib/i18n/dictionary";
@@ -40,11 +42,13 @@ import { readLocaleContext } from "@/lib/i18n/server";
  * headline, so the page reads as the same family rather than as a second
  * design.
  *
- * **The contents are a scaffold.** The structure — the two sections, the order,
- * the headings — is settled; what fills them is not. The tip jar in particular
- * has nothing to link to (there is no payment route and no domain, CLAUDE.md
- * gap 1), so it carries the site's dashed "named, not built" note in place of
- * a button, exactly like the leaderboard's sample standings.
+ * **Both sections end in a door.** Each answer column is a sentence and then
+ * one button: a `mailto:` to the address, and a hand-off to the tip jar's page
+ * (both in `lib/contact.ts`). The address is still spelled out in the prose
+ * above its button — that is what someone copying it into a webmail tab needs,
+ * and a `mailto:` is useless to them — so the button is the shortcut, never the
+ * only way through. The tip jar's button carried the site's dashed "named, not
+ * built" note until there was a payment route to point at.
  *
  * A pair of chips linking to the two sections stood above the first headline
  * until they were removed on request. They were a table of contents for a page
@@ -207,26 +211,64 @@ function ContactPageSection({
           </p>
         </div>
 
-        {/* The answer column. It is the half of each section that is still a
-            scaffold: the address is real and the tip jar has nothing behind it
-            yet. */}
+        {/* The answer column: a sentence, then the one control that acts on
+            it. Both sections are this shape, which is the other half of what
+            lets either of them lead. */}
         <div className="md:pt-2">
+          {/* The tip jar says everything it has to say in its lead, so its
+              answer column is the button alone. */}
           {id === "contact" ? (
             <p className="max-w-[46ch] text-[15px] leading-relaxed text-ink-dim">
               <ContactEmailText text={t.contactBlurb} />
             </p>
-          ) : (
-            /* A dashed edge is the site's mark for a thing that is named but
-               not built — the same note the leaderboard's sample standings
-               carry, and the same holding pattern the home board's unbuilt
-               cards use. It stands where the way to send one will go. */
-            <p className="max-w-[46ch] rounded-2xl border border-dashed border-hairline px-5 py-3 text-[13px] leading-relaxed text-ink-dim">
-              {t.supportSoon}
-            </p>
-          )}
+          ) : null}
+          <div className={id === "contact" ? "mt-6" : undefined}>
+            {id === "contact" ? (
+              /* Not a new tab: a `mailto:` is handled by the mail client, and
+                 a browser that cannot hand it off leaves an empty tab behind
+                 when it is given a target. */
+              <ActionLink href={`mailto:${CONTACT_EMAIL}`} label={t.contactAction} />
+            ) : (
+              <ActionLink href={SUPPORT_URL} label={t.supportAction} external />
+            )}
+          </div>
         </div>
       </div>
     </section>
+  );
+}
+
+/**
+ * Each section's one control.
+ *
+ * The site's own filled pill — the shape the versus lobby's share button and
+ * the account panel's primary buttons wear — rather than a second button
+ * design for this page: there is one of these per section and they are the
+ * only things on the page that are pressed, so they should look like
+ * everything else that is. `w-full` below `sm` for the same reason the account
+ * panel's do it: a pill the width of its label looks like a chip on a phone.
+ *
+ * `external` is what decides the new tab, and it carries `noopener` with it.
+ * Only the tip jar sets it: a `mailto:` is a hand-off to another application,
+ * not a page, and a target on one is what leaves a blank tab behind.
+ */
+function ActionLink({
+  href,
+  label,
+  external = false,
+}: {
+  href: string;
+  label: string;
+  external?: boolean;
+}) {
+  return (
+    <a
+      href={href}
+      {...(external ? { target: "_blank", rel: "noopener noreferrer" } : null)}
+      className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-6 py-2.5 text-sm font-semibold text-page transition hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto"
+    >
+      {label}
+    </a>
   );
 }
 

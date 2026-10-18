@@ -30,9 +30,10 @@ npm run era:check           # SQL era rule == TS era rule; run after touching ei
 npm run versus:bot:check    # bot tier mix, grid snap, era rules; run after touching the bot, BANDS or panes
 npm run image:attach -- …   # link one R2 object to an event
 npm run images:attach -- …  # link a whole R2 prefix, filename == event slug
-npm run backdrops:derive -- --prefix <folder>/          # rebuild -1440/-2560 widths
+npm run backdrops:derive -- --prefix <folder>/          # rebuild -1440/-2560 widths (.jpg + .webp)
 npm run backdrops:derive -- --key <key> --widths 800,1600
-npm run images:shrink       # cap event images at 1600px; run LAST, after any attach
+npm run art:webp            # .webp twin of every decorative art key (from its .jpg, no resample)
+npm run images:shrink       # event images -> WebP, 1600px cap, from the master; run LAST, after any attach
 npm run images:shrink -- --dry-run --prefix film-dizi/
 
 # Confirmed QA account (no mailbox needed). Writes creds to .env.test.local, never prints them.
@@ -137,9 +138,11 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
   download path and leaves the shrunk `-<width>` rows as non-primary orphans.
   Those orphans are invisible (only `is_primary` is ever read) and they block
   the next shrink run on `image_object_unique`; clearing them is a deletion,
-  which is the user's call. A 600-900KB result at the 1600px cap is normal
-  single-encode output, not a missed row. The master is never touched, and
-  backdrops are out of reach by construction — they have no `public.image` row.
+  which is the user's call. It encodes WebP from the **master** (never from an
+  earlier derivative) and re-points the primary row at `<base>-<edge>.webp`;
+  rows already WebP/AVIF inside the cap are skipped. The master is never
+  touched, and backdrops are out of reach by construction — they have no
+  `public.image` row.
 - **Attaching:** `--source-url` and `--license` are mandatory. **Never invent an
   attribution** — ask for the real source. The script reads size, type, hash
   and dimensions from R2 bytes; never hand-type them. Valid licenses:
@@ -153,6 +156,10 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
 - **Backdrops: load the derived `-1440`/`-2560` widths, never the master.** Any
   new backdrop needs both. `BACKDROP_WIDTHS` in `lib/storage/images.ts` is the
   one list. Pane → photo mapping lives only in that file.
+- **Decorative art is served as `.webp`** (`ART_EXTENSION`). The `.jpg`
+  derivative of the same name stays in the bucket as the source
+  `art:webp` encodes from — format change only, same pixels. Every art key the
+  site loads must be reachable from `decorativeArtKeys()`, or it gets no WebP.
 - **A new R2 prefix or extension must be added to the dev proxy**
   (`app/api/r2/[...key]/route.ts`, `ALLOWED_PREFIXES`/`ALLOWED_EXTENSIONS`), or
   it fails exactly like a missing object. A new event-image prefix also goes in
@@ -176,9 +183,18 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
   (idempotent on `source`). Badge rules only in `lib/game/badge-rules.ts`.
 - **Solo rounds are masked:** deals return `DealtEvent` + signed token, the year
   comes only from `app/actions/scoring.ts` reveals. Never send a year in a deal.
+- **Round clocks:** solo games (and the daily) use `SOLO_ROUND_SECONDS` in
+  `lib/game/rounds.ts`; versus uses `ROUND_SECONDS` in `lib/game/versus.ts`,
+  stamped per match. Bot think windows must close inside `ROUND_SECONDS`
+  (`versus:bot:check` asserts it).
 - **Round queue:** refill to `ROUND_QUEUE_TARGET` (3), server deals
   `ROUND_QUEUE_DEPTH` (2). Keep them different — equal values reintroduce a
   dead "Next round" button on question 2.
+- **Shared reads are cached** in `lib/db/cached.ts` (`unstable_cache`: public
+  boards 60s, daily questions 1h); per-player reads (ranks, attempts) stay
+  live. Reference data (badge catalogue, `kind = 'other'` category links,
+  settled daily challenges) is memoised per process. `next/cache` never goes
+  in modules `scripts/` imports.
 - Solo refills go through `POST /api/deal` (`lib/game/deal.ts`), never a Server
   Action: actions run one at a time, and a reveal must not queue behind a deal.
 - **Advance buttons are never `disabled`**; a press with nothing queued is
@@ -189,6 +205,27 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
   in `lib/game/rounds.ts`. `tsc` won't catch this, only the bundler.
 - `components/timeline-stage.tsx` holds visuals shared by solo and versus —
   move shared visuals there rather than copying.
+
+## Daily play limit
+
+- **The subject games are three a day, one for a guest**; date guessing,
+  comparison and survival are unlimited. The list and both numbers live only in
+  `lib/game/play-limit.ts` (`LIMITED_GAMES`, `playsPerDay`) — SQL takes the
+  limit as a parameter, so there is no second copy to keep in step.
+- **A game is spent by its first graded round, not by the deal.** Enforced in
+  `revealDateRound`, which a client cannot skip: opening the page and leaving
+  costs nothing, quitting mid-set costs the game.
+- **A member's games are `solo_set` rows**, read by `game_play_standing()`;
+  there is no table of the limit's own. A set id is the client's, so counting
+  claims by it is unlimited play — what bounds it is the set closing at
+  `QUESTIONS_PER_SET`. A round already in `solo_answer` is always replayable:
+  a retried reveal is a lost reply, not a second game.
+- **A guest's games are the `tempus_plays` cookie** (`lib/game/play-ledger.ts`)
+  and therefore soft; the sign-up notice is the answer to that, not a stricter
+  store. Reads never write it — `readAllowance` runs during a render.
+- The day is the daily's day (midnight UTC, `playDay`). Two gates: the page
+  refuses to deal, and `usePlayLimit` replaces the game when a reveal comes
+  back `play-limit`. Both draw `PlayLimitPanel`.
 
 ## Head-to-head (versus)
 
@@ -206,8 +243,10 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
 - A seat is a bearer token in `sessionStorage` (per tab). Presence is advisory,
   and off in online matches.
 - **Online matches** (`is_public`): history mode only (`PUBLIC_VERSUS_MODE`),
-  no rematch and no TP — only KP. Accounts need a username; guests store
-  nothing and play the lower league.
+  no rematch and no TP — only KP. **Signed-in accounts only**, with a
+  username: `findVersusOpponent` refuses a guest (`needs-account`) and the
+  online card links to sign-in instead. Friend rooms stay open to guests.
+  Bots therefore never sit down as "Guest".
 - **A bot is a seat with no browser.** `versus_seat_bot` stores its whole plan
   (from `lib/game/versus-bot.ts`) on `match_round`; `versus_reconcile()`
   commits each guess at `bot_commit_at`. No worker, cron or socket server: the
@@ -234,6 +273,11 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
   English messages.
 - Gate: `PROTECTED_PREFIXES` in `lib/auth/paths.ts`, enforced by `middleware.ts`
   and `requireAccount()` in each page. `safeNextPath()` validates `next`.
+- **Identity is read locally.** `getCurrentUser()` (and the middleware) use
+  `getClaims()` — ES256 signature checked against the project's JWKS, no round
+  trip — and are `cache()`d per render. `getVerifiedUser()` (`getUser()`, a
+  network call) only where a revoked session must not pass or `identities` is
+  needed: password changes, the account page's password form, the admin gate.
 - Profiles are created by the `handle_new_user()` trigger, not the sign-up code.
 - `app/auth/callback/route.ts` must stay a Route Handler and outside the
   middleware matcher. Its origin comes from the request `Host`, not env.
@@ -241,6 +285,9 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
   server-side in `updatePassword`.
 - Badges are one 6-rung ladder; `refreshBadges()` recomputes them and never
   clears `unlocked_at`. Worn badge: `profile.worn_badge`, else highest.
+- Badge pages call `measureBadges()` before render and `saveBadges()` in
+  `after()`. A set's last reveal does not refresh badges: it returns
+  `badgesPending`, and the summary fetches `POST /api/set-badges`.
 
 ## UI invariants
 
@@ -268,6 +315,9 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
   underneath (and is released after `FADE_MS`).
 - Hidden-but-mounted UI (menu panel, inactive board view, closed pills) must be
   `inert`.
+- **The home explorer never loads the 3D coin under `md`.** Phones open on
+  the date-guessing pill and closing folds the stage away; the coin is
+  desktop-only (`components/home-explorer.tsx`).
 - Respect `prefers-reduced-motion` everywhere; infinite motion stops outright.
 - `--board-w` sets the home board's scale and the below-the-fold column width;
   `CARD_HEIGHT` keeps both board views aligned. Write Tailwind class names out in

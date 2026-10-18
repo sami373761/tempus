@@ -67,11 +67,25 @@ export function contactView(
 }
 
 /**
- * TEMPORARY. There is no domain yet (CLAUDE.md gap 1) and therefore no
- * mailbox; this is a stand-in so the two places that print it can be laid out
- * and read. Change it here — it lives beside the paths rather than in the
- * dictionary because an address is not a translation, and it is in this module
- * rather than in a component because two of them now show it: the home page's
- * contact block and the contact page itself.
+ * The mailbox the site is reached at. Real and live: mail sent here arrives.
+ *
+ * It is a plain mailbox rather than an address on the site's own domain
+ * because there is no domain yet (CLAUDE.md gap 1), and a working address is
+ * worth more to a visitor than a tidy one. Change it here — it lives beside
+ * the paths rather than in the dictionary because an address is not a
+ * translation, and it is in this module rather than in a component because
+ * three of them show it: the home page's contact block, the contact page's
+ * prose, and that page's write-to-us button.
  */
-export const CONTACT_EMAIL = "hello@tempusgame.com";
+export const CONTACT_EMAIL = "supporttempus@gmail.com";
+
+/**
+ * The tip jar, which is somebody else's page.
+ *
+ * Buy Me a Coffee is the payment route — there is no checkout of our own and
+ * no plan for one, so the button hands the visitor off and that is the whole
+ * of the feature. It sits here next to the address for the same reason: the
+ * two doors `/contact` is made of are each a destination, and both of them
+ * are strings rather than translations.
+ */
+export const SUPPORT_URL = "https://buymeacoffee.com/sam10";

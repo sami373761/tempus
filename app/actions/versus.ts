@@ -1,8 +1,7 @@
 "use server";
 
-import type { User } from "@supabase/supabase-js";
 
-import { getCurrentUser } from "@/lib/auth/server";
+import { getCurrentUser, type SessionUser } from "@/lib/auth/server";
 import { readChronoRating, readUsername } from "@/lib/db/accounts";
 import { createAdminDbClient } from "@/lib/db/admin";
 import {
@@ -161,8 +160,7 @@ export interface FindRequest {
   /**
    * The seat in the public match this press was made from, i.e. the end
    * screen's "Find new opponent". Checked, then stamped on the new lobby so
-   * the two players just finished are not paired again — the only way that
-   * rule can reach a guest, who has no ledger row to be recognised by.
+   * the two players just finished are not paired again.
    */
   after?: { matchId: string; token: string } | null;
 }
@@ -197,8 +195,9 @@ export interface FindRequest {
  * previous match (`after`) is checked after them too, so the one just
  * forfeited counts as finished.
  *
- * A guest has nothing to forfeit and nothing to read: no name, no rating, the
- * bottom league.
+ * **Online play needs an account.** A guest is refused with `needs-account`
+ * before anything is read or seated, and the client sends them to sign in.
+ * Friend rooms (`createVersusMatch`) stay open to guests.
  */
 export async function findVersusOpponent(
   request: FindRequest = {},
@@ -206,13 +205,14 @@ export async function findVersusOpponent(
   const admin = createAdminDbClient();
 
   try {
+    const user = await getCurrentUser();
+    if (!user) return { ok: false, reason: "needs-account" };
+
     const attempt = isSeatTokenShape(request?.attempt) ? request.attempt : undefined;
     if (attempt) {
       const held = await liveSeatForToken(admin, attempt);
       if (held) return { ok: true, ...held };
     }
-
-    const user = await getCurrentUser();
 
     const after = request?.after;
     const previousMatch = (): Promise<string | null> =>
@@ -224,27 +224,20 @@ export async function findVersusOpponent(
         ? finishedPublicMatch(admin, after.matchId, after.token)
         : Promise.resolve(null);
 
-    let searcher: Searcher = { userId: null, rating: null, name: null };
-    let previousMatchId: string | null;
-    if (user) {
-      // Side by side, to save a round trip: closing an account's open online
-      // matches is right whether or not it may search now — a match it has
-      // walked away from to search again is lost either way.
-      const [name] = await Promise.all([
-        readUsername(admin, user.id),
-        forfeitOpenPublicMatches(admin, user.id),
-      ]);
-      if (name === null) return { ok: false, reason: "needs-username" };
+    // Side by side, to save a round trip: closing an account's open online
+    // matches is right whether or not it may search now — a match it has
+    // walked away from to search again is lost either way.
+    const [name] = await Promise.all([
+      readUsername(admin, user.id),
+      forfeitOpenPublicMatches(admin, user.id),
+    ]);
+    if (name === null) return { ok: false, reason: "needs-username" };
 
-      const [rating, previous] = await Promise.all([
-        readChronoRating(admin, user.id),
-        previousMatch(),
-      ]);
-      searcher = { userId: user.id, name, rating };
-      previousMatchId = previous;
-    } else {
-      previousMatchId = await previousMatch();
-    }
+    const [rating, previousMatchId] = await Promise.all([
+      readChronoRating(admin, user.id),
+      previousMatch(),
+    ]);
+    const searcher: Searcher = { userId: user.id, name, rating };
 
     const found = await matchmake(admin, {
       ownMatchId: null,
@@ -552,7 +545,7 @@ const GONE = { ok: false, reason: "gone" } as const;
  */
 async function searcherFor(
   admin: ReturnType<typeof createAdminDbClient>,
-  user: User | null,
+  user: SessionUser | null,
 ): Promise<Searcher> {
   if (!user) return { userId: null, rating: null, name: null };
 

@@ -131,6 +131,11 @@ export interface Account {
    * `chronoStanding()` in lib/game/chrono-rating.ts turns it into a league.
    */
   chronoRating: number | null;
+  /**
+   * The R2 key of the player's picture, or null for the default one. In the
+   * chrome's read so /account does not make a second trip to the same row.
+   */
+  avatarKey: string | null;
 }
 
 /**

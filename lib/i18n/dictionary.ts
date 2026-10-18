@@ -389,8 +389,9 @@ const en = {
   versusTierLower: "Lower league",
   versusTierMiddle: "Middle league",
   versusTierUpper: "Upper league",
-  versusGuestRatingHint: "Playing as a guest — sign in to earn Chrono Rating.",
-  versusSignInForRating: "Sign in",
+  versusOnlineNeedsAccount:
+    "Online matches are for accounts — sign in to play and earn Chrono Rating.",
+  versusSignInToPlay: "Sign in to play",
   versusYouLeft: "You left the match.",
   versusYourLeague: "Your league: {league}",
   // An account with no username yet plays online under none, so it is sent
@@ -668,6 +669,10 @@ const en = {
     "Your ideas matter to us, and they shape what gets built next.",
   contactBlurb:
     "A wrong date, a mode worth building, or a thought about the game: write to {email} and it will be read.",
+  // The button under that sentence on `/contact`, which opens a mail client at
+  // the same address. The sentence names the address for anyone who would
+  // rather copy it; this is the shortcut for everyone else.
+  contactAction: "Write to us",
 
   // --- /contact, which holds the block above and the tip jar ---------------
   // Which of the two leads is decided by the menu row the visitor came through
@@ -675,9 +680,11 @@ const en = {
   // what its menu row is labelled from, like the three rows that name a page.
   supportTitle: "Buy me a coffee",
   supportLead:
-    "Tempus is free, carries no advertising and is written in spare evenings.",
-  supportSoon:
-    "There is no tip jar to pass yet. When there is a way to send one, this is where it will be.",
+    "If you've enjoyed what's here, you can support me by buying me a coffee.",
+  // Deliberately not `supportTitle` again: the headline it would sit under
+  // already says that, and a button repeating its own heading reads as a
+  // second one. It says what pressing it does.
+  supportAction: "Leave a coffee",
 
   // --- the daily -----------------------------------------------------------
   // Ten questions a day, the same ten for everybody, playable once. The two
@@ -695,6 +702,32 @@ const en = {
   dailyNextIn: "New questions in {h}h {m}m",
   dailyNextInSoon: "New questions in {m}m",
   dailySubmitFailed: "That could not be sent. Try again.",
+
+  // --- the subject modes' daily limit --------------------------------------
+  // Three games a day in Football, Basketball, Born When? and Film & TV; one
+  // for a guest. The rules are lib/game/play-limit.ts. These strings carry
+  // three facts: that the limit exists, that an account raises it, and that
+  // the general games have none — so the screen is a way on rather than a
+  // dead end.
+  playLimitDone: "That's today's games",
+  playLimitGuestDone: "That was your game for today",
+  playLimitMemberBody:
+    "This mode is {total} games a day, and today's are played. Your next {total} arrive at midnight UTC.",
+  playLimitGuestBody:
+    "Guests get {total} game a day in this mode. Sign up and it is {member} a day, and your points are kept.",
+  // The nudge on the set summary, where the game that was just played was the
+  // last one the day allows. Shorter than the panel's: the player is reading a
+  // result, not looking for a way in.
+  playLimitGuestSummary:
+    "That was your game for today. Sign up to play {member} a day and keep your points.",
+  playLimitMemberSummary:
+    "That was today's last game in this mode. New games at midnight UTC.",
+  playLimitLeftToday: "{n} of {total} games left today",
+  playLimitResetIn: "New games in {h}h {m}m",
+  playLimitResetInSoon: "New games in {m}m",
+  // The way on. Both of these have no limit at all, which is the point of
+  // naming them here rather than leaving the player with one button home.
+  playLimitUnlimited: "No daily limit:",
 
   noEvents: "No events available. Check the database connection.",
 
@@ -965,8 +998,9 @@ const tr: Dict = {
   versusTierLower: "Alt Küme",
   versusTierMiddle: "Orta Küme",
   versusTierUpper: "Üst Küme",
-  versusGuestRatingHint: "Misafir olarak oynuyorsun — Kronos Puanı kazanmak için giriş yap.",
-  versusSignInForRating: "Giriş yap",
+  versusOnlineNeedsAccount:
+    "Online oynamak için giriş yapman gerekiyor.",
+  versusSignInToPlay: "Giriş yap ve oyna",
   versusYouLeft: "Maçtan ayrıldın.",
   versusYourLeague: "Kümen: {league}",
   versusNeedsUsername: "Çevrim içi oynamak için bir kullanıcı adı gerekiyor.",
@@ -1189,11 +1223,12 @@ const tr: Dict = {
     "Fikirleriniz bizim için değerli; sırada ne yapılacağını onlar belirliyor.",
   contactBlurb:
     "Hatalı bir tarih, yapılmaya değer bir mod ya da oyun hakkında bir düşünce: {email} adresine yaz, okunacak.",
+  contactAction: "Bize yaz",
 
   supportTitle: "Bana bir kahve ısmarla",
-  supportLead: "Tempus ücretsiz, reklam taşımıyor ve boş akşamlarda yazılıyor.",
-  supportSoon:
-    "Henüz uzatılacak bir kahve kavanozu yok. Bir yolu açıldığında burada olacak.",
+  supportLead:
+    "Buradaki içerikler hoşuna gittiyse bir kahve ısmarlayarak bana destek olabilirsin.",
+  supportAction: "Bir kahve ısmarla",
 
   dailyDone: "Günlük tamamlandı",
   dailyAlreadyToday: "Bugünü zaten oynadın.",
@@ -1206,6 +1241,21 @@ const tr: Dict = {
   dailyNextIn: "Yeni sorulara {h} sa {m} dk",
   dailyNextInSoon: "Yeni sorulara {m} dk",
   dailySubmitFailed: "Gönderilemedi. Tekrar dene.",
+
+  playLimitDone: "Bugünlük bu kadar",
+  playLimitGuestDone: "Bugünkü oyununu oynadın",
+  playLimitMemberBody:
+    "Bu mod günde {total} oyun ve bugünküler oynandı. Yeni {total} oyun gece yarısı (UTC) açılıyor.",
+  playLimitGuestBody:
+    "Misafirler bu modda günde {total} oyun oynar. Kayıt olursan günde {member} oyun hakkın olur ve puanların saklanır.",
+  playLimitGuestSummary:
+    "Bugünkü oyununu oynadın. Kayıt ol, günde {member} oyun oyna ve puanlarını sakla.",
+  playLimitMemberSummary:
+    "Bu modda bugünün son oyunuydu. Yeni oyunlar gece yarısı (UTC) açılıyor.",
+  playLimitLeftToday: "Bugün {total} oyundan {n} tanesi kaldı",
+  playLimitResetIn: "Yeni oyunlara {h} sa {m} dk",
+  playLimitResetInSoon: "Yeni oyunlara {m} dk",
+  playLimitUnlimited: "Günlük sınırı olmayanlar:",
 
   noEvents: "Olay bulunamadı. Veritabanı bağlantısını kontrol et.",
 
@@ -1475,8 +1525,9 @@ const de: Dict = {
   versusTierLower: "Untere Liga",
   versusTierMiddle: "Mittlere Liga",
   versusTierUpper: "Obere Liga",
-  versusGuestRatingHint: "Du spielst als Gast — melde dich an, um Chrono-Rating zu sammeln.",
-  versusSignInForRating: "Anmelden",
+  versusOnlineNeedsAccount:
+    "Online-Spiele brauchen ein Konto — melde dich an, um zu spielen und Chrono-Rating zu sammeln.",
+  versusSignInToPlay: "Anmelden und spielen",
   versusYouLeft: "Du hast das Spiel verlassen.",
   versusYourLeague: "Deine Liga: {league}",
   versusNeedsUsername: "Für Online-Spiele brauchst du einen Benutzernamen.",
@@ -1702,12 +1753,12 @@ const de: Dict = {
     "Deine Ideen sind uns wichtig — sie bestimmen, was als Nächstes entsteht.",
   contactBlurb:
     "Ein falsches Datum, ein Modus, der gebaut werden sollte, oder ein Gedanke zum Spiel: schreib an {email}, es wird gelesen.",
+  contactAction: "Schreib uns",
 
   supportTitle: "Spendier mir einen Kaffee",
   supportLead:
-    "Tempus ist kostenlos, zeigt keine Werbung und entsteht an freien Abenden.",
-  supportSoon:
-    "Es gibt noch keine Kaffeekasse. Sobald es einen Weg dafür gibt, steht er hier.",
+    "Wenn dir die Inhalte hier gefallen, kannst du mich mit einem Kaffee unterstützen.",
+  supportAction: "Kaffee spendieren",
 
   dailyDone: "Tagesrätsel geschafft",
   dailyAlreadyToday: "Du hast heute schon gespielt.",
@@ -1720,6 +1771,21 @@ const de: Dict = {
   dailyNextIn: "Neue Fragen in {h} Std. {m} Min.",
   dailyNextInSoon: "Neue Fragen in {m} Min.",
   dailySubmitFailed: "Das konnte nicht gesendet werden. Versuch es erneut.",
+
+  playLimitDone: "Das waren die Spiele für heute",
+  playLimitGuestDone: "Das war dein Spiel für heute",
+  playLimitMemberBody:
+    "Dieser Modus erlaubt {total} Spiele pro Tag, und die von heute sind gespielt. Die nächsten {total} gibt es um Mitternacht UTC.",
+  playLimitGuestBody:
+    "Gäste haben in diesem Modus {total} Spiel pro Tag. Mit einem Konto sind es {member} pro Tag, und deine Punkte bleiben erhalten.",
+  playLimitGuestSummary:
+    "Das war dein Spiel für heute. Melde dich an für {member} Spiele pro Tag und behalte deine Punkte.",
+  playLimitMemberSummary:
+    "Das war das letzte Spiel heute in diesem Modus. Neue Spiele um Mitternacht UTC.",
+  playLimitLeftToday: "Noch {n} von {total} Spielen heute",
+  playLimitResetIn: "Neue Spiele in {h} Std. {m} Min.",
+  playLimitResetInSoon: "Neue Spiele in {m} Min.",
+  playLimitUnlimited: "Ohne Tageslimit:",
 
   noEvents: "Keine Ereignisse verfügbar. Prüfe die Datenbankverbindung.",
 
@@ -1984,8 +2050,9 @@ const fr: Dict = {
   versusTierLower: "Ligue inférieure",
   versusTierMiddle: "Ligue intermédiaire",
   versusTierUpper: "Ligue supérieure",
-  versusGuestRatingHint: "Tu joues en invité — connecte-toi pour gagner de la Cote Chrono.",
-  versusSignInForRating: "Se connecter",
+  versusOnlineNeedsAccount:
+    "Les parties en ligne demandent un compte — connecte-toi pour jouer et gagner de la Cote Chrono.",
+  versusSignInToPlay: "Se connecter pour jouer",
   versusYouLeft: "Tu as quitté le duel.",
   versusYourLeague: "Ta ligue : {league}",
   versusNeedsUsername: "Il te faut un nom d’utilisateur pour jouer en ligne.",
@@ -2210,11 +2277,12 @@ const fr: Dict = {
     "Vos idées comptent pour nous : elles décident de ce qui sera construit ensuite.",
   contactBlurb:
     "Une date erronée, un mode qui mériterait d'exister, ou une idée sur le jeu : écrivez à {email}, c'est lu.",
+  contactAction: "Écrivez-nous",
 
   supportTitle: "Offre-moi un café",
-  supportLead: "Tempus est gratuit, sans publicité, et s'écrit le soir venu.",
-  supportSoon:
-    "Il n'y a pas encore de cagnotte à tendre. Dès qu'un moyen existera, il sera ici.",
+  supportLead:
+    "Si ce que vous trouvez ici vous plaît, vous pouvez me soutenir en m'offrant un café.",
+  supportAction: "Offrir un café",
 
   dailyDone: "Quotidien terminé",
   dailyAlreadyToday: "Tu as déjà joué aujourd'hui.",
@@ -2227,6 +2295,21 @@ const fr: Dict = {
   dailyNextIn: "Nouvelles questions dans {h} h {m} min",
   dailyNextInSoon: "Nouvelles questions dans {m} min",
   dailySubmitFailed: "L'envoi a échoué. Réessaie.",
+
+  playLimitDone: "C'est tout pour aujourd'hui",
+  playLimitGuestDone: "C'était ta partie du jour",
+  playLimitMemberBody:
+    "Ce mode permet {total} parties par jour, et celles d'aujourd'hui sont jouées. Les {total} suivantes arrivent à minuit UTC.",
+  playLimitGuestBody:
+    "Les invités ont {total} partie par jour dans ce mode. Avec un compte, c'est {member} par jour, et tes points sont conservés.",
+  playLimitGuestSummary:
+    "C'était ta partie du jour. Crée un compte pour jouer {member} parties par jour et garder tes points.",
+  playLimitMemberSummary:
+    "C'était la dernière partie du jour dans ce mode. Nouvelles parties à minuit UTC.",
+  playLimitLeftToday: "Encore {n} parties sur {total} aujourd'hui",
+  playLimitResetIn: "Nouvelles parties dans {h} h {m} min",
+  playLimitResetInSoon: "Nouvelles parties dans {m} min",
+  playLimitUnlimited: "Sans limite quotidienne :",
 
   noEvents: "Aucun événement disponible. Vérifie la connexion à la base de données.",
 
@@ -2491,8 +2574,9 @@ const es: Dict = {
   versusTierLower: "Liga baja",
   versusTierMiddle: "Liga media",
   versusTierUpper: "Liga alta",
-  versusGuestRatingHint: "Juegas como invitado — inicia sesión para ganar Puntuación Chrono.",
-  versusSignInForRating: "Iniciar sesión",
+  versusOnlineNeedsAccount:
+    "Las partidas en línea requieren una cuenta: inicia sesión para jugar y ganar Puntuación Chrono.",
+  versusSignInToPlay: "Inicia sesión para jugar",
   versusYouLeft: "Has abandonado el duelo.",
   versusYourLeague: "Tu liga: {league}",
   versusNeedsUsername: "Para jugar en línea necesitas un nombre de usuario.",
@@ -2718,12 +2802,12 @@ const es: Dict = {
     "Tus ideas nos importan: deciden qué se construye a continuación.",
   contactBlurb:
     "Una fecha equivocada, un modo que merezca construirse o una idea sobre el juego: escribe a {email}, se lee.",
+  contactAction: "Escríbenos",
 
   supportTitle: "Invítame a un café",
   supportLead:
-    "Tempus es gratis, no lleva publicidad y se escribe en tardes libres.",
-  supportSoon:
-    "Todavía no hay bote que pasar. Cuando exista una forma de hacerlo, estará aquí.",
+    "Si te ha gustado el contenido de aquí, puedes apoyarme invitándome a un café.",
+  supportAction: "Invitar a un café",
 
   dailyDone: "Diario completado",
   dailyAlreadyToday: "Ya has jugado hoy.",
@@ -2736,6 +2820,21 @@ const es: Dict = {
   dailyNextIn: "Nuevas preguntas en {h} h {m} min",
   dailyNextInSoon: "Nuevas preguntas en {m} min",
   dailySubmitFailed: "No se pudo enviar. Inténtalo de nuevo.",
+
+  playLimitDone: "Esto es todo por hoy",
+  playLimitGuestDone: "Esa era tu partida de hoy",
+  playLimitMemberBody:
+    "Este modo permite {total} partidas al día, y las de hoy ya están jugadas. Las siguientes {total} llegan a medianoche UTC.",
+  playLimitGuestBody:
+    "Los invitados tienen {total} partida al día en este modo. Con una cuenta son {member} al día, y tus puntos se guardan.",
+  playLimitGuestSummary:
+    "Esa era tu partida de hoy. Crea una cuenta para jugar {member} al día y guardar tus puntos.",
+  playLimitMemberSummary:
+    "Esa era la última partida de hoy en este modo. Nuevas partidas a medianoche UTC.",
+  playLimitLeftToday: "Quedan {n} de {total} partidas hoy",
+  playLimitResetIn: "Nuevas partidas en {h} h {m} min",
+  playLimitResetInSoon: "Nuevas partidas en {m} min",
+  playLimitUnlimited: "Sin límite diario:",
 
   noEvents: "No hay eventos disponibles. Revisa la conexión a la base de datos.",
 

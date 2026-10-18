@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { after } from "next/server";
 
 import { AccountPanel } from "@/components/account-panel";
 import { BadgeFrame } from "@/components/badge-frame";
 import { LinkPending } from "@/components/link-pending";
 import {
   getCurrentUser,
+  getVerifiedUser,
   hasPasswordIdentity,
   requireAccount,
 } from "@/lib/auth/server";
@@ -15,14 +17,13 @@ import {
   type Badge,
 } from "@/lib/badges";
 import { avatarSrc } from "@/lib/avatar";
-import { readAvatarKey } from "@/lib/db/accounts";
 import { createAdminDbClient } from "@/lib/db/admin";
 import {
+  measureBadges,
   readLeaderboardPosition,
   readShownBadge,
-  refreshBadges,
+  saveBadges,
 } from "@/lib/db/scoring";
-import { createServerDbClient } from "@/lib/db/server";
 import { format } from "@/lib/i18n/dictionary";
 import { readLocaleContext } from "@/lib/i18n/server";
 
@@ -53,6 +54,19 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function AccountPage() {
   const { locale, t } = await readLocaleContext();
+  /* The id is in the session token (read locally, no round trip), so every
+     read below starts now, beside the chrome's profile read that
+     `requireAccount` waits on, rather than after it. A signed-out visitor
+     starts nothing and is redirected by `requireAccount`. */
+  const session = await getCurrentUser();
+  const admin = createAdminDbClient();
+  const reads = session
+    ? Promise.allSettled([
+        measureBadges(admin, session.id),
+        readShownBadge(admin, session.id),
+        readLeaderboardPosition(admin, session.id, "all"),
+      ])
+    : null;
   const account = await requireAccount("/account");
 
   /* The user record as well as the account, for one fact the profile row does
@@ -62,36 +76,49 @@ export default async function AccountPage() {
      Supabase adds the email identity and the next render of this page sees it.
      `hasPasswordIdentity` is the same predicate `updatePassword` checks, so the
      form's shape and the action's requirement cannot disagree. */
-  const user = await getCurrentUser();
-  const hasPassword = user ? hasPasswordIdentity(user) : true;
+  const user = getVerifiedUser();
 
-  // Guarded like the badge read below: a picture that cannot be read is the
-  // default picture, not a page that fails.
-  let avatarKey: string | null = null;
-  try {
-    avatarKey = await readAvatarKey(await createServerDbClient(), account.id);
-  } catch (error) {
-    console.error("account: avatar read failed", error);
-  }
+  const avatarKey = account.avatarKey;
   const avatar = avatarSrc(avatarKey);
 
-  // Re-measured here as on /achievements, so the count of badges and the
-  // ring on the picture are never a visit behind.
+  /* Re-measured here as on /achievements, so the count of badges and the
+     ring on the picture are never a visit behind — but only *measured* before
+     the page: every read goes out at once (the password check's
+     user record included), and the write, if anything
+     changed, follows the response. `shown_badge` reads the rows as they were,
+     so a badge discovered by this very visit (a head-to-head win, which has no
+     refresh of its own) is worn from the next one. */
   let earned = 0;
   let totalTp = 0;
   let worn: Badge | null = null;
   let rank: number | null = null;
-  try {
-    const admin = createAdminDbClient();
-    const state = await refreshBadges(admin, account.id);
+  const [measured, shown, position] = await (reads ??
+    Promise.allSettled([
+      measureBadges(admin, account.id),
+      readShownBadge(admin, account.id),
+      readLeaderboardPosition(admin, account.id, "all"),
+    ]));
+  if (measured.status === "fulfilled") {
+    const state = measured.value;
     earned = state.badges.filter((badge) => badge.unlockedAt !== null).length;
     totalTp = state.stats.tp;
-    const shown = await readShownBadge(admin, account.id);
-    worn = shown ? BADGE_BY_SLUG[shown] : null;
-    rank = (await readLeaderboardPosition(admin, account.id, "all"))?.rank ?? null;
-  } catch (error) {
-    console.error("account: badge refresh failed", error);
+    if (state.writes.length > 0) {
+      after(() =>
+        saveBadges(admin, account.id, state).catch((error) =>
+          console.error("account: badge save failed", error),
+        ),
+      );
+    }
+  } else {
+    console.error("account: badge measure failed", measured.reason);
   }
+  if (shown.status === "fulfilled") {
+    worn = shown.value ? BADGE_BY_SLUG[shown.value] : null;
+  }
+  if (position.status === "fulfilled") rank = position.value?.rank ?? null;
+
+  const verified = await user;
+  const hasPassword = verified ? hasPasswordIdentity(verified) : true;
 
   return (
     <div className="mx-auto max-w-[calc(var(--board-w)+3rem)] px-6 pb-32 pt-12 sm:pt-16">

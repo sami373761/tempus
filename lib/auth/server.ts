@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 
@@ -14,13 +15,53 @@ import type { Account } from "../db/types.ts";
  * `lib/db/accounts.ts`.
  */
 
-/** The signed-in user, or null. Validates the token against Supabase. */
-export async function getCurrentUser(): Promise<User | null> {
+/**
+ * Who the session belongs to, as far as the signed token says: the claims the
+ * game needs (id, email, app_metadata) and nothing that lives only on the
+ * `auth.users` row.
+ */
+export type SessionUser = Pick<User, "id" | "email" | "app_metadata">;
+
+/**
+ * The signed-in user, or null — from the access token, verified locally.
+ *
+ * `getClaims()` checks the token's ES256 signature against the project's
+ * published keys (fetched once per process) instead of asking Supabase Auth,
+ * which is ~400 ms to the database's region and used to be paid twice before
+ * every page's first byte. A token is still refreshed through the cookie when
+ * it has expired — `getClaims` goes through `getSession` first.
+ *
+ * What it cannot see is a session revoked elsewhere: until the access token
+ * expires (an hour at most) a signed-out device still reads as signed in. That
+ * is acceptable for a game's identity; the two places where it is not —
+ * changing a password and the admin gate — use `getVerifiedUser`.
+ *
+ * `cache()` makes it one read per render however many components ask.
+ */
+export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
+  const supabase = await createServerDbClient();
+  const { data, error } = await supabase.auth.getClaims();
+  if (error || !data) return null;
+  const { claims } = data;
+  if (!claims.sub) return null;
+  return {
+    id: claims.sub,
+    email: typeof claims.email === "string" ? claims.email : undefined,
+    app_metadata: (claims.app_metadata ?? {}) as User["app_metadata"],
+  };
+});
+
+/**
+ * The full user record, validated by Supabase Auth on every call. A network
+ * round trip — only for what must not trust an unrevoked token or needs
+ * fields the token does not carry (`identities`).
+ */
+export const getVerifiedUser = cache(async (): Promise<User | null> => {
   const supabase = await createServerDbClient();
   const { data, error } = await supabase.auth.getUser();
   if (error) return null;
   return data.user;
-}
+});
 
 /**
  * Whether an account has an email/password identity at all.
@@ -42,7 +83,7 @@ export function hasPasswordIdentity(user: User): boolean {
   return user.identities?.some((identity) => identity.provider === "email") ?? false;
 }
 
-export async function requireUser(): Promise<User> {
+export async function requireUser(): Promise<SessionUser> {
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized: authentication required.");
   return user;
@@ -59,7 +100,7 @@ export async function requireUser(): Promise<User> {
  * email's local part for a request — the same reasoning the home page's event
  * count is wrapped in.
  */
-export async function getCurrentAccount(): Promise<Account | null> {
+export const getCurrentAccount = cache(async (): Promise<Account | null> => {
   const user = await getCurrentUser();
   if (!user) return null;
 
@@ -71,15 +112,21 @@ export async function getCurrentAccount(): Promise<Account | null> {
     username: null,
     unseenBadges: 0,
     chronoRating: null,
+    avatarKey: null,
   };
   try {
     profile = await readProfileChrome(await createServerDbClient(), user.id);
   } catch {
-    profile = { username: null, unseenBadges: 0, chronoRating: null };
+    profile = {
+      username: null,
+      unseenBadges: 0,
+      chronoRating: null,
+      avatarKey: null,
+    };
   }
 
   return accountFrom(user, profile);
-}
+});
 
 /**
  * The signed-in player, or a redirect to the sign-in form.

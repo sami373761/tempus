@@ -150,6 +150,7 @@ export function accountFrom(
     username: string | null;
     unseenBadges?: number;
     chronoRating?: number | null;
+    avatarKey?: string | null;
   },
 ): Account {
   const fallback = user.email?.split("@")[0] ?? null;
@@ -160,6 +161,7 @@ export function accountFrom(
     displayName: profile.username ?? fallback ?? "Player",
     unseenBadges: profile.unseenBadges ?? 0,
     chronoRating: profile.chronoRating ?? null,
+    avatarKey: profile.avatarKey ?? null,
   };
 }
 
@@ -212,10 +214,11 @@ export async function readProfileChrome(
   username: string | null;
   unseenBadges: number;
   chronoRating: number | null;
+  avatarKey: string | null;
 }> {
   const { data, error } = await client
     .from("profile")
-    .select("username, unseen_badges, chrono_rating")
+    .select("username, unseen_badges, chrono_rating, avatar_key")
     .eq("id", userId)
     .maybeSingle();
 
@@ -227,6 +230,7 @@ export async function readProfileChrome(
     // which this read makes unnecessary wherever the chrome is already
     // resolved.
     chronoRating: data?.chrono_rating ?? null,
+    avatarKey: data?.avatar_key ?? null,
   };
 }
 
@@ -316,6 +320,32 @@ export async function setUsername(
   throw new Error(`setUsername: ${error.message}`);
 }
 
+type BadgeCatalogRow = { slug: string; default_target: number };
+
+/* The ladder itself: six rows that change only with a migration. Kept per
+   process rather than read beside every player's progress — a cold start
+   reads it once, and a failed read is not kept, so the next call retries. */
+const BADGE_CATALOG_TTL_MS = 10 * 60 * 1000;
+let badgeCatalog: { at: number; rows: Promise<BadgeCatalogRow[]> } | null = null;
+
+function readBadgeCatalog(client: DbClient): Promise<BadgeCatalogRow[]> {
+  if (badgeCatalog && Date.now() - badgeCatalog.at < BADGE_CATALOG_TTL_MS) {
+    return badgeCatalog.rows;
+  }
+  const rows = Promise.resolve(
+    client.from("badge").select("slug, default_target").order("sort_order"),
+  ).then(({ data, error }) => {
+    if (error) throw new Error(`readBadgeCatalog: ${error.message}`);
+    return data ?? [];
+  });
+  const entry = { at: Date.now(), rows };
+  badgeCatalog = entry;
+  rows.catch(() => {
+    if (badgeCatalog === entry) badgeCatalog = null;
+  });
+  return rows;
+}
+
 /**
  * Every badge's state for one player, in the badges' own order.
  *
@@ -330,21 +360,20 @@ export async function readBadgeProgress(
   userId: string,
 ): Promise<BadgeProgress[]> {
   const [badges, progress] = await Promise.all([
-    client.from("badge").select("slug, default_target").order("sort_order"),
+    readBadgeCatalog(client),
     client
       .from("user_badge_progress")
       .select("badge_slug, progress, target, unlocked_at, details")
       .eq("user_id", userId),
   ]);
 
-  if (badges.error) throw new Error(`readBadgeProgress: ${badges.error.message}`);
   if (progress.error) {
     throw new Error(`readBadgeProgress: ${progress.error.message}`);
   }
 
   const rows = new Map((progress.data ?? []).map((row) => [row.badge_slug, row]));
 
-  return (badges.data ?? []).map((badge) => {
+  return badges.map((badge) => {
     const row = rows.get(badge.slug);
     return {
       slug: badge.slug,

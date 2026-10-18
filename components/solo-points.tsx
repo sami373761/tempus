@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
 
 import { RefreshChrome } from "@/components/refresh-chrome";
-import { BADGE_BY_SLUG, type BadgeSlug } from "@/lib/badges";
+import { BADGE_BY_SLUG, isBadgeSlug, type BadgeSlug } from "@/lib/badges";
 import type { RevealResult } from "@/lib/game/solo";
 import { format, type Dict } from "@/lib/i18n/dictionary";
 
@@ -46,17 +46,50 @@ const EMPTY: SetPoints = { tp: 0, banked: false, newBadges: [] };
 export function useSoloSet() {
   const [setId, setSetId] = useState(newSetId);
   const [points, setPoints] = useState<SetPoints>(EMPTY);
+  // The set a late badge answer belongs to: one that arrives after "play
+  // again" must not be announced on the next set's summary.
+  const liveSet = useRef(setId);
+  liveSet.current = setId;
 
   const record = useCallback((result: Extract<RevealResult, { ok: true }>) => {
-    setPoints((current) => {
-      const banked = result.banked?.counted ? result.banked : null;
-      return {
-        tp: current.tp + (banked ? banked.tp + banked.bonus : result.tp),
-        banked: current.banked || banked !== null,
-        newBadges: [...current.newBadges, ...(banked?.newBadges ?? [])],
-      };
-    });
+    const banked = result.banked?.counted ? result.banked : null;
+    setPoints((current) => ({
+      tp: current.tp + (banked ? banked.tp + banked.bonus : result.tp),
+      banked: current.banked || banked !== null,
+      newBadges: [...current.newBadges, ...(banked?.newBadges ?? [])],
+    }));
+    if (banked?.badgesPending) announceSetBadges(liveSet.current);
   }, []);
+
+  /* The set's last reveal does not wait for the badge refresh (see
+     `bankIfMember` in app/actions/scoring.ts): the summary opens at once and
+     the announcement joins it when this answers. A failure is silent — the
+     badge is still awarded, and the menu's mark and /achievements show it. */
+  function announceSetBadges(forSet: string) {
+    fetch("/api/set-badges", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ setId: forSet }),
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body: { badges?: unknown } | null) => {
+        const badges = Array.isArray(body?.badges)
+          ? body.badges.filter(
+              (slug): slug is BadgeSlug =>
+                typeof slug === "string" && isBadgeSlug(slug),
+            )
+          : [];
+        if (badges.length === 0 || liveSet.current !== forSet) return;
+        setPoints((points) => ({
+          ...points,
+          newBadges: [
+            ...points.newBadges,
+            ...badges.filter((slug) => !points.newBadges.includes(slug)),
+          ],
+        }));
+      })
+      .catch(() => {});
+  }
 
   /** A new set: a new id, so the next round opens a fresh row. */
   const reset = useCallback(() => {

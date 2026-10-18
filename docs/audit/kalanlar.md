@@ -34,10 +34,12 @@ render etmiyor; yeni hesap altı kartı %0 görüyor.
 `explorer-coin.tsx` — 3,9 MB GLB + three.js her ziyaretçiye. Çözüm:
 `navigator.connection.saveData` / yavaş bağlantıda yükleme.
 
-### 10. Commit dışı dağınıklık
-`scripts/tmp-dupes.ts`, `scripts/tmp-precheck.ts`, `scripts/tmp-run.ts`,
-`tmp-exclude-check.ts` silinebilir; `tmp-run.ts`'teki pooler host bilgisi
-`scripts/db.ts`'e taşınmalı. `.claude/` `.gitignore`'da değil.
+### ~~10. Commit dışı dağınıklık~~ — kapandı
+Dört `tmp-*` teşhis dosyası silindi. Pooler host bilgisi artık
+`scripts/db.ts`'te: doğrudan host erişilemezse (`ENOTFOUND`/`ENETUNREACH`/…)
+`connect()` oturum pooler'ı üzerinden bir kez yeniden deniyor, yani her db
+script'i IPv4-only ağda da çalışıyor. `.claude/settings.local.json`
+`.gitignore`'a eklendi (paylaşılan proje ayarları commit'te kalır).
 
 ## Listeye girmeyen adaylar
 - Daily UTC gece yarısını geçince ertesi günün anahtarıyla puanlama (H3,

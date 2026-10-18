@@ -427,7 +427,7 @@ export function DailyGame({
      Render
      ---------------------------------------------------------------------- */
 
-  // Thirty seconds a question, kept across a reload: the day's ten questions
+  // Twenty-five seconds a question, kept across a reload: the day's ten questions
   // are the same on every load, so a clock that restarted would be a reload's
   // worth of time to look the answer up (see `useSoloRoundClock`).
   const clockKey = `daily:${puzzleDate}:${shownIdx}`;

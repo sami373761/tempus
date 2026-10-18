@@ -273,9 +273,9 @@ temiz, beş dilde anahtarlar tam:
    karar gerekir).
 6. Ana sayfa: olay sayısı DB'den okunmak yerine sabit "1000+".
 7. SSS 6→8 soru; kullanıcı adı doğrulaması 4 ayrı hataya bölündü.
-- `scripts/tmp-*.ts` ve `tmp-exclude-check.ts` salt okunur teşhis;
-  **silinebilir** (yalnız `tmp-run.ts`'teki pooler host bilgisi
-  `scripts/db.ts`'e taşınmaya değer). `.claude/` gitignore'da değil.
+- `scripts/tmp-*.ts` ve `tmp-exclude-check.ts` silindi; pooler host bilgisi
+  `scripts/db.ts`'teki `connect()` yedek yoluna taşındı.
+  `.claude/settings.local.json` gitignore'da.
 - `CARD_BOX_WIDE` (26rem + 194px) kompakt raylı futbol/basketbol için artık
   yanlış ölçü; masaüstünde yazma modunda düğme zıplayabilir.
 

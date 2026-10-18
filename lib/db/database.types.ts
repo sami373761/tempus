@@ -927,6 +927,21 @@ export type Database = {
         Args: { p_user_id: string };
         Returns: undefined;
       };
+      /**
+       * Subject-mode games this account has begun since a lower bound, and
+       * whether one set is still playable. Read-only, over `solo_set`.
+       */
+      game_play_standing: {
+        Args: {
+          p_user_id: string;
+          p_game: string;
+          p_set_id: string | null;
+          p_round_id: string | null;
+          p_since: string;
+          p_set_size: number;
+        };
+        Returns: Json;
+      };
       leaderboard: {
         Args: { p_since?: string | null; p_limit?: number };
         Returns: {

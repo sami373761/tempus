@@ -2,7 +2,7 @@ import "server-only";
 
 import type { User } from "@supabase/supabase-js";
 
-import { getCurrentUser } from "./server.ts";
+import { getVerifiedUser, type SessionUser } from "./server.ts";
 
 /**
  * Admin authorization.
@@ -15,13 +15,15 @@ import { getCurrentUser } from "./server.ts";
  */
 const ADMIN_ROLE = "admin";
 
-export function isAdmin(user: User | null): boolean {
+export function isAdmin(user: SessionUser | null): boolean {
   return user?.app_metadata?.role === ADMIN_ROLE;
 }
 
 /** Throws unless the caller is a signed-in admin. Use in admin layouts/actions. */
 export async function requireAdmin(): Promise<User> {
-  const user = await getCurrentUser();
+  // Verified with Supabase Auth, not just the token: a revoked admin session
+  // must not keep working until its token expires.
+  const user = await getVerifiedUser();
   if (!isAdmin(user)) {
     throw new Error("Forbidden: admin role required.");
   }

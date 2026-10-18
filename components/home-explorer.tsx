@@ -206,6 +206,22 @@ export function HomeExplorer({
   const [open, setOpen] = useState<ItemId | null>(null);
   const [rank, setRank] = useState<BadgeSlug>("gold");
 
+  /* **A phone never gets the coin.** It is a 3.9MB model and a WebGL context
+     for an ornament, on the connection least able to afford either, so under
+     `md` the explorer opens on the first game instead and closing it folds the
+     stage away rather than revealing anything. `null` until the first effect
+     has looked: the server cannot know the width, and mounting the coin on a
+     guess would start its prefetch on exactly the screens this is for. */
+  const [phone, setPhone] = useState<boolean | null>(null);
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 48rem)");
+    const sync = () => setPhone(!desktop.matches);
+    sync();
+    if (!desktop.matches) setOpen((current) => current ?? "guess");
+    desktop.addEventListener("change", sync);
+    return () => desktop.removeEventListener("change", sync);
+  }, []);
+
   const stage: StageId = open ?? "idle";
 
   /* The item the phone's detail block is showing. It lags `open` by design:
@@ -401,71 +417,90 @@ export function HomeExplorer({
             nothing. It fades with the panel it belongs to over `FADE_MS`
             rather than switching, or the border would snap in a frame ahead of
             the artwork it frames. */}
+        {/* On a phone the stage folds to nothing once the list is closed —
+            there is no coin there to show — with the same row collapse
+            `MobileDetail` uses. From `md` both wrappers are `contents`, so the
+            stage is the grid item it always was. */}
         <div
-          /* **`w-full` is load-bearing below `md`.** With only `aspect-[4/3]`
-             and a `min-h`, the box took its *width* from its height — a grid
-             item with a preferred ratio and a definite height is not stretched
-             in the other axis — so it came out 424px wide inside a 277px card
-             and every panel's right-hand side was cut off by the section's own
-             `overflow-hidden`. Pinning the width makes the ratio set the
-             height, the floor raise it, and the picture end where the card
-             does. */
-          /* The floor was `20rem` while the panels that are not one
-             photograph needed it — three stacked statistics and three stacked
-             subject squares. Both are three-across on a phone now, so the
-             ratio alone is enough and 13rem is only a guard for the narrowest
-             screens. It is 100px of height given back, which is what lets the
-             pills and the picture be on the same screen. */
-          className={`explorer-motion relative aspect-[4/3] w-full min-h-[13rem] overflow-hidden rounded-[22px] border transition-colors ease-out md:aspect-auto md:h-full md:min-h-0 ${
-            open === null ? "border-transparent bg-transparent" : "border-hairline bg-page"
+          /* The negative margin takes back the two grid gaps the empty detail
+             and stage rows would otherwise leave under the pills. */
+          className={`explorer-motion grid transition-[grid-template-rows,margin] md:contents ${
+            open === null ? "-mt-6" : "mt-0"
           }`}
-          style={{ transitionDuration: `${FADE_MS}ms` }}
+          style={{
+            gridTemplateRows: open === null ? "0fr" : "1fr",
+            transitionDuration: `${FADE_MS}ms`,
+          }}
+          inert={phone === true && open === null}
         >
-          {(["idle", ...ITEMS.map((item) => item.id)] as StageId[]).map((id) => {
-            const isActive = id === shown.active;
-            const isLeaving = id === shown.leaving;
-            const item = ITEMS.find((candidate) => candidate.id === id);
+          <div className="min-h-0 overflow-hidden md:contents">
+            <div
+              /* **`w-full` is load-bearing below `md`.** With only `aspect-[4/3]`
+                 and a `min-h`, the box took its *width* from its height — a grid
+                 item with a preferred ratio and a definite height is not stretched
+                 in the other axis — so it came out 424px wide inside a 277px card
+                 and every panel's right-hand side was cut off by the section's own
+                 `overflow-hidden`. Pinning the width makes the ratio set the
+                 height, the floor raise it, and the picture end where the card
+                 does. */
+              /* The floor was `20rem` while the panels that are not one
+                 photograph needed it — three stacked statistics and three stacked
+                 subject squares. Both are three-across on a phone now, so the
+                 ratio alone is enough and 13rem is only a guard for the narrowest
+                 screens. It is 100px of height given back, which is what lets the
+                 pills and the picture be on the same screen. */
+              className={`explorer-motion relative aspect-[4/3] w-full min-h-[13rem] overflow-hidden rounded-[22px] border transition-colors ease-out md:aspect-auto md:h-full md:min-h-0 ${
+                open === null ? "border-transparent bg-transparent" : "border-hairline bg-page"
+              }`}
+              style={{ transitionDuration: `${FADE_MS}ms` }}
+            >
+              {(["idle", ...ITEMS.map((item) => item.id)] as StageId[]).map((id) => {
+                const isActive = id === shown.active;
+                const isLeaving = id === shown.leaving;
+                const item = ITEMS.find((candidate) => candidate.id === id);
 
-            return (
-              <div
-                key={id}
-                id={`explorer-stage-${id}`}
-                aria-hidden={!isActive}
-                inert={!isActive}
-                /* Every layer is opaque, or the one being left shows through
-                   the one arriving — but the coin's is opaque in the *card's*
-                   colour, which is what makes it read as no plate at all while
-                   still covering the panel it replaced. */
-                className={`explorer-motion absolute inset-0 transition-opacity ease-out ${
-                  item ? "bg-page" : "bg-card"
-                }`}
-                style={{
-                  opacity: isActive || isLeaving ? 1 : 0,
-                  // The only ordering that matters: incoming above outgoing.
-                  zIndex: isActive ? 2 : isLeaving ? 1 : 0,
-                  transitionDuration: `${FADE_MS}ms`,
-                }}
-              >
-                {item ? (
-                  <Stage
-                    item={item}
-                    t={t}
-                    locale={locale}
-                    art={art}
-                    stats={stats}
-                    rank={rank}
-                    active={isActive}
-                  />
-                ) : (
-                  <ExplorerCoin
-                    src={model}
-                    playing={isActive}
-                    fadeMs={FADE_MS}
-                  />
-                )}
-              </div>
-            );
-          })}
+                return (
+                  <div
+                    key={id}
+                    id={`explorer-stage-${id}`}
+                    aria-hidden={!isActive}
+                    inert={!isActive}
+                    /* Every layer is opaque, or the one being left shows through
+                       the one arriving — but the coin's is opaque in the *card's*
+                       colour, which is what makes it read as no plate at all while
+                       still covering the panel it replaced. */
+                    className={`explorer-motion absolute inset-0 transition-opacity ease-out ${
+                      item ? "bg-page" : "bg-card"
+                    }`}
+                    style={{
+                      opacity: isActive || isLeaving ? 1 : 0,
+                      // The only ordering that matters: incoming above outgoing.
+                      zIndex: isActive ? 2 : isLeaving ? 1 : 0,
+                      transitionDuration: `${FADE_MS}ms`,
+                    }}
+                  >
+                    {item ? (
+                      <Stage
+                        item={item}
+                        t={t}
+                        locale={locale}
+                        art={art}
+                        stats={stats}
+                        rank={rank}
+                        active={isActive}
+                      />
+                    ) : phone === false ? (
+                      <ExplorerCoin
+                        src={model}
+                        playing={isActive}
+                        fadeMs={FADE_MS}
+                      />
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -1052,6 +1087,7 @@ function StagePhoto({
         aria-hidden
         draggable={false}
         decoding="async"
+        loading="lazy"
         className="explorer-motion h-full w-full object-cover transition-transform ease-out"
         style={{
           transform: active ? "scale(1)" : "scale(1.06)",
@@ -1117,6 +1153,7 @@ function StageSubjects({
             aria-hidden
             draggable={false}
             decoding="async"
+            loading="lazy"
             className="h-full w-full object-cover"
           />
           {/* The name sits on the picture rather than under it, which is what
@@ -1212,7 +1249,7 @@ function StageBadge({
           key={rank}
           className={`flex flex-col items-center ${active ? "explorer-badge-in" : ""}`}
         >
-          <BadgeFrame badge={badge} avatar={avatar} />
+          <BadgeFrame badge={badge} avatar={avatar} loading="lazy" />
 
           <p className="text-center font-display text-xl font-semibold text-ink">
             {t[badge.nameKey]}
@@ -1270,6 +1307,7 @@ function StageLibrary({
         aria-hidden
         draggable={false}
         decoding="async"
+        loading="lazy"
         className="explorer-motion h-full w-full object-cover transition-transform ease-out"
         style={{
           transform: active ? "scale(1)" : "scale(1.06)",

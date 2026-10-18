@@ -14,7 +14,11 @@ import {
 import { createAdminDbClient } from "@/lib/db/admin";
 import { createServerDbClient } from "@/lib/db/server";
 import { isDevelopment } from "@/lib/env";
-import { getCurrentUser, hasPasswordIdentity } from "@/lib/auth/server";
+import {
+  getCurrentUser,
+  getVerifiedUser,
+  hasPasswordIdentity,
+} from "@/lib/auth/server";
 import { ACCOUNT_PATH, safeNextPath, SIGN_IN_PATH } from "@/lib/auth/paths";
 
 /**
@@ -380,7 +384,7 @@ export async function updatePassword(
   _state: AuthState,
   form: FormData,
 ): Promise<AuthState> {
-  const user = await getCurrentUser();
+  const user = await getVerifiedUser();
   if (!user) redirect(SIGN_IN_PATH);
 
   const password = String(form.get("password") ?? "");

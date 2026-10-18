@@ -8,13 +8,15 @@ import {
 import { getCurrentUser } from "@/lib/auth/server";
 import { createAdminDbClient } from "@/lib/db/admin";
 import {
+  readChronoLeaderboardCached,
+  readLeaderboardCached,
+} from "@/lib/db/cached";
+import {
   isLeaderboardPeriod,
-  readChronoLeaderboard,
   readChronoLeaderboardPosition,
-  readLeaderboard,
   readLeaderboardPosition,
+  type readLeaderboard,
 } from "@/lib/db/scoring";
-import { createServerDbClient } from "@/lib/db/server";
 import { format } from "@/lib/i18n/dictionary";
 import { readLocaleContext } from "@/lib/i18n/server";
 
@@ -75,23 +77,24 @@ export default async function LeaderboardPage({
         ? requested
         : "all";
 
-  const client = await createServerDbClient();
-
   // The signed-in player's own standing on each board, for when they are not
   // on the one shown. Guarded: it is a nicety, and must not cost anyone the
   // board — so a failed `getCurrentUser` leaves all three lines off rather
-  // than taking the page down.
+  // than taking the page down. Read from the token, not Supabase Auth, so it
+  // costs nothing in front of the parallel block below.
   const user = await getCurrentUser().catch(() => null);
   const admin = user ? createAdminDbClient() : null;
 
   // Every read in flight at once. The six are independent, and issued
   // together they cost the one trip to the database's region that a single
-  // board used to.
+  // board used to. The three boards are everybody's and come from the data
+  // cache (a minute at most behind); the three positions are this player's
+  // and are always live, so a round just banked shows in their own line.
   const [all, month, rating, allMine, monthMine, ratingMine] =
     await Promise.allSettled([
-      readLeaderboard(client, "all"),
-      readLeaderboard(client, "month"),
-      readChronoLeaderboard(client),
+      readLeaderboardCached("all"),
+      readLeaderboardCached("month"),
+      readChronoLeaderboardCached(),
       admin && user ? readLeaderboardPosition(admin, user.id, "all") : null,
       admin && user ? readLeaderboardPosition(admin, user.id, "month") : null,
       admin && user ? readChronoLeaderboardPosition(admin, user.id) : null,

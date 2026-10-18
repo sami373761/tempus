@@ -26,8 +26,10 @@
     "era:check": "node --experimental-strip-types --no-warnings scripts/check-era.ts",
     "backdrops:derive": "node --experimental-strip-types --no-warnings scripts/derive-backdrops.ts",
     "images:shrink": "node --experimental-strip-types --no-warnings scripts/shrink-event-images.ts",
+    "art:webp": "node --experimental-strip-types --no-warnings scripts/art-webp.ts",
     "db:seed:descriptions": "node --experimental-strip-types --no-warnings scripts/seed-descriptions.ts",
-    "versus:bot:check": "node --experimental-strip-types --no-warnings scripts/check-versus-bot.ts"
+    "versus:bot:check": "node --experimental-strip-types --no-warnings scripts/check-versus-bot.ts",
+    "bot:names": "node --experimental-strip-types --no-warnings scripts/make-bot-names.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.700.0",

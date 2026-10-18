@@ -41,7 +41,7 @@ import type { Database, Json } from "./database.types.ts";
 import type { DbClient } from "./queries.ts";
 import { eventCategorySlugs, eventsByIds, randomEvents } from "./queries.ts";
 import { DEFAULT_LOCALE } from "./types.ts";
-import { BOT_GUEST_CHANCE, botShownRating, pickBotNames } from "../game/bot-names.ts";
+import { botShownRating, pickBotNames } from "../game/bot-names.ts";
 import { chronoTier } from "../game/chrono-rating.ts";
 import { screenFormatOf } from "../game/screen.ts";
 import { gradeGuess, roundPoints } from "../game/scoring.ts";
@@ -850,12 +850,9 @@ async function takenUsernames(
 /**
  * The name and rating a bot sits down under.
  *
- * **A guest only where a guest could really be.** Guests play the bottom league
- * and matchmaking seats them only into bottom-league lobbies, so a person in
- * the middle or upper league never meets one. A "Guest" opposite a host there
- * would therefore be a bot by elimination, which is why the guest disguise is
- * offered only when the host is in the bottom league, whatever
- * `BOT_GUEST_CHANCE` says for the higher levels.
+ * **Always a name and a rating.** Online play needs an account
+ * (`findVersusOpponent`), so every person across the table has both, and a
+ * nameless "Guest" seat would be a bot by elimination.
  *
  * **Never a name somebody has.** The candidates were checked against
  * `profile.username` (`takenUsernames`, run beside the lobby read), because a
@@ -878,13 +875,8 @@ function botDisguise(
   candidates: readonly string[],
   taken: ReadonlySet<string>,
 ): { name: string | null; rating: number | null } {
-  const guest = { name: null, rating: null };
-  const guestPlausible = chronoTier(hostRating) === 1;
-
-  if (guestPlausible && rng() < BOT_GUEST_CHANCE[level]) return guest;
-
   const name = candidates.find((candidate) => !taken.has(candidate));
-  if (!name) return guest;
+  if (!name) return { name: null, rating: null };
 
   return { name, rating: botShownRating(rng, level, hostRating) };
 }

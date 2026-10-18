@@ -49,7 +49,6 @@ import {
   type SeatCredentials,
   type StoredSeat,
 } from "@/components/versus-search";
-import { signInHref } from "@/lib/auth/paths";
 import { signedDelta } from "@/lib/game/chrono-rating";
 import type { SupportedLocale } from "@/lib/db/types";
 import {
@@ -85,6 +84,7 @@ import {
   fractionAtYear,
   paneBounds,
   paneForYear,
+  STILL_PANES,
   type TimelinePane,
   yearAtFraction,
 } from "@/lib/game/timeline";
@@ -696,7 +696,7 @@ export function VersusGame({
   if (!view || !shown)
     return (
       <>
-        <TimelineBackdrop pane={DEFAULT_PANE} />
+        <TimelineBackdrop pane={DEFAULT_PANE} panes={STILL_PANES} />
         <LoadingNotice label={t.versusJoining} />
       </>
     );
@@ -2310,8 +2310,7 @@ function OpponentLockedBadge({
  * — the same two players are not paired twice running, and "again" there
  * means somebody new — so the first button opens a fresh search instead and
  * the rematch request never appears. The rating change is shown, because it
- * is what an online match was *for*; a guest is told what signing in would
- * have kept. And a match someone walked out of says who, because online the
+ * is what an online match was *for*. And a match someone walked out of says who, because online the
  * one who left loses it, and "your opponent left" would be wrong half the
  * time. An invitation's summary is exactly what it was.
  */
@@ -2640,9 +2639,9 @@ function VersusSummary({
  * ends the match), so what is printed here is what the ledger holds, not a
  * prediction from lib/game/chrono-rating.ts that could disagree with it.
  *
- * A guest has no rating to change, so they are told what signing in keeps
- * instead — the one moment that sentence is about something that just
- * happened. An account whose change has not arrived shows a wait rather than
+ * Online play needs an account, so every seat here has a rating; a match
+ * with none (one played as a guest before that rule) shows nothing. An
+ * account whose change has not arrived shows a wait rather than
  * a guess; it is one read away (the change is not on the pushed row, so the
  * game reads the view once more as the match ends).
  */
@@ -2650,19 +2649,7 @@ function RatingChange({ view, t }: { view: MatchView; t: Dict }) {
   const rating = view.ratings[view.seat];
   const delta = view.ratingDeltas[view.seat];
 
-  if (rating === null) {
-    return (
-      <p className="text-xs leading-snug text-white/60">
-        {t.versusGuestRatingHint}{" "}
-        <Link
-          href={signInHref("/versus")}
-          className="font-semibold text-ink underline underline-offset-4 transition hover:opacity-80"
-        >
-          {t.versusSignInForRating}
-        </Link>
-      </p>
-    );
-  }
+  if (rating === null) return null;
 
   // Not arrived yet: the block's own frame, the same height as the one it
   // becomes, with the wait where the number will be — so the buttons under
@@ -2870,7 +2857,7 @@ function LoadingNotice({ label }: { label: string }) {
 export function FatalNotice({ message, t }: { message: string; t: Dict }) {
   return (
     <div className="flex min-h-0 w-full flex-1 items-center justify-center px-6">
-      <TimelineBackdrop pane={DEFAULT_PANE} />
+      <TimelineBackdrop pane={DEFAULT_PANE} panes={STILL_PANES} />
       <div className="w-full max-w-sm rounded-3xl border border-white/12 bg-black/45 px-7 py-7 text-center shadow-2xl shadow-black/70 backdrop-blur-2xl">
         <p className="text-sm text-ink">{message}</p>
         <Link

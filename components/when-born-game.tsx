@@ -9,6 +9,13 @@ import {
   useKeyboardEntry,
 } from "@/components/date-entry";
 import { NoteDeck, RoundVerdict, VerdictDeck } from "@/components/round-flank";
+import {
+  isPlayLimitRefusal,
+  PlayLimitLeft,
+  PlayLimitNotice,
+  PlayLimitPanel,
+  usePlayLimit,
+} from "@/components/play-limit";
 import { RoundHead } from "@/components/round-head";
 import { SoloRoundTimer, useSoloRoundClock } from "@/components/round-timer";
 import { SetProgress, SetSummary } from "@/components/set-summary";
@@ -36,6 +43,7 @@ import {
   ROUND_QUEUE_DEPTH,
   ROUND_QUEUE_TARGET,
 } from "@/lib/game/rounds";
+import type { PlayAllowance } from "@/lib/game/play-limit";
 import { gradeGuess, WHEN_BORN_BANDS } from "@/lib/game/scoring";
 import type { DealtEvent, RevealedDate } from "@/lib/game/solo";
 import {
@@ -126,11 +134,19 @@ export function WhenBornGame({
   events,
   t,
   locale,
+  allowance,
 }: {
   /** Masked and signed: the year arrives with the reply to a guess. */
   events: DealtEvent<WhenBornEvent>[];
   t: Dict;
   locale: SupportedLocale;
+  /**
+   * The player's standing in this mode today — three games a day, one for a
+   * guest (lib/game/play-limit.ts). The page has already refused to deal when
+   * the day is spent, so this is what the *second* set of a session is checked
+   * against.
+   */
+  allowance: PlayAllowance;
 }) {
   // Three rails, so the general game's state rather than the film game's: a
   // pane on camera, and one marker position per pane so that panning away and
@@ -161,6 +177,7 @@ export function WhenBornGame({
   const [sending, setSending] = useState(false);
   const [failed, setFailed] = useState(false);
   const solo = useSoloSet();
+  const limit = usePlayLimit({ setId: solo.setId, allowance });
   const [refillAttempt, setRefillAttempt] = useState(0);
   // Latched when the player presses "Next round" before the queue has a round
   // to give them. The button is never dead, only late.
@@ -430,6 +447,12 @@ export function WhenBornGame({
     const round = event;
     try {
       const result = await revealDateRound(round.token, guessed, solo.setId);
+      // The daily limit travels with every reveal, refusals included: this is
+      // where a game is counted (see `usePlayLimit`). A spent day is not a
+      // failure and must not be handed back as one — there is nothing to
+      // retry, and the panel above has already taken over.
+      limit.record(result);
+      if (isPlayLimitRefusal(result)) return;
       if (!result.ok) throw new Error(result.reason);
       if (queueHead.current?.token !== round.token) return;
       setReveal({ date: result.date, tp: result.tp });
@@ -536,7 +559,7 @@ export function WhenBornGame({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingNext, upcoming, accuracy]);
 
-  // Thirty seconds a round. Not while the summary is up: the round under it
+  // Twenty-five seconds a round. Not while the summary is up: the round under it
   // has already advanced, and its clock starts when the summary goes.
   const clock = useSoloRoundClock({
     round: event?.token ?? null,
@@ -555,6 +578,21 @@ export function WhenBornGame({
     guessPane === null || answerPane === null || guessPane === answerPane
       ? REVEAL_DELAY_MS
       : REVEAL_HOLD_MS + panDuration(guessPane, answerPane, WHEN_BORN_PANES);
+
+  // The ledger refused this set — a second tab, or a "Play again" that raced
+  // the count. The game comes off the screen rather than being played out.
+  if (limit.blocked && limit.allowance) {
+    return (
+      <div className="flex min-h-0 w-full flex-1 flex-col">
+        <TimelineBackdrop pane={WHEN_BORN_DEFAULT_PANE} panes={WHEN_BORN_PANES} />
+        <PlayLimitPanel
+          allowance={limit.allowance}
+          title={t.whenBornTitle}
+          t={t}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col">
@@ -598,6 +636,18 @@ export function WhenBornGame({
             setResults([]);
             setPlayed([]);
           }}
+          // A spent day takes the "Play again" button off and puts the reason
+          // in its place — for a guest, with the one thing that changes it.
+          noReplay={
+            limit.allowance && limit.left === 0 ? (
+              <PlayLimitNotice allowance={limit.allowance} t={t} />
+            ) : null
+          }
+          note={
+            limit.allowance ? (
+              <PlayLimitLeft allowance={limit.allowance} t={t} />
+            ) : null
+          }
           t={t}
         />
       ) : (

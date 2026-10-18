@@ -68,8 +68,14 @@ export async function ensureDailyChallenges(
   admin: AdminClient,
   puzzleDate: string,
 ): Promise<Record<DailyAudience, DailyChallenge> | null> {
+  // A settled day never changes (the primary key above sees to that), so once
+  // this process has read it, it is not read again — the page and every
+  // banked guess used to pay a round trip to learn the same twenty ids.
+  const remembered = settledDays.get(puzzleDate);
+  if (remembered) return remembered;
+
   const existing = await readChallengeRows(admin, puzzleDate);
-  if (existing) return existing;
+  if (existing) return rememberDay(puzzleDate, existing);
 
   // `requireImage` is left at its default: an event with no photograph is not
   // on the site, and the daily is the one mode where a missing picture would
@@ -112,7 +118,22 @@ export async function ensureDailyChallenges(
   if (!settled) {
     throw new Error("ensureDailyChallenges: incomplete day after dealing");
   }
-  return settled;
+  return rememberDay(puzzleDate, settled);
+}
+
+/** Settled days, by date. Two entries at most: today, and yesterday's tail. */
+const settledDays = new Map<string, Record<DailyAudience, DailyChallenge>>();
+
+function rememberDay(
+  puzzleDate: string,
+  day: Record<DailyAudience, DailyChallenge>,
+): Record<DailyAudience, DailyChallenge> {
+  settledDays.set(puzzleDate, day);
+  for (const date of settledDays.keys()) {
+    if (settledDays.size <= 2) break;
+    settledDays.delete(date);
+  }
+  return day;
 }
 
 /**

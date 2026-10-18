@@ -16,6 +16,9 @@ next-env.d.ts
 /supabase/.branches
 /supabase/.temp
 
+# claude code — per-machine settings only; shared project config is committed
+/.claude/settings.local.json
+
 # misc
 .DS_Store
 /.vercel

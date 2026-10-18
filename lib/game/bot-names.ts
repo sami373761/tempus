@@ -17,19 +17,28 @@
  * `in` query over `pickBotNames`' candidates), so a bot never wears somebody's
  * name. None is a public figure, and none is a word anyone would mind seeing.
  *
+ * **The pool is thousands deep, not hundreds** (`bot-name-pool.ts`, generated
+ * from a wordlist by scripts/make-bot-names.ts). Size is the point: a name is
+ * reserved the moment a bot wears it and never released, so a small pool is
+ * one a regular player starts meeting twice — and "I have played this
+ * opponent before" is the one tell no plausible name can cover. The hand-
+ * written names below stay at the head of it because nothing generated beats
+ * them for the five languages the site speaks.
+ *
  * Pure, like lib/game/versus-bot.ts: the randomness is passed in.
  */
 
+import { BOT_NAME_POOL } from "./bot-name-pool.ts";
 import { CHRONO_RATING_RULES, CHRONO_TIER_FLOORS } from "./chrono-rating.ts";
 import { NEAR_RATING_WINDOW } from "./versus.ts";
 import type { BotLevel, Rng } from "./versus-bot.ts";
 
 /**
- * The pool. Roughly even across Turkish, English, German, French and Spanish
- * flavours, plus a handle-style tail that belongs to no language — which is
- * what a real leaderboard looks like.
+ * The hand-written names: roughly even across Turkish, English, German, French
+ * and Spanish flavours, plus a handle-style tail that belongs to no language —
+ * which is what a real leaderboard looks like.
  */
-export const BOT_NAMES: readonly string[] = Object.freeze([
+const CURATED_BOT_NAMES: readonly string[] = Object.freeze([
   // Turkish
   "mehmetcan34",
   "ayse_nur",
@@ -272,6 +281,15 @@ export const BOT_NAMES: readonly string[] = Object.freeze([
 ]);
 
 /**
+ * Every name a bot can wear: the hand-written ones, then the generated pool,
+ * de-duplicated once at load because the two lists are written by different
+ * hands and a name in both would be two chances at the same name.
+ */
+export const BOT_NAMES: readonly string[] = Object.freeze([
+  ...new Set([...CURATED_BOT_NAMES, ...BOT_NAME_POOL]),
+]);
+
+/**
  * `count` distinct names in random order — candidates, not a choice: the
  * caller takes the first one no real account holds. A partial Fisher–Yates
  * over a copy, so the pool itself is never reordered.
@@ -286,23 +304,6 @@ export function pickBotNames(rng: Rng, count: number): string[] {
   }
   return pool.slice(0, take);
 }
-
-/**
- * Chance a bot of this level appears as a guest (null name, null rating).
- *
- * Only the bottom league has any. Guests play there and nowhere else —
- * `versus_matchmake` gives a guest bottom-league lobbies only, so a middle- or
- * upper-league account never meets one — and a nameless opponent above the
- * bottom league would be a bot by elimination. The 10% first planned for the
- * middle league is therefore 0: `botDisguise` in lib/db/matches.ts already
- * refuses the disguise outside the bottom league, and the table says the same
- * thing rather than carry a number nothing could act on.
- */
-export const BOT_GUEST_CHANCE: Readonly<Record<BotLevel, number>> = Object.freeze({
-  1: 0.3,
-  2: 0,
-  3: 0,
-});
 
 /** Each league's span in KP; the upper league has no ceiling. */
 const LEAGUE_SPAN: Readonly<Record<BotLevel, { min: number; max: number }>> = {

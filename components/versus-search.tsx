@@ -11,7 +11,7 @@ import {
   type SearchPollResult,
 } from "@/app/actions/versus";
 import { SUMMARY_BUTTON } from "@/components/set-summary";
-import { ACCOUNT_PATH } from "@/lib/auth/paths";
+import { ACCOUNT_PATH, signInHref } from "@/lib/auth/paths";
 import { CHRONO_TIER_LABEL_KEYS, chronoTier } from "@/lib/game/chrono-rating";
 import {
   SEARCH_FALLBACK_MAX_MS,
@@ -356,7 +356,7 @@ export interface SeatCredentials {
 }
 
 /** Why a press did not open a search: the two the player can act on. */
-export type FindError = "failed" | "needs-username";
+export type FindError = "failed" | "needs-username" | "needs-account";
 
 /**
  * The "find opponent" press, shared by the start page and the end of an
@@ -379,8 +379,8 @@ export type FindError = "failed" | "needs-username";
  * **The match it was pressed from goes with it.** The end screen passes its
  * own seat; the start page passes the last online match this tab finished
  * (`readLastOnlineMatch`), if any. The server checks it and keeps the two
- * players of that match apart — the only way "not the same opponent twice in a
- * row" can reach a guest.
+ * players of that match apart, so "not the same opponent twice in a row" holds
+ * even across a trip home.
  */
 export function useFindOpponent(after?: StoredSeat | null): {
   find: () => void;
@@ -417,8 +417,10 @@ export function useFindOpponent(after?: StoredSeat | null): {
 
       if (!result || !result.ok) {
         setError(
-          result && result.reason === "needs-username"
-            ? "needs-username"
+          result &&
+            (result.reason === "needs-username" ||
+              result.reason === "needs-account")
+            ? result.reason
             : "failed",
         );
         setBusy(false);
@@ -452,6 +454,21 @@ export function FindOpponentError({
   t: Dict;
 }) {
   if (error === null) return null;
+
+  // A session that expired between loading the page and pressing the button.
+  if (error === "needs-account") {
+    return (
+      <p role="alert" className="text-xs text-bad">
+        {t.versusOnlineNeedsAccount}{" "}
+        <Link
+          href={signInHref("/versus")}
+          className="font-semibold text-ink underline underline-offset-4 transition hover:opacity-80"
+        >
+          {t.versusSignInToPlay}
+        </Link>
+      </p>
+    );
+  }
 
   if (error === "needs-username") {
     return (

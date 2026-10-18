@@ -1,7 +1,7 @@
 "use server";
 
 import { getCurrentUser } from "@/lib/auth/server";
-import { eventCategorySlugs, randomEvents } from "@/lib/db/queries";
+import { categorySlugLookup, randomEvents } from "@/lib/db/queries";
 import { createServerDbClient } from "@/lib/db/server";
 import type { LocalizedEvent } from "@/lib/db/types";
 import type { ComparisonGameId, SoloGame } from "@/lib/game/points";
@@ -155,7 +155,8 @@ export async function dealBasketballEvents(
  * lib/game/screen.ts for why that is a rule and not a label.
  *
  * The format is a second, small query rather than a wider view (see
- * `eventCategorySlugs`), and it is resolved **here** rather than on the client
+ * `eventCategorySlugs`), read beside the draw and kept per process
+ * (`categorySlugLookup`), and it is resolved **here** rather than on the client
  * for the same reason the pool is: `kind = 'other'` categories are not a pool
  * and could not be used to reach another game's events, but a client that had
  * to ask for them would be a client that could ask for anything else in
@@ -172,7 +173,7 @@ export async function dealScreenEvents(
 
   const locale = await readLocale();
   const supabase = await createServerDbClient();
-  const [events, userId] = await Promise.all([
+  const [events, userId, categories] = await Promise.all([
     randomEvents(supabase, {
       count: take,
       locale,
@@ -180,13 +181,10 @@ export async function dealScreenEvents(
       exclude: sanitizeExclude(exclude),
     }),
     dealtTo(),
+    categorySlugLookup(supabase, { kind: "other" }),
   ]);
 
-  const formats = await eventCategorySlugs(
-    supabase,
-    events.map((event) => event.id),
-    { kind: "other" },
-  );
+  const formats = await categories(events.map((event) => event.id));
 
   return dealDated(
     "screen",
@@ -230,7 +228,7 @@ export async function dealWhenBornEvents(
 
   const locale = await readLocale();
   const supabase = await createServerDbClient();
-  const [events, userId] = await Promise.all([
+  const [events, userId, categories] = await Promise.all([
     randomEvents(supabase, {
       count: take,
       locale,
@@ -238,13 +236,10 @@ export async function dealWhenBornEvents(
       exclude: sanitizeExclude(exclude),
     }),
     dealtTo(),
+    categorySlugLookup(supabase, { kind: "other" }),
   ]);
 
-  const fields = await eventCategorySlugs(
-    supabase,
-    events.map((event) => event.id),
-    { kind: "other" },
-  );
+  const fields = await categories(events.map((event) => event.id));
 
   return dealDated(
     "when-born",

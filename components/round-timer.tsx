@@ -103,8 +103,8 @@ const SOLO_TICK_MS = 100;
 /**
  * How long a round's clock waits for its picture before starting without it.
  *
- * The clock starts once the photograph is in, because thirty seconds spent
- * looking at a blank card are not thirty seconds of question. From question
+ * The clock starts once the photograph is in, because twenty-five seconds spent
+ * looking at a blank card are not twenty-five seconds of question. From question
  * two on the picture was pulled during the previous round and this is
  * instant; on question one it is the page's own load. Capped, so a picture
  * that never arrives cannot hold the clock open forever.
@@ -131,7 +131,7 @@ export interface SoloRoundClock {
 }
 
 /**
- * Thirty seconds per solo round (`SOLO_ROUND_SECONDS`), and what happens when
+ * Twenty-five seconds per solo round (`SOLO_ROUND_SECONDS`), and what happens when
  * they run out.
  *
  * **A wall clock, not a stopwatch.** The deadline is stamped once per round

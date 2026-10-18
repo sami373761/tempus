@@ -86,7 +86,7 @@ export const EXCLUDED_EVENT_LIMIT = 64;
  * runs out the round is locked in from whatever is on the board — see
  * `useSoloRoundClock` in components/round-timer.tsx.
  */
-export const SOLO_ROUND_SECONDS = 30;
+export const SOLO_ROUND_SECONDS = 25;
 
 /**
  * How long a round's photograph takes to dissolve into the next one's. Must

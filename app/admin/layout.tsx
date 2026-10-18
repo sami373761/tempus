@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { isAdmin } from "@/lib/auth/admin";
-import { getCurrentUser } from "@/lib/auth/server";
+import { getVerifiedUser } from "@/lib/auth/server";
 
 /**
  * Gate for every future /admin route. There are no admin pages yet, so /admin
@@ -13,7 +13,7 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getCurrentUser();
+  const user = await getVerifiedUser();
   if (!isAdmin(user)) notFound();
 
   return <section className="mx-auto max-w-5xl px-6 py-10">{children}</section>;

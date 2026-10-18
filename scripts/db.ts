@@ -52,18 +52,82 @@ function isLocalHost(url: string): boolean {
   }
 }
 
-export async function connect(): Promise<Client> {
-  const url = databaseUrl();
+/**
+ * The project's direct host `db.<ref>.supabase.co` publishes AAAA records only.
+ * From an IPv4-only network it is simply unreachable, and every script here
+ * dies on connect with ENOTFOUND or ENETUNREACH before running a statement.
+ *
+ * The session pooler answers on IPv4, speaks the same protocol and takes the
+ * same password with the project ref folded into the username — so a failure
+ * to reach the direct host is worth one retry through it rather than an error
+ * the operator has to recognise and work around. Returns null when the stored
+ * URL is not a direct Supabase host (a local cluster, or already the pooler),
+ * where there is nothing to fall back to.
+ */
+function poolerUrl(url: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+  const ref = /^db\.([a-z0-9]+)\.supabase\.co$/.exec(parsed.hostname)?.[1];
+  if (!ref) return null;
 
-  const client = new Client({
+  // The region is the project's own and cannot be derived from the direct host;
+  // TEMPUS is ap-southeast-2 (see CLAUDE.md "Known gaps" — the region is settled).
+  parsed.hostname = "aws-0-ap-southeast-2.pooler.supabase.com";
+  parsed.port = "5432";
+  parsed.username = `postgres.${ref}`;
+  return parsed.toString();
+}
+
+/** Errors that mean "this host cannot be dialled", as opposed to a refused
+ *  password or a bad database name — only these are worth a second route. */
+const UNREACHABLE = new Set([
+  "ENOTFOUND",
+  "ENETUNREACH",
+  "EHOSTUNREACH",
+  "EAI_AGAIN",
+  "ETIMEDOUT",
+]);
+
+function isUnreachable(error: unknown): boolean {
+  const code = (error as { code?: unknown } | null)?.code;
+  return typeof code === "string" && UNREACHABLE.has(code);
+}
+
+function clientFor(url: string): Client {
+  return new Client({
     connectionString: url,
     // Supabase terminates TLS with a managed cert; verification against the
     // local trust store fails, so trust the endpoint we explicitly dialled.
     ssl: isLocalHost(url) ? false : { rejectUnauthorized: false },
     statement_timeout: 120_000,
   });
-  await client.connect();
-  return client;
+}
+
+export async function connect(): Promise<Client> {
+  const url = databaseUrl();
+  const client = clientFor(url);
+
+  try {
+    await client.connect();
+    return client;
+  } catch (error) {
+    const fallback = isUnreachable(error) ? poolerUrl(url) : null;
+    if (!fallback) throw error;
+
+    // Say which route carried the connection: a script that reports the target
+    // back to the operator would otherwise name a host it never reached.
+    console.warn(
+      `db: ${new URL(url).hostname} is unreachable (${(error as { code?: string }).code}); ` +
+        "retrying through the session pooler",
+    );
+    const pooled = clientFor(fallback);
+    await pooled.connect();
+    return pooled;
+  }
 }
 
 /** Hides the password when echoing the target back to the operator. */

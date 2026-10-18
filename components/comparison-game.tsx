@@ -567,7 +567,7 @@ export function ComparisonGame({
         ? "left"
         : "right";
 
-  // Thirty seconds a round, on the picture of the event being placed. Not
+  // Twenty-five seconds a round, on the picture of the event being placed. Not
   // while a summary is up: the round underneath it has already advanced, and
   // its clock starts when the summary goes.
   const clock = useSoloRoundClock({

@@ -97,6 +97,14 @@ export const TIMELINE_PANES: PaneSet = [
 export const DEFAULT_PANE: TimelinePane = "ce";
 
 /**
+ * The default pane alone, for screens that show the backdrop but no timeline
+ * (the versus start page, its loading and error notices). Given the full set,
+ * `TimelineBackdrop` also mounts the neighbouring pane's photograph for a walk
+ * that can never happen there — a second full-bleed download for nothing.
+ */
+export const STILL_PANES: PaneSet = [DEFAULT_PANE];
+
+/**
  * The football game's pane set: one rail, football's own span.
  *
  * A subject game is played over a slice of history rather than the whole of

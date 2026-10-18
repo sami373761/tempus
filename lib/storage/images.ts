@@ -165,7 +165,7 @@ export function randomHomepageHeroUrl(): string {
 interface BackdropPlate {
   /** R2 prefix, no trailing slash. */
   folder: string;
-  /** Object name without the `-<width>.jpg` the derivatives carry. */
+  /** Object name without the `-<width>.webp` the derivatives carry. */
   base: string;
 }
 
@@ -251,13 +251,26 @@ export type BackdropWidth = (typeof BACKDROP_WIDTHS)[number];
 /** Largest stored width — the `src` a browser falls back to without `srcset`. */
 const WIDEST = BACKDROP_WIDTHS[BACKDROP_WIDTHS.length - 1]!;
 
-/** `<folder>/<base>-<width>.jpg`, the shape every backdrop derivative has. */
+/**
+ * The format every piece of derived site art is served in: backdrops, covers,
+ * board cards, the pattern and the 1v1 art.
+ *
+ * WebP at the *same pixel size* as the JPEG derivatives it replaced — a format
+ * change, never a resample, so a full-bleed backdrop is exactly as sharp as it
+ * was (measured: the three timeline/comparison plates went from 3.5 MB to
+ * ~1.1 MB together). The `.jpg` derivatives stay in the bucket beside them;
+ * `npm run art:webp` makes the `.webp` from them, and `backdrops:derive` writes
+ * both for a new plate.
+ */
+const ART_EXTENSION = "webp";
+
+/** `<folder>/<base>-<width>.webp`, the shape every backdrop derivative has. */
 function backdropObjectKey(
   folder: string,
   base: string,
   width: BackdropWidth,
 ): string {
-  return `${folder}/${base}-${width}.jpg`;
+  return `${folder}/${base}-${width}.${ART_EXTENSION}`;
 }
 
 function backdropSrcSet(folder: string, base: string): string {
@@ -345,7 +358,7 @@ function gameCoverObjectKey(
   photo: 0 | 1,
   width: (typeof GAME_COVER_WIDTHS)[number],
 ): string {
-  return `homepage/${GAME_COVER_BASE_NAMES[card][photo]}-${width}.jpg`;
+  return `homepage/${GAME_COVER_BASE_NAMES[card][photo]}-${width}.${ART_EXTENSION}`;
 }
 
 /** Largest stored width — the `src` a browser falls back to without `srcset`. */
@@ -436,29 +449,29 @@ export type BoardPhoto =
  */
 const BOARD_PHOTO_OBJECT_KEYS: Record<BoardPhoto, string> = {
   // homepage/flag-1.jpg — heraldic banners, two lions facing each other.
-  versus: "homepage/versus-card.jpg",
+  versus: `homepage/versus-card.${ART_EXTENSION}`,
   // homepage/arka-2.jpg — rock formations seen through an arch.
-  compare: "homepage/compare-card.jpg",
+  compare: `homepage/compare-card.${ART_EXTENSION}`,
   // homepage/arka-3.jpg, at its uploaded size. See above.
-  other: "homepage/other-games-card.jpg",
+  other: `homepage/other-games-card.${ART_EXTENSION}`,
   // homepage/arka-4.png — the rider of the Moscow arms, centred square crop.
-  survival: "homepage/survival-card.jpg",
-  football: "homepage/football-card.jpg",
-  basketball: "homepage/basketball-card.jpg",
+  survival: `homepage/survival-card.${ART_EXTENSION}`,
+  football: `homepage/football-card.${ART_EXTENSION}`,
+  basketball: `homepage/basketball-card.${ART_EXTENSION}`,
   // The master this was cut from is `homepage/movies-1.jpg`; the card is
   // "Film & TV" and `screen` is what the board calls it.
-  screen: "homepage/screen-card.jpg",
+  screen: `homepage/screen-card.${ART_EXTENSION}`,
   // The last three masters are the only ones not under `homepage/`: they were
   // uploaded to prefixes of their own — `invention/invention.jpg` (a filament
   // bulb), `when-born/when-born.webp` (the Confucius statue) and
   // `coming-soon/coming-soon.jpg`. The cards cut from them live here with every
   // other card, so the board stays one prefix and the dev proxy needs no new
   // entry.
-  invention: "homepage/invention-card.jpg",
-  whenBorn: "homepage/when-born-card.jpg",
+  invention: `homepage/invention-card.${ART_EXTENSION}`,
+  whenBorn: `homepage/when-born-card.${ART_EXTENSION}`,
   // The card for the modes that have no name yet, which is why it was the last
   // bare one on the board.
-  comingSoon: "homepage/coming-soon-card.jpg",
+  comingSoon: `homepage/coming-soon-card.${ART_EXTENSION}`,
 };
 
 /**
@@ -497,7 +510,7 @@ export function explorerModel(): string {
  * 2x, and a second file would only be chosen on screens that are narrower than
  * the card it is already too big for.
  */
-const SURVIVAL_STAGE_OBJECT_KEY = "homepage/survival-stage-1600.jpg";
+const SURVIVAL_STAGE_OBJECT_KEY = `homepage/survival-stage-1600.${ART_EXTENSION}`;
 
 export function boardPhotoUrl(card: BoardPhoto): string {
   return publicImageUrl(BOARD_PHOTO_OBJECT_KEYS[card]);
@@ -587,7 +600,7 @@ export function explorerArt(): Record<ExplorerArt, ExplorerImage> {
 export const ABOUT_ART_WIDTHS = [800, 1600] as const;
 
 function aboutArtObjectKey(width: (typeof ABOUT_ART_WIDTHS)[number]): string {
-  return `homepage/pattern-${width}.jpg`;
+  return `homepage/pattern-${width}.${ART_EXTENSION}`;
 }
 
 /** Largest stored width — the `src` a browser falls back to without `srcset`. */
@@ -626,7 +639,7 @@ export function aboutArtSrcSet(): string {
  * the online card's own picture — a background takes one URL, and the two
  * cards stand side by side and so load their art the same way.
  */
-const VERSUS_FRIEND_ART_OBJECT_KEY = "1v1/1v1-1600.jpg";
+const VERSUS_FRIEND_ART_OBJECT_KEY = `1v1/1v1-1600.${ART_EXTENSION}`;
 
 export function versusFriendArtUrl(): string {
   return publicImageUrl(VERSUS_FRIEND_ART_OBJECT_KEY);
@@ -656,4 +669,35 @@ export function dailyGameCoverIndex(
   const dayNumber = Math.floor(now.getTime() / 86_400_000);
   const offset = card === "comparison" ? 0 : 1;
   return ((dayNumber + offset) % 2) as 0 | 1;
+}
+
+/**
+ * Every derived art object the site loads, as served (`.webp`). The one list
+ * `scripts/art-webp.ts` converts from — so a key added to a builder above is
+ * covered by the next run without a second list to keep in step.
+ */
+export function decorativeArtKeys(): string[] {
+  const keys = new Set<string>();
+  for (const { folder, base } of Object.values(TIMELINE_BACKDROP_PLATES)) {
+    for (const width of BACKDROP_WIDTHS) {
+      keys.add(backdropObjectKey(folder, base, width));
+    }
+  }
+  for (const width of BACKDROP_WIDTHS) {
+    keys.add(
+      backdropObjectKey("comparison-game", COMPARISON_BACKDROP_BASE_NAME, width),
+    );
+  }
+  for (const card of Object.keys(GAME_COVER_BASE_NAMES) as GameCard[]) {
+    for (const photo of [0, 1] as const) {
+      for (const width of GAME_COVER_WIDTHS) {
+        keys.add(gameCoverObjectKey(card, photo, width));
+      }
+    }
+  }
+  for (const key of Object.values(BOARD_PHOTO_OBJECT_KEYS)) keys.add(key);
+  keys.add(SURVIVAL_STAGE_OBJECT_KEY);
+  for (const width of ABOUT_ART_WIDTHS) keys.add(aboutArtObjectKey(width));
+  keys.add(VERSUS_FRIEND_ART_OBJECT_KEY);
+  return [...keys].sort();
 }

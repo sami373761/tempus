@@ -28,6 +28,11 @@
  * one would ship a megabyte no browser would pick:
  *
  *   npm run backdrops:derive -- --key homepage/pattern.jpg --widths 800,1600
+ *
+ * Each width is written twice: `-<width>.jpg`, and `-<width>.webp` encoded
+ * from it at the same pixel size — the WebP is what the pages load
+ * (`ART_EXTENSION` in lib/storage/images.ts), and the JPEG is what
+ * `npm run art:webp` re-encodes from.
  */
 
 import { execFileSync } from "node:child_process";
@@ -42,6 +47,8 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
+
+import sharp from "sharp";
 
 import { loadEnvFile } from "./db.ts";
 import { BACKDROP_WIDTHS } from "../lib/storage/images.ts";
@@ -116,8 +123,16 @@ try {
       ]);
 
       const body = readFileSync(resized);
+      // Same pixels, other format: never a second resample. Quality matches
+      // scripts/art-webp.ts.
+      const webp = await sharp(body)
+        .rotate()
+        .webp({ quality: 82, effort: 6, smartSubsample: true })
+        .toBuffer();
+      const webpTarget = `${base}-${width}.webp`;
       if (dryRun) {
         console.log(`would   ${target}  ${kb(body.byteLength)}`);
+        console.log(`would   ${webpTarget}  ${kb(webp.byteLength)}`);
         continue;
       }
 
@@ -131,6 +146,16 @@ try {
         }),
       );
       console.log(`wrote  ${target}  ${kb(body.byteLength)}`);
+      await s3.send(
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: webpTarget,
+          Body: webp,
+          ContentType: "image/webp",
+          CacheControl: "public, max-age=31536000, immutable",
+        }),
+      );
+      console.log(`wrote  ${webpTarget}  ${kb(webp.byteLength)}`);
       written += 1;
     }
   }

@@ -331,6 +331,76 @@ export async function eventCategorySlugs(
   return byEvent;
 }
 
+/* Every `kind` link in one read, kept per process: the category links change
+   only when the dataset is re-seeded, and the dealers that read them used to
+   wait for the draw before asking — a second round trip on every refill. The
+   index is fetched beside the draw instead, and after the first refill it is
+   already in memory. Capped at one page: a kind that outgrows it is read per
+   draw again rather than silently truncated. */
+const CATEGORY_INDEX_TTL_MS = 10 * 60 * 1000;
+const CATEGORY_INDEX_MAX_ROWS = 1000;
+const categoryIndexes = new Map<
+  CategoryKind,
+  { at: number; index: Promise<Map<string, string[]> | null> }
+>();
+
+function readCategoryIndex(
+  client: DbClient,
+  kind: CategoryKind,
+): Promise<Map<string, string[]> | null> {
+  const cached = categoryIndexes.get(kind);
+  if (cached && Date.now() - cached.at < CATEGORY_INDEX_TTL_MS) {
+    return cached.index;
+  }
+
+  const index = Promise.resolve(
+    client
+      .from("event_category")
+      .select("event_id, category!inner(slug, kind)")
+      .eq("category.kind", kind)
+      .range(0, CATEGORY_INDEX_MAX_ROWS - 1),
+  ).then(({ data, error }) => {
+    if (error) throw error;
+    if ((data ?? []).length >= CATEGORY_INDEX_MAX_ROWS) return null;
+    const byEvent = new Map<string, string[]>();
+    for (const link of data ?? []) {
+      const slugs = byEvent.get(link.event_id);
+      if (slugs) slugs.push(link.category.slug);
+      else byEvent.set(link.event_id, [link.category.slug]);
+    }
+    return byEvent;
+  });
+
+  const entry = { at: Date.now(), index };
+  categoryIndexes.set(kind, entry);
+  // A failed read is not kept: the next refill asks again.
+  index.catch(() => {
+    if (categoryIndexes.get(kind) === entry) categoryIndexes.delete(kind);
+  });
+  return index;
+}
+
+/**
+ * `eventCategorySlugs` in two halves, so the read can start before the ids
+ * are known: call this beside the draw, then pass it the drawn ids. Falls
+ * back to the per-id query when the index is unavailable or too large.
+ */
+export async function categorySlugLookup(
+  client: DbClient,
+  options: { kind: CategoryKind },
+): Promise<(ids: readonly string[]) => Promise<Map<string, string[]>>> {
+  const index = await readCategoryIndex(client, options.kind).catch(() => null);
+  if (!index) return (ids) => eventCategorySlugs(client, ids, options);
+  return async (ids) => {
+    const byEvent = new Map<string, string[]>();
+    for (const id of ids) {
+      const slugs = index.get(id);
+      if (slugs) byEvent.set(id, slugs);
+    }
+    return byEvent;
+  };
+}
+
 export async function getEventBySlug(
   client: DbClient,
   slug: string,

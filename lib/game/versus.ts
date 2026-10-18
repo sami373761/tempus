@@ -48,7 +48,7 @@ export const ROUNDS_PER_MATCH = QUESTIONS_PER_SET;
  * flight keeps the limit it started with even across a deploy that changes
  * this number.
  */
-export const ROUND_SECONDS = 25;
+export const ROUND_SECONDS = 20;
 
 /**
  * How long both players look at the round result before the next question.
@@ -76,8 +76,8 @@ export const PUBLIC_VERSUS_MODE: VersusMode = "history";
  * How long "Opponent found" stays on screen before question one.
  *
  * Not a phase: the first round's `round_started_at` is simply stamped this far
- * in the future, and its deadline from there. So the twenty-five seconds a player
- * gets are twenty-five seconds of question, the server refuses a guess that arrives
+ * in the future, and its deadline from there. So the twenty seconds a player
+ * gets are twenty seconds of question, the server refuses a guess that arrives
  * early (`versus_submit` answers `early`), and a bot's thinking time is counted
  * from the same instant a person's is.
  */

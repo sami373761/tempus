@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 
 import { PointsLine, type SetPoints } from "@/components/solo-points";
@@ -51,6 +51,8 @@ export function SetSummary({
   otherHref,
   otherLabel,
   onPlayAgain,
+  noReplay = null,
+  note = null,
   points = null,
   t,
 }: {
@@ -63,6 +65,17 @@ export function SetSummary({
   otherHref: string;
   otherLabel: string;
   onPlayAgain: () => void;
+  /**
+   * What stands in for "Play again" when there is no again: the subject modes
+   * are three games a day, and the game that used the last one ends on the
+   * notice instead of the button (`PlayLimitNotice` in
+   * components/play-limit.tsx). Given as a node rather than a flag so this
+   * screen stays ignorant of the limit — it knows only that something else
+   * belongs in that slot.
+   */
+  noReplay?: ReactNode;
+  /** A quiet line under the buttons: in a limited mode, the games left today. */
+  note?: ReactNode;
   t: Dict;
 }) {
   const summary = summarizeSet(results);
@@ -144,14 +157,20 @@ export function SetSummary({
 
         {summary.byVerdict && <Breakdown byVerdict={summary.byVerdict} t={t} />}
 
+        {/* Above the buttons, not among them: it is the reason the first of
+            them is missing, and it carries its own action for a guest. */}
+        {noReplay}
+
         <div className="flex flex-col gap-2.5">
-          <button
-            type="button"
-            onClick={onPlayAgain}
-            className={`${SUMMARY_BUTTON} bg-ink text-page hover:opacity-85`}
-          >
-            {t.playAgain}
-          </button>
+          {!noReplay && (
+            <button
+              type="button"
+              onClick={onPlayAgain}
+              className={`${SUMMARY_BUTTON} bg-ink text-page hover:opacity-85`}
+            >
+              {t.playAgain}
+            </button>
+          )}
 
           <ShareButton
             buildText={() =>
@@ -186,6 +205,8 @@ export function SetSummary({
         <Link href={otherHref} className={SUMMARY_LINK}>
           {otherLabel}
         </Link>
+
+        {note}
       </div>
     </div>
   );

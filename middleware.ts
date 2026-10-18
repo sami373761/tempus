@@ -50,9 +50,15 @@ export async function middleware(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  /* `getClaims`, not `getUser`: the token's signature is checked locally
+     against the project's ES256 keys, where `getUser` was a ~400 ms round trip
+     to Supabase Auth in front of every page and every deal. An expired token
+     is still refreshed here (it goes through `getSession`), which is the half
+     of this file the cookie depends on. A session revoked elsewhere passes
+     until its token expires; the pages that care re-check (`requireAccount`
+     is the boundary, `getVerifiedUser` the strict read). */
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims.sub ? data.claims : null;
 
   const { pathname, search } = request.nextUrl;
 

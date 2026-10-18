@@ -15,6 +15,13 @@ import {
   VerdictDeckRow,
   VerdictFlank,
 } from "@/components/round-flank";
+import {
+  isPlayLimitRefusal,
+  PlayLimitLeft,
+  PlayLimitNotice,
+  PlayLimitPanel,
+  usePlayLimit,
+} from "@/components/play-limit";
 import { RoundHead } from "@/components/round-head";
 import { SoloRoundTimer, useSoloRoundClock } from "@/components/round-timer";
 import { SetProgress, SetSummary } from "@/components/set-summary";
@@ -46,6 +53,7 @@ import {
   ROUND_QUEUE_DEPTH,
   ROUND_QUEUE_TARGET,
 } from "@/lib/game/rounds";
+import type { PlayAllowance } from "@/lib/game/play-limit";
 import { gradeGuess, type BandSet } from "@/lib/game/scoring";
 import {
   QUESTIONS_PER_SET,
@@ -138,6 +146,7 @@ export function TimelineGame({
   otherLabel,
   railHeading = true,
   headBlurb = null,
+  allowance = null,
 }: {
   /** Masked and signed: the year arrives with the reply to a guess. */
   events: DealtEvent[];
@@ -192,6 +201,14 @@ export function TimelineGame({
    * second heading over a screen that already deleted its first.
    */
   headBlurb?: string | null;
+  /**
+   * The player's standing in this mode today, where the mode has a daily
+   * limit (football and basketball do; `/guess` does not and passes null).
+   * The page has already refused to deal when the day is spent — see
+   * lib/game/play-limit.ts — so this is what the *second* set of a session is
+   * checked against.
+   */
+  allowance?: PlayAllowance | null;
 }) {
   const [pane, setPane] = useState<TimelinePane>(homePane);
   // One position per pane: panning away and back should not lose the marker.
@@ -218,6 +235,7 @@ export function TimelineGame({
   const [sending, setSending] = useState(false);
   const [failed, setFailed] = useState(false);
   const solo = useSoloSet();
+  const limit = usePlayLimit({ setId: solo.setId, allowance });
   const [refillAttempt, setRefillAttempt] = useState(0);
   // Latched when the player presses "Next round" before the queue has a round
   // to give them. With the queue kept a round ahead (`ROUND_QUEUE_TARGET`)
@@ -496,6 +514,12 @@ export function TimelineGame({
     const round = event;
     try {
       const result = await revealDateRound(round.token, guessed, solo.setId);
+      // The daily limit travels with every reveal, refusals included: a
+      // subject mode's reveal is where a game is counted (see `usePlayLimit`).
+      limit.record(result);
+      // A spent day is not a failure and must not be handed back as one —
+      // there is no guess to retry. The panel above has already taken over.
+      if (isPlayLimitRefusal(result)) return;
       if (!result.ok) throw new Error(result.reason);
       // Only if the round on screen is still the one that was asked about: a
       // reply cannot land on a question the player has moved past.
@@ -646,7 +670,7 @@ export function TimelineGame({
   // the one name the markup below branches on.
   const subject = !railHeading;
 
-  // Thirty seconds a round. Not while the summary is up: the round under it
+  // Twenty-five seconds a round. Not while the summary is up: the round under it
   // has already advanced, and its clock starts when the summary goes.
   const clock = useSoloRoundClock({
     round: event?.token ?? null,
@@ -656,6 +680,22 @@ export function TimelineGame({
   });
 
   if (!event) return null;
+
+  // The ledger refused this set — a second tab, or a "Play again" that raced
+  // the count. The game comes off the screen rather than being played out: at
+  // this point it is a game the day does not have.
+  if (limit.blocked && limit.allowance) {
+    return (
+      <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-4 sm:gap-5">
+        <TimelineBackdrop pane={homePane} panes={panes} />
+        <PlayLimitPanel
+          allowance={limit.allowance}
+          title={title ?? t.timelineTitle}
+          t={t}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-4 sm:gap-5">
@@ -683,6 +723,18 @@ export function TimelineGame({
             setPlayed([]);
             solo.reset();
           }}
+          // A spent day takes the "Play again" button off and puts the reason
+          // in its place — for a guest, with the one thing that changes it.
+          noReplay={
+            limit.allowance && limit.left === 0 ? (
+              <PlayLimitNotice allowance={limit.allowance} t={t} />
+            ) : null
+          }
+          note={
+            limit.allowance ? (
+              <PlayLimitLeft allowance={limit.allowance} t={t} />
+            ) : null
+          }
           points={solo.points}
           t={t}
         />

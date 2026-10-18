@@ -120,9 +120,9 @@ type MatrixRow = readonly [
  * The modernist's row is its average — see `tierWeightsFor`, which bends it by
  * era. Each row sums to 100; the check script asserts it.
  *
- * The think windows all close well inside `ROUND_SECONDS` (25 s) because
+ * The think windows all close well inside `ROUND_SECONDS` (20 s) because
  * `versus_reconcile()` only commits an answer whose moment falls before the
- * deadline — a bot that thought for 26 seconds would simply time out.
+ * deadline — a bot that thought for 21 seconds would simply time out.
  */
 const CHARACTER_MATRIX: Readonly<
   Record<BotArchetype, Readonly<Record<BotLevel, MatrixRow>>>

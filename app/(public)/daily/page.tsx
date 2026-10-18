@@ -3,10 +3,10 @@ import type { Metadata } from "next";
 import { DailyGame } from "@/components/daily-game";
 import { getCurrentUser } from "@/lib/auth/server";
 import { createAdminDbClient } from "@/lib/db/admin";
+import { readDailyQuestionsCached } from "@/lib/db/cached";
 import {
   ensureDailyChallenges,
   readDailyAttempt,
-  readDailyQuestions,
   NO_DAILY_ATTEMPT,
 } from "@/lib/db/daily";
 import { createServerDbClient } from "@/lib/db/server";
@@ -17,7 +17,8 @@ import { maskedImageUrl } from "@/lib/storage/masked-image";
 
 // The day's state is per-request and per-player: which audience is asking,
 // whether they have already played, and whether today's challenges have been
-// drawn yet. None of that can be cached.
+// drawn yet. None of that can be cached as a page — the questions themselves
+// are, as data.
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -67,17 +68,22 @@ export default async function DailyPage() {
   const puzzleDate = dailyPuzzleDate();
 
   const challenges = await ensureDailyChallenges(admin, puzzleDate);
-  const questions = challenges
-    ? await readDailyQuestions(admin, challenges[audience], locale)
-    : null;
 
-  // A member's attempt is the one-attempt rule and the resume point in one
-  // row. A guest's lives in their browser, so the server has nothing to say
-  // about it and the component reads it on mount.
-  const attempt =
-    user && questions
-      ? await readDailyAttempt(await createServerDbClient(), user.id, puzzleDate)
-      : NO_DAILY_ATTEMPT;
+  // The questions are everybody's (cached, lib/db/cached.ts); the attempt is
+  // this member's and is read live, beside them rather than after. A member's
+  // attempt is the one-attempt rule and the resume point in one row. A guest's
+  // lives in their browser, so the server has nothing to say about it and the
+  // component reads it on mount.
+  const [questions, attempt] = challenges
+    ? await Promise.all([
+        readDailyQuestionsCached(challenges[audience], locale),
+        user
+          ? createServerDbClient().then((client) =>
+              readDailyAttempt(client, user.id, puzzleDate),
+            )
+          : NO_DAILY_ATTEMPT,
+      ])
+    : [null, NO_DAILY_ATTEMPT];
 
   // The questions whose prose may cross the wire: the ones that are already
   // over. Always empty for a guest — their attempt is in their browser, and so

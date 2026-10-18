@@ -43,6 +43,7 @@ export function BadgeFrame({
   holeContent,
   artworkStyle,
   align = "frame",
+  loading,
   className = "",
 }: {
   badge: Badge;
@@ -72,6 +73,12 @@ export function BadgeFrame({
    * of badges wants: see the note above.
    */
   align?: "frame" | "ring";
+  /**
+   * `"lazy"` for a badge below the fold. React promotes every eager `<img>`
+   * it renders on the server to a high-priority preload, so an eager badge at
+   * the bottom of the home page competes with the picture at the top.
+   */
+  loading?: "lazy" | "eager";
   className?: string;
 }) {
   const { w, h, x, y } = badge.frame;
@@ -113,6 +120,7 @@ export function BadgeFrame({
           src={avatarSrc}
           alt=""
           aria-hidden="true"
+          loading={loading}
           className="absolute rounded-full object-cover"
           style={hole}
         />
@@ -134,6 +142,7 @@ export function BadgeFrame({
         src={badge.src}
         alt=""
         aria-hidden="true"
+        loading={loading}
         style={artworkStyle}
         className="pointer-events-none absolute inset-0 h-full w-full select-none object-contain"
       />

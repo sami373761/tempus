@@ -24,7 +24,6 @@
  */
 
 import {
-  BOT_GUEST_CHANCE,
   BOT_NAMES,
   botShownRating,
   pickBotNames,
@@ -343,7 +342,11 @@ for (const archetype of BOT_ARCHETYPES) {
    --------------------------------------------------------------------------- */
 
 {
-  if (BOT_NAMES.length < 180) fail(`only ${BOT_NAMES.length} bot names`);
+  // The generated pool is 8,000 of these; a run that found only the hand-
+  // written few hundred means bot-name-pool.ts was lost or truncated, which
+  // nothing else would notice until players started meeting the same opponent
+  // twice.
+  if (BOT_NAMES.length < 8_000) fail(`only ${BOT_NAMES.length} bot names`);
   if (new Set(BOT_NAMES).size !== BOT_NAMES.length) {
     const seen = new Set<string>();
     for (const name of BOT_NAMES) {
@@ -361,13 +364,6 @@ for (const archetype of BOT_ARCHETYPES) {
     if (picked.some((name) => !pool.has(name))) fail("pickBotNames invented a name");
   }
   if (pickBotNames(rng, BOT_NAMES.length + 5).length !== BOT_NAMES.length) fail("pickBotNames overran the pool");
-
-  // Guests only ever play the bottom league, so a nameless opponent anywhere
-  // else would be a bot by elimination.
-  const chances: Record<BotLevel, number> = { 1: 0.3, 2: 0, 3: 0 };
-  for (const level of LEVELS) {
-    if (BOT_GUEST_CHANCE[level] !== chances[level]) fail(`BOT_GUEST_CHANCE[${level}] = ${BOT_GUEST_CHANCE[level]}`);
-  }
 
   const hosts: Record<BotLevel, (number | null)[]> = {
     1: [null, 0, 4, 120, 280, 299],

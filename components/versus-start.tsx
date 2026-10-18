@@ -16,7 +16,7 @@ import {
   CHRONO_TIER_LABEL_KEYS,
   type ChronoStanding,
 } from "@/lib/game/chrono-rating";
-import { DEFAULT_PANE } from "@/lib/game/timeline";
+import { DEFAULT_PANE, STILL_PANES } from "@/lib/game/timeline";
 import {
   VERSUS_MODE_SPEC,
   VERSUS_MODES,
@@ -51,8 +51,8 @@ import { format, type Dict } from "@/lib/i18n/dictionary";
  *
  * **The online card says where the player stands before they press.** A
  * signed-in player is shown their Chrono Rating and league, which is what the
- * search will match on; a guest is told the one thing they are giving up — a
- * guest's results are not kept — with the sign-in link that changes it. The
+ * search will match on. Online play needs an account, so a guest is told so
+ * and the card's button is the way to sign in rather than a search. The
  * standing is read on the server because the rating lives on the profile row,
  * which this Client Component has no business querying; on both doors it rides
  * in the read the chrome already makes (`readProfileChrome`).
@@ -120,7 +120,7 @@ export function VersusStart({
     // reaches. `my-auto` centres while there is room and gives way when there
     // is not, so the page's own scroll gets the overflow.
     <div className="flex w-full flex-1 flex-col items-center">
-      <TimelineBackdrop pane={DEFAULT_PANE} />
+      <TimelineBackdrop pane={DEFAULT_PANE} panes={STILL_PANES} />
 
       <div className="my-auto flex w-full max-w-5xl flex-col gap-4 py-2 md:gap-5">
         <VersusChoice
@@ -471,43 +471,49 @@ function OnlineCard({
             </p>
           ) : !signedIn ? (
             <p className="mt-4 text-sm text-white/65">
-              {t.versusGuestRatingHint}{" "}
-              <Link
-                href={signInHref("/versus")}
-                className="font-semibold text-ink underline underline-offset-4 transition hover:opacity-80"
-              >
-                {t.versusSignInForRating}
-              </Link>
+              {t.versusOnlineNeedsAccount}
             </p>
           ) : null}
         </div>
 
         <div className="flex w-full shrink-0 flex-col items-center gap-2 md:w-auto md:items-end">
-          <button
-            type="button"
-            onClick={find}
-            aria-busy={busy}
-            // Never `disabled` while busy: the hook already refuses a second
-            // press, and a disabled button drops focus to the document.
-            // Capped below `md` like "Play a friend": stacked, the column is
-            // the page's width, and between 640 and 767px a full-width button
-            // was a bar rather than a button.
-            className={`relative w-full max-w-sm rounded-full border border-transparent bg-ink px-8 py-3 text-sm font-semibold text-page transition hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:w-auto md:min-w-[14rem] md:max-w-none ${
-              busy ? "cursor-progress" : ""
-            }`}
-          >
-            {t.versusFindButton}
-            {/* The board's loading trace, as on the mode cards: opening a
-                search is a round trip, and a button that looked unpressed
-                for a second reads as one that did nothing. */}
-            {busy && (
-              <span aria-hidden="true" className="round-trace">
-                <i />
-                <i />
-                <i />
-              </span>
-            )}
-          </button>
+          {signedIn ? (
+            <button
+              type="button"
+              onClick={find}
+              aria-busy={busy}
+              // Never `disabled` while busy: the hook already refuses a second
+              // press, and a disabled button drops focus to the document.
+              // Capped below `md` like "Play a friend": stacked, the column is
+              // the page's width, and between 640 and 767px a full-width button
+              // was a bar rather than a button.
+              className={`relative w-full max-w-sm rounded-full border border-transparent bg-ink px-8 py-3 text-sm font-semibold text-page transition hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:w-auto md:min-w-[14rem] md:max-w-none ${
+                busy ? "cursor-progress" : ""
+              }`}
+            >
+              {t.versusFindButton}
+              {/* The board's loading trace, as on the mode cards: opening a
+                  search is a round trip, and a button that looked unpressed
+                  for a second reads as one that did nothing. */}
+              {busy && (
+                <span aria-hidden="true" className="round-trace">
+                  <i />
+                  <i />
+                  <i />
+                </span>
+              )}
+            </button>
+          ) : (
+            /* The same filled button, so the card does not change shape for a
+               guest — it only leads somewhere else first. `next` brings them
+               back here to press it. */
+            <Link
+              href={signInHref("/versus")}
+              className="relative w-full max-w-sm rounded-full border border-transparent bg-ink px-8 py-3 text-center text-sm font-semibold text-page transition hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:w-auto md:min-w-[14rem] md:max-w-none"
+            >
+              {t.versusSignInToPlay}
+            </Link>
+          )}
           <FindOpponentError error={error} t={t} />
         </div>
       </div>

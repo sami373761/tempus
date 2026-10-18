@@ -1,17 +1,20 @@
 "use server";
 
 import { after } from "next/server";
-import type { User } from "@supabase/supabase-js";
 
-import { getCurrentUser } from "@/lib/auth/server";
+import { getCurrentUser, type SessionUser } from "@/lib/auth/server";
 import { isBadgeSlug } from "@/lib/badges";
 import { createAdminDbClient } from "@/lib/db/admin";
 import {
-  badgesEarnedDuringSet,
   bankSoloRound,
   refreshBadges,
   setWornBadge,
 } from "@/lib/db/scoring";
+import {
+  allowRound,
+  type RoundAllowance,
+} from "@/lib/game/play-ledger";
+import { isLimitedGame } from "@/lib/game/play-limit";
 import {
   comparisonPoints,
   DATE_GAMES,
@@ -88,10 +91,22 @@ export async function revealDateRound(
 
   try {
     const admin = createAdminDbClient();
-    const [dates, user] = await Promise.all([
+    // All three in one wait. The limit is read beside the date rather than
+    // before it, so the four limited modes cost the same round trip as the
+    // unlimited ones — see the note on `allowRound`.
+    const [dates, user, play] = await Promise.all([
       readDates(admin, claims.eventIds),
       dealtAccount(claims),
+      allowRoundOf(claims, setId),
     ]);
+
+    // The day's games are spent. Nothing is revealed and nothing is banked:
+    // this is the gate a client cannot skip, because a guess it cannot send
+    // for grading is a guess it cannot have an answer to.
+    if (play && !play.ok) {
+      return { ok: false, reason: "play-limit", plays: play.allowance };
+    }
+
     const date = dates.get(claims.eventIds[0]!);
     if (!date) return { ok: false, reason: "failed" };
 
@@ -105,7 +120,15 @@ export async function revealDateRound(
       tp,
     });
 
-    return { ok: true, date, verdict, correct, tp, banked };
+    return {
+      ok: true,
+      date,
+      verdict,
+      correct,
+      tp,
+      banked,
+      plays: play?.allowance ?? null,
+    };
   } catch (error) {
     console.error("revealDateRound failed", error);
     return { ok: false, reason: "failed" };
@@ -248,16 +271,42 @@ async function readDates(
  * one the round was dealt to. Read alongside the event's date rather than
  * after it — each is a round trip to the database's region.
  */
-async function dealtAccount(claims: RoundClaims): Promise<User | null> {
+async function dealtAccount(claims: RoundClaims): Promise<SessionUser | null> {
   if (!claims.userId) return null;
   const user = await getCurrentUser();
   return user && user.id === claims.userId ? user : null;
 }
 
+/**
+ * Whether this round may be played at all: the subject modes are three games a
+ * day, one for a guest (lib/game/play-limit.ts).
+ *
+ * Null in every other game, which is what makes this the whole of the limit's
+ * presence on this path — the four modes are a list in one module rather than
+ * a branch in each caller.
+ *
+ * **Whose game it is comes from the token, not the session.** `claims.userId`
+ * is the account the round was dealt to, so a round is counted against that
+ * account however the tab's session has moved since — the same reasoning as
+ * `dealtAccount`, which asks a different question (may it be *paid*).
+ */
+async function allowRoundOf(
+  claims: RoundClaims,
+  setId: string | null,
+): Promise<RoundAllowance | null> {
+  if (!isLimitedGame(claims.game)) return null;
+  return allowRound(
+    claims.game,
+    setId,
+    claims.roundId,
+    claims.userId ?? null,
+  );
+}
+
 async function bankIfMember(
   admin: Admin,
   claims: RoundClaims,
-  user: User | null,
+  user: SessionUser | null,
   setId: string | null,
   graded: { verdict: Verdict; correct: boolean; tp: number },
 ): Promise<BankedRound | null> {
@@ -282,26 +331,23 @@ async function bankIfMember(
   const { setClosed, ...round } = banked;
 
   /*
-   * Badges are re-measured after every payout, but **not before the reply**:
-   * the refresh is three or four more round trips, and a player waiting on a
-   * reveal is waiting on exactly this request. So mid-set it runs after the
-   * response (`after`), and the set's last round — where the summary that
-   * announces badges is about to be drawn — waits for it and reports every
-   * badge unlocked since the set began, the deferred ones included.
+   * Badges are re-measured after every payout, but **never before the
+   * reply**: the refresh is three or four more round trips, and a player
+   * waiting on a reveal is waiting on exactly this request. Mid-set it runs
+   * after the response (`after`). The set's last round does not refresh at
+   * all — it says the badges are pending, and the summary asks
+   * `/api/set-badges`, which refreshes and reports every badge unlocked since
+   * the set began, the deferred ones included. The summary opens on this
+   * reply alone instead of waiting ~2 s for the announcement.
    *
    * A payout of nothing changes nothing a rule reads (a correct answer always
    * pays), so it skips the refresh. Failures are logged, never thrown: the
-   * round is already banked, and /achievements refreshes on every visit.
+   * round is already banked, and /achievements re-measures on every visit.
    */
-  let newBadges: BankedRound["newBadges"] = [];
   if (round.counted && setClosed) {
-    try {
-      await refreshBadges(admin, user.id);
-      newBadges = await badgesEarnedDuringSet(admin, user.id, setId);
-    } catch (error) {
-      console.error("refreshBadges at set end failed", error);
-    }
-  } else if (round.counted && round.tp + round.bonus > 0) {
+    return { ...round, newBadges: [], badgesPending: true };
+  }
+  if (round.counted && round.tp + round.bonus > 0) {
     after(async () => {
       try {
         await refreshBadges(admin, user.id);
@@ -311,5 +357,5 @@ async function bankIfMember(
     });
   }
 
-  return { ...round, newBadges };
+  return { ...round, newBadges: [] };
 }

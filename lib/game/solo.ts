@@ -17,6 +17,7 @@
 
 import type { BadgeSlug } from "../badges.ts";
 import type { DatePrecision, LocalizedEvent } from "../db/types.ts";
+import type { PlayAllowance } from "./play-limit.ts";
 import type { ComparisonRound } from "./rounds.ts";
 import type { Verdict } from "./scoring.ts";
 
@@ -102,6 +103,11 @@ export interface BankedRound {
   setTp: number;
   /** Badges this round's payout unlocked, bottom rung first. */
   newBadges: BadgeSlug[];
+  /**
+   * The round closed its set and the set's badges are still being measured:
+   * the summary fetches them from `/api/set-badges` (see `useSoloSet`).
+   */
+  badgesPending?: boolean;
 }
 
 export type RevealResult =
@@ -116,5 +122,21 @@ export type RevealResult =
       banked: BankedRound | null;
       /** A comparison round's three dates; absent for a date round. */
       comparison?: RevealedComparison;
+      /**
+       * Where this player now stands in a subject mode's three-a-day limit
+       * (lib/game/play-limit.ts). Null in the games that have no limit, which
+       * is how the screen knows not to print one.
+       */
+      plays?: PlayAllowance | null;
     }
-  | { ok: false; reason: "bad-token" | "bad-input" | "failed" };
+  | {
+      ok: false;
+      /**
+       * `play-limit` is the day's games being spent — the server-side half of
+       * the limit, and the only refusal here that is not a failure. The screen
+       * answers it with the notice rather than with "try again"; see
+       * `usePlayLimit`.
+       */
+      reason: "bad-token" | "bad-input" | "failed" | "play-limit";
+      plays?: PlayAllowance | null;
+    };
