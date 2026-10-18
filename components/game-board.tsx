@@ -3,6 +3,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link, { useLinkStatus } from "next/link";
 
+import { VersusDialog } from "@/components/versus-dialog";
+import type { VersusChoiceProps } from "@/components/versus-start";
 import type { Dict } from "@/lib/i18n/dictionary";
 import type { BoardPhoto } from "@/lib/storage/images";
 
@@ -78,6 +80,7 @@ export function GameBoard({
   dailyCover,
   guessCover,
   photos,
+  versus,
 }: {
   t: Dict;
   /** The date-guessing game's common-era backdrop, reused as the Daily card's
@@ -93,8 +96,17 @@ export function GameBoard({
    *  server like `guessCover` — a record of strings crosses the boundary
    *  rather than the whole of `lib/storage/images`. */
   photos: Record<BoardPhoto, string>;
+  /** Everything the 1v1 window needs, resolved on the server for the reason
+   *  the photographs above are: the art lives in `lib/storage/images` and the
+   *  standing on the profile row, and neither is a client's to read. The
+   *  dictionary is this component's own, so it is not in here twice. */
+  versus: Omit<VersusChoiceProps, "t">;
 }) {
   const [view, setView] = useState<View>("play");
+  /* The 1v1 window, which the card below opens in place rather than
+     navigating to it. False until the first press, and the dialog is not in
+     the tree at all until then — see components/versus-dialog.tsx. */
+  const [duel, setDuel] = useState(false);
   // Bumped on every swap so the card stagger can be replayed by remounting the
   // view's contents — a CSS animation that has already finished does not run
   // again merely because its element became visible. Zero is the first paint,
@@ -180,191 +192,214 @@ export function GameBoard({
   }, [swaps]);
 
   return (
-    /* `@container` is what lets a cover card's *height* be solved from the
-       board's own width — see `CoverCard`. The width cap is the shared token,
-       because the masthead row above reads it too. */
-    <div
-      ref={board}
-      data-measured={cellHeight !== null || undefined}
-      data-swapping={swapping || undefined}
-      style={
-        cellHeight === null
-          ? undefined
-          : ({ "--board-cell-h": `${cellHeight}px` } as React.CSSProperties)
-      }
-      className="board-cell @container grid w-full max-w-[var(--board-w)]"
-    >
-      {/* Six columns rather than four, because the row under the covers is
-          three tiles wide now that survival has moved into the other view: a
-          cover spans three of them and a tile two, so both rows still end flush
-          with the board's edges. The tiles are the wider for it — a third of
-          the board at the games cards' height — which is the only shape on the
-          board that is not square, and is what lets the two views stay the same
-          width as well as the same height. */}
-      <BoardView
-        active={view === "play"}
-        swaps={swaps}
-        columns={6}
-        viewRef={playView}
+    <>
+      {/* `@container` is what lets a cover card's *height* be solved from the
+          board's own width — see `CoverCard`. The width cap is the shared
+          token, because the masthead row above reads it too.
+
+          The window below is a sibling of it, not a child: a container query
+          context is also a containing block for anything `fixed` inside it,
+          which would have pinned a full-screen dialog to the board's own box. */}
+      <div
+        ref={board}
+        data-measured={cellHeight !== null || undefined}
+        data-swapping={swapping || undefined}
+        style={
+          cellHeight === null
+            ? undefined
+            : ({ "--board-cell-h": `${cellHeight}px` } as React.CSSProperties)
+        }
+        className="board-cell @container grid w-full max-w-[var(--board-w)]"
       >
-        <CoverCard
-          href="/daily"
-          title={t.dailyTitle}
-          kicker={t.timelineTitle}
-          icon={<CalendarIcon />}
-          photo={dailyCover}
-          blurb={t.cardDailyBlurb}
-          index={0}
-        />
-        <CoverCard
-          href="/guess"
-          title={t.timelineTitle}
-          icon={<MarkerIcon />}
-          photo={guessCover}
-          /* The instruction the game's own screen carries, rather than a second
-             sentence about the same game in five languages. */
-          blurb={t.timelineBlurb}
-          index={1}
-        />
-        <BoardCard
-          href="/versus"
-          title={t.duelTitle}
-          blurb={t.cardDuelBlurb}
-          kicker={t.timelineTitle}
-          icon={<SwordsIcon />}
-          photo={photos.versus}
-          span="wide"
-          index={2}
-        />
-        <BoardCard
-          href="/compare"
-          title={t.comparisonTitle}
-          blurb={t.comparisonBlurb}
-          icon={<ScalesIcon />}
-          photo={photos.compare}
-          span="wide"
-          index={3}
-        />
-        {/* `span="full"` rather than `"wide"` only matters under `md`, where
-            the grid is two columns and this is the odd third tile: spanning
-            both keeps the row flush instead of leaving a half-width hole. At
-            six columns it is two of them like its neighbours. */}
-        <BoardCard
-          onClick={(event) => show("games", event)}
-          title={t.otherGamesTitle}
-          blurb={t.cardOtherBlurb}
-          icon={<GridIcon />}
-          photo={photos.other}
-          span="full"
-          index={4}
-        />
-      </BoardView>
+        {/* Six columns rather than four, because the row under the covers is
+            three tiles wide now that survival has moved into the other view: a
+            cover spans three of them and a tile two, so both rows still end flush
+            with the board's edges. The tiles are the wider for it — a third of
+            the board at the games cards' height — which is the only shape on the
+            board that is not square, and is what lets the two views stay the same
+            width as well as the same height. */}
+        <BoardView
+          active={view === "play"}
+          swaps={swaps}
+          columns={6}
+          viewRef={playView}
+        >
+          <CoverCard
+            href="/daily"
+            title={t.dailyTitle}
+            kicker={t.timelineTitle}
+            icon={<CalendarIcon />}
+            photo={dailyCover}
+            blurb={t.cardDailyBlurb}
+            index={0}
+          />
+          <CoverCard
+            href="/guess"
+            title={t.timelineTitle}
+            icon={<MarkerIcon />}
+            photo={guessCover}
+            /* The instruction the game's own screen carries, rather than a second
+               sentence about the same game in five languages. */
+            blurb={t.timelineBlurb}
+            index={1}
+          />
+          {/* The one card on the board that answers its own press: the two
+              ways into head-to-head open over the page rather than a route
+              away — see components/versus-dialog.tsx for why the choice is
+              worth no page load. The `href` stays, so every other way of
+              following a link still lands on `/versus`. */}
+          <BoardCard
+            href="/versus"
+            onOpen={() => setDuel(true)}
+            title={t.duelTitle}
+            blurb={t.cardDuelBlurb}
+            kicker={t.timelineTitle}
+            icon={<SwordsIcon />}
+            photo={photos.versus}
+            span="wide"
+            index={2}
+          />
+          <BoardCard
+            href="/compare"
+            title={t.comparisonTitle}
+            blurb={t.comparisonBlurb}
+            icon={<ScalesIcon />}
+            photo={photos.compare}
+            span="wide"
+            index={3}
+          />
+          {/* `span="full"` rather than `"wide"` only matters under `md`, where
+              the grid is two columns and this is the odd third tile: spanning
+              both keeps the row flush instead of leaving a half-width hole. At
+              six columns it is two of them like its neighbours. */}
+          <BoardCard
+            onClick={(event) => show("games", event)}
+            swap
+            title={t.otherGamesTitle}
+            blurb={t.cardOtherBlurb}
+            icon={<GridIcon />}
+            photo={photos.other}
+            span="full"
+            index={4}
+          />
+        </BoardView>
 
-      <BoardView
-        active={view === "games"}
-        swaps={swaps}
-        columns={4}
-        viewRef={gamesView}
-      >
-        {/* Survival leads this view, and it is now the one card in it that is
-            built — it kept the slot it took from the three that were being
-            held open, rather than moving to the play view, because this is
-            still where a player looks for a mode that is not one of the two
-            headline games.
+        <BoardView
+          active={view === "games"}
+          swaps={swaps}
+          columns={4}
+          viewRef={gamesView}
+        >
+          {/* Survival leads this view, and it is now the one card in it that is
+              built — it kept the slot it took from the three that were being
+              held open, rather than moving to the play view, because this is
+              still where a player looks for a mode that is not one of the two
+              headline games.
 
-            **Its kicker is the comparison round, not the date-guessing one.**
-            The kicker names the game a mode is played over, and survival is
-            the comparison round with no set of ten around it (see
-            app/(public)/survival/page.tsx) — it was labelled date guessing
-            while it was only a name on a card. */}
-        <BoardCard
-          href="/survival"
-          title={t.survivalTitle}
-          blurb={t.cardSurvivalBlurb}
-          kicker={t.comparisonTitle}
-          icon={<HeartIcon />}
-          photo={photos.survival}
-          index={0}
-        />
-        <BoardCard
-          href="/football"
-          title={t.footballTitle}
-          blurb={t.cardFootballBlurb}
-          kicker={t.timelineTitle}
-          icon={<FootballIcon />}
-          photo={photos.football}
-          index={1}
-        />
-        <BoardCard
-          href="/basketball"
-          title={t.basketballTitle}
-          blurb={t.cardBasketballBlurb}
-          kicker={t.timelineTitle}
-          icon={<BasketballIcon />}
-          photo={photos.basketball}
-          index={2}
-        />
-        <BoardCard
-          href="/screen"
-          title={t.screenTitle}
-          blurb={t.cardScreenBlurb}
-          kicker={t.timelineTitle}
-          icon={<ClapperIcon />}
-          photo={photos.screen}
-          index={3}
-        />
-        {/* The last two slots stood empty until 2026-10-06. They are named
-            now, which leaves the view eight cards with nothing held open: the
-            board's shape is settled and the two that mean something — what is
-            coming and the way back — are still in the corner the eye knows.
+              **Its kicker is the comparison round, not the date-guessing one.**
+              The kicker names the game a mode is played over, and survival is
+              the comparison round with no set of ten around it (see
+              app/(public)/survival/page.tsx) — it was labelled date guessing
+              while it was only a name on a card. */}
+          <BoardCard
+            href="/survival"
+            title={t.survivalTitle}
+            blurb={t.cardSurvivalBlurb}
+            kicker={t.comparisonTitle}
+            icon={<HeartIcon />}
+            photo={photos.survival}
+            index={0}
+          />
+          <BoardCard
+            href="/football"
+            title={t.footballTitle}
+            blurb={t.cardFootballBlurb}
+            kicker={t.timelineTitle}
+            icon={<FootballIcon />}
+            photo={photos.football}
+            index={1}
+          />
+          <BoardCard
+            href="/basketball"
+            title={t.basketballTitle}
+            blurb={t.cardBasketballBlurb}
+            kicker={t.timelineTitle}
+            icon={<BasketballIcon />}
+            photo={photos.basketball}
+            index={2}
+          />
+          <BoardCard
+            href="/screen"
+            title={t.screenTitle}
+            blurb={t.cardScreenBlurb}
+            kicker={t.timelineTitle}
+            icon={<ClapperIcon />}
+            photo={photos.screen}
+            index={3}
+          />
+          {/* The last two slots stood empty until 2026-10-06. They are named
+              now, which leaves the view eight cards with nothing held open: the
+              board's shape is settled and the two that mean something — what is
+              coming and the way back — are still in the corner the eye knows.
 
-            **Born When? leads this pair and Inventions follows it**, which is
-            the order the two modes are actually in: the first row of this view
-            is the four that can be played, and this slot is the fifth of them.
-            Inventions has moved down into the unbuilt half of the view, beside
-            the card that stands for everything else still being written. */}
-        <BoardCard
-          href="/when-born"
-          title={t.whenBornTitle}
-          blurb={t.cardWhenBornBlurb}
-          kicker={t.timelineTitle}
-          icon={<PersonIcon />}
-          photo={photos.whenBorn}
-          index={4}
-        />
-        {/* The one card on the board that says so across its whole face rather
-            than with a chip in the corner. See `veil` on `BoardCard`: the
-            chip was read as decoration beside three live cards wearing
-            photographs of the same weight, and this mode is far enough off
-            that "not yet" has to be the first thing about the card rather than
-            a detail of it. */}
-        <BoardCard
-          title={t.inventionTitle}
-          blurb={t.cardInventionBlurb}
-          kicker={t.timelineTitle}
-          icon={<BulbIcon />}
-          photo={photos.invention}
-          veil={t.comingSoonTitle}
-          index={5}
-        />
-        <BoardCard
-          title={t.comingSoonTitle}
-          blurb={t.cardComingSoonBlurb}
-          kicker={t.newGamesBlurb}
-          icon={<SparkIcon />}
-          photo={photos.comingSoon}
-          soon={t.comingSoon}
-          index={6}
-        />
-        <BoardCard
-          onClick={(event) => show("play", event)}
-          title={t.backTitle}
-          icon={<ArrowLeftIcon />}
-          arrow="back"
-          index={7}
-        />
-      </BoardView>
-    </div>
+              **Born When? leads this pair and Inventions follows it**, which is
+              the order the two modes are actually in: the first row of this view
+              is the four that can be played, and this slot is the fifth of them.
+              Inventions has moved down into the unbuilt half of the view, beside
+              the card that stands for everything else still being written. */}
+          <BoardCard
+            href="/when-born"
+            title={t.whenBornTitle}
+            blurb={t.cardWhenBornBlurb}
+            kicker={t.timelineTitle}
+            icon={<PersonIcon />}
+            photo={photos.whenBorn}
+            index={4}
+          />
+          {/* The one card on the board that says so across its whole face rather
+              than with a chip in the corner. See `veil` on `BoardCard`: the
+              chip was read as decoration beside three live cards wearing
+              photographs of the same weight, and this mode is far enough off
+              that "not yet" has to be the first thing about the card rather than
+              a detail of it. */}
+          <BoardCard
+            title={t.inventionTitle}
+            blurb={t.cardInventionBlurb}
+            kicker={t.timelineTitle}
+            icon={<BulbIcon />}
+            photo={photos.invention}
+            veil={t.comingSoonTitle}
+            index={5}
+          />
+          <BoardCard
+            title={t.comingSoonTitle}
+            blurb={t.cardComingSoonBlurb}
+            kicker={t.newGamesBlurb}
+            icon={<SparkIcon />}
+            photo={photos.comingSoon}
+            soon={t.comingSoon}
+            index={6}
+          />
+          <BoardCard
+            onClick={(event) => show("play", event)}
+            swap
+            title={t.backTitle}
+            icon={<ArrowLeftIcon />}
+            arrow="back"
+            index={7}
+          />
+        </BoardView>
+      </div>
+
+      {/* Outside the board rather than inside it: the window covers the page,
+          and the board is a grid whose two views are stacked in one cell. */}
+      <VersusDialog
+        open={duel}
+        onClose={() => setDuel(false)}
+        t={t}
+        {...versus}
+      />
+    </>
   );
 }
 
@@ -757,6 +792,8 @@ function CoverCard({
 function BoardCard({
   href,
   onClick,
+  onOpen,
+  swap,
   title,
   blurb,
   kicker,
@@ -770,6 +807,14 @@ function BoardCard({
 }: {
   href?: string;
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  /** Answers the plain left click where `href` is the fallback — see the
+   *  `Link` branch at the foot of this component. */
+  onOpen?: () => void;
+  /** Marks one of the two cards that swap the board's views, which is the pair
+   *  focus is handed between (see the effect in `GameBoard`). Only those two:
+   *  a third marked card would take the handover from the one that undoes the
+   *  swap. */
+  swap?: boolean;
   title: string;
   /** One line about the mode, unrolled under the title on hover. See
    *  `CardBlurb`. The way back has none: it is not a game. */
@@ -943,7 +988,7 @@ function BoardCard({
         onClick={onClick}
         /* Marks the pair the board hands focus between — see the effect in
            `GameBoard`. */
-        data-board-swap
+        data-board-swap={swap || undefined}
         style={cardOrder(index)}
         className={`${shape} cursor-pointer transition-colors hover:border-ink/25 hover:bg-card-raised/60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent`}
       >
@@ -988,10 +1033,28 @@ function BoardCard({
   return (
     <Link
       href={href}
+      /* A card can answer the plain left click itself and stay a link for
+         every other press — the site menu's rows work the same way. The 1v1
+         card is the one that does: its two choices open in a window over the
+         page rather than a route away, but `/versus` is still where a
+         middle-click, a modified click and a copied address go, and a reader
+         with no JavaScript follows the href as before. `defaultPrevented` is
+         checked first so this can never fight something upstream. */
+      onClick={(event) => {
+        if (!onOpen || event.defaultPrevented) return;
+        if (event.button !== 0) return;
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+          return;
+        }
+        event.preventDefault();
+        onOpen();
+      }}
       style={cardOrder(index)}
       className={`${shape} transition-colors hover:border-ink/25 hover:bg-card-raised focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent`}
     >
       {inner}
+      {/* No trace on a card that opens a window: there is nothing on the way.
+          It still mounts for the modified clicks, which are navigations. */}
       <CardTrace />
     </Link>
   );

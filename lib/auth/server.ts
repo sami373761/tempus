@@ -63,17 +63,22 @@ export async function getCurrentAccount(): Promise<Account | null> {
   const user = await getCurrentUser();
   if (!user) return null;
 
-  // The name to greet them by and the badge count the menu marks, in the one
-  // read — see `readProfileChrome`. A failed read costs both and nothing
-  // else: the site has to stay usable with no name and no mark.
-  let profile = { username: null as string | null, unseenBadges: 0 };
+  // The name to greet them by, the badge count the menu marks and the rating
+  // the 1v1 window prints, in the one read — see `readProfileChrome`. A failed
+  // read costs all three and nothing else: the site has to stay usable with no
+  // name, no mark and no standing.
+  let profile: Awaited<ReturnType<typeof readProfileChrome>> = {
+    username: null,
+    unseenBadges: 0,
+    chronoRating: null,
+  };
   try {
     profile = await readProfileChrome(await createServerDbClient(), user.id);
   } catch {
-    profile = { username: null, unseenBadges: 0 };
+    profile = { username: null, unseenBadges: 0, chronoRating: null };
   }
 
-  return accountFrom(user, profile.username, profile.unseenBadges);
+  return accountFrom(user, profile);
 }
 
 /**

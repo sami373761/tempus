@@ -121,6 +121,16 @@ export interface Account {
    * the chrome already reads this profile (`readProfileChrome`).
    */
   unseenBadges: number;
+  /**
+   * The player's Chrono Rating (KP), or null when there is no profile row —
+   * never 0 for "unknown", since 0 is a real standing. It rides in the same
+   * read as the two above for the same reason: the 1v1 window says which
+   * league a search will play in, and it can be opened from the home page,
+   * where one number is not worth a round trip of its own.
+   *
+   * `chronoStanding()` in lib/game/chrono-rating.ts turns it into a league.
+   */
+  chronoRating: number | null;
 }
 
 /**

@@ -8,8 +8,10 @@ import { SiteMark } from "@/components/site-header";
 import { SiteMenu } from "@/components/site-menu";
 import { getCurrentAccount } from "@/lib/auth/server";
 import { SUPPORTED_LOCALES } from "@/lib/db/types";
+import { chronoStanding } from "@/lib/game/chrono-rating";
 import { readLocaleContext } from "@/lib/i18n/server";
 import {
+  boardPhotoUrl,
   boardPhotos,
   dailyGameCoverIndex,
   explorerArt,
@@ -18,6 +20,7 @@ import {
   gameCoverUrl,
   timelineBackdropSrcSet,
   timelineBackdropUrl,
+  versusFriendArtUrl,
 } from "@/lib/storage/images";
 
 export default async function HomePage() {
@@ -65,6 +68,34 @@ export default async function HomePage() {
      the board that carry a pair of widths, so they travel as `CoverPhoto`
      objects rather than as single URLs. */
   const photos = boardPhotos();
+
+  /* What the board's 1v1 card opens, which is the head-to-head page's own two
+     cards in a window (components/versus-dialog.tsx). They are resolved here
+     for the same reason everything above them is: the art lives in
+     `lib/storage/images` and the standing on the profile row, and the board is
+     a Client Component.
+
+     The picker's four photographs are the board's own — the same pictures its
+     cards wear, so a mode looks the same wherever it is offered — except the
+     general game, which has no card of its own and wears the date-guessing
+     cover, picked by the day exactly as the cover above is.
+
+     The standing costs no round trip: `chronoRating` rides in the profile read
+     the menu already makes for the player's name (`readProfileChrome`). */
+  const versus = {
+    photos: {
+      history: guessCover.src,
+      football: boardPhotoUrl("football"),
+      screen: boardPhotoUrl("screen"),
+      basketball: boardPhotoUrl("basketball"),
+    },
+    friendArt: versusFriendArtUrl(),
+    standing:
+      account && account.chronoRating !== null
+        ? chronoStanding(account.chronoRating)
+        : null,
+    signedIn: account !== null,
+  };
 
   /* The explorer's library panel used to state how big the illustrated library
      is, read from the database so it could not go stale. It states "1000+"
@@ -161,6 +192,7 @@ export default async function HomePage() {
           dailyCover={dailyCover}
           guessCover={guessCover}
           photos={photos}
+          versus={versus}
         />
       </section>
 

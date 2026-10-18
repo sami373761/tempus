@@ -604,6 +604,35 @@ export function aboutArtSrcSet(): string {
 }
 
 /**
+ * The art behind the "play a friend" card, on the head-to-head screen and in
+ * the home page's 1v1 window.
+ *
+ * Decorative like everything else outside the era folders, under a prefix of
+ * its own (`1v1/`) — which had to be added to the dev proxy
+ * (app/api/r2/[...key]/route.ts) as well, or it fails exactly like a missing
+ * object.
+ *
+ * **It is a repeat, not a photograph**, so it needs no crop and reads the same
+ * at any size — the same kind of art as `homepage/pattern.jpg`, and it is
+ * handled the same way: one derived width rather than the uploaded master.
+ * The master is 2752x1536 and 2.4MB, which is several times what a card ever
+ * shows; 1600 covers the widest the card can be (the page's ~1024px column at
+ * 2x would be the only thing to ask for more, and this is a flat pattern on
+ * black where the difference is invisible).
+ *
+ *   npm run backdrops:derive -- --key 1v1/1v1.jpeg --widths 1600
+ *
+ * One file and no `srcSet` because the card paints it as a CSS background like
+ * the online card's own picture — a background takes one URL, and the two
+ * cards stand side by side and so load their art the same way.
+ */
+const VERSUS_FRIEND_ART_OBJECT_KEY = "1v1/1v1-1600.jpg";
+
+export function versusFriendArtUrl(): string {
+  return publicImageUrl(VERSUS_FRIEND_ART_OBJECT_KEY);
+}
+
+/**
  * Which of a card's two photos today gets.
  *
  * The brief is "random daily, but never the same two days running". With only

@@ -136,19 +136,30 @@ export function validateUsername(raw: string): UsernameCheck {
   return { ok: true, username: folded };
 }
 
-/** The chrome's view of whoever is signed in. */
+/**
+ * The chrome's view of whoever is signed in.
+ *
+ * The profile half arrives as one object rather than as a list of positional
+ * arguments: it is exactly what `readProfileChrome` returns, so the two cannot
+ * drift, and a third `null` in a row was already hard to read at the call
+ * site.
+ */
 export function accountFrom(
   user: { id: string; email?: string | null },
-  username: string | null,
-  unseenBadges = 0,
+  profile: {
+    username: string | null;
+    unseenBadges?: number;
+    chronoRating?: number | null;
+  },
 ): Account {
   const fallback = user.email?.split("@")[0] ?? null;
   return {
     id: user.id,
     email: user.email ?? null,
-    username,
-    displayName: username ?? fallback ?? "Player",
-    unseenBadges,
+    username: profile.username,
+    displayName: profile.username ?? fallback ?? "Player",
+    unseenBadges: profile.unseenBadges ?? 0,
+    chronoRating: profile.chronoRating ?? null,
   };
 }
 
@@ -175,26 +186,36 @@ export async function readUsername(
 }
 
 /**
- * The two things the site's chrome reads off a profile: the name to greet
- * them by, and whether there is a badge waiting to be looked at.
+ * The three things the site's chrome reads off a profile: the name to greet
+ * them by, whether there is a badge waiting to be looked at, and where the
+ * player stands in the online league.
  *
- * One query rather than two because this runs in the layout, on every
- * player-facing route — the username read was already there, and the count
- * rides along in it for nothing. That is the whole reason the mark is a
- * number on `profile` rather than a count over `user_badge_progress`: the
- * database is a long way from the player (see the note in CLAUDE.md), and a
- * nudge is not worth a round trip per page.
+ * One query rather than three because this runs in the layout, on every
+ * player-facing route — the username read was already there, and the other
+ * two ride along in it for nothing. That is the whole reason the badge mark
+ * is a number on `profile` rather than a count over `user_badge_progress`:
+ * the database is a long way from the player (see the note in CLAUDE.md), and
+ * a nudge is not worth a round trip per page.
  *
- * Both fall back rather than throwing, for `readUsername`'s reason: a missing
- * profile row should cost the greeting, not the site.
+ * **The rating is here for the same reason**, since the home page's 1v1
+ * window says which league a search will play in before the player has gone
+ * anywhere. A read of its own would have been a second trip on the landing
+ * page for one number that was already in the row being fetched.
+ *
+ * All three fall back rather than throwing, for `readUsername`'s reason: a
+ * missing profile row should cost the greeting, not the site.
  */
 export async function readProfileChrome(
   client: DbClient,
   userId: string,
-): Promise<{ username: string | null; unseenBadges: number }> {
+): Promise<{
+  username: string | null;
+  unseenBadges: number;
+  chronoRating: number | null;
+}> {
   const { data, error } = await client
     .from("profile")
-    .select("username, unseen_badges")
+    .select("username, unseen_badges, chrono_rating")
     .eq("id", userId)
     .maybeSingle();
 
@@ -202,6 +223,10 @@ export async function readProfileChrome(
   return {
     username: data?.username ?? null,
     unseenBadges: data?.unseen_badges ?? 0,
+    // Null rather than 0 for a row that is not there — see `readChronoRating`,
+    // which this read makes unnecessary wherever the chrome is already
+    // resolved.
+    chronoRating: data?.chrono_rating ?? null,
   };
 }
 

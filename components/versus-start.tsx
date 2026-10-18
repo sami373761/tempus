@@ -33,30 +33,29 @@ import { format, type Dict } from "@/lib/i18n/dictionary";
  * they are different presses with different follow-ups. The online card is one
  * button and nothing to choose: matchmaking only ever plays the general
  * library (`PUBLIC_VERSUS_MODE`), because a rating has to mean one thing. So
- * it is the wide card on top, the press most visitors came for. The friend
- * card under it is the invitation flow exactly as it was.
+ * it is the wide card on top, the press most visitors came for, and the friend
+ * card under it is the invitation flow.
+ *
+ * **The two cards are one shape.** They were not until 2026-10-18 — the
+ * friend card was a bare glass panel under a dressed banner — and a choice
+ * between two things should not look like one thing and its footnote. They
+ * share a shell, a set of art layers and an arrangement now (`CARD_SHELL`,
+ * `CardArt`, `CARD_ROW`); what still separates them is the order on the column
+ * and a filled button against an outlined one.
+ *
+ * **The pair is not only this page.** `VersusChoice` is the two cards with no
+ * page around them, and the home board opens exactly that in a window rather
+ * than sending anyone here first — see components/versus-dialog.tsx. Whichever
+ * door it is opened from, the press navigates into the match: the choosing is
+ * worth no page load, and the playing is what one is for.
  *
  * **The online card says where the player stands before they press.** A
  * signed-in player is shown their Chrono Rating and league, which is what the
  * search will match on; a guest is told the one thing they are giving up — a
  * guest's results are not kept — with the sign-in link that changes it. The
- * standing is read on the server (the page) because the rating lives on the
- * profile row, which this Client Component has no business querying.
- *
- * **The game is picked before the code is minted.** A match is ten questions
- * drawn from one pool and the pool is stamped on the match row
- * (`match.mode`), so it cannot be chosen later — a rematch is another ten of
- * the same game, and the second player arrives at a match that already knows
- * what it is. Pressing "play a friend" therefore opens a small board of the
- * date-guessing games instead of creating a match straight away, and the
- * invite code appears on the lobby screen the chosen mode lands on.
- *
- * **The match is created on the press, not on the render.** Visiting this page
- * costs nothing; only a real intent to play deals a hand of ten rounds. The
- * seat token is written to `sessionStorage` *before* navigating — the other
- * way round, the match page would arrive with no seat, fail to find one, and
- * join the match this player had just created, taking seat two in their own
- * game. The online press does the same through `useFindOpponent`.
+ * standing is read on the server because the rating lives on the profile row,
+ * which this Client Component has no business querying; on both doors it rides
+ * in the read the chrome already makes (`readProfileChrome`).
  */
 
 /** Every card on the picker, in board order. */
@@ -81,23 +80,186 @@ const PICKER: { key: PickerPhoto; mode: VersusMode | null }[] = [
   { key: "basketball", mode: null },
 ];
 
-export function VersusStart({
-  t,
-  photos,
-  standing,
-  signedIn,
-}: {
+/**
+ * What either way in needs to know, and the one type the home page's window
+ * and this page both fill in.
+ *
+ * The photographs are resolved on the server — `lib/storage/images` holds
+ * every object key on the site and the cards are a Client Component, so a
+ * handful of strings cross that boundary instead of the whole module — and
+ * the standing comes from the server for a harder reason: a rating lives on
+ * the profile row, which nothing in the browser may query.
+ */
+export interface VersusChoiceProps {
   t: Dict;
   /**
-   * The board's own photograph for each subject, resolved on the server (the
-   * page) because `lib/storage/images` is where every key lives and this is a
-   * Client Component. The same pictures the home board's cards wear, so a mode
-   * looks the same wherever it is offered.
+   * The board's own photograph for each subject on the friend card's picker,
+   * the same pictures the home board's cards wear, so a mode looks the same
+   * wherever it is offered. `history` doubles as the online card's art: the
+   * general game is the only pool matchmaking plays.
    */
   photos: Record<PickerPhoto, string>;
+  /** The repeat behind the friend card — see `versusFriendArtUrl`. */
+  friendArt: string;
   /** The signed-in player's rating and league; null for a guest. */
   standing: ChronoStanding | null;
   signedIn: boolean;
+}
+
+export function VersusStart({
+  t,
+  photos,
+  friendArt,
+  standing,
+  signedIn,
+}: VersusChoiceProps) {
+  return (
+    // Not `justify-center` on a box pinned to the page's height: once the
+    // picker is open the two cards can be taller than a short window, and a
+    // centred column that overflows is cut off at the *top*, where no scroll
+    // reaches. `my-auto` centres while there is room and gives way when there
+    // is not, so the page's own scroll gets the overflow.
+    <div className="flex w-full flex-1 flex-col items-center">
+      <TimelineBackdrop pane={DEFAULT_PANE} />
+
+      <div className="my-auto flex w-full max-w-5xl flex-col gap-4 py-2 md:gap-5">
+        <VersusChoice
+          t={t}
+          photos={photos}
+          friendArt={friendArt}
+          standing={standing}
+          signedIn={signedIn}
+        />
+
+        {/* The sideways door, for someone who came here and would rather play
+            alone. It sat inside the friend card until the two cards were made
+            one shape: a link to another game is not part of either press, and
+            under both of them it belongs to the page instead. */}
+        <Link
+          href="/guess"
+          className="mx-auto inline-block px-3 py-2 text-xs text-white/55 underline-offset-4 transition hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        >
+          {t.tryTimeline}
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The two ways in, and nothing around them.
+ *
+ * Split out from the page so the home board can open the same pair in a window
+ * without sending anyone to `/versus` first (components/versus-dialog.tsx).
+ * Both presses navigate on their own — into a search lobby or into an
+ * invitation — so there is nothing for a caller to do afterwards and nothing
+ * for this to report back.
+ *
+ * It renders two sections and no box of its own: the caller owns the column
+ * they sit in, which is a page here and a dialog there.
+ */
+export function VersusChoice({
+  t,
+  photos,
+  friendArt,
+  standing,
+  signedIn,
+}: VersusChoiceProps) {
+  return (
+    <>
+      <OnlineCard
+        t={t}
+        photo={photos.history}
+        standing={standing}
+        signedIn={signedIn}
+      />
+      <FriendCard t={t} photos={photos} art={friendArt} />
+    </>
+  );
+}
+
+/**
+ * The frame both cards wear.
+ *
+ * They were two different objects until 2026-10-18 — a dressed banner with a
+ * photograph behind it over a bare glass panel — which made the second one
+ * read as a footnote to the first rather than as the other half of the
+ * choice. One shell, one set of art layers and one arrangement inside (words
+ * on the left, the press on the right above `md`) is the whole of the fix. The
+ * hierarchy between them is still there, but it is carried by the things that
+ * should carry it: the order on the column, and a filled button against an
+ * outlined one.
+ */
+const CARD_SHELL =
+  "relative overflow-hidden rounded-3xl border border-white/12 bg-black/45 shadow-2xl shadow-black/70 backdrop-blur-2xl";
+
+/** The row inside a card: words, then the press. */
+const CARD_ROW =
+  "relative flex flex-col items-center gap-6 px-7 py-8 text-center md:flex-row md:items-end md:justify-between md:px-9 md:py-9 md:text-left";
+
+const CARD_KICKER =
+  "text-xs font-semibold uppercase tracking-[0.18em] text-white/55";
+
+const CARD_TITLE =
+  "mt-1 font-display text-3xl font-semibold tracking-tight text-ink";
+
+/**
+ * A card's picture, pushed well back, and the gradient that makes the words on
+ * it readable whatever the picture is.
+ *
+ * A background rather than an `<img>` because it is decoration under a label:
+ * there is nothing in either picture a screen reader should be told about that
+ * the title does not already say. The gradient runs up on a stacked card and
+ * across on a wide one, which is where the text is in each case.
+ *
+ * `opacity` is passed as a whole class name rather than a number — Tailwind
+ * reads the source for class names, and a computed one is a string it never
+ * sees. The two cards differ: the online card is a photograph and sits at 35%,
+ * the friend card's repeat is painted on near-black and needs a little more to
+ * register at all.
+ */
+function CardArt({ photo, opacity }: { photo: string; opacity: string }) {
+  return (
+    <>
+      <div
+        aria-hidden="true"
+        className={`absolute inset-0 bg-cover bg-center ${opacity}`}
+        style={{ backgroundImage: `url(${JSON.stringify(photo)})` }}
+      />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/75 to-black/40 md:bg-gradient-to-r"
+      />
+    </>
+  );
+}
+
+/**
+ * The friend press: an invitation, once the game behind it is chosen.
+ *
+ * **The game is picked before the code is minted.** A match is ten questions
+ * drawn from one pool and the pool is stamped on the match row
+ * (`match.mode`), so it cannot be chosen later — a rematch is another ten of
+ * the same game, and the second player arrives at a match that already knows
+ * what it is. Pressing "play a friend" therefore opens a small board of the
+ * date-guessing games instead of creating a match straight away, and the
+ * invite code appears on the lobby screen the chosen mode lands on.
+ *
+ * **The match is created on the press, not on the render.** Opening this card
+ * costs nothing; only a real intent to play deals a hand of ten rounds. The
+ * seat token is written to `sessionStorage` *before* navigating — the other
+ * way round, the match page would arrive with no seat, fail to find one, and
+ * join the match this player had just created, taking seat two in their own
+ * game.
+ */
+function FriendCard({
+  t,
+  photos,
+  art,
+}: {
+  t: Dict;
+  photos: Record<PickerPhoto, string>;
+  art: string;
 }) {
   const router = useRouter();
   const [picking, setPicking] = useState(false);
@@ -153,40 +315,53 @@ export function VersusStart({
   }
 
   return (
-    // Not `justify-center` on a box pinned to the page's height: once the
-    // picker is open the two cards can be taller than a short window, and a
-    // centred column that overflows is cut off at the *top*, where no scroll
-    // reaches. `my-auto` centres while there is room and gives way when there
-    // is not, so the page's own scroll gets the overflow.
-    <div className="flex w-full flex-1 flex-col items-center">
-      <TimelineBackdrop pane={DEFAULT_PANE} />
+    <section className={CARD_SHELL}>
+      <CardArt photo={art} opacity="opacity-45" />
 
-      <div className="my-auto flex w-full max-w-5xl flex-col gap-4 py-2 md:gap-5">
-        <OnlineCard
-          t={t}
-          photo={photos.history}
-          standing={standing}
-          signedIn={signedIn}
-        />
-
-        <section className="flex flex-col rounded-3xl border border-white/12 bg-black/45 px-7 py-7 text-center shadow-2xl shadow-black/70 backdrop-blur-2xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
-            {t.versusTitle}
-          </p>
-          <h2 className="mt-1 font-display text-2xl font-semibold text-ink">
-            {t.versusPlayFriend}
-          </h2>
-          <p className="mx-auto mt-2 max-w-xs text-sm text-white/70">
+      <div className={CARD_ROW}>
+        <div className="min-w-0 max-w-xl">
+          <p className={CARD_KICKER}>{t.versusTitle}</p>
+          <h2 className={CARD_TITLE}>{t.versusPlayFriend}</h2>
+          <p className="mt-2 text-sm leading-snug text-white/70">
             {picking ? t.versusChooseMode : t.versusBlurb}
           </p>
+        </div>
 
-          {picking ? (
+        {/* The press, in the online card's own slot — and gone while the
+            picker is open, where the four games *are* the press. Nothing
+            stands in for it: a disabled button in a slot whose job is being
+            done by the row below it is a second thing to read. */}
+        {!picking && (
+          <div className="flex w-full shrink-0 flex-col items-center gap-2 md:w-auto md:items-end">
+            <button
+              ref={playFriend}
+              type="button"
+              onClick={() => setPicking(true)}
+              // Outlined where the online card's is filled: both presses are
+              // offered the same way now, and this is what keeps the one most
+              // visitors came for in front. Capped below `md` for the online
+              // button's reason — stacked, the column is the page's width, and
+              // a full-width button is a bar rather than a button.
+              className="w-full max-w-sm rounded-full border border-white/45 bg-black/45 px-8 py-3 text-sm font-semibold text-ink backdrop-blur-md transition hover:bg-black/65 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:w-auto md:min-w-[14rem] md:max-w-none"
+            >
+              {t.versusPlayFriend}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* The picker and anything the last press has to say share one
+          footer, so the card has a single bottom edge whichever of them is
+          open. */}
+      {(picking || error) && (
+        <div className="relative px-7 pb-8 md:px-9 md:pb-9">
+          {picking && (
             <>
               {/* Two up on a phone, which is what keeps a 3:2 photograph a
                   photograph at that width, and four up once the card is the
                   page's full column — two up there made each photograph a
                   third of the window tall and pushed the board off it. */}
-              <div ref={grid} className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+              <div ref={grid} className="grid grid-cols-2 gap-3 md:grid-cols-4">
                 {PICKER.map((entry, index) => (
                   <ModeCard
                     key={entry.key}
@@ -216,41 +391,25 @@ export function VersusStart({
               {/* Out of the way rather than prominent: the subject board is
                   what the player came here to read, and the way back is only
                   needed by someone who opened it by accident. Quiet is not
-                  tiny, though: the padding makes it a thumb-sized target, and
-                  `mt-3` plus `-mb-2` hand the same 8px back so the line sits
-                  exactly where the bare 16px text did. */}
+                  tiny, though: the padding makes it a thumb-sized target. */}
               <button
                 type="button"
                 onClick={() => setPicking(false)}
-                className="mx-auto -mb-2 mt-3 px-3 py-2 text-xs text-white/55 underline-offset-4 transition hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className="mx-auto mt-3 block px-3 py-2 text-xs text-white/55 underline-offset-4 transition hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               >
                 {t.backTitle}
               </button>
             </>
-          ) : (
-            <button
-              ref={playFriend}
-              type="button"
-              onClick={() => setPicking(true)}
-              // The column is the page's width now; a button that spanned it
-              // would be a bar, not a button.
-              className="mx-auto mt-6 w-full max-w-sm rounded-full border border-white/45 bg-black/45 px-6 py-2.5 text-sm font-semibold text-ink backdrop-blur-md transition hover:bg-black/65 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-            >
-              {t.versusPlayFriend}
-            </button>
           )}
 
-          {error && <p className="mt-3 text-xs text-bad">{error}</p>}
-
-          <Link
-            href="/guess"
-            className="mx-auto -mb-2 mt-3 inline-block px-3 py-2 text-xs text-white/55 underline-offset-4 transition hover:text-ink hover:underline"
-          >
-            {t.tryTimeline}
-          </Link>
-        </section>
-      </div>
-    </div>
+          {error && (
+            <p role="alert" className="mt-3 text-center text-xs text-bad">
+              {error}
+            </p>
+          )}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -260,7 +419,9 @@ export function VersusStart({
  * Wide and dressed, with the general game's own photograph pushed well back
  * behind it — the same treatment the "coming soon" card had, now on the card
  * that plays. Text on the left and the button on the right above `md`, where
- * the card is the page's full width; stacked and centred below it.
+ * the card is the page's full width; stacked and centred below it. The frame,
+ * the art layers and that arrangement are `CARD_SHELL`/`CardArt`/`CARD_ROW`,
+ * shared with the friend card so the two read as one choice.
  */
 function OnlineCard({
   t,
@@ -279,25 +440,13 @@ function OnlineCard({
   const { find, busy, error } = useFindOpponent();
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-white/12 bg-black/45 shadow-2xl shadow-black/70 backdrop-blur-2xl">
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 bg-cover bg-center opacity-35"
-        style={{ backgroundImage: `url(${JSON.stringify(photo)})` }}
-      />
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/75 to-black/40 md:bg-gradient-to-r"
-      />
+    <section className={CARD_SHELL}>
+      <CardArt photo={photo} opacity="opacity-35" />
 
-      <div className="relative flex flex-col items-center gap-6 px-7 py-8 text-center md:flex-row md:items-end md:justify-between md:px-9 md:py-9 md:text-left">
+      <div className={CARD_ROW}>
         <div className="min-w-0 max-w-xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
-            {t.versusOnlineTitle}
-          </p>
-          <h2 className="mt-1 font-display text-3xl font-semibold tracking-tight text-ink">
-            {t.versusFindTitle}
-          </h2>
+          <p className={CARD_KICKER}>{t.versusOnlineTitle}</p>
+          <h2 className={CARD_TITLE}>{t.versusFindTitle}</h2>
           <p className="mt-2 text-sm leading-snug text-white/70">
             {t.versusOnlineBlurb}
           </p>

@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
 
 import { VersusStart } from "@/components/versus-start";
-import { getCurrentUser } from "@/lib/auth/server";
-import { readChronoRating } from "@/lib/db/accounts";
-import { createAdminDbClient } from "@/lib/db/admin";
-import { chronoStanding, type ChronoStanding } from "@/lib/game/chrono-rating";
+import { getCurrentAccount } from "@/lib/auth/server";
+import { chronoStanding } from "@/lib/game/chrono-rating";
 import { readLocaleContext } from "@/lib/i18n/server";
 import {
   boardPhotoUrl,
   dailyGameCoverIndex,
   gameCoverUrl,
+  versusFriendArtUrl,
 } from "@/lib/storage/images";
 
 export const dynamic = "force-dynamic";
@@ -33,27 +32,25 @@ export async function generateMetadata(): Promise<Metadata> {
  * The only things resolved here are the picker's photographs, for the reason
  * the home board's are resolved in its page: `lib/storage/images` holds every
  * object key on the site and the component that needs them is a Client
- * Component. Four strings cross that boundary instead of the whole module.
+ * Component. Five strings cross that boundary instead of the whole module.
  * And the player's standing: the online card says which league a search will
  * play in, and only the server can read a rating.
  */
 export default async function VersusPage() {
-  const [{ t }, user] = await Promise.all([readLocaleContext(), getCurrentUser()]);
+  const [{ t }, account] = await Promise.all([
+    readLocaleContext(),
+    getCurrentAccount(),
+  ]);
 
-  // Service role, as the actions read it, so the number on this card is the
-  // number matchmaking will seat them on. Guarded like the menu's username
-  // read: a rating that cannot be read leaves the card without a standing line
-  // rather than the page without a button.
-  let standing: ChronoStanding | null = null;
-  if (user) {
-    try {
-      const rating = await readChronoRating(createAdminDbClient(), user.id);
-      standing = rating === null ? null : chronoStanding(rating);
-    } catch (error) {
-      console.error("versus page: readChronoRating failed", error);
-      standing = null;
-    }
-  }
+  // The rating arrives with the rest of the chrome rather than in a read of
+  // its own (`readProfileChrome`), which is also how the home page's window
+  // gets it — one number from the row the session already fetches. A read
+  // that failed leaves `chronoRating` null, so the card loses its standing
+  // line rather than the page losing its button.
+  const standing =
+    account && account.chronoRating !== null
+      ? chronoStanding(account.chronoRating)
+      : null;
 
   // The three playable subjects wear the board's own cards; the general game
   // has no board photograph of its own (it is one of the two cover cards), so
@@ -72,8 +69,9 @@ export default async function VersusPage() {
       <VersusStart
         t={t}
         photos={photos}
+        friendArt={versusFriendArtUrl()}
         standing={standing}
-        signedIn={user !== null}
+        signedIn={account !== null}
       />
     </div>
   );

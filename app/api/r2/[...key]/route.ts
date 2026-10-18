@@ -40,6 +40,7 @@ const ALLOWED_PREFIXES = [
   "film-dizi/",
   "when-born/",
   "basketball/",
+  "1v1/",
   "videos/",
   "3d-models/",
   "user_profile_pictures/",
