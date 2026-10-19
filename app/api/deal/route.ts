@@ -1,5 +1,6 @@
 import {
   dealBasketballEvents,
+  dealCategoryEvents,
   dealComparisonRounds,
   dealFootballEvents,
   dealScreenEvents,
@@ -8,6 +9,7 @@ import {
   dealWhenBornEvents,
 } from "@/app/actions/rounds";
 import { isDealGame, type DealGame, type DealtFor } from "@/lib/game/deal";
+import { isCategoryGameName } from "@/lib/game/points";
 
 /**
  * The solo games' background refill — the dealers in app/actions/rounds.ts,
@@ -45,12 +47,21 @@ export async function POST(request: Request): Promise<Response> {
       ? (body as Record<string, unknown>)
       : {};
 
-  if (!isDealGame(game)) return refuse(404);
+  // A built-in pool by key, or a subject category by slug — which
+  // dealCategoryEvents accepts only if it is a published category, so an
+  // unknown slug is an empty deal, never the general pool.
+  const dealer =
+    isDealGame(game)
+      ? DEALERS[game]
+      : typeof game === "string" && isCategoryGameName(game)
+        ? (n: number, ex: readonly string[]) => dealCategoryEvents(game, n, ex)
+        : null;
+  if (!dealer) return refuse(404);
   if (typeof count !== "number" || !Number.isFinite(count)) return refuse(400);
   if (!Array.isArray(exclude)) return refuse(400);
 
   try {
-    const dealt = await DEALERS[game](
+    const dealt = await dealer(
       count,
       exclude.filter((id): id is string => typeof id === "string"),
     );

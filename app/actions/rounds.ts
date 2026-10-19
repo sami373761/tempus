@@ -1,6 +1,7 @@
 "use server";
 
 import { getCurrentUser } from "@/lib/auth/server";
+import { publishedCategory } from "@/lib/db/cached";
 import { categorySlugLookup, randomEvents } from "@/lib/db/queries";
 import { createServerDbClient } from "@/lib/db/server";
 import type { LocalizedEvent } from "@/lib/db/types";
@@ -251,6 +252,52 @@ export async function dealWhenBornEvents(
     ),
     userId,
   );
+}
+
+/**
+ * A subject category's rounds, by slug (§7.7): one dealer for every category
+ * made in the admin panel. The built-in four keep their own dealers above
+ * (their rounds carry a tag the game prints), and a built-in slug is routed
+ * to them.
+ *
+ * **The slug never opens the general pool.** It is accepted only if it names
+ * a *published* `game_category` row, and the draw is that category's
+ * `topicSlug` — the same restriction the built-in dealers use — so a client
+ * can ask for a category but never for the history pool or a draft.
+ */
+export async function dealCategoryEvents(
+  slug: string,
+  count: number = ROUND_QUEUE_DEPTH,
+  exclude: readonly string[] = [],
+): Promise<DealtEvent[]> {
+  switch (slug) {
+    case FOOTBALL_TOPIC:
+      return dealFootballEvents(count, exclude);
+    case BASKETBALL_TOPIC:
+      return dealBasketballEvents(count, exclude);
+    case SCREEN_TOPIC:
+      return dealScreenEvents(count, exclude);
+    case WHEN_BORN_TOPIC:
+      return dealWhenBornEvents(count, exclude);
+  }
+
+  const category = typeof slug === "string" ? await publishedCategory(slug) : null;
+  if (!category) return [];
+  const take = Math.min(Math.max(1, Math.trunc(count) || 1), MAX_DRAW);
+
+  const locale = await readLocale();
+  const supabase = await createServerDbClient();
+  const [events, userId] = await Promise.all([
+    randomEvents(supabase, {
+      count: take,
+      locale,
+      topicSlug: category.slug,
+      exclude: sanitizeExclude(exclude),
+    }),
+    dealtTo(),
+  ]);
+
+  return dealDated(category.slug, shuffle(events), userId);
 }
 
 /**

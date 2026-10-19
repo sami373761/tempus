@@ -63,6 +63,8 @@ export type Database = {
           sort_key: number;
           status: Database["public"]["Enums"]["publication_status"];
           is_sensitive: boolean;
+          /** Set by admin_* writes; seed scripts skip such rows. */
+          admin_edited_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -75,6 +77,7 @@ export type Database = {
           precision?: Database["public"]["Enums"]["date_precision"];
           status?: Database["public"]["Enums"]["publication_status"];
           is_sensitive?: boolean;
+          admin_edited_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -87,6 +90,7 @@ export type Database = {
           precision?: Database["public"]["Enums"]["date_precision"];
           status?: Database["public"]["Enums"]["publication_status"];
           is_sensitive?: boolean;
+          admin_edited_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -139,6 +143,8 @@ export type Database = {
           id: string;
           slug: string;
           kind: Database["public"]["Enums"]["category_kind"];
+          /** The tag group of a kind = 'other' category (§7.6), else null. */
+          tag_kind: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -146,6 +152,7 @@ export type Database = {
           id?: string;
           slug: string;
           kind?: Database["public"]["Enums"]["category_kind"];
+          tag_kind?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -273,7 +280,8 @@ export type Database = {
           height: number | null;
           checksum_sha256: string | null;
           source_name: string | null;
-          source_page_url: string;
+          /** Optional for PD / PD-US / CC0 (image_source_required_unless_pd). */
+          source_page_url: string | null;
           author: string | null;
           license_code: string;
           attribution_text: string | null;
@@ -292,7 +300,7 @@ export type Database = {
           height?: number | null;
           checksum_sha256?: string | null;
           source_name?: string | null;
-          source_page_url: string;
+          source_page_url?: string | null;
           author?: string | null;
           license_code: string;
           attribution_text?: string | null;
@@ -575,6 +583,11 @@ export type Database = {
           /** +1 the real date is later than the stored year, -1 earlier. */
           direction: number;
           locale_code: string | null;
+          /** Null only on is_legacy rows (votes from before accounts). */
+          user_id: string | null;
+          /** event.year when cast; stamped by trigger. */
+          year_at_vote: number;
+          is_legacy: boolean;
           created_at: string;
         };
         Insert: {
@@ -582,6 +595,7 @@ export type Database = {
           event_id: string;
           direction: number;
           locale_code?: string | null;
+          user_id: string;
           created_at?: string;
         };
         Update: {
@@ -624,6 +638,8 @@ export type Database = {
            * mark_badges_seen().
            */
           unseen_badges: number;
+          /** Admin-set: left off every leaderboard (TP/KP kept). */
+          is_hidden_from_boards: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -847,6 +863,86 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      game_category: {
+        Row: {
+          slug: string;
+          category_id: string;
+          layout: "landscape" | "poster";
+          /** CategoryPane[] (lib/game/builtin-categories.ts). */
+          panes: Json;
+          default_pane: string;
+          /** BandSet: [{ verdict, relative, floorYears }]. */
+          bands: Json;
+          image_prefix: string;
+          card_image_key: string | null;
+          backdrop_key: string | null;
+          tag_kind: string | null;
+          show_on_home: boolean;
+          home_order: number;
+          status: "draft" | "published";
+          is_builtin: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        /** Written only by admin_* functions. */
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      game_category_translation: {
+        Row: {
+          slug: string;
+          locale_code: string;
+          title: string;
+          blurb: string | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      admin_audit: {
+        Row: {
+          id: number;
+          actor_id: string;
+          action: string;
+          target_table: string;
+          target_id: string;
+          before: Json | null;
+          after: Json | null;
+          note: string | null;
+          created_at: string;
+        };
+        /** Written by admin_log() and the admin_* functions. */
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      admin_login_attempt: {
+        Row: {
+          id: number;
+          kind: "password" | "totp";
+          ip: string;
+          username: string | null;
+          success: boolean;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      event_challenge_review: {
+        Row: {
+          id: number;
+          event_id: string;
+          year: number;
+          reviewed_at: string;
+          actor_id: string;
+          note: string | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: {
       event_challenge_stats: {
@@ -861,6 +957,9 @@ export type Database = {
           /** later_votes - earlier_votes. What the admin list sorts on. */
           score: number;
           last_challenged_at: string | null;
+          /** Every vote ever cast on the event, open or not. */
+          all_votes: number;
+          reviewed_at: string | null;
         };
         Relationships: [];
       };
@@ -1114,6 +1213,244 @@ export type Database = {
       versus_forfeit_user: {
         Args: { p_user_id: string; p_except_match: string | null };
         Returns: number;
+      };
+      /* Admin panel (20261018170000_admin_audit.sql …
+         20261018171000_admin_categories.sql). service_role only. */
+      admin_abandon_match: {
+        Args: { p_actor: string; p_match_id: string | null; p_note: string | null };
+        Returns: string | null;
+      };
+      admin_adjust_score: {
+        Args: { p_actor: string; p_user_id: string | null; p_tp: number | null; p_note: string | null };
+        Returns: number | null;
+      };
+      admin_attach_image: {
+        Args: { p_actor: string; p_event_id: string | null; p_master: Json | null; p_webp: Json | null; p_meta: Json | null; p_note: string | null };
+        Returns: string | null;
+      };
+      admin_audit_entry: {
+        Args: { p_id: number | null };
+        Returns: Json;
+      };
+      admin_audit_list: {
+        Args: { p_filters: Json | null; p_page: number | null };
+        Returns: Json;
+      };
+      admin_category_detail: {
+        Args: { p_slug: string | null };
+        Returns: Json;
+      };
+      admin_category_list: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      admin_category_publish_gaps: {
+        Args: { p_slug: string | null };
+        Returns: Json;
+      };
+      admin_challenge_detail: {
+        Args: { p_event_id: string | null };
+        Returns: Json;
+      };
+      admin_challenge_list: {
+        Args: { p_filters: Json | null; p_page: number | null };
+        Returns: Json;
+      };
+      admin_clear_avatar: {
+        Args: { p_actor: string; p_user_id: string | null; p_note: string | null };
+        Returns: undefined;
+      };
+      admin_create_category: {
+        Args: { p_actor: string; p_input: Json | null; p_note: string | null };
+        Returns: string | null;
+      };
+      admin_create_event: {
+        Args: { p_actor: string; p_input: Json | null; p_status: string | null; p_note: string | null };
+        Returns: string | null;
+      };
+      admin_daily_overview: {
+        Args: { p_from: string | null; p_days: number | null };
+        Returns: Json;
+      };
+      admin_dashboard: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      admin_delete_category: {
+        Args: { p_actor: string; p_slug: string | null; p_typed: string | null; p_note: string | null };
+        Returns: undefined;
+      };
+      admin_delete_event: {
+        Args: { p_actor: string; p_event_id: string | null; p_typed_name: string | null; p_note: string | null };
+        Returns: Json;
+      };
+      admin_delete_event_preview: {
+        Args: { p_event_id: string | null };
+        Returns: Json;
+      };
+      admin_delete_image_rows: {
+        Args: { p_actor: string; p_ids: string[] | null; p_note: string | null };
+        Returns: number | null;
+      };
+      admin_dismiss_challenges: {
+        Args: { p_actor: string; p_event_id: string | null; p_note: string | null };
+        Returns: Json;
+      };
+      admin_duplicate_candidates: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      admin_event_detail: {
+        Args: { p_event_id: string | null };
+        Returns: Json;
+      };
+      admin_event_list: {
+        Args: { p_filters: Json | null; p_page: number | null };
+        Returns: Json;
+      };
+      admin_event_name: {
+        Args: { p_event_id: string | null };
+        Returns: string | null;
+      };
+      admin_event_snapshot: {
+        Args: { p_event_id: string | null };
+        Returns: Json;
+      };
+      admin_health_checks: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      admin_image_report: {
+        Args: { p_tab: string | null; p_topic: string | null; p_page: number | null };
+        Returns: Json;
+      };
+      admin_import_events: {
+        Args: { p_actor: string; p_topic: string | null; p_rows: Json | null; p_status: string | null; p_note: string | null };
+        Returns: number | null;
+      };
+      admin_log: {
+        Args: { p_actor: string; p_action: string | null; p_table: string | null; p_id: string | null; p_before?: Json | null; p_after?: Json | null; p_note?: string | null };
+        Returns: number | null;
+      };
+      admin_login_attempt_prune: {
+        Args: Record<PropertyKey, never>;
+        Returns: number | null;
+      };
+      admin_login_gate: {
+        Args: { p_kind: string | null; p_ip: string | null; p_username: string | null };
+        Returns: number | null;
+      };
+      admin_login_record: {
+        Args: { p_kind: string | null; p_ip: string | null; p_username: string | null; p_success: boolean | null };
+        Returns: undefined;
+      };
+      admin_rename_user: {
+        Args: { p_actor: string; p_user_id: string | null; p_new_name: string | null; p_reserve_old: boolean | null; p_note: string | null; p_release_reserved?: boolean | null };
+        Returns: string | null;
+      };
+      admin_repoint_image: {
+        Args: { p_actor: string; p_event_id: string | null; p_moves: Json | null; p_note: string | null };
+        Returns: undefined;
+      };
+      admin_reroll_daily: {
+        Args: { p_actor: string; p_date: string | null; p_audience: string | null; p_event_ids: string[] | null; p_other_ids: string[] | null; p_note: string | null };
+        Returns: undefined;
+      };
+      admin_save_category_tags: {
+        Args: { p_actor: string; p_slug: string | null; p_tags: Json | null; p_note: string | null };
+        Returns: undefined;
+      };
+      admin_set_category_art: {
+        Args: { p_actor: string; p_slug: string | null; p_kind: string | null; p_key: string | null; p_note: string | null };
+        Returns: undefined;
+      };
+      admin_set_category_home: {
+        Args: { p_actor: string; p_slug: string | null; p_show: boolean | null; p_order: number | null; p_note: string | null };
+        Returns: undefined;
+      };
+      admin_set_category_status: {
+        Args: { p_actor: string; p_slug: string | null; p_status: string | null; p_note: string | null };
+        Returns: Json;
+      };
+      admin_set_event_category: {
+        Args: { p_actor: string; p_event_id: string | null; p_topic: string | null; p_tag: string | null; p_note: string | null };
+        Returns: undefined;
+      };
+      admin_set_event_sensitive: {
+        Args: { p_actor: string; p_event_id: string | null; p_value: boolean | null; p_note: string | null };
+        Returns: undefined;
+      };
+      admin_set_event_status: {
+        Args: { p_actor: string; p_ids: string[] | null; p_status: string | null; p_note: string | null };
+        Returns: number | null;
+      };
+      admin_set_hidden_from_boards: {
+        Args: { p_actor: string; p_user_id: string | null; p_value: boolean | null; p_note: string | null };
+        Returns: undefined;
+      };
+      admin_suspicious_users: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      admin_update_category: {
+        Args: { p_actor: string; p_slug: string | null; p_input: Json | null; p_note: string | null };
+        Returns: undefined;
+      };
+      admin_update_event_year: {
+        Args: { p_actor: string; p_event_id: string | null; p_year: number | null; p_precision: string | null; p_note: string | null };
+        Returns: Json;
+      };
+      admin_update_image_attribution: {
+        Args: { p_actor: string; p_image_id: string | null; p_input: Json | null; p_note: string | null };
+        Returns: undefined;
+      };
+      admin_upsert_event_translations: {
+        Args: { p_actor: string; p_event_id: string | null; p_rows: Json | null; p_note: string | null };
+        Returns: undefined;
+      };
+      admin_user_delete_preview: {
+        Args: { p_user_id: string | null };
+        Returns: Json;
+      };
+      admin_user_detail: {
+        Args: { p_user_id: string | null };
+        Returns: Json;
+      };
+      admin_user_list: {
+        Args: { p_query: string | null; p_page: number | null };
+        Returns: Json;
+      };
+      admin_utc_today: {
+        Args: Record<PropertyKey, never>;
+        Returns: string | null;
+      };
+      admin_versus_overview: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      admin_year_change_preview: {
+        Args: { p_event_id: string | null; p_new_year: number | null };
+        Returns: Json;
+      };
+      board_visible: {
+        Args: { p_user_id: string | null };
+        Returns: boolean;
+      };
+      event_tag_slug: {
+        Args: { p_event_id: string | null };
+        Returns: string | null;
+      };
+      event_topic_slug: {
+        Args: { p_event_id: string | null };
+        Returns: string | null;
+      };
+      panes_problem: {
+        Args: { p_panes: Json | null; p_default: string | null };
+        Returns: string | null;
+      };
+      year_fits_topic: {
+        Args: { p_topic: string | null; p_year: number | null };
+        Returns: boolean;
       };
     };
     Enums: {

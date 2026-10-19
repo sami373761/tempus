@@ -1,5 +1,6 @@
 "use server";
 
+import { getCurrentUser } from "@/lib/auth/server";
 import { createAdminDbClient } from "@/lib/db/admin";
 import {
   isChallengeDirection,
@@ -9,28 +10,23 @@ import {
 import { readLocale } from "@/lib/i18n/server";
 
 /**
- * The one way a browser can write to the database.
+ * A player's vote that an event is dated wrongly.
  *
- * Everything else on the site is read-only to `anon` — the content tables have
- * no write grants and no write policies — so this action is the exception and
- * is shaped accordingly: the service-role client is used for exactly one
- * INSERT into exactly one table, and every argument is checked here rather
- * than trusted from the client.
+ * **Signed-in players only, one vote each.** The admin panel ranks events by
+ * these votes, so a vote has to be a person: a guest is told to sign in
+ * (`needs-account`), and an account that has already voted on this event's
+ * current year is told so (`already-voted`) — there is no changing or taking
+ * back a vote. Changing the event's year in the panel opens a fresh count;
+ * renaming it does not.
  *
- * The locale is read from the cookie rather than taken as an argument, the
- * same way `dealTimelineEvents` does it, which leaves the caller with nothing
- * to supply but the event and the direction.
- *
- * There is no per-player limit, because there is no player: the site has no
- * accounts and a browser has nothing durable to key one on. So this records a
- * stream of reports for an editor to read, not a vote to be trusted — see the
- * migration. What it must never do is let a malformed call through, which is
- * what the two guards below are for.
+ * The service-role client is used for exactly one INSERT into exactly one
+ * table; the player's identity comes from the session, the year from the
+ * database (a trigger stamps `year_at_vote`), and the locale from the cookie,
+ * which leaves the caller nothing to supply but the event and the direction.
  */
-
-/** Deliberately coarse: the player is thanked either way, and a failure is a
- *  prompt to try again rather than something to explain. */
-export type ChallengeResult = { ok: boolean };
+export type ChallengeResult =
+  | { ok: true }
+  | { ok: false; reason?: "needs-account" | "already-voted" };
 
 export async function submitDateChallenge(
   eventId: string,
@@ -40,14 +36,18 @@ export async function submitDateChallenge(
     return { ok: false };
   }
 
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, reason: "needs-account" };
+
   try {
     const locale = await readLocale();
-    await recordDateChallenge(createAdminDbClient(), {
+    const outcome = await recordDateChallenge(createAdminDbClient(), {
       eventId,
+      userId: user.id,
       direction: direction as ChallengeDirection,
       localeCode: locale,
     });
-    return { ok: true };
+    return outcome === "recorded" ? { ok: true } : { ok: false, reason: "already-voted" };
   } catch {
     // A thrown database error must not reach the browser as a stack trace —
     // the same rule the head-to-head actions follow. A foreign-key violation

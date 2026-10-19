@@ -281,7 +281,7 @@ export function WhenBornGame({
     preload.src = url;
   }, [upcoming?.image?.url]);
 
-  const fraction = fractions[pane];
+  const fraction = (fractions[pane] ?? 0.5);
   const railYear = yearAtFraction(pane, fraction);
   // The guess made (input stops) and the guess graded (the reveal starts)
   // are a round trip apart; see components/timeline-game.tsx.
@@ -813,7 +813,7 @@ export function WhenBornGame({
                       panes={WHEN_BORN_PANES}
                       active={candidate === pane}
                       heading={false}
-                      fraction={fractions[candidate]}
+                      fraction={(fractions[candidate] ?? 0.5)}
                       onFractionChange={(next) => move(candidate, next)}
                       answered={lockedIn}
                       // Shown but not draggable while a year is being typed:
@@ -849,7 +849,7 @@ export function WhenBornGame({
                         pane: candidate,
                         guessPane,
                         guessFraction:
-                          guessPane === null ? 0 : fractions[guessPane],
+                          guessPane === null ? 0 : (fractions[guessPane] ?? 0.5),
                         answerPane: answered ? answerPane : null,
                         answerYear: reveal?.date.year ?? null,
                         answerDelayMs,

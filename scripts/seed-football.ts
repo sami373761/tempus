@@ -24,6 +24,7 @@
  * attached.
  */
 
+import { countAdminEdited, skippedLine } from "./seed-guard.ts";
 import { connect, describeTarget, loadEnvFile } from "./db.ts";
 import { PARSED_LOCALES } from "./parse-events.ts";
 import {
@@ -122,9 +123,11 @@ async function main(): Promise<void> {
       );
     }
 
+    const skipped = await countAdminEdited(client, events.map((event) => event.slug));
     await client.query("commit");
     console.log(
-      `\n\nEvents upserted      : ${eventRows}` +
+      skippedLine(skipped) +
+      `\nEvents upserted      : ${eventRows}` +
         `\nTranslations upserted: ${translationRows}` +
         `\nCategory links       : ${categoryRows}`,
     );
@@ -162,7 +165,8 @@ async function upsertEvents(
            month     = null,
            day       = null,
            precision = excluded.precision,
-           status    = excluded.status`,
+           status    = excluded.status
+     where public.event.admin_edited_at is null`,
     values,
   );
 
@@ -196,7 +200,8 @@ async function upsertTranslations(
      values ${tuples.join(", ")}
      on conflict (event_id, locale_code) do update
        set name        = excluded.name,
-           description = excluded.description`,
+           description = excluded.description
+     where (select e.admin_edited_at from public.event e where e.id = event_translation.event_id) is null`,
     values,
   );
 
@@ -216,7 +221,9 @@ async function linkCategory(
 
   const { rowCount } = await client.query(
     `insert into public.event_category (event_id, category_id)
-     values ${tuples.join(", ")}
+     select v.event_id, v.category_id::uuid from (values ${tuples.join(", ")}) as v(event_id, category_id)
+     where not exists (
+       select 1 from public.event e where e.id = v.event_id and e.admin_edited_at is not null)
      on conflict (event_id, category_id) do nothing`,
     values,
   );

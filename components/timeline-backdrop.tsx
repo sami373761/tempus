@@ -179,7 +179,7 @@ export function TimelineBackdrop({
             key={candidate}
             className="timeline-backdrop-layer absolute inset-0 transition-opacity ease-out"
             style={{
-              background: PANE_WASH[candidate],
+              background: PANE_WASH[candidate] ?? PANE_WASH.ce,
               opacity: isActive || isLeaving ? 1 : 0,
               // The only ordering that matters: incoming above outgoing.
               zIndex: isActive ? 2 : isLeaving ? 1 : 0,

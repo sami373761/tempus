@@ -7,7 +7,7 @@ import { SUMMARY_BUTTON } from "@/components/set-summary";
 import { signInHref } from "@/lib/auth/paths";
 import { minutesUntilReset } from "@/lib/game/daily";
 import {
-  LIMITED_GAME_PATH,
+  limitedGamePath,
   MEMBER_PLAYS_PER_DAY,
   playsLeft,
   type PlayAllowance,
@@ -197,7 +197,7 @@ export function PlayLimitPanel({
               so theirs is the way out. */}
           {!member && (
             <Link
-              href={signInHref(LIMITED_GAME_PATH[allowance.game])}
+              href={signInHref(limitedGamePath(allowance.game))}
               className={`${SUMMARY_BUTTON} inline-flex items-center justify-center bg-ink text-page hover:opacity-85`}
             >
               {t.authTabSignUp}
@@ -246,7 +246,7 @@ export function PlayLimitNotice({
 
       {!member && (
         <Link
-          href={signInHref(LIMITED_GAME_PATH[allowance.game])}
+          href={signInHref(limitedGamePath(allowance.game))}
           className="mt-3 inline-flex items-center justify-center rounded-full bg-ink px-5 py-2 text-xs font-semibold text-page transition hover:opacity-85"
         >
           {t.authTabSignUp}

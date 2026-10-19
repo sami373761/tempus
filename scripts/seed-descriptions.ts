@@ -207,7 +207,8 @@ async function updateDescriptions(
        join public.event e on e.slug = incoming.slug
       where t.event_id = e.id
         and t.locale_code = incoming.locale_code
-        and t.description is distinct from incoming.description`,
+        and t.description is distinct from incoming.description
+        and e.admin_edited_at is null`,
     values,
   );
 

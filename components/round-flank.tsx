@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { submitDateChallenge } from "@/app/actions/challenges";
 import type { ChallengeDirection } from "@/lib/db/challenges";
+import { signInHref } from "@/lib/auth/paths";
 import type { SupportedLocale } from "@/lib/db/types";
 import type { GuessAccuracy, Verdict } from "@/lib/game/scoring";
 import {
@@ -603,7 +604,7 @@ export function DateChallenge({
   t: Dict;
 }) {
   const [stage, setStage] = useState<
-    "idle" | "ask" | "choose" | "sending" | "done" | "failed"
+    "idle" | "ask" | "choose" | "sending" | "done" | "failed" | "signin" | "voted"
   >("idle");
   const root = useRef<HTMLDivElement>(null);
   // Set by a press that is about to unmount the button it came from. Every
@@ -631,7 +632,11 @@ export function DateChallenge({
     try {
       const result = await submitDateChallenge(eventId, direction);
       // A failure offers the two answers again, so focus goes back to them.
+      // A guest is sent to sign in, and a second vote is answered rather than
+      // retried: neither offers the two buttons again.
       if (result.ok) setStage("done");
+      else if (result.reason === "needs-account") goTo("signin");
+      else if (result.reason === "already-voted") setStage("voted");
       else goTo("failed");
     } catch {
       goTo("failed");
@@ -730,6 +735,26 @@ export function DateChallenge({
 
       {stage === "done" && (
         <p className="on-photo text-xs text-white/80">{t.challengeThanks}</p>
+      )}
+
+      {stage === "voted" && (
+        <p className="on-photo text-xs text-white/80">{t.challengeAlreadyVoted}</p>
+      )}
+
+      {stage === "signin" && (
+        <div className="space-y-2">
+          <p className="on-photo text-xs text-white/80">{t.challengeSignIn}</p>
+          {/* Back to this page after signing in; signInHref runs the path
+              through the same `next` rules the form validates with. */}
+          <a
+            href={signInHref(
+              typeof window === "undefined" ? null : window.location.pathname,
+            )}
+            className={`block w-full text-center ${CHALLENGE_BUTTON}`}
+          >
+            {t.challengeSignInLink}
+          </a>
+        </div>
       )}
     </div>
   );

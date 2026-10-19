@@ -48,10 +48,10 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 
-import sharp from "sharp";
 
 import { loadEnvFile } from "./db.ts";
 import { BACKDROP_WIDTHS } from "../lib/storage/images.ts";
+import { backdropKey, toArtWebp } from "../lib/storage/image-derive.ts";
 
 loadEnvFile();
 
@@ -103,7 +103,7 @@ try {
     writeFileSync(source, original);
 
     for (const width of widths) {
-      const target = `${base}-${width}.jpg`;
+      const target = backdropKey(base, width, "jpg");
 
       if (!force && (await exists(target))) {
         console.log(`skip   ${target} (already in the bucket)`);
@@ -125,11 +125,8 @@ try {
       const body = readFileSync(resized);
       // Same pixels, other format: never a second resample. Quality matches
       // scripts/art-webp.ts.
-      const webp = await sharp(body)
-        .rotate()
-        .webp({ quality: 82, effort: 6, smartSubsample: true })
-        .toBuffer();
-      const webpTarget = `${base}-${width}.webp`;
+      const webp = await toArtWebp(body);
+      const webpTarget = backdropKey(base, width, "webp");
       if (dryRun) {
         console.log(`would   ${target}  ${kb(body.byteLength)}`);
         console.log(`would   ${webpTarget}  ${kb(webp.byteLength)}`);

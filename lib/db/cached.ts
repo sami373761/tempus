@@ -4,6 +4,8 @@ import { unstable_cache } from "next/cache";
 
 import { createAdminDbClient } from "./admin.ts";
 import type { DailyChallenge } from "./daily.ts";
+import { readGameCategories, type GameCategory } from "./game-categories.ts";
+import { registerEventImagePrefixes } from "../storage/masked-image.ts";
 import { readDailyQuestions } from "./daily.ts";
 import {
   readChronoLeaderboard,
@@ -45,7 +47,7 @@ export const readLeaderboardCached = unstable_cache(
 export const readChronoLeaderboardCached = unstable_cache(
   () => readChronoLeaderboard(createAdminDbClient()),
   ["chrono-leaderboard"],
-  { revalidate: LEADERBOARD_REVALIDATE_S, tags: ["leaderboard"] },
+  { revalidate: LEADERBOARD_REVALIDATE_S, tags: ["leaderboard", "chrono-leaderboard"] },
 );
 
 /**
@@ -59,5 +61,32 @@ export const readDailyQuestionsCached = unstable_cache(
   (challenge: DailyChallenge, locale: string) =>
     readDailyQuestions(createAdminDbClient(), challenge, locale),
   ["daily-questions"],
-  { revalidate: 60 * 60 },
+  // `events` too: an event corrected in the admin panel must not wait out
+  // the hour on today's daily.
+  { revalidate: 60 * 60, tags: ["daily", "events"] },
 );
+
+/**
+ * The published game categories (lib/db/game-categories.ts). Shared by every
+ * visitor and changed only from the admin panel, which clears the
+ * `categories` tag on every category write — so the window below is only
+ * the fallback for a write made outside the panel.
+ */
+const readGameCategoriesData = unstable_cache(
+  () => readGameCategories(createAdminDbClient()),
+  ["game-categories"],
+  { revalidate: 300, tags: ["categories"] },
+);
+
+export async function readGameCategoriesCached(): Promise<GameCategory[]> {
+  const categories = await readGameCategoriesData();
+  // Their image folders are event folders too (lib/storage/masked-image.ts).
+  registerEventImagePrefixes(categories.map((c) => c.imagePrefix));
+  return categories;
+}
+
+/** One published category by slug, or null. */
+export async function publishedCategory(slug: string): Promise<GameCategory | null> {
+  const all = await readGameCategoriesCached();
+  return all.find((c) => c.slug === slug) ?? null;
+}

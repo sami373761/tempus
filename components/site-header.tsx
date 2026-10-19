@@ -68,6 +68,9 @@ export const TRANSPARENT_ROUTES = [
   // The daily game paints a full-bleed `TimelineBackdrop` behind its play and
   // summary screens (components/daily-game.tsx), the same as the rails above.
   "/daily",
+  // Subject categories made in the admin panel (app/(public)/oyun/[slug]):
+  // the same full-bleed rail screen as /football.
+  "/oyun",
 ];
 
 /**

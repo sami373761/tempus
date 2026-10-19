@@ -106,16 +106,36 @@ const EVENT_IMAGE_PREFIXES = [
   "film-dizi",
   "when-born",
   "basketball",
+  // New football uploads from the admin panel; the existing football
+  // photographs stay under ce/.
+  "football",
 ] as const;
+
+/**
+ * The fixed core above plus the folders of categories made in the admin
+ * panel (`game_category.image_prefix`), registered by whoever has read the
+ * categories (the dev proxy, the category pages). A folder name is
+ * `^[a-z0-9-]+$` by the table's own check, so it is safe inside the regex.
+ *
+ * Masked rounds are the daily and head-to-head, which only ever deal the
+ * general pool — so in practice only the core is reached here; the
+ * registration keeps the rule "every event folder is known" true anyway.
+ */
+const REGISTERED_PREFIXES = new Set<string>();
+
+export function registerEventImagePrefixes(prefixes: readonly string[]): void {
+  for (const p of prefixes) if (/^[a-z0-9-]+$/.test(p)) REGISTERED_PREFIXES.add(p);
+}
 
 /**
  * One flat object under one of the prefixes, with an image extension. Single
  * segment by construction: no event image is nested, so a `/` after the
  * prefix is refused rather than interpreted.
  */
-const EVENT_IMAGE_KEY = new RegExp(
-  `^(?:${EVENT_IMAGE_PREFIXES.join("|")})/[A-Za-z0-9][A-Za-z0-9._-]*\\.(jpe?g|png|webp|avif)$`,
-);
+function eventImageKey(): RegExp {
+  const all = [...EVENT_IMAGE_PREFIXES, ...REGISTERED_PREFIXES];
+  return new RegExp(`^(?:${all.join("|")})/[A-Za-z0-9][A-Za-z0-9._-]*\\.(jpe?g|png|webp|avif)$`);
+}
 
 const MIME_BY_EXTENSION: Record<string, string> = {
   jpg: "image/jpeg",
@@ -183,7 +203,7 @@ export function unmaskImageToken(token: string): string | null {
  * is the second fence, not the first: it holds even if the secret leaked.
  */
 export function maskedImageMimeType(objectKey: string): string | null {
-  const match = EVENT_IMAGE_KEY.exec(objectKey);
+  const match = eventImageKey().exec(objectKey);
   return match ? (MIME_BY_EXTENSION[match[1]!] ?? null) : null;
 }
 

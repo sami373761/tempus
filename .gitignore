@@ -22,3 +22,6 @@ next-env.d.ts
 # misc
 .DS_Store
 /.vercel
+
+# throwaway admin test database (scripts/admin-test-db)
+/scripts/admin-test-db/.env.test-db

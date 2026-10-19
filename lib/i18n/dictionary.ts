@@ -469,6 +469,9 @@ const en = {
   challengeSending: "Sending...",
   challengeThanks: "Thank you. Your correction has been recorded.",
   challengeFailed: "That could not be sent. Try again.",
+  challengeSignIn: "Sign in to vote on a date.",
+  challengeSignInLink: "Sign in",
+  challengeAlreadyVoted: "You have already voted on this date.",
   challengeDismiss: "Close",
 
   // The achievements page. Six rungs on one ladder, climbed with TP; from Gold
@@ -1058,6 +1061,9 @@ const tr: Dict = {
   challengeSending: "Gönderiliyor...",
   challengeThanks: "Teşekkürler. Düzeltmen kaydedildi.",
   challengeFailed: "Gönderilemedi. Tekrar dene.",
+  challengeSignIn: "Oy vermek için giriş yapın.",
+  challengeSignInLink: "Giriş yap",
+  challengeAlreadyVoted: "Bu olay için oyunuz alındı.",
   challengeDismiss: "Kapat",
 
   achievementsTitle: "Başarımlar",
@@ -1587,6 +1593,9 @@ const de: Dict = {
   challengeSending: "Wird gesendet...",
   challengeThanks: "Danke. Deine Korrektur wurde erfasst.",
   challengeFailed: "Das konnte nicht gesendet werden. Versuch es erneut.",
+  challengeSignIn: "Melde dich an, um über ein Datum abzustimmen.",
+  challengeSignInLink: "Anmelden",
+  challengeAlreadyVoted: "Für dieses Ereignis hast du bereits abgestimmt.",
   challengeDismiss: "Schließen",
 
   achievementsTitle: "Erfolge",
@@ -2111,6 +2120,9 @@ const fr: Dict = {
   challengeSending: "Envoi...",
   challengeThanks: "Merci. Ta correction a été enregistrée.",
   challengeFailed: "Impossible d'envoyer. Réessaie.",
+  challengeSignIn: "Connecte-toi pour voter sur une date.",
+  challengeSignInLink: "Se connecter",
+  challengeAlreadyVoted: "Tu as déjà voté pour cet événement.",
   challengeDismiss: "Fermer",
 
   achievementsTitle: "Succès",
@@ -2636,6 +2648,9 @@ const es: Dict = {
   challengeSending: "Enviando...",
   challengeThanks: "Gracias. Tu corrección ha quedado registrada.",
   challengeFailed: "No se pudo enviar. Inténtalo de nuevo.",
+  challengeSignIn: "Inicia sesión para votar sobre una fecha.",
+  challengeSignInLink: "Iniciar sesión",
+  challengeAlreadyVoted: "Ya has votado sobre este evento.",
   challengeDismiss: "Cerrar",
 
   achievementsTitle: "Logros",

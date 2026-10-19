@@ -19,7 +19,7 @@ import { eraForYear, isEraFolder, type EraFolder } from "../historical-date.ts";
 import { publicEnv } from "../env.ts";
 // Type-only: the backdrop record below is keyed by pane, and importing the type
 // rather than the module keeps storage free of any runtime dependency on the game.
-import type { TimelinePane } from "../game/timeline.ts";
+import type { BuiltinPane, TimelinePane } from "../game/timeline.ts";
 
 const EXTENSION_BY_MIME: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -169,7 +169,7 @@ interface BackdropPlate {
   base: string;
 }
 
-const TIMELINE_BACKDROP_PLATES: Record<TimelinePane, BackdropPlate> = {
+const TIMELINE_BACKDROP_PLATES: Record<BuiltinPane, BackdropPlate> = {
   cosmos: { folder: "date-guessing-game", base: "cosmos" },
   evolution: { folder: "date-guessing-game", base: "game-backgrounds-003" },
   civilization: { folder: "date-guessing-game", base: "game-backgrounds-002" },
@@ -281,11 +281,35 @@ function backdropSrcSet(folder: string, base: string): string {
 }
 
 /** Object key for one pane's backdrop at one of the stored widths. */
+/**
+ * Plates for panes that arrive as data (an admin-made category's rails): the
+ * category's `backdrop_key` master, whose `-1440`/`-2560` derivatives the
+ * panel writes on upload. A registered pane with no plate wears the common
+ * era's, which is art the site already has.
+ */
+const REGISTERED_PLATES = new Map<string, BackdropPlate>();
+
+export function registerBackdropPlate(pane: string, masterKey: string | null): void {
+  if (!masterKey) return;
+  const slash = masterKey.lastIndexOf("/");
+  if (slash <= 0) return;
+  const base = masterKey.slice(slash + 1).replace(/\.[a-z0-9]+$/i, "");
+  REGISTERED_PLATES.set(pane, { folder: masterKey.slice(0, slash), base });
+}
+
+function plateFor(pane: TimelinePane): BackdropPlate {
+  return (
+    (TIMELINE_BACKDROP_PLATES as Record<string, BackdropPlate>)[pane] ??
+    REGISTERED_PLATES.get(pane) ??
+    TIMELINE_BACKDROP_PLATES.ce
+  );
+}
+
 export function timelineBackdropObjectKey(
   pane: TimelinePane,
   width: BackdropWidth,
 ): string {
-  const { folder, base } = TIMELINE_BACKDROP_PLATES[pane];
+  const { folder, base } = plateFor(pane);
   return backdropObjectKey(folder, base, width);
 }
 
@@ -295,7 +319,7 @@ export function timelineBackdropUrl(pane: TimelinePane): string {
 
 /** All stored widths, for a full-bleed `sizes="100vw"` backdrop. */
 export function timelineBackdropSrcSet(pane: TimelinePane): string {
-  const { folder, base } = TIMELINE_BACKDROP_PLATES[pane];
+  const { folder, base } = plateFor(pane);
   return backdropSrcSet(folder, base);
 }
 

@@ -65,10 +65,33 @@ export const SOLO_GAMES = [
   "survival",
 ] as const;
 
-export type SoloGame = (typeof SOLO_GAMES)[number];
+export type BuiltinSoloGame = (typeof SOLO_GAMES)[number];
+
+/**
+ * A subject category made in the admin panel (`game_category.slug`). It plays
+ * like the built-in subject games — dealt, graded on reveal, banked a round
+ * at a time into a set — and the database checks the name
+ * (`assert_game_name()`), so the type only promises the shape.
+ */
+export type CategoryGame = string & { readonly __category?: true };
+
+/** A solo game: a built-in one, or a category slug. */
+export type SoloGame = BuiltinSoloGame | CategoryGame;
 
 export function isSoloGame(value: string): value is SoloGame {
-  return (SOLO_GAMES as readonly string[]).includes(value);
+  return (SOLO_GAMES as readonly string[]).includes(value) || isCategoryGameName(value);
+}
+
+/** The names the core games use; a category slug can never be one of them. */
+export const CORE_GAMES = ["history", "compare", "survival", "daily", "versus"] as const;
+
+/**
+ * Whether a name is shaped like a category's game (not a core game, slug
+ * shaped). Shape only: whether it is a *published* category is the
+ * dealer's and the reveal's question, both of which read the row.
+ */
+export function isCategoryGameName(value: string): value is CategoryGame {
+  return /^[a-z0-9]+(-[a-z0-9]+)*$/.test(value) && !(CORE_GAMES as readonly string[]).includes(value);
 }
 
 /**
@@ -86,6 +109,11 @@ export const DATE_GAMES = [
 ] as const satisfies readonly SoloGame[];
 
 export type DateGame = (typeof DATE_GAMES)[number];
+
+/** Every game answered with a year: the general one and every category. */
+export function isYearGame(game: string): boolean {
+  return game !== "compare" && game !== "survival" && isSoloGame(game);
+}
 
 /** The two games answered by picking a section between anchors. */
 export type ComparisonGameId = Extract<SoloGame, "compare" | "survival">;

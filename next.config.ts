@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+import { ADMIN_BASE } from "./lib/admin/path.ts";
+
 const r2PublicBaseUrl = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_URL;
 
 /**
@@ -39,10 +41,30 @@ const nextConfig: NextConfig = {
     serverActions: {
       /* Profile pictures may be up to 4 MB (`AVATAR_MAX_BYTES`), and Next's
          default limit is 1 MB for the whole request — a larger file would be
-         refused before the action could say why. 4.5 MB is also Vercel's own
-         ceiling on a request body, so this cannot usefully go higher. */
-      bodySizeLimit: "4.5mb",
+         refused before the action could say why. Raised to 26 MB for the
+         admin panel's image uploads (≤ 25 MB, lib/admin/image-upload.ts):
+         the site now runs on its own VPS, not Vercel, whose 4.5 MB request
+         ceiling set the old value. Every action still checks its own file
+         size (AVATAR_MAX_BYTES stays 4 MB). */
+      bodySizeLimit: "26mb",
     },
+  },
+  /**
+   * The admin panel's responses only: never cached, never framed, never
+   * leaking the secret address in a Referer, never indexed. Scoped to the
+   * panel's path so the public site's caching is untouched.
+   */
+  async headers() {
+    const adminHeaders = [
+      { key: "Cache-Control", value: "no-store, max-age=0" },
+      { key: "Referrer-Policy", value: "no-referrer" },
+      { key: "X-Frame-Options", value: "DENY" },
+      { key: "X-Robots-Tag", value: "noindex, nofollow" },
+    ];
+    return [
+      { source: ADMIN_BASE, headers: adminHeaders },
+      { source: `${ADMIN_BASE}/:path*`, headers: adminHeaders },
+    ];
   },
   images: {
     // Images live in Cloudflare R2 and are served from its public/CDN hostname.

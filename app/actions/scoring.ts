@@ -5,6 +5,7 @@ import { after } from "next/server";
 import { getCurrentUser, type SessionUser } from "@/lib/auth/server";
 import { isBadgeSlug } from "@/lib/badges";
 import { createAdminDbClient } from "@/lib/db/admin";
+import { publishedCategory } from "@/lib/db/cached";
 import {
   bankSoloRound,
   refreshBadges,
@@ -18,6 +19,7 @@ import { isLimitedGame } from "@/lib/game/play-limit";
 import {
   comparisonPoints,
   DATE_GAMES,
+  isYearGame,
   tierPoints,
   type SoloGame,
 } from "@/lib/game/points";
@@ -70,8 +72,22 @@ const DATE_GAME_BANDS: Record<(typeof DATE_GAMES)[number], BandSet | undefined> 
   "when-born": WHEN_BORN_BANDS,
 };
 
-function isDateGame(game: SoloGame): game is (typeof DATE_GAMES)[number] {
-  return (DATE_GAMES as readonly string[]).includes(game);
+function isDateGame(game: SoloGame): boolean {
+  return (DATE_GAMES as readonly string[]).includes(game) || isYearGame(game);
+}
+
+/**
+ * The ladder a round is graded on: the built-in games' constants, or a
+ * category's `game_category.bands` (computed from its timeline in the admin
+ * panel). A slug that is not a published category grades nothing — the
+ * round could not have been dealt.
+ */
+async function bandsFor(game: SoloGame): Promise<{ ok: true; bands: BandSet | undefined } | { ok: false }> {
+  if ((DATE_GAMES as readonly string[]).includes(game)) {
+    return { ok: true, bands: DATE_GAME_BANDS[game as (typeof DATE_GAMES)[number]] };
+  }
+  const category = await publishedCategory(game);
+  return category ? { ok: true, bands: category.bands } : { ok: false };
 }
 
 export async function revealDateRound(
@@ -94,11 +110,13 @@ export async function revealDateRound(
     // All three in one wait. The limit is read beside the date rather than
     // before it, so the four limited modes cost the same round trip as the
     // unlimited ones — see the note on `allowRound`.
-    const [dates, user, play] = await Promise.all([
+    const [dates, user, play, ladder] = await Promise.all([
       readDates(admin, claims.eventIds),
       dealtAccount(claims),
       allowRoundOf(claims, setId),
+      bandsFor(claims.game),
     ]);
+    if (!ladder.ok) return { ok: false, reason: "bad-token" };
 
     // The day's games are spent. Nothing is revealed and nothing is banked:
     // this is the gate a client cannot skip, because a guess it cannot send
@@ -110,7 +128,7 @@ export async function revealDateRound(
     const date = dates.get(claims.eventIds[0]!);
     if (!date) return { ok: false, reason: "failed" };
 
-    const { verdict } = gradeGuess(guess, date.year, DATE_GAME_BANDS[claims.game]);
+    const { verdict } = gradeGuess(guess, date.year, ladder.bands);
     const tp = tierPoints(verdict);
     const correct = verdict !== "wayOff";
 

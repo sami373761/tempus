@@ -64,10 +64,10 @@ import {
   HeadObjectCommand,
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
-import sharp from "sharp";
 
 import { connect, describeTarget, loadEnvFile } from "./db.ts";
 import { r2 } from "./attach-core.ts";
+import { encodeEventWebp, eventWebpKey } from "../lib/storage/image-derive.ts";
 
 /**
  * Long-edge cap, and the suffix the rewritten key carries. 1600 against a
@@ -216,22 +216,11 @@ async function rewrite(row: {
   const source = (await masterOf(row.key)) ?? row.key;
   const master = await download(source);
 
-  // `inside` + `withoutEnlargement` is a cap: a picture already within it is
-  // re-encoded at its own size, never upscaled. `rotate()` applies the EXIF
-  // orientation before the metadata is dropped.
-  const { data: body, info } = await sharp(master, { failOn: "none" })
-    .rotate()
-    .resize({
-      width: maxDim,
-      height: maxDim,
-      fit: "inside",
-      withoutEnlargement: true,
-    })
-    .webp({ quality, effort: 6, smartSubsample: true })
-    .toBuffer({ resolveWithObject: true });
-
-  const longEdge = Math.max(info.width, info.height);
-  const target = `${source.replace(/\.[A-Za-z0-9]+$/, "")}-${longEdge}.webp`;
+  // The encoding itself is lib/storage/image-derive.ts, shared with the admin
+  // panel's upload, so a panel upload and a shrink run produce the same file.
+  const { body, width, height } = await encodeEventWebp(master, { maxDim, quality });
+  const info = { width, height };
+  const target = eventWebpKey(source, Math.max(width, height));
 
   if (target === row.key) {
     skipped.push(`${row.key} (already this derivative)`);

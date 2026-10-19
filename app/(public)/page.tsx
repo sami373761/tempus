@@ -9,6 +9,8 @@ import { SiteMenu } from "@/components/site-menu";
 import { getCurrentAccount } from "@/lib/auth/server";
 import { SUPPORTED_LOCALES } from "@/lib/db/types";
 import { chronoStanding } from "@/lib/game/chrono-rating";
+import { readGameCategoriesCached } from "@/lib/db/cached";
+import { categoryBlurb, categoryTitle } from "@/lib/db/game-categories";
 import { readLocaleContext } from "@/lib/i18n/server";
 import {
   boardPhotoUrl,
@@ -18,6 +20,7 @@ import {
   explorerModel,
   gameCoverSrcSet,
   gameCoverUrl,
+  publicImageUrl,
   timelineBackdropSrcSet,
   timelineBackdropUrl,
   versusFriendArtUrl,
@@ -25,6 +28,24 @@ import {
 
 export default async function HomePage() {
   const { locale, t } = await readLocaleContext();
+
+  /* Game categories (public.game_category, managed in the admin panel): which
+     subject cards are shown, and any category the panel added. A failed read
+     shows the board as it always was — the built-in four, no extras. */
+  const categories = await readGameCategoriesCached().catch(() => null);
+  const hiddenBuiltins = (categories ?? [])
+    .filter((c) => c.isBuiltin && !c.showOnHome)
+    .map((c) => c.slug);
+  const extraCards = (categories ?? [])
+    .filter((c) => !c.isBuiltin && c.showOnHome && c.layout === "landscape")
+    .sort((a, b) => a.homeOrder - b.homeOrder)
+    .map((c) => ({
+      slug: c.slug,
+      href: `/oyun/${c.slug}`,
+      title: categoryTitle(c, locale),
+      blurb: categoryBlurb(c, locale),
+      photo: c.cardImageKey ? publicImageUrl(c.cardImageKey) : null,
+    }));
 
   /* The masthead's menu button is this page's own copy (the layout's floating
      one stands down on `/`), so this page has to resolve the session too — the
@@ -193,6 +214,8 @@ export default async function HomePage() {
           guessCover={guessCover}
           photos={photos}
           versus={versus}
+          hiddenBuiltins={hiddenBuiltins}
+          extraCards={extraCards}
         />
       </section>
 

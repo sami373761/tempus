@@ -104,3 +104,11 @@ export function isDevelopment(): boolean {
   assertServer("isDevelopment()");
   return process.env.NODE_ENV === "development";
 }
+
+/**
+ * True in a production build. Safe on both sides: NODE_ENV is inlined at
+ * build time. Used for cookie flags (`secure`), never for access decisions.
+ */
+export function isProduction(): boolean {
+  return process.env.NODE_ENV === "production";
+}

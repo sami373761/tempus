@@ -11,6 +11,7 @@
  * later pass, and `image` rows require real provenance to be inserted at all.
  */
 
+import { countAdminEdited, skippedLine } from "./seed-guard.ts";
 import { connect, describeTarget, loadEnvFile } from "./db.ts";
 import {
   PARSED_LOCALES,
@@ -86,9 +87,11 @@ async function main(): Promise<void> {
       );
     }
 
+    const skipped = await countAdminEdited(client, events.map((event) => event.slug));
     await client.query("commit");
     console.log(
-      `\n\nEvents upserted      : ${eventRows}` +
+      skippedLine(skipped) +
+      `\nEvents upserted      : ${eventRows}` +
         `\nTranslations upserted: ${translationRows}`,
     );
   } catch (error) {
@@ -128,7 +131,8 @@ async function upsertEvents(
            month     = excluded.month,
            day       = excluded.day,
            precision = excluded.precision,
-           status    = excluded.status`,
+           status    = excluded.status
+     where public.event.admin_edited_at is null`,
     values,
   );
 
@@ -156,7 +160,8 @@ async function upsertTranslations(
     `insert into public.event_translation (event_id, locale_code, name)
      values ${tuples.join(", ")}
      on conflict (event_id, locale_code) do update
-       set name = excluded.name`,
+       set name = excluded.name
+     where (select e.admin_edited_at from public.event e where e.id = event_translation.event_id) is null`,
     values,
   );
 

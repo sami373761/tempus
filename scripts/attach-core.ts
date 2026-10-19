@@ -11,7 +11,7 @@ import { createHash } from "node:crypto";
 import { GetObjectCommand, HeadObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import type { Client } from "pg";
 
-import { probeImage } from "./image-probe.ts";
+import { probeImage } from "../lib/storage/image-probe.ts";
 import { parseImageObjectKey } from "../lib/storage/images.ts";
 import { eraForYear } from "../lib/historical-date.ts";
 

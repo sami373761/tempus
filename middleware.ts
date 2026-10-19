@@ -2,6 +2,12 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { ACCOUNT_PATH, isProtectedPath, SIGN_IN_PATH } from "@/lib/auth/paths";
+import { isAdminPath } from "@/lib/admin/path";
+import {
+  ADMIN_SEEN_COOKIE,
+  ADMIN_SEEN_COOKIE_OPTIONS,
+  isFresh,
+} from "@/lib/admin/session-seen";
 import { publicEnv } from "@/lib/env";
 
 /**
@@ -84,6 +90,15 @@ export async function middleware(request: NextRequest) {
         : ACCOUNT_PATH;
     url.search = "";
     return NextResponse.redirect(url);
+  }
+
+  /* The admin panel's idle clock (lib/admin/session-seen.ts): a page load
+     inside the panel counts as activity, but only while the clock is still
+     running — an expired one is left expired, so the page's own gate sends
+     the visitor back to the sign-in form. Authorization itself is never
+     decided here; requireAdminPage / requireAdmin do that. */
+  if (user && isAdminPath(pathname) && isFresh(request.cookies.get(ADMIN_SEEN_COOKIE)?.value)) {
+    response.cookies.set(ADMIN_SEEN_COOKIE, String(Date.now()), ADMIN_SEEN_COOKIE_OPTIONS);
   }
 
   return response;

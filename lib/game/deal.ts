@@ -16,6 +16,7 @@
  */
 import type { ScreenEvent } from "./screen.ts";
 import type { DealtComparisonRound, DealtEvent } from "./solo.ts";
+import type { CategoryGame } from "./points.ts";
 import type { WhenBornEvent } from "./when-born.ts";
 
 export const DEAL_PATH = "/api/deal";
@@ -39,8 +40,9 @@ export const DEAL_GAMES = [
 
 export type DealGame = (typeof DEAL_GAMES)[number];
 
-/** The date games that play on `TimelineGame`. */
-export type TimelineDealGame = Extract<DealGame, "history" | "football" | "basketball">;
+/** The date games that play on `TimelineGame`: the built-in three, and any
+ *  landscape category made in the admin panel (dealt by slug). */
+export type TimelineDealGame = Extract<DealGame, "history" | "football" | "basketball"> | CategoryGame;
 
 export interface DealtFor {
   history: DealtEvent[];
@@ -65,7 +67,17 @@ export async function dealRounds<G extends DealGame>(
   game: G,
   count: number,
   exclude: readonly string[],
-): Promise<DealtFor[G]> {
+): Promise<DealtFor[G]>;
+export async function dealRounds(
+  game: CategoryGame,
+  count: number,
+  exclude: readonly string[],
+): Promise<DealtEvent[]>;
+export async function dealRounds(
+  game: string,
+  count: number,
+  exclude: readonly string[],
+): Promise<unknown> {
   const response = await fetch(DEAL_PATH, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -73,5 +85,5 @@ export async function dealRounds<G extends DealGame>(
     cache: "no-store",
   });
   if (!response.ok) throw new Error(`deal failed: ${response.status}`);
-  return (await response.json()) as DealtFor[G];
+  return response.json();
 }

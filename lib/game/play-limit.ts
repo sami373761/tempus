@@ -26,7 +26,7 @@
  */
 
 import { dailyPuzzleDate } from "./daily.ts";
-import type { SoloGame } from "./points.ts";
+import { isCategoryGameName, type CategoryGame, type SoloGame } from "./points.ts";
 
 /**
  * The games a day's worth of plays is counted for.
@@ -41,20 +41,31 @@ export const LIMITED_GAMES = [
   "when-born",
 ] as const satisfies readonly SoloGame[];
 
-export type LimitedGame = (typeof LIMITED_GAMES)[number];
+/**
+ * The built-in four above, and every subject category made in the admin
+ * panel: all subject games are limited (§7.8), so a category slug is a
+ * limited game by its shape alone — the dealer and the reveal both refuse a
+ * slug that is not a published category.
+ */
+export type LimitedGame = (typeof LIMITED_GAMES)[number] | CategoryGame;
 
 export function isLimitedGame(value: string): value is LimitedGame {
-  return (LIMITED_GAMES as readonly string[]).includes(value);
+  return (LIMITED_GAMES as readonly string[]).includes(value) || isCategoryGameName(value);
 }
 
-/** Where each limited game lives, for the notice's "come back" links and the
- *  `next` a guest is sent to sign in with. */
-export const LIMITED_GAME_PATH: Record<LimitedGame, string> = {
+/** Where each built-in limited game lives, for the notice's "come back"
+ *  links and the `next` a guest is sent to sign in with. */
+export const LIMITED_GAME_PATH: Record<(typeof LIMITED_GAMES)[number], string> = {
   football: "/football",
   basketball: "/basketball",
   screen: "/screen",
   "when-born": "/when-born",
 };
+
+/** A limited game's page: the built-in route, else the generic category route. */
+export function limitedGamePath(game: LimitedGame): string {
+  return (LIMITED_GAME_PATH as Record<string, string>)[game] ?? `/oyun/${game}`;
+}
 
 /** Games an account may play of one subject mode per day. */
 export const MEMBER_PLAYS_PER_DAY = 3;

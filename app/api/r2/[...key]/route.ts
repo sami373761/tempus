@@ -1,3 +1,4 @@
+import { readGameCategoriesCached } from "@/lib/db/cached";
 import { getObject } from "@/lib/storage/r2";
 
 /**
@@ -40,6 +41,7 @@ const ALLOWED_PREFIXES = [
   "film-dizi/",
   "when-born/",
   "basketball/",
+  "football/",
   "1v1/",
   "videos/",
   "3d-models/",

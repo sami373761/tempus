@@ -38,23 +38,32 @@ function voteFor(direction: ChallengeDirection): 1 | -1 {
   return direction === "later" ? 1 : -1;
 }
 
-/** One report. Returns nothing: the player is thanked, not shown a tally. */
+/**
+ * One vote. An account votes once per event per stored year
+ * (`event_date_challenge_one_vote`); a second vote is not an error to the
+ * player, it is an answer — `"already-voted"`. The year the vote is about is
+ * stamped by the database from `event.year`, never sent from here.
+ */
 export async function recordDateChallenge(
   client: DbClient,
   input: {
     eventId: string;
+    userId: string;
     direction: ChallengeDirection;
     /** The language the round was played in, for the editor's benefit. */
     localeCode?: string | null;
   },
-): Promise<void> {
+): Promise<"recorded" | "already-voted"> {
   const { error } = await client.from("event_date_challenge").insert({
     event_id: input.eventId,
+    user_id: input.userId,
     direction: voteFor(input.direction),
     locale_code: input.localeCode ?? null,
   });
 
+  if (error?.code === "23505") return "already-voted";
   if (error) throw new Error(`recordDateChallenge: ${error.message}`);
+  return "recorded";
 }
 
 /** One event's tally, as the admin panel will list it. */
@@ -78,7 +87,9 @@ export interface EventChallengeStats {
  * `"volume"` ignores the direction and ranks by how often an event is reported
  * at all — which is the one an editor opening the list actually wants.
  *
- * Nothing calls this yet; the admin panel is where it is going (CLAUDE.md).
+ * Counts open votes only — cast for the event's current year, after its last
+ * review (see the event_challenge_stats view). The admin panel's own list is
+ * `admin_challenge_list`, which also filters; this stays for scripts.
  */
 export async function eventChallengeStats(
   client: DbClient,

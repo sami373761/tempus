@@ -1,6 +1,7 @@
 import "server-only";
 
 import {
+  CopyObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
@@ -58,6 +59,30 @@ export async function putObject(options: {
       CacheControl: options.cacheControl ?? "public, max-age=31536000, immutable",
     }),
   );
+}
+
+/** Server-side copy inside the bucket (the admin panel's "Klasöre taşı"). */
+export async function copyObject(fromKey: string, toKey: string): Promise<void> {
+  const { s3, bucket } = r2();
+  await s3.send(
+    new CopyObjectCommand({
+      Bucket: bucket,
+      Key: toKey,
+      CopySource: `${bucket}/${fromKey.split("/").map(encodeURIComponent).join("/")}`,
+    }),
+  );
+}
+
+/** The whole object as bytes (admin uploads re-derive from a master). */
+export async function getObjectBytes(objectKey: string): Promise<Buffer | null> {
+  const { s3, bucket } = r2();
+  try {
+    const object = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: objectKey }));
+    return Buffer.from(await object.Body!.transformToByteArray());
+  } catch (error) {
+    if (isNotFound(error)) return null;
+    throw error;
+  }
 }
 
 export async function deleteObject(objectKey: string): Promise<void> {

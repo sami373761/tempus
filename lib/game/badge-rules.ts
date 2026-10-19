@@ -30,8 +30,12 @@ import { DATE_GAMES, type DateGame } from "./points.ts";
 export interface PlayerStats {
   /** Career TP, every game. */
   tp: number;
-  /** Exact-year answers per date game. The daily counts as `history`. */
-  perfects: Record<DateGame, number>;
+  /**
+   * Exact-year answers per date game. The daily counts as `history`. Keyed
+   * by game: the built-in five always, plus every category made in the admin
+   * panel (`player_stats` returns one key per `game_category` row).
+   */
+  perfects: Record<DateGame, number> & Record<string, number>;
   /** Longest survival run, in correct answers. */
   bestSurvival: number;
   /** Most Perfects in a single set of the general date game. */
@@ -80,8 +84,9 @@ interface Rung {
   quests: readonly Quest[];
 }
 
+// Every date game counts, categories included (§7.8).
 const totalPerfects = (s: PlayerStats) =>
-  DATE_GAMES.reduce((sum, game) => sum + s.perfects[game], 0);
+  Object.values(s.perfects).reduce((sum, n) => sum + (n ?? 0), 0);
 
 /**
  * The ladder, bottom to top. Order matters: each rung needs the one before.
@@ -108,7 +113,7 @@ export const BADGE_RULES: readonly Rung[] = [
       {
         key: "perfectGames",
         target: 3,
-        measure: (s) => DATE_GAMES.filter((game) => s.perfects[game] > 0).length,
+        measure: (s) => Object.values(s.perfects).filter((n) => (n ?? 0) > 0).length,
         labelKey: "questPerfectGames",
       },
       {
@@ -150,6 +155,8 @@ export const BADGE_RULES: readonly Rung[] = [
       {
         // Counted as Perfects *towards* the 5-per-game target, so a player
         // with 40 in one game and none elsewhere reads 5 of 25, not 25 of 25.
+        // Over the built-in five only: a target that grew with every category
+        // the panel publishes would take back badges' progress overnight.
         key: "everyGamePerfects",
         target: 5 * DATE_GAMES.length,
         measure: (s) =>

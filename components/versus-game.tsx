@@ -1269,7 +1269,7 @@ function StageRound({
     // camera's jump to another era is spent behind the fold instead of being
     // watched.
     let from = pane;
-    let year = yearAtFraction(pane, fractions[pane]);
+    let year = yearAtFraction(pane, (fractions[pane] ?? 0.5));
 
     if (direct) {
       const typed = directYear(entry, entryRange);
@@ -1428,7 +1428,7 @@ function StageRound({
                   pane={candidate}
                   panes={panes}
                   active={candidate === pane}
-                  fraction={fractions[candidate]}
+                  fraction={(fractions[candidate] ?? 0.5)}
                   onFractionChange={(next) => move(candidate, next)}
                   answered={closed}
                   showGuess={!closed || guessPane === candidate}
@@ -1452,7 +1452,7 @@ function StageRound({
                           pane: candidate,
                           guessPane,
                           guessFraction:
-                            guessPane === null ? 0 : fractions[guessPane],
+                            guessPane === null ? 0 : (fractions[guessPane] ?? 0.5),
                           answerPane,
                           answerYear: revealed.year,
                           answerDelayMs,

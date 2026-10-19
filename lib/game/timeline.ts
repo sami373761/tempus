@@ -48,7 +48,7 @@ import { PRESENT_YEAR } from "../historical-date.ts";
  * pane unrepresentable; deriving it from a concatenation would make every
  * `indexOf` on a set reject the union it is a subset of.
  */
-export type TimelinePane =
+export type BuiltinPane =
   | "cosmos"
   | "evolution"
   | "civilization"
@@ -59,6 +59,14 @@ export type TimelinePane =
   | "born-antiquity"
   | "born-premodern"
   | "born-modern";
+
+/**
+ * A pane id. The built-in ten are `BuiltinPane`; a category made in the admin
+ * panel brings its own panes as data (`game_category.panes`), registered at
+ * run time with `registerPanes`. So the type is a string — the union above is
+ * kept for the records that must stay total over the panes the code ships.
+ */
+export type TimelinePane = BuiltinPane | (string & {});
 
 /**
  * A pane set: the panes one game pans between, oldest first.
@@ -289,7 +297,7 @@ export const SCREEN_MIN_YEAR = 1900;
  * display BCE years, where `max` is the pane's LEFT (oldest) edge and `min` its
  * right — the axis runs backwards, like the era it describes.
  */
-type PaneSpec =
+export type PaneSpec =
   | { scale: "year"; minYear: number; maxYear: number; tickStep: number }
   | {
       scale: "bce-linear";
@@ -307,7 +315,7 @@ type PaneSpec =
       stepYears: number;
     };
 
-const PANE_SPEC: Record<TimelinePane, PaneSpec> = {
+export const PANE_SPEC: Readonly<Record<BuiltinPane, PaneSpec>> = {
   // 10 billion -> 10 million BCE. Earth, the continents, the dinosaurs.
   cosmos: {
     scale: "bce-log",
@@ -426,6 +434,45 @@ const PANE_SPEC: Record<TimelinePane, PaneSpec> = {
 export const ALL_PANES: PaneSet = Object.keys(PANE_SPEC) as TimelinePane[];
 
 /**
+ * Panes that arrive as data: an admin-made category's rails. Keyed by pane id,
+ * which for such a category is `<slug>--<n>` — the double hyphen cannot occur
+ * in a slug, so a registered pane can never shadow a built-in one.
+ *
+ * Registration is idempotent and happens wherever the category row is read
+ * (the page on the server, the game component on the client), so every helper
+ * below resolves the same spec on both sides.
+ */
+const REGISTERED = new Map<string, PaneSpec>();
+const REGISTERED_LABELS = new Map<string, Record<string, string>>();
+
+export function registerPanes(
+  panes: readonly ({ key: string; label?: Record<string, string> } & PaneSpec)[],
+): void {
+  for (const { key, label, ...spec } of panes) {
+    if (key in PANE_SPEC) continue;
+    REGISTERED.set(key, spec as PaneSpec);
+    if (label) REGISTERED_LABELS.set(key, label);
+  }
+}
+
+/** A registered pane's heading in one locale, or null for a built-in pane. */
+export function registeredPaneLabel(pane: TimelinePane, locale: string): string | null {
+  const labels = REGISTERED_LABELS.get(pane);
+  return labels ? (labels[locale] ?? labels.en ?? null) : null;
+}
+
+export function isBuiltinPane(pane: string): pane is BuiltinPane {
+  return Object.prototype.hasOwnProperty.call(PANE_SPEC, pane);
+}
+
+/** The spec a pane id resolves to. Throws for a pane nobody registered. */
+export function paneSpec(pane: TimelinePane): PaneSpec {
+  const spec = isBuiltinPane(pane) ? PANE_SPEC[pane] : REGISTERED.get(pane);
+  if (!spec) throw new Error(`timeline: unknown pane "${pane}"`);
+  return spec;
+}
+
+/**
  * Display BCE year -> astronomical year. 100 BCE -> -99; 0 stays the hinge.
  *
  * Displays 0 and 1 are the same year — 1 BCE is astronomical 0, and the
@@ -449,7 +496,7 @@ export function yearToBceDisplay(year: number): number {
  * own granularity.
  */
 export function yearAtFraction(pane: TimelinePane, fraction: number): number {
-  const spec = PANE_SPEC[pane];
+  const spec = paneSpec(pane);
   const t = clamp01(fraction);
 
   switch (spec.scale) {
@@ -474,7 +521,7 @@ export function yearAtFraction(pane: TimelinePane, fraction: number): number {
 
 /** Inverse of `yearAtFraction`; clamped, so an out-of-pane year pins to an edge. */
 export function fractionAtYear(pane: TimelinePane, year: number): number {
-  const spec = PANE_SPEC[pane];
+  const spec = paneSpec(pane);
 
   switch (spec.scale) {
     case "year":
@@ -547,7 +594,7 @@ export function paneBounds(pane: TimelinePane): { min: number; max: number } {
  * Drag to the neighbourhood, then step onto the year.
  */
 export function keyStepFraction(pane: TimelinePane): number {
-  const spec = PANE_SPEC[pane];
+  const spec = paneSpec(pane);
 
   switch (spec.scale) {
     case "year":
@@ -587,7 +634,7 @@ export function coarseStepFraction(pane: TimelinePane): number {
  * decade, which is evenly spaced on their own scale.
  */
 export function paneTicks(pane: TimelinePane): number[] {
-  const spec = PANE_SPEC[pane];
+  const spec = paneSpec(pane);
   const years: number[] = [];
 
   switch (spec.scale) {

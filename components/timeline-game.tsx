@@ -395,7 +395,7 @@ export function TimelineGame({
     preload.src = url;
   }, [upcoming?.image?.url]);
 
-  const fraction = fractions[pane];
+  const fraction = (fractions[pane] ?? 0.5);
   const year = yearAtFraction(pane, fraction);
   // Two states where there used to be one, because the answer now arrives a
   // round trip after the guess. `locked` is the guess having been made — the
@@ -972,7 +972,7 @@ export function TimelineGame({
                       // space nothing can occupy.
                       heading={railHeading}
                       compact={subject}
-                      fraction={fractions[candidate]}
+                      fraction={(fractions[candidate] ?? 0.5)}
                       onFractionChange={(next) => move(candidate, next)}
                       answered={locked}
                       // The marker belongs to the pane it was placed in. Showing one on
@@ -997,7 +997,7 @@ export function TimelineGame({
                         pane: candidate,
                         guessPane,
                         guessFraction:
-                          guessPane === null ? 0 : fractions[guessPane],
+                          guessPane === null ? 0 : (fractions[guessPane] ?? 0.5),
                         answerPane,
                         answerYear: reveal?.date.year ?? null,
                         answerDelayMs,

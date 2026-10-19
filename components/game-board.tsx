@@ -81,8 +81,16 @@ export function GameBoard({
   guessCover,
   photos,
   versus,
+  hiddenBuiltins = [],
+  extraCards = [],
 }: {
   t: Dict;
+  /** Built-in subject cards the admin panel took off the home page. */
+  hiddenBuiltins?: readonly string[];
+  /** Subject categories added in the admin panel and shown on the home page,
+   *  in their `home_order`; they join the games view after the built-in
+   *  subject cards. */
+  extraCards?: readonly { slug: string; href: string; title: string; blurb: string; photo: string | null }[];
   /** The date-guessing game's common-era backdrop, reused as the Daily card's
    *  picture. Asked for on 2026-10-07: that card painted `.board-mesh` while
    *  every other card on both views carried a photograph, which made the one
@@ -310,33 +318,39 @@ export function GameBoard({
             photo={photos.survival}
             index={0}
           />
-          <BoardCard
-            href="/football"
-            title={t.footballTitle}
-            blurb={t.cardFootballBlurb}
-            kicker={t.timelineTitle}
-            icon={<FootballIcon />}
-            photo={photos.football}
-            index={1}
-          />
-          <BoardCard
-            href="/basketball"
-            title={t.basketballTitle}
-            blurb={t.cardBasketballBlurb}
-            kicker={t.timelineTitle}
-            icon={<BasketballIcon />}
-            photo={photos.basketball}
-            index={2}
-          />
-          <BoardCard
-            href="/screen"
-            title={t.screenTitle}
-            blurb={t.cardScreenBlurb}
-            kicker={t.timelineTitle}
-            icon={<ClapperIcon />}
-            photo={photos.screen}
-            index={3}
-          />
+          {!hiddenBuiltins.includes("football") && (
+            <BoardCard
+              href="/football"
+              title={t.footballTitle}
+              blurb={t.cardFootballBlurb}
+              kicker={t.timelineTitle}
+              icon={<FootballIcon />}
+              photo={photos.football}
+              index={1}
+            />
+          )}
+          {!hiddenBuiltins.includes("basketball") && (
+            <BoardCard
+              href="/basketball"
+              title={t.basketballTitle}
+              blurb={t.cardBasketballBlurb}
+              kicker={t.timelineTitle}
+              icon={<BasketballIcon />}
+              photo={photos.basketball}
+              index={2}
+            />
+          )}
+          {!hiddenBuiltins.includes("screen") && (
+            <BoardCard
+              href="/screen"
+              title={t.screenTitle}
+              blurb={t.cardScreenBlurb}
+              kicker={t.timelineTitle}
+              icon={<ClapperIcon />}
+              photo={photos.screen}
+              index={3}
+            />
+          )}
           {/* The last two slots stood empty until 2026-10-06. They are named
               now, which leaves the view eight cards with nothing held open: the
               board's shape is settled and the two that mean something — what is
@@ -347,15 +361,29 @@ export function GameBoard({
               is the four that can be played, and this slot is the fifth of them.
               Inventions has moved down into the unbuilt half of the view, beside
               the card that stands for everything else still being written. */}
-          <BoardCard
-            href="/when-born"
-            title={t.whenBornTitle}
-            blurb={t.cardWhenBornBlurb}
-            kicker={t.timelineTitle}
-            icon={<PersonIcon />}
-            photo={photos.whenBorn}
-            index={4}
-          />
+          {!hiddenBuiltins.includes("when-born") && (
+            <BoardCard
+              href="/when-born"
+              title={t.whenBornTitle}
+              blurb={t.cardWhenBornBlurb}
+              kicker={t.timelineTitle}
+              icon={<PersonIcon />}
+              photo={photos.whenBorn}
+              index={4}
+            />
+          )}
+          {extraCards.map((card, i) => (
+            <BoardCard
+              key={card.slug}
+              href={card.href}
+              title={card.title}
+              blurb={card.blurb}
+              kicker={t.timelineTitle}
+              icon={<BulbIcon />}
+              photo={card.photo ?? undefined}
+              index={5 + i}
+            />
+          ))}
           {/* The one card on the board that says so across its whole face rather
               than with a chip in the corner. See `veil` on `BoardCard`: the
               chip was read as decoration beside three live cards wearing

@@ -328,7 +328,7 @@ export function DailyGame({
   async function submit() {
     if (answered || sending || !event) return;
 
-    const year = yearAtFraction(pane, fractions[pane]);
+    const year = yearAtFraction(pane, (fractions[pane] ?? 0.5));
     setGuess(year);
     setGuessPane(pane);
     setSending(true);
@@ -597,7 +597,7 @@ export function DailyGame({
                   key={candidate}
                   pane={candidate}
                   active={candidate === pane}
-                  fraction={fractions[candidate]}
+                  fraction={(fractions[candidate] ?? 0.5)}
                   onFractionChange={(next) => move(candidate, next)}
                   // Locked from the press, not from the reply: the rail must
                   // not be draggable while a guess is in flight, or the marker
@@ -611,7 +611,7 @@ export function DailyGame({
                     pane: candidate,
                     guessPane,
                     guessFraction:
-                      guessPane === null ? 0 : fractions[guessPane],
+                      guessPane === null ? 0 : (fractions[guessPane] ?? 0.5),
                     answerPane,
                     answerYear: revealed?.year ?? null,
                     answerDelayMs,

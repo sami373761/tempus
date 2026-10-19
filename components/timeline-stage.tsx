@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { EventVisual } from "@/components/event-visual";
-import type { LocalizedEvent, SupportedLocale } from "@/lib/db/types";
+import { SUPPORTED_LOCALES, type LocalizedEvent, type SupportedLocale } from "@/lib/db/types";
 import { ROUND_PHOTO_FADE_MS } from "@/lib/game/rounds";
 import {
   ALL_PANES,
@@ -19,9 +19,10 @@ import {
   type PaneSet,
   type TimelinePane,
   yearAtFraction,
+  registeredPaneLabel,
 } from "@/lib/game/timeline";
 import { formatYear, formatYearMagnitude } from "@/lib/historical-date";
-import { dateLabels, type Dict } from "@/lib/i18n/dictionary";
+import { DICTIONARIES, dateLabels, type Dict } from "@/lib/i18n/dictionary";
 
 /**
  * The date-guessing *stage*: the four-pane camera, the rail, the picture and
@@ -1281,8 +1282,10 @@ export function doorLabel(pane: TimelinePane, t: Dict): string {
     case "born-modern":
       return paneSpanLabel(pane);
     case "ce":
-    default:
       return t.commonEra;
+    default:
+      // A panel-made category's rail: its own name, else the years it covers.
+      return registeredPaneLabel(pane, localeOfDict(t)) ?? paneSpanLabel(pane);
   }
 }
 
@@ -1423,10 +1426,20 @@ export function paneLabel(pane: TimelinePane, t: Dict): string {
     case "born-modern":
       return paneSpanLabel(pane);
     case "ce":
-    default:
-      // Spelled out as a heading; the door pill keeps the abbreviation.
       return t.commonEraTitle;
+    default: {
+      // A category made in the admin panel names its own rails, per locale.
+      // The dictionary is the only locale this function is handed, so the
+      // locale is recognised from it.
+      const own = registeredPaneLabel(pane, localeOfDict(t));
+      // Spelled out as a heading; the door pill keeps the abbreviation.
+      return own ?? t.commonEraTitle;
+    }
   }
+}
+
+function localeOfDict(t: Dict): SupportedLocale {
+  return SUPPORTED_LOCALES.find((l) => DICTIONARIES[l].commonEraTitle === t.commonEraTitle && DICTIONARIES[l].bc === t.bc) ?? "en";
 }
 
 /**
