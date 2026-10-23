@@ -398,7 +398,9 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
 7. Email sign-ups are not confirmed, by decision: "Confirm email" is off in the
    Supabase dashboard, so `signUp` returns a session. No mail sender is set up
    (Resend would need `RESEND_API_KEY`/`MAIL_FROM`), so password reset is
-   hidden in production (`canReset`). `@example.com` is rejected.
+   hidden in production (`canReset`). Accepted trade-off: anyone can register
+   someone else's address, and Supabase links a later Google sign-in with that
+   email to the same account. `@example.com` is rejected.
 8. `/contact` is a scaffold; the tip jar has no payment route.
 9. `homepage/movies-1.jpg` and the coming-soon master are unlicensed film stills
    — settle rights before going public.
