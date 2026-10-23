@@ -263,11 +263,12 @@ async function main(): Promise<void> {
     ok(Number((await one(db, "select public.admin_log($1, 'user.ban', 'auth.users', $2, null, '{}', null) as id", [actor, user])).id) > 0, "admin_log writes a row");
 
     // ---- versus ------------------------------------------------------------
-    const vo = await one<{ v: { stuck: number; live: { id: string }[] } }>(db, "select public.admin_versus_overview() as v");
-    ok(vo.v.stuck === 2, "admin_versus_overview finds the two stuck matches", vo.v.stuck);
+    const vo = await one<{ v: { stuck: number; live: unknown[]; stale: { id: string }[] } }>(db, "select public.admin_versus_overview() as v");
+    ok(vo.v.stuck === 2 && vo.v.stale.length === 2, "admin_versus_overview finds the two stuck matches", vo.v.stuck);
+    ok(vo.v.live.length === 0, "a match idle for hours is not listed as live", vo.v.live.length);
     const ratingBefore = await one<{ s: string }>(db, "select coalesce(sum(chrono_rating), 0)::text as s from public.profile");
-    await audited(db, "versus.abandon", "admin_abandon_match", () => db.query("select public.admin_abandon_match($1, $2, null)", [actor, vo.v.live[0]!.id]));
-    ok((await one(db, "select phase::text as p from public.match where id = $1", [vo.v.live[0]!.id])).p === "abandoned", "abandon ends the match");
+    await audited(db, "versus.abandon", "admin_abandon_match", () => db.query("select public.admin_abandon_match($1, $2, null)", [actor, vo.v.stale[0]!.id]));
+    ok((await one(db, "select phase::text as p from public.match where id = $1", [vo.v.stale[0]!.id])).p === "abandoned", "abandon ends the match");
     ok((await one<{ s: string }>(db, "select coalesce(sum(chrono_rating), 0)::text as s from public.profile")).s === ratingBefore.s, "abandon moves no KP");
 
     // ---- health, audit, dashboard ------------------------------------------

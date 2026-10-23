@@ -7,8 +7,28 @@ import { adminRpc } from "@/lib/db/admin/rpc";
 
 export const dynamic = "force-dynamic";
 
+type OpenMatch = {
+  id: string;
+  phase: string;
+  currentIdx: number;
+  totalRounds: number;
+  isPublic: boolean;
+  hasBot: boolean;
+  opponentJoined: boolean;
+  lastSeen: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/**
+ * Open matches in three groups (see 20261023120000_admin_versus_live.sql):
+ * `live` is being played, `waiting` is a lobby opened in the last 30 minutes,
+ * `stale` is everything else not yet ended — the ones to close by hand.
+ */
 type Overview = {
-  live: { id: string; phase: string; currentIdx: number; totalRounds: number; isPublic: boolean; hasBot: boolean; lastSeen: string | null; updatedAt: string; stuck: boolean }[];
+  live: OpenMatch[];
+  waiting: OpenMatch[];
+  stale: OpenMatch[];
   stuck: number;
   ended: number;
   sweepable: number;
@@ -26,9 +46,10 @@ export default async function VersusPage() {
   return (
     <>
       <PageTitle>Versus</PageTitle>
-      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-5">
-        <Stat label="Canlı maç" value={o.live.length} />
-        <Stat label="Takılı" value={o.stuck} alert={o.stuck > 0} />
+      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-6">
+        <Stat label="Oynanan maç" value={o.live.length} />
+        <Stat label="Bekleyen oda" value={o.waiting.length} />
+        <Stat label="Terk edilmiş" value={o.stuck} alert={o.stuck > 0} />
         <Stat label="Bitmiş (tablo)" value={o.ended} />
         <Stat label="Terk oranı (7 gün)" value={o.abandonRate === null ? "—" : `%${Math.round(o.abandonRate * 100)}`} />
         <Stat label="Ort. eşleşme bekleme" value={o.avgMatchWaitSeconds === null ? "—" : `${o.avgMatchWaitSeconds} sn`} />
@@ -60,34 +81,55 @@ export default async function VersusPage() {
             ))}
           </div>
         </Card>
-        <Card title="Canlı maçlar" className="lg:col-span-2">
-          <Table head={["Maç", "Faz", "Tur", "Tür", "Son görülme", "Güncelleme", ""]} empty={o.live.length === 0}>
-            {o.live.map((m) => (
-              <tr key={m.id}>
-                <Td className="text-ink-dim">{m.id.slice(0, 8)}</Td>
-                <Td>
-                  {m.phase} {m.stuck ? <Badge tone="bad">takılı</Badge> : null}
-                </Td>
-                <Td>
-                  {m.currentIdx + 1}/{m.totalRounds}
-                </Td>
-                <Td>{m.isPublic ? "çevrimiçi" : "arkadaş"}{m.hasBot ? " · bot" : ""}</Td>
-                <Td>{fmtDate(m.lastSeen)}</Td>
-                <Td>{fmtDate(m.updatedAt)}</Td>
-                <Td>
-                  <ActionForm
-                    danger
-                    compact
-                    run={abandonMatch.bind(null, m.id)}
-                    fields={[{ name: "note", label: "Not", kind: "text" }]}
-                    submitLabel="Maçı sonlandır"
-                  />
-                </Td>
-              </tr>
-            ))}
-          </Table>
+        <Card title="Oynanan maçlar" className="lg:col-span-2">
+          <MatchTable matches={o.live} closeLabel="Maçı sonlandır" />
+        </Card>
+        <Card title="Bekleyen odalar (son 30 dk)" className="lg:col-span-2">
+          <p className="mb-3 text-sm text-ink-dim">
+            Kurulmuş ama başlamamış odalar: rakip daha gelmemiş ya da iki taraf hazır demedi.
+          </p>
+          <MatchTable matches={o.waiting} closeLabel="Odayı kapat" />
+        </Card>
+        <Card title="Terk edilmiş" className="lg:col-span-2">
+          <p className="mb-3 text-sm text-ink-dim">
+            Kimsenin dönmediği odalar ve 10 dakikadır ilerlemeyen maçlar. 12 saat sonra temizleme bunları
+            zaten siler; şimdi kapatmak da güvenli, KP etkilenmez.
+          </p>
+          <MatchTable matches={o.stale} closeLabel="Kapat" />
         </Card>
       </div>
     </>
+  );
+}
+
+function MatchTable({ matches, closeLabel }: { matches: OpenMatch[]; closeLabel: string }) {
+  return (
+    <Table head={["Maç", "Faz", "Tur", "Tür", "Rakip", "Açıldı", "Son hareket", ""]} empty={matches.length === 0}>
+      {matches.map((m) => (
+        <tr key={m.id}>
+          <Td className="text-ink-dim">{m.id.slice(0, 8)}</Td>
+          <Td>{m.phase}</Td>
+          <Td>
+            {m.currentIdx + 1}/{m.totalRounds}
+          </Td>
+          <Td>
+            {m.isPublic ? "çevrimiçi" : "arkadaş"}
+            {m.hasBot ? " · bot" : ""}
+          </Td>
+          <Td>{m.opponentJoined ? "geldi" : <Badge tone="bad">yok</Badge>}</Td>
+          <Td>{fmtDate(m.createdAt)}</Td>
+          <Td>{fmtDate(m.updatedAt)}</Td>
+          <Td>
+            <ActionForm
+              danger
+              compact
+              run={abandonMatch.bind(null, m.id)}
+              fields={[{ name: "note", label: "Not", kind: "text" }]}
+              submitLabel={closeLabel}
+            />
+          </Td>
+        </tr>
+      ))}
+    </Table>
   );
 }
