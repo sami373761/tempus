@@ -6,6 +6,7 @@ import {
   safeNextPath,
   SIGN_IN_PATH,
 } from "@/lib/auth/paths";
+import { hasAdminRole } from "@/lib/auth/role";
 import { createServerDbClient } from "@/lib/db/server";
 
 /**
@@ -47,7 +48,14 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = await createServerDbClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+  // An admin's address arriving through Google (or a mail link) still gets
+  // no game session — see lib/auth/role.ts.
+  if (!error && hasAdminRole(data.user?.app_metadata)) {
+    await supabase.auth.signOut({ scope: "local" });
+    return NextResponse.redirect(new URL(SIGN_IN_PATH, origin));
+  }
 
   if (error) {
     return NextResponse.redirect(

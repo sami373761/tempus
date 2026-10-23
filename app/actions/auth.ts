@@ -28,6 +28,7 @@ import {
   SIGN_IN_PATH,
   VERIFY_PATH,
 } from "@/lib/auth/paths";
+import { hasAdminRole } from "@/lib/auth/role";
 import {
   allowAuthMail,
   RECOVERY_COOKIE,
@@ -202,10 +203,18 @@ export async function signInWithEmail(
   if (!password) return { status: "error", code: "invalid-credentials" };
 
   const supabase = await createServerDbClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     return { status: "error", code: mapAuthError(error.message, error.status) };
+  }
+  /* The panel's account cannot sign in to the game (lib/auth/role.ts). The
+     session just made is dropped — `local`, so a panel session in another
+     tab survives — and the form says only what it says for a wrong password:
+     it must not confirm that the address is an admin's. */
+  if (hasAdminRole(data.user?.app_metadata)) {
+    await supabase.auth.signOut({ scope: "local" });
+    return { status: "error", code: "invalid-credentials" };
   }
 
   revalidatePath("/", "layout");
@@ -608,7 +617,8 @@ export async function updatePassword(
   form: FormData,
 ): Promise<AuthState> {
   const user = await getVerifiedUser();
-  if (!user) redirect(SIGN_IN_PATH);
+  // The panel's account changes its password with scripts/make-admin.ts.
+  if (!user || hasAdminRole(user.app_metadata)) redirect(SIGN_IN_PATH);
 
   const password = String(form.get("password") ?? "");
   const confirm = String(form.get("confirm") ?? "");

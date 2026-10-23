@@ -7,6 +7,7 @@ import {
   publicOrigin,
   SIGN_IN_PATH,
 } from "@/lib/auth/paths";
+import { hasAdminRole } from "@/lib/auth/role";
 import { isAdminPath } from "@/lib/admin/path";
 import {
   ADMIN_SEEN_COOKIE,
@@ -69,7 +70,12 @@ export async function middleware(request: NextRequest) {
      until its token expires; the pages that care re-check (`requireAccount`
      is the boundary, `getVerifiedUser` the strict read). */
   const { data } = await supabase.auth.getClaims();
-  const user = data?.claims.sub ? data.claims : null;
+  // An admin session is the panel's, not a player's (lib/auth/role.ts): to
+  // the game's gates it is nobody.
+  const user =
+    data?.claims.sub && !hasAdminRole(data.claims.app_metadata)
+      ? data.claims
+      : null;
 
   const { pathname, search } = request.nextUrl;
 

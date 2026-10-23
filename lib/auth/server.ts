@@ -6,6 +6,7 @@ import type { User } from "@supabase/supabase-js";
 
 import { accountFrom, readProfileChrome } from "../db/accounts.ts";
 import { signInHref } from "./paths.ts";
+import { hasAdminRole } from "./role.ts";
 import { createServerDbClient } from "../db/server.ts";
 import type { Account } from "../db/types.ts";
 
@@ -36,6 +37,12 @@ export type SessionUser = Pick<User, "id" | "email" | "app_metadata">;
  * is acceptable for a game's identity; the two places where it is not —
  * changing a password and the admin gate — use `getVerifiedUser`.
  *
+ * **An admin session reads as signed out.** The panel's account shares the
+ * session cookie with the game but is not a player (`lib/auth/role.ts`);
+ * this is the read every game path goes through — the menu, deals, reveals,
+ * TP, badges, versus — so stopping it here keeps it out of all of them. The
+ * panel's own gate never calls this.
+ *
  * `cache()` makes it one read per render however many components ask.
  */
 export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
@@ -44,6 +51,7 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
   if (error || !data) return null;
   const { claims } = data;
   if (!claims.sub) return null;
+  if (hasAdminRole(claims.app_metadata)) return null;
   return {
     id: claims.sub,
     email: typeof claims.email === "string" ? claims.email : undefined,

@@ -5,7 +5,8 @@ import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 
-import { getVerifiedUser, type SessionUser } from "./server.ts";
+import { hasAdminRole } from "./role.ts";
+import { getVerifiedUser } from "./server.ts";
 import { createServerDbClient } from "../db/server.ts";
 import {
   ADMIN_MFA,
@@ -32,10 +33,8 @@ import {
  *   2. The session is `aal2`: the TOTP second factor was verified in it.
  *   3. It has not been idle for 30 minutes (lib/admin/session-seen.ts).
  */
-const ADMIN_ROLE = "admin";
-
-export function isAdmin(user: SessionUser | null): boolean {
-  return user?.app_metadata?.role === ADMIN_ROLE;
+export function isAdmin(user: Pick<User, "app_metadata"> | null): boolean {
+  return hasAdminRole(user?.app_metadata);
 }
 
 export type AdminGateFailure = "no-session" | "not-admin" | "needs-mfa" | "idle";
