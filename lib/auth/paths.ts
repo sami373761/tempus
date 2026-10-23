@@ -14,6 +14,13 @@
 /** The sign-in / sign-up page. One route for both — see the form. */
 export const SIGN_IN_PATH = "/signin";
 
+/** Where the links in our account mails land: a page with one button, so a
+ *  mail scanner opening the URL does not spend the one-time token. */
+export const VERIFY_PATH = "/verify";
+
+/** Where a password-reset link ends up, once it has signed the player in. */
+export const RESET_PASSWORD_PATH = "/reset-password";
+
 /** Where a signed-in player lands when they ask for their account. */
 export const ACCOUNT_PATH = "/account";
 

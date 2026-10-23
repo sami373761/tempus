@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { AuthForm } from "@/components/auth-form";
 import type { AuthErrorCode } from "@/app/actions/auth";
 import { safeNextPath } from "@/lib/auth/paths";
+import { isDevelopment } from "@/lib/env";
+import { isMailConfigured } from "@/lib/mail/send";
 import { readLocaleContext } from "@/lib/i18n/server";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -47,7 +49,7 @@ export default async function SignInPage({
      what lets the three-field sign-up finish inside one screen. */
   return (
     <div className="auth-screen flex min-h-[calc(100dvh-var(--site-bar-h))] flex-col items-center justify-center px-6 py-14">
-      <AuthForm t={t} next={next} initialError={error} />
+      <AuthForm t={t} next={next} initialError={error} canReset={isMailConfigured() || isDevelopment()} />
     </div>
   );
 }
@@ -57,9 +59,9 @@ function first(value: string | string[] | undefined): string | null {
   return value ?? null;
 }
 
-/** The codes `/auth/callback` is allowed to hand back. Anything else is
+/** The codes `/auth/callback` and `/verify` are allowed to hand back. Anything else is
  *  ignored rather than shown — the query string is not a place to write copy. */
-const CALLBACK_ERRORS = ["provider-failed", "generic"] as const;
+const CALLBACK_ERRORS = ["provider-failed", "link-expired", "generic"] as const;
 
 function asErrorCode(value: string | null): AuthErrorCode | null {
   return (CALLBACK_ERRORS as readonly string[]).includes(value ?? "")

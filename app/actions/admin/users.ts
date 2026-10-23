@@ -5,6 +5,7 @@ import { revalidate } from "@/lib/admin/revalidate";
 import { requireAdmin } from "@/lib/auth/admin";
 import { adminRpc } from "@/lib/db/admin/rpc";
 import { createAdminDbClient } from "@/lib/db/admin";
+import { deleteObject } from "@/lib/storage/r2";
 
 /**
  * Account actions (§6.7). Bans and deletion go through the Supabase Auth
@@ -150,8 +151,16 @@ export async function deleteUser(userId: Arg, typedUsername: Arg) {
       p_after: null,
       p_note: null,
     });
-    const { error } = await createAdminDbClient().auth.admin.deleteUser(id);
+    const db = createAdminDbClient();
+    // Read before the delete: the profile row (and its key) cascades away
+    // with the account, and the photo in R2 does not.
+    const { data: profile } = await db.from("profile").select("avatar_key").eq("id", id).maybeSingle();
+    const { error } = await db.auth.admin.deleteUser(id);
     if (error) fail("Hesap silinemedi (işlem kaydına yazıldı, hesap duruyor).");
+    /* The privacy policy (lib/privacy.ts) promises the photo goes with the
+       account. A failed delete leaves an unlinked object, never a broken
+       account, so it does not fail the action. */
+    if (profile?.avatar_key) await deleteObject(profile.avatar_key).catch(() => undefined);
     revalidate("leaderboard", "chrono-leaderboard");
     return null;
   }, "Hesap silindi.");

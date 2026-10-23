@@ -93,12 +93,29 @@ export function serverEnv() {
 }
 
 /**
+ * The site's own mail sender (lib/mail/send.ts), or null when it is not set
+ * up.
+ *
+ * Optional rather than `required()`: without it sign-up falls back to
+ * Supabase's built-in sender, which only delivers to the project's team, so a
+ * missing key degrades sign-up instead of taking every page down with it.
+ * `MAIL_FROM` must be an address on a domain verified in Resend.
+ */
+export function mailEnv(): { resendApiKey: string; from: string } | null {
+  assertServer("mailEnv()");
+  const resendApiKey = process.env.RESEND_API_KEY?.trim();
+  const from = process.env.MAIL_FROM?.trim();
+  return resendApiKey && from ? { resendApiKey, from } : null;
+}
+
+/**
  * True under `next dev`. Server-only, like every unprefixed variable.
  *
  * Exists for exactly one switch: sign-up skips the confirmation email in
- * development (`signUpWithEmail` in app/actions/auth.ts), so the site can be
- * tried with made-up addresses before custom SMTP exists. A production build
- * is always `production`, so the switch cannot follow a deploy.
+ * development when no mail sender is configured (`signUpWithEmail` in
+ * app/actions/auth.ts), so the site can be tried with made-up addresses. A
+ * production build is always `production`, so the switch cannot follow a
+ * deploy.
  */
 export function isDevelopment(): boolean {
   assertServer("isDevelopment()");

@@ -44,6 +44,7 @@ export function authErrorText(
     "photo-too-large": t.authErrPhotoTooLarge,
     "photo-type": t.authErrPhotoType,
     "photo-unreadable": t.authErrPhotoUnreadable,
+    "link-expired": t.authErrLinkExpired,
     generic: t.authErrGeneric,
   };
 

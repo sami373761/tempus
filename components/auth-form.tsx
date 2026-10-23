@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import {
+  requestPasswordReset,
   signInWithEmail,
   signInWithGoogle,
   signUpWithEmail,
@@ -36,18 +37,24 @@ import { format, type Dict } from "@/lib/i18n/dictionary";
  * ships in five languages and Supabase's messages are English only.
  */
 
-type Mode = "signin" | "signup";
+/** `forgot` is the reset-link request: reached from the sign-in form, not a
+ *  tab of its own, because it is a detour from signing in rather than a door. */
+type Mode = "signin" | "signup" | "forgot";
 
 export function AuthForm({
   t,
   next,
   initialError,
+  canReset,
 }: {
   t: Dict;
   /** Where to go once there is a session. Validated server-side as well. */
   next: string | null;
   /** A code carried back by `/auth/callback` when the OAuth round trip failed. */
   initialError: AuthErrorCode | null;
+  /** Whether a reset link can actually be mailed. Without a mail sender the
+   *  link would promise an email that never leaves, so it is not offered. */
+  canReset: boolean;
 }) {
   const [mode, setMode] = useState<Mode>("signin");
 
@@ -75,6 +82,7 @@ export function AuthForm({
   const [signInState, signIn] = useActionState(signInWithEmail, idle);
   const [signUpState, signUp] = useActionState(signUpWithEmail, { status: "idle" });
   const [googleState, google] = useActionState(signInWithGoogle, { status: "idle" });
+  const [forgotState, forgot] = useActionState(requestPasswordReset, { status: "idle" });
 
   const state = mode === "signin" ? signInState : signUpState;
 
@@ -92,6 +100,50 @@ export function AuthForm({
   /* The inbox notice replaces the whole form rather than sitting above it.
      There is nothing left to fill in at that point, and a form still on screen
      invites a second sign-up with the same address. */
+  if (forgotState.status === "sent") {
+    return (
+      <Panel>
+        <h1 className="font-display text-2xl font-semibold tracking-[-0.02em]">
+          {t.authConfirmTitle}
+        </h1>
+        <p className="mt-3 text-[15px] leading-relaxed text-ink-dim">
+          {format(t.authForgotSentBody, { email: forgotState.email })}
+        </p>
+      </Panel>
+    );
+  }
+
+  if (mode === "forgot") {
+    return (
+      <Panel>
+        <h1 className="font-display text-2xl font-semibold tracking-[-0.02em] sm:text-3xl">
+          {t.authForgotTitle}
+        </h1>
+        <p className="mt-2 text-[15px] leading-relaxed text-ink-dim">
+          {t.authForgotBlurb}
+        </p>
+        <form action={forgot} className="auth-fields mt-6 flex flex-col gap-4">
+          <Field
+            label={t.authEmail}
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+          />
+          {forgotState.status === "error" ? <ErrorNote t={t} state={forgotState} /> : null}
+          <SubmitButton label={t.authForgotSubmit} working={t.authWorking} />
+        </form>
+        <button
+          type="button"
+          onClick={() => switchTo("signin")}
+          className="mt-4 w-full text-center text-[13px] font-semibold text-ink-dim hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        >
+          {t.authBackToSignIn}
+        </button>
+      </Panel>
+    );
+  }
+
   if (signUpState.status === "confirm") {
     return (
       <Panel>
@@ -220,6 +272,18 @@ export function AuthForm({
           required
           minLength={mode === "signup" ? 8 : undefined}
         />
+
+        {mode === "signin" && canReset ? (
+          /* A button, not a link: the detour is a mode of this form, so the
+             typed email is the only thing it has to ask for again. */
+          <button
+            type="button"
+            onClick={() => switchTo("forgot")}
+            className="-mt-2 self-end text-[12px] font-semibold text-ink-dim hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          >
+            {t.authForgotLink}
+          </button>
+        ) : null}
 
         {state.status === "error" ? <ErrorNote t={t} state={state} /> : null}
 

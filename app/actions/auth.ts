@@ -1,6 +1,6 @@
 "use server";
 
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -13,13 +13,30 @@ import {
 } from "@/lib/db/accounts";
 import { createAdminDbClient } from "@/lib/db/admin";
 import { createServerDbClient } from "@/lib/db/server";
-import { isDevelopment } from "@/lib/env";
+import { isDevelopment, isProduction } from "@/lib/env";
 import {
   getCurrentUser,
   getVerifiedUser,
   hasPasswordIdentity,
 } from "@/lib/auth/server";
-import { ACCOUNT_PATH, safeNextPath, SIGN_IN_PATH } from "@/lib/auth/paths";
+import {
+  ACCOUNT_PATH,
+  RESET_PASSWORD_PATH,
+  safeNextPath,
+  SIGN_IN_PATH,
+  VERIFY_PATH,
+} from "@/lib/auth/paths";
+import {
+  allowAuthMail,
+  RECOVERY_COOKIE,
+  RECOVERY_TTL_SECONDS,
+  signRecoveryMark,
+  verifyRecoveryMark,
+} from "@/lib/auth/mail-guard";
+import { clientIp } from "@/lib/admin/client-ip";
+import { authMail, type AuthMailKind } from "@/lib/mail/auth-mail";
+import { isMailConfigured, sendMail } from "@/lib/mail/send";
+import { readLocaleContext } from "@/lib/i18n/server";
 
 /**
  * Everything a browser can do to its own account.
@@ -73,6 +90,9 @@ export type AuthErrorCode =
   | "photo-too-large"
   | "photo-type"
   | "photo-unreadable"
+  /** A confirmation or reset link that was already used, has expired, or was
+   *  cut short in transit. Raised on `/verify` and shown on the sign-in form. */
+  | "link-expired"
   | "generic";
 
 /**
@@ -90,6 +110,9 @@ export type AuthState =
    *  other failure leaves it unset. */
   | { status: "error"; code: AuthErrorCode; detail?: string }
   | { status: "confirm"; email: string }
+  /** A reset link was asked for. Said the same way whether or not the address
+   *  has an account, so the form cannot be used to find out which do. */
+  | { status: "sent"; email: string }
   /** The account page's two forms. A distinct state rather than a return to
    *  `idle`, so "nothing has been submitted" and "that worked" are tellable
    *  apart — otherwise a freshly loaded form announces a save it never made. */
@@ -206,12 +229,17 @@ export async function signUpWithEmail(
 
   const supabase = await createServerDbClient();
 
-  /* **Development only: no confirmation email.** The account is created
-     already confirmed through the Admin API and signed straight in, so the
-     site can be tried with addresses that receive no mail — and without the
-     built-in sender's hourly limit (CLAUDE.md, known gap 7). The metadata is
-     the same `username` the trigger reads on the public path. Production
-     never takes this branch; see `isDevelopment`. */
+  /* The normal path: Supabase creates the account and mints the token, we
+     send the mail. See lib/mail/send.ts for why the mailer is ours. */
+  if (isMailConfigured()) {
+    return signUpWithOwnMail(email, password, username, destination(form));
+  }
+
+  /* **Development without a mail key: no confirmation email.** The account is
+     created already confirmed through the Admin API and signed straight in,
+     so the site can be tried with addresses that receive no mail. The
+     metadata is the same `username` the trigger reads on the public path.
+     Production never takes this branch; see `isDevelopment`. */
   if (isDevelopment()) {
     const { error: createError } = await createAdminDbClient().auth.admin.createUser({
       email,
@@ -272,6 +300,196 @@ export async function signUpWithEmail(
 }
 
 /**
+ * Sign-up with the confirmation mail sent by us.
+ *
+ * `generateLink({ type: "signup" })` creates the unconfirmed account (the
+ * profile trigger fires exactly as for `signUp`) and returns the token
+ * without mailing anything. Asked again for an address that is still
+ * unconfirmed, it issues a fresh token and voids the old one — which is what
+ * makes "I never got the mail" answerable by simply signing up again.
+ */
+async function signUpWithOwnMail(
+  email: string,
+  password: string,
+  username: string,
+  next: string,
+): Promise<AuthState> {
+  if (!allowAuthMail(email, clientIp(await headers()))) {
+    return { status: "error", code: "rate-limited" };
+  }
+
+  const { data, error } = await createAdminDbClient().auth.admin.generateLink({
+    type: "signup",
+    email,
+    password,
+    options: { data: { username } },
+  });
+
+  if (error) {
+    if (error.code === "email_exists" || error.status === 422) {
+      return { status: "error", code: "email-taken" };
+    }
+    return { status: "error", code: mapAuthError(error.message, error.status) };
+  }
+
+  const sent = await mailLink("confirm", email, data.properties.hashed_token, next);
+  if (!sent) return { status: "error", code: "generic" };
+
+  return { status: "confirm", email };
+}
+
+/**
+ * Mails a password-reset link.
+ *
+ * The answer is `sent` for every well-formed address, account or not: a form
+ * that said "no such account" would let anyone test which addresses play
+ * here. The throttle applies before that question is asked, so it leaks
+ * nothing either.
+ */
+export async function requestPasswordReset(
+  _state: AuthState,
+  form: FormData,
+): Promise<AuthState> {
+  const email = field(form, "email");
+  if (!EMAIL_RE.test(email)) return { status: "error", code: "email-invalid" };
+
+  if (!allowAuthMail(email, clientIp(await headers()))) {
+    return { status: "error", code: "rate-limited" };
+  }
+
+  const { data, error } = await createAdminDbClient().auth.admin.generateLink({
+    type: "recovery",
+    email,
+  });
+
+  // 404 is "no account with that address": answered like a success, above.
+  if (error) {
+    return error.status === 404
+      ? { status: "sent", email }
+      : { status: "error", code: "generic" };
+  }
+
+  const sent = await mailLink("recovery", email, data.properties.hashed_token, null);
+  if (!sent) return { status: "error", code: "generic" };
+
+  return { status: "sent", email };
+}
+
+/**
+ * Sends the link to `/verify`, never straight to a session.
+ *
+ * The mail points at a page with a button rather than at something that
+ * signs in on a GET: corporate mail scanners and link previews open every URL
+ * in a message, and a one-time token spent by a scanner is a link that says
+ * "expired" to its owner. Only the press on that page spends it.
+ *
+ * In development with no mail key the link is printed to the server log
+ * instead, so the reset flow can still be walked through locally.
+ */
+async function mailLink(
+  kind: AuthMailKind,
+  email: string,
+  tokenHash: string,
+  next: string | null,
+): Promise<boolean> {
+  const query = new URLSearchParams({
+    token_hash: tokenHash,
+    type: kind === "confirm" ? "signup" : "recovery",
+  });
+  const safe = safeNextPath(next);
+  if (safe && safe !== ACCOUNT_PATH) query.set("next", safe);
+  const link = `${await siteOrigin()}${VERIFY_PATH}?${query}`;
+
+  if (!isMailConfigured()) {
+    if (!isDevelopment()) return false;
+    console.info(`[mail] ${kind} link for ${email}: ${link}`);
+    return true;
+  }
+
+  const { t } = await readLocaleContext();
+  return sendMail(authMail(kind, t, email, link));
+}
+
+/**
+ * Spends a link from one of our mails: the press on `/verify`.
+ *
+ * A Server Action rather than a Route Handler because it is answered by a
+ * form, and an action may write the session cookie. A recovery also leaves
+ * the signed mark the reset page asks for — see lib/auth/mail-guard.ts.
+ */
+export async function confirmEmailLink(form: FormData): Promise<void> {
+  const tokenHash = field(form, "token_hash");
+  const type = field(form, "type");
+  const next = safeNextPath(field(form, "next")) ?? ACCOUNT_PATH;
+
+  if (!tokenHash || (type !== "signup" && type !== "recovery")) {
+    redirect(`${SIGN_IN_PATH}?error=link-expired`);
+  }
+
+  const supabase = await createServerDbClient();
+  const { data, error } = await supabase.auth.verifyOtp({
+    type,
+    token_hash: tokenHash,
+  });
+
+  if (error || !data.user) redirect(`${SIGN_IN_PATH}?error=link-expired`);
+
+  revalidatePath("/", "layout");
+
+  if (type === "recovery") {
+    (await cookies()).set(RECOVERY_COOKIE, signRecoveryMark(data.user.id), {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: isProduction(),
+      path: RESET_PASSWORD_PATH,
+      maxAge: RECOVERY_TTL_SECONDS,
+    });
+    redirect(RESET_PASSWORD_PATH);
+  }
+
+  redirect(next);
+}
+
+/**
+ * Sets a new password after a reset link — no current password asked,
+ * because the link was the proof. Only with the recovery mark, never on the
+ * strength of a session alone (see `updatePassword` for why that matters).
+ *
+ * Every other session of the account is signed out: a reset is often the
+ * answer to "someone else has my password", and leaving their session alive
+ * would make it no answer at all.
+ */
+export async function resetPassword(
+  _state: AuthState,
+  form: FormData,
+): Promise<AuthState> {
+  const user = await getVerifiedUser();
+  const jar = await cookies();
+  if (!user || !verifyRecoveryMark(jar.get(RECOVERY_COOKIE)?.value, user.id)) {
+    return { status: "error", code: "link-expired" };
+  }
+
+  const password = String(form.get("password") ?? "");
+  const confirm = String(form.get("confirm") ?? "");
+  if (password.length < MIN_PASSWORD) {
+    return { status: "error", code: "password-weak" };
+  }
+  if (password !== confirm) return { status: "error", code: "password-mismatch" };
+
+  const supabase = await createServerDbClient();
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) {
+    return { status: "error", code: mapAuthError(error.message, error.status) };
+  }
+
+  await supabase.auth.signOut({ scope: "others" });
+  jar.delete({ name: RECOVERY_COOKIE, path: RESET_PASSWORD_PATH });
+
+  revalidatePath("/", "layout");
+  redirect(ACCOUNT_PATH);
+}
+
+/**
  * Hands the browser Google's consent URL.
  *
  * Started on the server so the PKCE verifier is written as a cookie the
@@ -298,7 +516,7 @@ export async function signInWithGoogle(
      contacts the provider — it only builds the URL, so it cannot tell an
      enabled provider from a missing one. With Google switched off in the
      Supabase dashboard that URL answers 400, and redirecting to it leaves the
-     player on a JSON error page on another origin with no way back. One HEAD
+     player on a JSON error page on another origin with no way back. One GET
      turns that into this form saying so in their own language.
      
      It is only a guard: anything other than a client error is let through, so a
@@ -316,7 +534,10 @@ export async function signInWithGoogle(
  *  provider. A 3xx is the normal answer and means Google is ready. */
 async function providerRefuses(url: string): Promise<boolean> {
   try {
-    const response = await fetch(url, { method: "HEAD", redirect: "manual" });
+    /* GET, not HEAD: Supabase's authorize endpoint answers every HEAD with a
+       405, which read as "provider refused" and blocked Google even when it
+       was enabled. The 302 body is empty, so a GET costs nothing more. */
+    const response = await fetch(url, { method: "GET", redirect: "manual" });
     return response.status >= 400 && response.status < 500;
   } catch {
     // Cannot tell. Let the redirect happen rather than refusing a sign-in
@@ -440,13 +661,17 @@ export async function updatePassword(
  * server, where there is no proxy and no TLS.
  */
 async function callbackUrl(next?: string | null): Promise<string> {
+  const safe = safeNextPath(next);
+  const query = safe ? `?next=${encodeURIComponent(safe)}` : "";
+  return `${await siteOrigin()}/auth/callback${query}`;
+}
+
+/** This request's own origin — the base of every link we hand out. */
+async function siteOrigin(): Promise<string> {
   const head = await headers();
   const host = head.get("x-forwarded-host") ?? head.get("host") ?? "localhost:3000";
   const proto =
     head.get("x-forwarded-proto") ??
     (host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https");
-
-  const safe = safeNextPath(next);
-  const query = safe ? `?next=${encodeURIComponent(safe)}` : "";
-  return `${proto}://${host}/auth/callback${query}`;
+  return `${proto}://${host}`;
 }

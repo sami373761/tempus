@@ -3,10 +3,11 @@
 A historical date-guessing game. Playable: `/guess` (date guessing), `/compare`
 (comparison), `/versus` (head-to-head: friend rooms and online matchmaking).
 Accounts, TP scoring, badges, the leaderboard and Chrono Rating (KP, online
-only) are live. There is no admin UI yet.
+only) are live. An admin panel lives at a secret path (`ADMIN_SEGMENT` in
+`lib/admin/path.ts`); the path itself is never written into this file.
 
 Stack: Next.js 15 (App Router) · TypeScript · Tailwind v4 · Supabase Postgres 17
-· Cloudflare R2 · targeted at Vercel.
+· Cloudflare R2 · one Oracle Cloud VM behind Caddy (runbook: `docs/SERVER.md`).
 
 ## Rules for this file
 
@@ -36,15 +37,26 @@ npm run art:webp            # .webp twin of every decorative art key (from its .
 npm run images:shrink       # event images -> WebP, 1600px cap, from the master; run LAST, after any attach
 npm run images:shrink -- --dry-run --prefix film-dizi/
 
+npm run admin:check         # admin SQL functions/contract against the DB; run after any migration
+npm run admin:parity        # built-in game_category rows == the code's constants (read-only)
+npm run admin:test          # admin functions on a throwaway Postgres (scripts/admin-test-db/, localhost only)
+npm run versus:sweep        # clear ended matches (versus_sweep())
+
 # Confirmed QA account (no mailbox needed). Writes creds to .env.test.local, never prints them.
 node --experimental-strip-types scripts/make-test-account.ts
+# Admin account: --create | --reset-mfa <u> | --reset-password <u> | --revoke <u>.
+# --create writes the credentials into docs/admin/LOKAL_KURULUM.md §2 — never commit that file with them.
+node --experimental-strip-types scripts/make-admin.ts --create
 ```
 
 - `npm run db:types` needs the Supabase CLI, which is **not installed**. Hand-edit
   `lib/db/database.types.ts` to match any migration.
 - **`npm run build` while `npm run dev` is running breaks the dev server** (every
   route 500s with "Cannot find module"). Not a code error. Recover with
-  `pkill -f "next-server|next dev"`, `rm -rf .next`, restart dev.
+  `pkill -f "next-server|next dev"`, `rm -rf .next`, restart dev. Production
+  builds are made in a separate copy of the repo for this reason.
+- `SUPABASE_DB_URL`'s direct host is IPv6-only; `scripts/db.ts` falls back to the
+  ap-southeast-2 session pooler on its own.
 
 ## Environment
 
@@ -58,12 +70,17 @@ SUPABASE_DB_URL                    # direct Postgres, used by scripts/
 CLOUDFLARE_ACCOUNT_ID              # NOT R2_ACCOUNT_ID
 R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
 R2_BUCKET_NAME                     # NOT R2_BUCKET; value: history-images
-NEXT_PUBLIC_R2_PUBLIC_BASE_URL
+NEXT_PUBLIC_R2_PUBLIC_BASE_URL     # dev: /api/r2 proxy; production: the real R2 public origin
 NEXT_PUBLIC_DEV_INVITE_ORIGIN      # optional, LAN origin for versus invites in dev
+RESEND_API_KEY, MAIL_FROM          # account mail (lib/mail/send.ts); optional, see Accounts
 ```
 
-Auth adds no env vars. The Google provider and Site/Redirect URLs are configured
-in the Supabase dashboard, not the repo.
+`NEXT_PUBLIC_*` values are baked in at build time, so the production build needs
+the production values (see `docs/SERVER.md`): `/api/r2` answers 404 when
+`NODE_ENV=production`.
+
+The Google provider (Google Cloud project `tempus-oauth-512512`, published) and
+Site/Redirect URLs are configured in the Supabase dashboard, not the repo.
 
 ## Data
 
@@ -84,6 +101,11 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
   - the column grant on `public.match` ↔ `MATCH_CLIENT_COLUMNS` in `lib/game/versus.ts`
   - the pool/draw rules in `random_events()` (every draw, one round trip) ↔
     `poolRestriction()` and `RandomEventsOptions` in `lib/db/queries.ts`
+  - `assert_game_name()` ↔ `CORE_GAMES` / `isCategoryGameName()` in `lib/game/points.ts`
+  - `panes_year_bounds()` / `panes_problem()` ↔ `paneYearRange()` / `panesProblem()`
+    in `lib/game/auto-bands.ts`
+  - built-in `game_category` rows ↔ `lib/game/builtin-categories.ts`
+    (`npm run admin:check` and `npm run admin:parity` verify)
 - **Eras:** `year <= 0` → `bce`, `1..2026` → `ce`, `> 2026` → `future`. Era
   category links are maintained by a trigger; never write them by hand.
 - **An event with no primary image is hidden from the site.** Queries in
@@ -110,13 +132,25 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
   can name (`auth.uid()`), use an RLS policy; otherwise use the service role
   behind a validated Server Action.
   - `profile` → RLS, column-scoped grant on `username` only.
-  - `event_date_challenge` → service role only (game is playable signed out).
+  - `event_date_challenge` → service role only. Voting needs an account: one vote
+    per account per event per year (`year_at_vote` is stamped by a trigger, so
+    a corrected year opens voting again). Older anonymous rows are `is_legacy`.
   - `user_badge_progress`, `score_entry`, `solo_set`, `solo_answer`,
     `chrono_rating_entry` → service role only (players must not award
     themselves points, rating or badges).
   - `reserved_username` (names bots have worn), `match_player`, `match_round`
     → service role only.
-- Admin auth is `app_metadata.role = 'admin'`; `app/admin/layout.tsx` is the gate.
+  - `admin_audit`, `admin_login_attempt`, `event_challenge_review` → service
+    role only. `game_category*` → published rows readable; writes only through
+    the `admin_*` functions.
+- **Admin auth:** `app_metadata.role = 'admin'` **and** an `aal2` session (TOTP)
+  **and** 30 minutes idle at most — `requireAdmin()` / `requireAdminPage()` in
+  `lib/auth/admin.ts`. Every export in `app/actions/admin/` starts with
+  `await requireAdmin()`; `admin_*` SQL is reached only through
+  `lib/db/admin/rpc.ts` (service role). Every admin write is logged to
+  `admin_audit`. `/admin` is a 404.
+- Seed scripts skip rows with `event.admin_edited_at` (`scripts/seed-guard.ts`):
+  the panel's edits survive a re-seed.
 - The `event_localized` view uses `security_invoker = true` (PG15+).
 - Migrations are append-only; never edit an applied one.
 
@@ -173,7 +207,8 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
 
 - **Scoring:** `gradeGuess()` in `lib/game/scoring.ts` is the only place a guess
   is graded — by relative error against the event's age, with a floor in years.
-  Tune difficulty only via `BANDS`. Tiers: `wayOff → bad → good → great → perfect`
+  Tune the date game's difficulty only via `BANDS`; subject categories carry
+  their own bands in `game_category.bands` (auto-derived, `lib/game/auto-bands.ts`). Tiers: `wayOff → bad → good → great → perfect`
   (`perfect` = exact year only). `roundPoints()` derives points from the same grade.
 - Tier labels and colours live only in `lib/game/verdict-style.ts`.
 - `versus_seat_result()` in SQL names `'wayOff'`; renaming a tier needs a migration.
@@ -209,9 +244,10 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
 ## Daily play limit
 
 - **The subject games are three a day, one for a guest**; date guessing,
-  comparison and survival are unlimited. The list and both numbers live only in
-  `lib/game/play-limit.ts` (`LIMITED_GAMES`, `playsPerDay`) — SQL takes the
-  limit as a parameter, so there is no second copy to keep in step.
+  comparison and survival are unlimited. Limited = the built-in `LIMITED_GAMES`
+  plus every panel-made subject category (`isLimitedGame`, `limitedGamePath`).
+  The rules and both numbers live only in `lib/game/play-limit.ts` — SQL takes
+  the limit as a parameter, so there is no second copy to keep in step.
 - **A game is spent by its first graded round, not by the deal.** Enforced in
   `revealDateRound`, which a client cannot skip: opening the page and leaving
   costs nothing, quitting mid-set costs the game.
@@ -279,6 +315,22 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
   network call) only where a revoked session must not pass or `identities` is
   needed: password changes, the account page's password form, the admin gate.
 - Profiles are created by the `handle_new_user()` trigger, not the sign-up code.
+- **Account mail is ours, not Supabase's.** `auth.admin.generateLink` mints the
+  token (sends nothing); `lib/mail/` sends a localized mail via Resend. Links
+  land on `/verify`, where a button POST spends the token (mail scanners must
+  not). Resets continue on `/reset-password`, gated by the signed
+  `tempus_recovery` cookie (`lib/auth/mail-guard.ts`) — a recovery session is
+  `amr: otp` like any other, so the session alone must never allow a
+  password change without the current one. Sends are throttled in process
+  memory (one Node process). Without `RESEND_API_KEY`: production falls back
+  to Supabase's sender (team addresses only); dev auto-confirms sign-ups and
+  logs reset links to the console.
+- `providerRefuses()` probes Google with GET: Supabase's authorize endpoint
+  answers every HEAD with 405.
+- **`/privacy` (`lib/privacy.ts`) describes what the code does** — cookies,
+  processors, what is public, that a deleted account's photo is deleted. A new
+  cookie, tracker or provider means updating it and `PRIVACY_UPDATED`. Google's
+  consent screen links to it.
 - `app/auth/callback/route.ts` must stay a Route Handler and outside the
   middleware matcher. Its origin comes from the request `Host`, not env.
 - `hasPasswordIdentity()` decides the password form's shape and is re-checked
@@ -330,24 +382,33 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
 ## Known gaps
 
 1. No custom domain yet (r2.dev unreachable; see above).
-2. 236 of 497 events have no image and are hidden. Stray malformed objects in the
+2. Many events have no primary image and are hidden. Stray malformed objects in the
    bucket (old `ce/` copies, `bce/formation-ofthe-moon.jpeg`,
    `ce/ashoka-adopts-buddhism.jpeg`) are safe to delete — never attach them.
 3. Only era categories exist; no topic tags.
 4. The DB is in ap-southeast-2, far from the players: every round trip shows.
    Moving regions is deferred.
-5. No admin UI. `eventChallengeStats()` is ready for its first screen.
-6. Google sign-in needs the provider enabled in the Supabase dashboard; the
-   Google-only "set a password" path is untested.
-7. Sign-ups need custom SMTP before launch (built-in sender is rate-limited).
-   Use `make-test-account.ts` for testing; `@example.com` is rejected.
+5. The admin panel's code is on the `admin-panel-web` branch, not yet merged into
+   `main`, while the live database already has its migrations — `main`'s guest
+   date-challenge votes are refused by the new schema. Test list and open items:
+   `docs/admin/LOKAL_KURULUM.md` §7 and §10.
+6. The Google-only "set a password" path is untested. The consent screen names
+   the supabase.co domain; that stays (fixing it is paid — everything stays on
+   free tiers).
+7. Email sign-ups are not confirmed, by decision: "Confirm email" is off in the
+   Supabase dashboard, so `signUp` returns a session. No mail sender is set up
+   (Resend would need `RESEND_API_KEY`/`MAIL_FROM`), so password reset is
+   hidden in production (`canReset`). `@example.com` is rejected.
 8. `/contact` is a scaffold; the tip jar has no payment route.
 9. `homepage/movies-1.jpg` and the coming-soon master are unlicensed film stills
    — settle rights before going public.
 10. The service-role key and R2 secret were exposed in a chat; rotate both.
 11. Solo deals still use `publicImageUrl()`, so the era folder shows in the
     image URL; versus and daily are masked.
-12. `versus_sweep()` has no caller; ended matches pile up until it is run.
+12. `versus_sweep()` has no scheduled caller (`npm run versus:sweep` exists; no
+    cron on the server yet); ended matches pile up until it is run.
+13. Production is plain HTTP on the server's IP until a domain is connected;
+    don't sign in to the admin panel over it. Open steps: `docs/SERVER.md`.
 
 ## Conventions
 

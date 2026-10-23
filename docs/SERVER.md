@@ -140,6 +140,22 @@ for `https://tempusplay.com/` to answer 200.
   `http://localhost:3000/**` (the second keeps dev sign-in links working now
   that the Site URL is production).
 
+## Account mail
+
+Sign-up confirmations and password resets are sent by the app itself through
+Resend (`lib/mail/send.ts`), not by Supabase's built-in mailer, which only
+delivers to the project's team. Supabase still mints the one-time tokens.
+
+- `.env.local` on the server needs `RESEND_API_KEY` and
+  `MAIL_FROM` (e.g. `Tempus <no-reply@tempusplay.com>`). Without them
+  production falls back to Supabase's sender and real players get no mail.
+- `tempusplay.com` must be a verified domain in Resend: add the DKIM/SPF
+  records Resend lists to the Cloudflare zone (DNS only).
+- Links land on `/verify` (a button spends the token, so mail scanners do
+  not) and resets continue on `/reset-password`.
+- Sends are throttled in process memory (`lib/auth/mail-guard.ts`); that
+  assumes one Node process.
+
 ## Cron
 
 `crontab -l` (user `ubuntu`): `versus_sweep()` at minute 7 of every hour,

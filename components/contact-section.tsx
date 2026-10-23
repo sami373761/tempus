@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { ContactEmailText } from "@/components/contact-email";
 import { SiteMark } from "@/components/site-header";
 import type { Dict } from "@/lib/i18n/dictionary";
@@ -108,6 +110,7 @@ export function ContactSection({ t }: { t: Dict }) {
             <p className="mt-4 max-w-[34ch] text-[15px] leading-relaxed text-ink-dim">
               {t.contactLead}
             </p>
+            <PrivacyLink t={t} />
           </div>
         </div>
 
@@ -142,6 +145,55 @@ export function ContactSection({ t }: { t: Dict }) {
         </div>
       </div>
     </section>
+  );
+}
+
+/**
+ * The way to `/privacy`, under the product's own column: the policy is about
+ * the product, and the foot of the home page is where a reader looks for one.
+ *
+ * A pill rather than a bare text link so it reads as a door with a label and
+ * a one-line reason to open it, in the block's amber — but quiet: hairline
+ * border and card fill at rest, the amber only in the icon until hover.
+ */
+function PrivacyLink({ t }: { t: Dict }) {
+  return (
+    <Link
+      href="/privacy"
+      className="group mt-6 inline-flex items-center gap-3 rounded-full border border-hairline bg-card/60 py-2 pl-2 pr-4 transition-colors hover:border-[#f5a623]/45 hover:bg-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+    >
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#f5a623]/12">
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#f5a623"
+          strokeWidth={1.6}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-4 w-4"
+        >
+          <path d="M12 3 5 6v5.5c0 4.2 2.9 8 7 9.5 4.1-1.5 7-5.3 7-9.5V6l-7-3Z" />
+          <path d="m9 12 2 2 4-4" />
+        </svg>
+      </span>
+      <span className="flex flex-col leading-tight">
+        <span className="text-[13px] font-semibold text-ink">{t.footerPrivacy}</span>
+        <span className="mt-0.5 text-[12px] text-ink-dim">{t.footerPrivacyHint}</span>
+      </span>
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="ml-1 h-3.5 w-3.5 text-ink-dim transition-transform group-hover:translate-x-0.5 group-hover:text-ink motion-reduce:transition-none"
+      >
+        <path d="M3 8h10M9 4l4 4-4 4" />
+      </svg>
+    </Link>
   );
 }
 
