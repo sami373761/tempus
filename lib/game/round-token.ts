@@ -24,7 +24,7 @@ import type { SoloGame } from "./points.ts";
  *
  * The key is derived from the service-role key rather than being an
  * environment variable of its own: it is already the one secret only the
- * server holds, and rotating it (CLAUDE.md, known gap 10) costs nothing worse
+ * server holds, and rotating it (CLAUDE.md, known gap 9) costs nothing worse
  * than the rounds already on screen failing to reveal once.
  */
 

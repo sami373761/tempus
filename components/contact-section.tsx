@@ -5,14 +5,14 @@ import { SiteMark } from "@/components/site-header";
 import type { Dict } from "@/lib/i18n/dictionary";
 
 /**
- * The last block on the home page: two columns under two rules, the product on
- * the left and the way to reach it on the right.
+ * The last block on the home page: three columns under three rules — the
+ * product, its privacy policy, and the way to reach it.
  *
  * The composition is transcribed from the supplied Apple reference — a hairline
  * across the top of each column, a long drop of empty space, then one large
  * line of tinted type with its explanation under it. What carries the design is
- * the **pair of rules**: two short bright-to-dark gradients side by side,
- * which is what tells the eye there are two columns before it has read a word.
+ * the **row of rules**: short bright-to-dark gradients side by side, which is
+ * what tells the eye there are columns before it has read a word.
  * They are the whole of the structure here; there is no card, no border and no
  * fill, which is also what lets this sit directly on the page under the FAQ's
  * plain text rather than reading as a third grid of tiles.
@@ -56,11 +56,11 @@ import type { Dict } from "@/lib/i18n/dictionary";
  * asked for: the headline was the largest type on the page and sat louder than
  * the FAQ above it.
  *
- * `min-h` is what keeps the two columns' headlines on exactly one baseline.
+ * `min-h` is what keeps the columns' headlines on exactly one baseline.
  * The row is as tall as its tallest item, and the two columns' items are not
  * the same height — a solid tile reads smaller than line art at one size, so
  * the mark is `1.1em` and the envelope `1.15em` — which centred each column's
- * text in a box half a pixel different from the other's. A floor taller than
+ * text in a box half a pixel different from the next. A floor taller than
  * both takes the icons out of that sum entirely.
  */
 const HEADLINE_ROW =
@@ -77,129 +77,135 @@ export function ContactSection({ t }: { t: Dict }) {
        links the section still lands here, and the browser's jump would
        otherwise put the heading under the top of the window. */
     <section id="contact" className="scroll-mt-24">
-      {/* One column on a phone with the rules stacked, which is what keeps the
-          treatment intact at every width — a rule is per column, so a column
-          that wraps takes its own rule with it. */}
-      <div className="grid gap-12 md:grid-cols-2 md:gap-8">
-        <div>
-          <Rule />
-          {/* The reference's long drop between the rule and the headline, to
-              scale: it is what makes the rule read as the top edge of a column
-              rather than as an underline above a paragraph. Shorter on a phone,
-              where two columns of it would be most of a screen of nothing. */}
-          <div className="pt-10 sm:pt-16">
-            {/* The masthead's own mark, beside the masthead's own word — the
-                same component the top-left corner of the site uses, so there
-                is one piece of artwork and one mask rather than a second copy
-                to keep in step.
+      {/* Three columns — the product, its privacy policy, the way to reach it —
+          each built the same way: rule, icon beside a headline, one paragraph.
+          The policy used to be a pill under the Tempus column, the only boxed
+          thing in a block made of rules and type, and it read as a stray
+          button; as a column of its own it is a third member of the row.
 
-                It is painted flat `text-ink` rather than swept, which is
-                exactly what it wears up in the masthead: a gradient tile
-                beside the word read as two different whites there, and the
-                reason holds here even though the word beside it is amber. It
-                has to be a *sibling* of the swept text for the same reason the
-                mail icon opposite is — `background-clip: text` with a
-                transparent colour applies to the whole element, and a mask
-                inside one would be clipped to glyphs it does not have. */}
-            <div className={HEADLINE_ROW}>
-              <SiteMark className="h-[1.1em] w-[1.1em] text-ink" />
-              {/* Written here rather than translated: it is the product's own
-                  name. */}
-              <p className={HEADLINE}>Tempus</p>
-            </div>
-            <p className="mt-4 max-w-[34ch] text-[15px] leading-relaxed text-ink-dim">
-              {t.contactLead}
-            </p>
-            <PrivacyLink t={t} />
+          One column below `lg` with the rules stacked: a rule is per column,
+          so a column that wraps takes its own rule with it. Three columns
+          start at `lg` because at `md` a third of the width leaves
+          "Confidentialité" and its icon no room on one line.
+
+          Side by side, the three share one rule across the full width instead
+          of three: separate rules cut the row into three blocks, and one line
+          over all of them is what makes it read as one footer. The drop under
+          it is shorter than a column's own (40px against 64px), which keeps the
+          columns attached to the line they hang from. */}
+      <Rule className="hidden lg:block" />
+      <div className="grid gap-12 lg:grid-cols-3 lg:gap-8 lg:pt-10">
+        <Column>
+          {/* The masthead's own mark, beside the masthead's own word — the
+              same component the top-left corner of the site uses, so there is
+              one piece of artwork and one mask rather than a second copy to
+              keep in step.
+
+              It is painted flat `text-ink` rather than swept, which is exactly
+              what it wears up in the masthead: a gradient tile beside the word
+              read as two different whites there. It has to be a *sibling* of
+              the swept text — `background-clip: text` with a transparent
+              colour applies to the whole element, and a mask inside one would
+              be clipped to glyphs it does not have. */}
+          <div className={HEADLINE_ROW}>
+            <SiteMark className="h-[1.1em] w-[1.1em] text-ink" />
+            {/* Written here rather than translated: it is the product's own
+                name. */}
+            <p className={HEADLINE}>Tempus</p>
           </div>
-        </div>
+          <p className={BODY}>{t.contactLead}</p>
+        </Column>
 
-        <div>
-          <Rule />
-          <div className="pt-10 sm:pt-16">
-            {/* The icon is *beside* the headline, not above it, and that is what
-                keeps the two columns' headlines on one baseline: both are the
-                first line under their rule, at the same offset. Above the line
-                it pushed this one 44px lower than the word `Tempus` opposite,
-                which made the pair of rules — the whole of the structure here —
-                look like two unrelated blocks.
-
-                `1.15em` rather than the mark's `1.1em`: this is line art and
-                that is a solid tile, so at one size the stroked envelope reads
-                the smaller of the two. Both are `em` of `HEADLINE_ROW`, so the
-                pair stays in proportion with the type at every width. */}
+        <Column>
+          {/* The whole column is the link, not just its headline: the target
+              is as large as the block it reads as, and the arrow — the one
+              thing here the other two columns lack — is what says it opens. */}
+          <Link
+            href="/privacy"
+            className="group block rounded-sm focus-visible:outline-2 focus-visible:outline-offset-8 focus-visible:outline-accent"
+          >
             <div className={HEADLINE_ROW}>
-              <MailIcon />
-              <p className={HEADLINE}>{t.contactTitle}</p>
+              <ShieldIcon />
+              <p className={HEADLINE}>{t.footerPrivacy}</p>
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="#f5a623"
+                strokeWidth={1.6}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-[0.55em] w-[0.55em] shrink-0 opacity-70 transition-transform group-hover:translate-x-1 group-hover:opacity-100 motion-reduce:transition-none"
+              >
+                <path d="M3 8h10M9 4l4 4-4 4" />
+              </svg>
             </div>
-
-            {/* The address lives in this sentence rather than above it — see
-                `ContactEmailText`, which is shared with `/contact` so there is
-                one implementation of dropping the `mailto:` into the slot.
-
-                `max-w` is in `ch` of the paragraph's own size. */}
-            <p className="mt-5 max-w-[46ch] text-[15px] leading-relaxed text-ink-dim">
-              <ContactEmailText text={t.contactBlurb} />
+            <p className={`${BODY} transition-colors group-hover:text-ink`}>
+              {t.footerPrivacyHint}
             </p>
+          </Link>
+        </Column>
+
+        <Column>
+          <div className={HEADLINE_ROW}>
+            <MailIcon />
+            <p className={HEADLINE}>{t.contactTitle}</p>
           </div>
-        </div>
+          {/* The address lives in this sentence rather than above it — see
+              `ContactEmailText`, which is shared with `/contact`. */}
+          <p className={BODY}>
+            <ContactEmailText text={t.contactBlurb} />
+          </p>
+        </Column>
       </div>
     </section>
   );
 }
 
+// One measure for all three paragraphs, so the columns end on the same
+// rhythm; `max-w` is in `ch` of the paragraph's own size.
+const BODY = "mt-5 max-w-[40ch] text-[15px] leading-relaxed text-ink-dim";
+
 /**
- * The way to `/privacy`, under the product's own column: the policy is about
- * the product, and the foot of the home page is where a reader looks for one.
- *
- * A pill rather than a bare text link so it reads as a door with a label and
- * a one-line reason to open it, in the block's amber — but quiet: hairline
- * border and card fill at rest, the amber only in the icon until hover.
+ * A rule (stacked layout only), then the reference's long drop before the headline: the drop is what
+ * makes the rule read as the top edge of a column rather than as an underline
+ * above a paragraph. Shorter on a phone, where stacked columns of it would be
+ * most of a screen of nothing.
  */
-function PrivacyLink({ t }: { t: Dict }) {
+function Column({ children }: { children: React.ReactNode }) {
   return (
-    <Link
-      href="/privacy"
-      className="group mt-6 inline-flex items-center gap-3 rounded-full border border-hairline bg-card/60 py-2 pl-2 pr-4 transition-colors hover:border-[#f5a623]/45 hover:bg-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-    >
-      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#f5a623]/12">
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#f5a623"
-          strokeWidth={1.6}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="h-4 w-4"
-        >
-          <path d="M12 3 5 6v5.5c0 4.2 2.9 8 7 9.5 4.1-1.5 7-5.3 7-9.5V6l-7-3Z" />
-          <path d="m9 12 2 2 4-4" />
-        </svg>
-      </span>
-      <span className="flex flex-col leading-tight">
-        <span className="text-[13px] font-semibold text-ink">{t.footerPrivacy}</span>
-        <span className="mt-0.5 text-[12px] text-ink-dim">{t.footerPrivacyHint}</span>
-      </span>
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 16 16"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.6}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="ml-1 h-3.5 w-3.5 text-ink-dim transition-transform group-hover:translate-x-0.5 group-hover:text-ink motion-reduce:transition-none"
-      >
-        <path d="M3 8h10M9 4l4 4-4 4" />
-      </svg>
-    </Link>
+    <div>
+      <Rule className="lg:hidden" />
+      <div className="pt-10 sm:pt-16 lg:pt-0">{children}</div>
+    </div>
   );
 }
 
 /** The column's top edge: 2px, bright at the left, dark at the right. */
-function Rule() {
-  return <div aria-hidden="true" className="contact-rule h-[2px] w-full" />;
+function Rule({ className = "" }: { className?: string }) {
+  return (
+    <div aria-hidden="true" className={`contact-rule h-[2px] w-full ${className}`} />
+  );
+}
+
+// Line art drawn to the mail icon's stroke and size, so the three icons in the
+// row read as one set.
+function ShieldIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#f5a623"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-[1.15em] w-[1.15em] shrink-0"
+    >
+      <path d="M12 3 5 6v5.5c0 4.2 2.9 8 7 9.5 4.1-1.5 7-5.3 7-9.5V6l-7-3Z" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
+  );
 }
 
 function MailIcon() {

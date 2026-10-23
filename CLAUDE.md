@@ -71,7 +71,6 @@ CLOUDFLARE_ACCOUNT_ID              # NOT R2_ACCOUNT_ID
 R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
 R2_BUCKET_NAME                     # NOT R2_BUCKET; value: history-images
 NEXT_PUBLIC_R2_PUBLIC_BASE_URL     # dev: /api/r2 proxy; production: the real R2 public origin
-NEXT_PUBLIC_DEV_INVITE_ORIGIN      # optional, LAN origin for versus invites in dev
 RESEND_API_KEY, MAIL_FROM          # account mail (lib/mail/send.ts); optional, see Accounts
 ```
 
@@ -199,9 +198,8 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
   it fails exactly like a missing object. A new event-image prefix also goes in
   `EVENT_IMAGE_PREFIXES` in `lib/storage/masked-image.ts`.
 - **r2.dev is unreachable from the owner's network and from the sandbox.**
-  Settled — do not re-raise or recommend fixes. Report "r2.dev is unreachable"
-  and move on. Verify objects via the S3 API instead. When a custom domain
-  arrives, only `NEXT_PUBLIC_R2_PUBLIC_BASE_URL` changes.
+  Settled — do not re-raise or recommend fixes. Production serves the bucket
+  from `https://img.tempusplay.com`; verify objects via the S3 API.
 
 ## Game logic
 
@@ -294,9 +292,11 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
   graded by `gradeGuess`.
 - The tick and `api/masked-image/` routes stay outside the middleware matcher;
   they are authorised by tokens, not the session.
-- Invite URLs come from `window.location`; on localhost use
-  `NEXT_PUBLIC_DEV_INVITE_ORIGIN` and add the LAN address to `allowedDevOrigins`.
-  Recipe: `docs/VERSUS_IMPLEMENTATION_CHECKPOINT.md`.
+- **Links for someone else (invites, share texts) use `SITE_ORIGIN`**
+  (`lib/site.ts`, `https://tempusplay.com`), never `window.location`: a room
+  opened on the dev server lives in the same database, so its code is joinable
+  on the live site. Copy buttons go through `copyText()` (`lib/clipboard.ts`),
+  which works on a plain-HTTP page too.
 - `lib/qr.ts` is a hand-written QR encoder; don't replace it with a hosted generator.
 
 ## Accounts
@@ -332,7 +332,12 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
   cookie, tracker or provider means updating it and `PRIVACY_UPDATED`. Google's
   consent screen links to it.
 - `app/auth/callback/route.ts` must stay a Route Handler and outside the
-  middleware matcher. Its origin comes from the request `Host`, not env.
+  middleware matcher.
+- **Absolute redirects use `publicOrigin(headers)`** (`lib/auth/paths.ts`),
+  never `request.url` or `nextUrl.clone()`: behind Caddy those carry the
+  upstream `localhost:3000` and send live visitors to `https://localhost:3000`.
+- A sign-in with no `next` lands on `AFTER_SIGN_IN_PATH` (the home page), not
+  the account page.
 - `hasPasswordIdentity()` decides the password form's shape and is re-checked
   server-side in `updatePassword`.
 - Badges are one 6-rung ladder; `refreshBadges()` recomputes them and never
@@ -381,36 +386,31 @@ Database: Supabase project `kyxydoaevasuauflrjrl`. Locales: `en, tr, de, fr, es`
 
 ## Known gaps
 
-1. No custom domain yet (r2.dev unreachable; see above).
-2. Many events have no primary image and are hidden. Stray malformed objects in the
+1. Many events have no primary image and are hidden. Stray malformed objects in the
    bucket (old `ce/` copies, `bce/formation-ofthe-moon.jpeg`,
    `ce/ashoka-adopts-buddhism.jpeg`) are safe to delete — never attach them.
-3. Only era categories exist; no topic tags.
-4. The DB is in ap-southeast-2, far from the players: every round trip shows.
+2. Only era categories exist; no topic tags.
+3. The DB is in ap-southeast-2, far from the players: every round trip shows.
    Moving regions is deferred.
-5. The admin panel's code is on the `admin-panel-web` branch, not yet merged into
+4. The admin panel's code is on the `admin-panel-web` branch, not yet merged into
    `main`, while the live database already has its migrations — `main`'s guest
    date-challenge votes are refused by the new schema. Test list and open items:
    `docs/admin/LOKAL_KURULUM.md` §7 and §10.
-6. The Google-only "set a password" path is untested. The consent screen names
+5. The Google-only "set a password" path is untested. The consent screen names
    the supabase.co domain; that stays (fixing it is paid — everything stays on
    free tiers).
-7. Email sign-ups are not confirmed, by decision: "Confirm email" is off in the
+6. Email sign-ups are not confirmed, by decision: "Confirm email" is off in the
    Supabase dashboard, so `signUp` returns a session. No mail sender is set up
    (Resend would need `RESEND_API_KEY`/`MAIL_FROM`), so password reset is
    hidden in production (`canReset`). Accepted trade-off: anyone can register
    someone else's address, and Supabase links a later Google sign-in with that
    email to the same account. `@example.com` is rejected.
-8. `/contact` is a scaffold; the tip jar has no payment route.
-9. `homepage/movies-1.jpg` and the coming-soon master are unlicensed film stills
+7. `/contact` is a scaffold; the tip jar has no payment route.
+8. `homepage/movies-1.jpg` and the coming-soon master are unlicensed film stills
    — settle rights before going public.
-10. The service-role key and R2 secret were exposed in a chat; rotate both.
-11. Solo deals still use `publicImageUrl()`, so the era folder shows in the
+9. The service-role key and R2 secret were exposed in a chat; rotate both.
+10. Solo deals still use `publicImageUrl()`, so the era folder shows in the
     image URL; versus and daily are masked.
-12. `versus_sweep()` has no scheduled caller (`npm run versus:sweep` exists; no
-    cron on the server yet); ended matches pile up until it is run.
-13. Production is plain HTTP on the server's IP until a domain is connected;
-    don't sign in to the admin panel over it. Open steps: `docs/SERVER.md`.
 
 ## Conventions
 

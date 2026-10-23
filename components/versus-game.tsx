@@ -90,6 +90,8 @@ import {
 } from "@/lib/game/timeline";
 import { VERDICT_COLORS, VERDICT_LABEL_KEYS } from "@/lib/game/verdict-style";
 import { formatYear } from "@/lib/historical-date";
+import { copyText } from "@/lib/clipboard";
+import { SITE_ORIGIN } from "@/lib/site";
 import { subscribeToMatch } from "@/lib/realtime/match-channel";
 import { dateLabels, format, type Dict } from "@/lib/i18n/dictionary";
 
@@ -2799,9 +2801,10 @@ function ShareMatchButton({
       "",
       squares,
       "",
-      // Read at click time: the site has no domain yet (CLAUDE.md gap 1), and
-      // the match path would be a dead link anyway once the match is swept.
-      window.location.origin,
+      // The site's front door rather than the match path, which is a dead
+      // link once the match is swept; the live origin rather than the page's,
+      // which on the dev server is an address the reader cannot open.
+      SITE_ORIGIN,
     ].join("\n");
 
     if (navigator.share) {
@@ -2815,12 +2818,7 @@ function ShareMatchButton({
       }
     }
 
-    try {
-      await navigator.clipboard.writeText(text);
-      flash("copied");
-    } catch {
-      flash("failed");
-    }
+    flash((await copyText(text)) ? "copied" : "failed");
   }
 
   return (

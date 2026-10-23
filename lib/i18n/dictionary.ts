@@ -698,9 +698,11 @@ const en = {
   contactTitle: "Contact Us",
   contactLead:
     "Your ideas matter to us, and they shape what gets built next.",
-  // The link under the home page's Tempus column to `/privacy`.
-  footerPrivacy: "Privacy policy",
-  footerPrivacyHint: "How we handle your data",
+  // The middle column of the home page's foot, which links to `/privacy`.
+  // The title is one short word: it shares a row of three headlines.
+  footerPrivacy: "Privacy",
+  footerPrivacyHint:
+    "What the game keeps about you, why it keeps it and what stays private, in plain words.",
   contactBlurb:
     "A wrong date, a mode worth building, or a thought about the game: write to {email} and it will be read.",
   // The button under that sentence on `/contact`, which opens a mail client at
@@ -1284,8 +1286,9 @@ const tr: Dict = {
   contactTitle: "Bize ulaş",
   contactLead:
     "Fikirleriniz bizim için değerli; sırada ne yapılacağını onlar belirliyor.",
-  footerPrivacy: "Gizlilik politikası",
-  footerPrivacyHint: "Verilerini nasıl koruduğumuzu oku",
+  footerPrivacy: "Gizlilik",
+  footerPrivacyHint:
+    "Oyunun senin hakkında ne tuttuğu, neden tuttuğu ve neyin gizli kaldığı, açık bir dille.",
   contactBlurb:
     "Hatalı bir tarih, yapılmaya değer bir mod ya da oyun hakkında bir düşünce: {email} adresine yaz, okunacak.",
   contactAction: "Bize yaz",
@@ -1846,7 +1849,8 @@ const de: Dict = {
   contactLead:
     "Deine Ideen sind uns wichtig — sie bestimmen, was als Nächstes entsteht.",
   footerPrivacy: "Datenschutz",
-  footerPrivacyHint: "Wie wir mit deinen Daten umgehen",
+  footerPrivacyHint:
+    "Was das Spiel über dich speichert, warum es das tut und was privat bleibt, in klaren Worten.",
   contactBlurb:
     "Ein falsches Datum, ein Modus, der gebaut werden sollte, oder ein Gedanke zum Spiel: schreib an {email}, es wird gelesen.",
   contactAction: "Schreib uns",
@@ -2401,7 +2405,8 @@ const fr: Dict = {
   contactLead:
     "Vos idées comptent pour nous : elles décident de ce qui sera construit ensuite.",
   footerPrivacy: "Confidentialité",
-  footerPrivacyHint: "Comment nous traitons vos données",
+  footerPrivacyHint:
+    "Ce que le jeu garde sur vous, pourquoi il le garde et ce qui reste privé, en termes simples.",
   contactBlurb:
     "Une date erronée, un mode qui mériterait d'exister, ou une idée sur le jeu : écrivez à {email}, c'est lu.",
   contactAction: "Écrivez-nous",
@@ -2957,7 +2962,8 @@ const es: Dict = {
   contactLead:
     "Tus ideas nos importan: deciden qué se construye a continuación.",
   footerPrivacy: "Privacidad",
-  footerPrivacyHint: "Cómo tratamos tus datos",
+  footerPrivacyHint:
+    "Qué guarda el juego sobre ti, por qué lo guarda y qué sigue siendo privado, en palabras claras.",
   contactBlurb:
     "Una fecha equivocada, un modo que merezca construirse o una idea sobre el juego: escribe a {email}, se lee.",
   contactAction: "Escríbenos",

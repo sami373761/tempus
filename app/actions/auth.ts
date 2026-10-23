@@ -21,6 +21,8 @@ import {
 } from "@/lib/auth/server";
 import {
   ACCOUNT_PATH,
+  AFTER_SIGN_IN_PATH,
+  publicOrigin,
   RESET_PASSWORD_PATH,
   safeNextPath,
   SIGN_IN_PATH,
@@ -186,7 +188,7 @@ function usernameError(
 
 /** Where to land after a successful sign-in. */
 function destination(form: FormData): string {
-  return safeNextPath(field(form, "next")) ?? ACCOUNT_PATH;
+  return safeNextPath(field(form, "next")) ?? AFTER_SIGN_IN_PATH;
 }
 
 export async function signInWithEmail(
@@ -397,7 +399,7 @@ async function mailLink(
     type: kind === "confirm" ? "signup" : "recovery",
   });
   const safe = safeNextPath(next);
-  if (safe && safe !== ACCOUNT_PATH) query.set("next", safe);
+  if (safe && safe !== AFTER_SIGN_IN_PATH) query.set("next", safe);
   const link = `${await siteOrigin()}${VERIFY_PATH}?${query}`;
 
   if (!isMailConfigured()) {
@@ -420,7 +422,7 @@ async function mailLink(
 export async function confirmEmailLink(form: FormData): Promise<void> {
   const tokenHash = field(form, "token_hash");
   const type = field(form, "type");
-  const next = safeNextPath(field(form, "next")) ?? ACCOUNT_PATH;
+  const next = safeNextPath(field(form, "next")) ?? AFTER_SIGN_IN_PATH;
 
   if (!tokenHash || (type !== "signup" && type !== "recovery")) {
     redirect(`${SIGN_IN_PATH}?error=link-expired`);
@@ -668,10 +670,5 @@ async function callbackUrl(next?: string | null): Promise<string> {
 
 /** This request's own origin — the base of every link we hand out. */
 async function siteOrigin(): Promise<string> {
-  const head = await headers();
-  const host = head.get("x-forwarded-host") ?? head.get("host") ?? "localhost:3000";
-  const proto =
-    head.get("x-forwarded-proto") ??
-    (host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https");
-  return `${proto}://${host}`;
+  return publicOrigin(await headers());
 }

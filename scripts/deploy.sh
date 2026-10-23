@@ -23,11 +23,9 @@ rsync -a --delete --exclude node_modules --exclude .next --exclude .git \
   --exclude 'Icon*' --exclude data "$SRC/" "$B/"
 
 # NEXT_PUBLIC_* values are baked in at build time, so production values go in
-# before the build: the real image origin (/api/r2 is a dev-only proxy) and no
-# LAN invite origin.
+# before the build: the real image origin (/api/r2 is a dev-only proxy).
 cd "$B"
-sed -i '' -e "s#^NEXT_PUBLIC_R2_PUBLIC_BASE_URL=.*#NEXT_PUBLIC_R2_PUBLIC_BASE_URL=$IMAGE_ORIGIN#" \
-          -e '/^NEXT_PUBLIC_DEV_INVITE_ORIGIN=/d' .env.local
+sed -i '' -e "s#^NEXT_PUBLIC_R2_PUBLIC_BASE_URL=.*#NEXT_PUBLIC_R2_PUBLIC_BASE_URL=$IMAGE_ORIGIN#" .env.local
 grep -q "^NEXT_PUBLIC_R2_PUBLIC_BASE_URL=$IMAGE_ORIGIN$" .env.local \
   || { echo "✗ .env.local has no NEXT_PUBLIC_R2_PUBLIC_BASE_URL line"; exit 1; }
 

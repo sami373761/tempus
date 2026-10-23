@@ -52,7 +52,7 @@ import { serverEnv } from "../env.ts";
  * The keys are derived from the service-role key, like the solo round tokens'
  * (lib/game/round-token.ts), rather than being an environment variable of their
  * own: it is already the one secret only the server holds, and rotating it
- * (CLAUDE.md, known gap 10) costs nothing worse than the pictures already on
+ * (CLAUDE.md, known gap 9) costs nothing worse than the pictures already on
  * screen failing to load once. The cipher and the IV are keyed separately so
  * neither key's use can say anything about the other.
  */

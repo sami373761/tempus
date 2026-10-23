@@ -1,6 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { ACCOUNT_PATH, safeNextPath, SIGN_IN_PATH } from "@/lib/auth/paths";
+import {
+  AFTER_SIGN_IN_PATH,
+  publicOrigin,
+  safeNextPath,
+  SIGN_IN_PATH,
+} from "@/lib/auth/paths";
 import { createServerDbClient } from "@/lib/db/server";
 
 /**
@@ -22,20 +27,22 @@ import { createServerDbClient } from "@/lib/db/server";
  */
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
+  // Not `url.origin`: in production that is the proxy's upstream, localhost.
+  const origin = publicOrigin(request.headers);
   const code = url.searchParams.get("code");
-  const next = safeNextPath(url.searchParams.get("next")) ?? ACCOUNT_PATH;
+  const next = safeNextPath(url.searchParams.get("next")) ?? AFTER_SIGN_IN_PATH;
 
   /* The provider reports its own refusals here — a closed consent screen comes
      back as `error=access_denied`. That is the player changing their mind, so
      it goes back to the form with nothing said. */
   const providerError = url.searchParams.get("error");
   if (providerError) {
-    return NextResponse.redirect(new URL(SIGN_IN_PATH, url.origin));
+    return NextResponse.redirect(new URL(SIGN_IN_PATH, origin));
   }
 
   if (!code) {
     return NextResponse.redirect(
-      new URL(`${SIGN_IN_PATH}?error=generic`, url.origin),
+      new URL(`${SIGN_IN_PATH}?error=generic`, origin),
     );
   }
 
@@ -44,9 +51,9 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     return NextResponse.redirect(
-      new URL(`${SIGN_IN_PATH}?error=provider-failed`, url.origin),
+      new URL(`${SIGN_IN_PATH}?error=provider-failed`, origin),
     );
   }
 
-  return NextResponse.redirect(new URL(next, url.origin));
+  return NextResponse.redirect(new URL(next, origin));
 }

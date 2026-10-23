@@ -14,6 +14,7 @@ import {
 } from "@/lib/game/set";
 import { VERDICT_LABEL_KEYS, verdictPip } from "@/lib/game/verdict-style";
 import { format, type Dict } from "@/lib/i18n/dictionary";
+import { copyText } from "@/lib/clipboard";
 
 /**
  * The screen at the end of a ten-question set, shared by both games.
@@ -424,12 +425,7 @@ export function ShareButton({
       }
     }
 
-    try {
-      await navigator.clipboard.writeText(text);
-      flash("copied");
-    } catch {
-      flash("failed");
-    }
+    flash((await copyText(text)) ? "copied" : "failed");
   }
 
   const label =

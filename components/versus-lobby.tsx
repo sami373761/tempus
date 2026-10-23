@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 
 import { QrCode } from "@/components/qr-code";
-import { publicEnv } from "@/lib/env";
+import { copyText } from "@/lib/clipboard";
+import { SITE_ORIGIN } from "@/lib/site";
 import { format, type Dict } from "@/lib/i18n/dictionary";
 import type { MatchView, Seat } from "@/lib/game/versus";
 import { otherSeat, versusModeSpec } from "@/lib/game/versus";
@@ -18,12 +19,11 @@ import { otherSeat, versusModeSpec } from "@/lib/game/versus";
  * and the QR code for the person sitting across the table — who should not
  * have to be sent anything at all.
  *
- * **The URL is read from `window.location` at render.** The site has no domain
- * yet (CLAUDE.md, gap 1), so a baked-in origin would be wrong on localhost and
- * wrong again on the first deploy. It is the same reason the solo game's share
- * text reads its URL at click time. `inviteOrigin()` below is the one
- * exception, and it exists because `localhost` is the one origin that is wrong
- * for the *reader* rather than for the site.
+ * **The URL is always the live site's** (`SITE_ORIGIN`), never the page's own:
+ * an invite is for someone somewhere else, and a room opened on the dev server
+ * used to hand out a `localhost` or LAN address nobody outside the house could
+ * open. Rooms live in the database the live site reads, so the code is
+ * joinable there wherever it was minted.
  *
  * **Both players ready is a gate, not a countdown.** The match cannot start
  * until each has pressed, because the alternative — starting on a timer when
@@ -41,7 +41,7 @@ export function VersusLobby({
   busy: boolean;
   t: Dict;
 }) {
-  const inviteUrl = useInviteUrl(view.code);
+  const inviteUrl = inviteUrlFor(view.code);
   const them = otherSeat(view.seat);
 
   const youReady = view.seats[view.seat].ready;
@@ -104,7 +104,7 @@ export function VersusLobby({
           {/* Only while there is still somebody to invite. Once they are in,
               the link is clutter standing between the player and the button
               they are waiting to press. */}
-          {!theyJoined && inviteUrl && (
+          {!theyJoined && (
             <>
               <div className="flex flex-col items-center gap-3">
                 <div className="rounded-2xl bg-white p-2 shadow-lg shadow-black/40">
@@ -307,13 +307,9 @@ function CopyLinkButton({
   );
 
   async function copy() {
-    try {
-      await navigator.clipboard.writeText(url);
-    } catch {
-      // Nothing useful to say: the code and the QR are both still on screen,
-      // and the URL is in the address bar.
-      return;
-    }
+    // On failure there is nothing useful to say: the code and the QR are
+    // both still on screen, and the URL is in the address bar.
+    if (!(await copyText(url))) return;
     setCopied(true);
     if (timer.current !== null) window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => setCopied(false), SHARE_FEEDBACK_MS);
@@ -375,39 +371,8 @@ function WhatsAppButton({
  * Returning null for the first paint is deliberate: the QR code and the share
  * buttons would otherwise render once against the wrong origin.
  */
-function useInviteUrl(code: string): string | null {
-  const [url, setUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    setUrl(`${inviteOrigin()}/versus/${code}`);
-  }, [code]);
-
-  return url;
-}
-
-/** Hosts that name the machine reading them rather than a machine on a network. */
-const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]", "::1"]);
-
-/**
- * The origin a second player should be sent to.
- *
- * `window.location.origin` is correct everywhere except the one situation this
- * mode cannot be tested without: a host browsing `http://localhost:3000` emits
- * an invite whose host *is the phone that scans it*, so the second player
- * resolves the link to their own device and can never arrive. Setting
- * `NEXT_PUBLIC_DEV_INVITE_ORIGIN` to the LAN address fixes the link, the
- * WhatsApp message and the QR code together, since all three read this.
- *
- * The override applies **only on a loopback host**. A real domain is never
- * loopback, so a value left behind in an environment cannot quietly redirect
- * production invites at someone's old laptop — the guard is the reason this is
- * safe to leave configured.
- */
-function inviteOrigin(): string {
-  const override = publicEnv.devInviteOrigin;
-  return override && LOOPBACK_HOSTS.has(window.location.hostname)
-    ? override
-    : window.location.origin;
+function inviteUrlFor(code: string): string {
+  return `${SITE_ORIGIN}/versus/${code}`;
 }
 
 /** Seat labels for the result screens, so "You" is always this client. */

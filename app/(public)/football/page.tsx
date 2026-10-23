@@ -60,7 +60,7 @@ export default async function FootballPage() {
   // client — see the queue note in `TimelineGame`.
   //
   // Drawn *alongside* the allowance rather than after it. Both are round trips
-  // to a database on the other side of the world (CLAUDE.md, known gap 4), and
+  // to a database on the other side of the world (CLAUDE.md, known gap 3), and
   // the common case is a player who may play: paying for them in sequence
   // would put the limit's latency in front of every round of every game, to
   // save a draw on the rare load that is refused.

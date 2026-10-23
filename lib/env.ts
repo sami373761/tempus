@@ -51,19 +51,6 @@ export const publicEnv = {
       process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_URL,
     ).replace(/\/+$/, "");
   },
-  /**
-   * Origin to write into a versus invite in place of the page's own, no
-   * trailing slash; null when unset, which is the normal case.
-   *
-   * Optional rather than `required()` because it exists only to make
-   * two-device testing possible on a LAN — see `inviteOrigin()` in
-   * `components/versus-lobby.tsx`, which is also where it is confined to
-   * loopback hosts so a stale value cannot follow a build to a real domain.
-   */
-  get devInviteOrigin(): string | null {
-    const value = process.env.NEXT_PUBLIC_DEV_INVITE_ORIGIN?.trim();
-    return value ? value.replace(/\/+$/, "") : null;
-  },
 } as const;
 
 /** True when the Supabase connection details are present. */

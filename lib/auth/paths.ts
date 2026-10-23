@@ -25,6 +25,14 @@ export const RESET_PASSWORD_PATH = "/reset-password";
 export const ACCOUNT_PATH = "/account";
 
 /**
+ * Where a sign-in with no `next` lands: the home page, where the games are.
+ * It was the account page, which left a new player on a settings screen
+ * instead of somewhere to play. A sign-in started from a gated page still
+ * comes back to that page through `next`.
+ */
+export const AFTER_SIGN_IN_PATH = "/";
+
+/**
  * Routes that need an account, as prefixes.
  *
  * Prefixes rather than exact paths so a sub-route added under either one is
@@ -59,4 +67,23 @@ export function safeNextPath(value: string | null | undefined): string | null {
 export function signInHref(next?: string | null): string {
   const safe = safeNextPath(next);
   return safe ? `${SIGN_IN_PATH}?next=${encodeURIComponent(safe)}` : SIGN_IN_PATH;
+}
+
+/**
+ * The origin the visitor actually typed, for building absolute redirects.
+ *
+ * Not `request.url` / `nextUrl`: behind Caddy, `next start -H 127.0.0.1`
+ * builds those from the address it listens on, so they come out as
+ * `https://localhost:3000` — the Google callback and the sign-in bounce sent
+ * live visitors there. Caddy forwards the real host and scheme, and overwrites
+ * any `X-Forwarded-*` a client sends itself, so those are trusted first; on
+ * the dev server there is no proxy and `Host` is the address in the bar.
+ */
+export function publicOrigin(headers: Headers): string {
+  const host =
+    headers.get("x-forwarded-host") ?? headers.get("host") ?? "localhost:3000";
+  const proto =
+    headers.get("x-forwarded-proto") ??
+    (host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https");
+  return `${proto}://${host}`;
 }

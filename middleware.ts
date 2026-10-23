@@ -1,7 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { ACCOUNT_PATH, isProtectedPath, SIGN_IN_PATH } from "@/lib/auth/paths";
+import {
+  AFTER_SIGN_IN_PATH,
+  isProtectedPath,
+  publicOrigin,
+  SIGN_IN_PATH,
+} from "@/lib/auth/paths";
 import { isAdminPath } from "@/lib/admin/path";
 import {
   ADMIN_SEEN_COOKIE,
@@ -69,9 +74,8 @@ export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   if (!user && isProtectedPath(pathname)) {
-    const url = request.nextUrl.clone();
-    url.pathname = SIGN_IN_PATH;
-    url.search = "";
+    // Not `nextUrl.clone()`: behind the proxy its origin is `localhost:3000`.
+    const url = new URL(SIGN_IN_PATH, publicOrigin(request.headers));
     // Where to come back to, including whatever query the player was carrying.
     url.searchParams.set("next", `${pathname}${search}`);
     return NextResponse.redirect(url);
@@ -82,13 +86,13 @@ export async function middleware(request: NextRequest) {
      button after signing in, and showing an empty form in either case reads as
      having been signed out. */
   if (user && pathname === SIGN_IN_PATH) {
-    const url = request.nextUrl.clone();
     const next = request.nextUrl.searchParams.get("next");
-    url.pathname =
+    const url = new URL(
       next && next.startsWith("/") && !next.startsWith("//")
         ? next.split("?")[0]!
-        : ACCOUNT_PATH;
-    url.search = "";
+        : AFTER_SIGN_IN_PATH,
+      publicOrigin(request.headers),
+    );
     return NextResponse.redirect(url);
   }
 
